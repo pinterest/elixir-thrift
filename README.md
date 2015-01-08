@@ -20,7 +20,7 @@ code generation. Start by adding `:thrift` to your project's `:compilers` list.
 For example:
 
 ```elixir
-compilers: [:thrift, :erlang, :elixir, :app]
+compilers: [:thrift | Mix.compilers]
 ```
 
 It's important to add `:thrift` *before* the `:erlang` entry. The Thrift

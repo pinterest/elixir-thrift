@@ -35,7 +35,7 @@ defmodule Mix.Tasks.Compile.Thrift do
     output_dir     = project[:thrift_output] || "src"
 
     stale_files = Enum.filter(thrift_files, fn file ->
-      force || stale? file, output_dir
+      force || stale?(file, output_dir)
     end)
 
     Enum.each stale_files, &generate(&1, output_dir, thrift_options)
@@ -49,7 +49,7 @@ defmodule Mix.Tasks.Compile.Thrift do
 
   defp stale?(thrift_file, output_dir) do
     targets = get_generated_files(thrift_file, output_dir)
-    Enum.empty? targets || Mix.Utils.stale? [thrift_file], targets
+    Enum.empty?(targets) || Mix.Utils.stale?([thrift_file], targets)
   end
 
   defp generate(thrift_file, output_dir, options) do

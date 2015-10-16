@@ -3,7 +3,7 @@ defmodule Thrift.Mixfile do
 
   def project do
     [app: :thrift,
-     version: "0.0.1",
+     version: "1.0.0",
      description: "Thrift utilities for Elixir",
      elixir: "~> 1.0",
      erlc_paths: ["ext/thrift/lib/erl/src"],

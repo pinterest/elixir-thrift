@@ -10,7 +10,7 @@ In particular, it includes a copy of the Erlang Thrift runtime library.
 Start by adding this package to your project as a dependency:
 
 ```elixir
-{:thrift, git: ..., submodules: true}
+{:thrift, github: "pinterest/elixir-thrift", submodules: true}
 ```
 
 ## Mix

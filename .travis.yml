@@ -12,7 +12,7 @@ script:
   - git submodule update
   - MIX_ENV=test mix do deps.get, compile
 after_script:
-  - MIX_ENV=test mix coveralls.detail
+  - MIX_ENV=test mix coveralls.travis
 cache:
   directories:
   - $HOME/.mix/archives

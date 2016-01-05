@@ -1,5 +1,8 @@
 # Thrift Utilities for Elixir
 
+[![Build Status](https://travis-ci.org/pinterest/elixir-thrift.svg?branch=master)](https://travis-ci.org/pinterest/elixir-thrift) [![Coverage Status](https://coveralls.io/repos/pinterest/elixir-thrift/badge.svg?branch=master)](https://coveralls.io/r/pinterest/elixir-thrift?branch=master)
+
+
 This package contains a handful of useful utilities for working with
 [Thrift](https://thrift.apache.org/) in Elixir.
 

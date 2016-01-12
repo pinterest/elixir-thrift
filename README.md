@@ -1,5 +1,11 @@
 # Thrift Utilities for Elixir
 
+![Version](https://img.shields.io/github/tag/pinterest/elixir-thrift.svg)
+[![Build Status](https://travis-ci.org/pinterest/elixir-thrift.svg?branch=master)](https://travis-ci.org/pinterest/elixir-thrift)
+[![Coverage Status](https://coveralls.io/repos/pinterest/elixir-thrift/badge.svg?branch=master&service=github)](https://coveralls.io/github/pinterest/elixir-thrift?branch=master)
+![Issues](https://img.shields.io/github/issues/pinterest/elixir-thrift.svg)
+![License](https://img.shields.io/badge/license-Apache%202-blue.svg)
+
 This package contains a handful of useful utilities for working with
 [Thrift](https://thrift.apache.org/) in Elixir.
 
@@ -10,7 +16,7 @@ In particular, it includes a copy of the Erlang Thrift runtime library.
 Start by adding this package to your project as a dependency:
 
 ```elixir
-{:thrift, git: ..., submodules: true}
+{:thrift, github: "pinterest/elixir-thrift", submodules: true}
 ```
 
 ## Mix

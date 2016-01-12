@@ -38,6 +38,8 @@ defmodule Mix.Tasks.Compile.Thrift do
       force || stale?(file, output_dir)
     end)
 
+    unless(Enum.empty?(stale_files), do: File.mkdir_p!(output_dir))
+
     Enum.each stale_files, &generate(&1, output_dir, thrift_options)
   end
 

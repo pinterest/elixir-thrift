@@ -1,0 +1,19 @@
+language: elixir
+elixir:
+  - 1.1.1
+otp_release:
+  - 18.1
+sudo: false
+install: true
+before_script:
+  - mix local.hex --force
+script:
+  - git submodule init
+  - git submodule update
+  - MIX_ENV=test mix do deps.get, compile
+after_script:
+  - MIX_ENV=test mix coveralls.travis
+cache:
+  directories:
+  - $HOME/.mix/archives
+

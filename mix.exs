@@ -34,7 +34,7 @@ defmodule Thrift.Mixfile do
   end
 
   defp deps do
-     [{:excoveralls, github: "parroty/excoveralls", tag: "v0.4.3", override: true, only: :test}]
+     [{:excoveralls, github: "parroty/excoveralls", tag: "v0.4.5", override: true, only: :test}]
   end
 
   defp description do

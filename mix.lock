@@ -1,5 +1,5 @@
 %{"certifi": {:hex, :certifi, "0.3.0"},
-  "excoveralls": {:git, "https://github.com/parroty/excoveralls.git", "a0d3d57b7137f3204690e4126a82d48d985a09fb", [tag: "v0.4.3"]},
+  "excoveralls": {:git, "https://github.com/parroty/excoveralls.git", "a0d3d57b7137f3204690e4126a82d48d985a09fb", [tag: "v0.4.5"]},
   "exjsx": {:hex, :exjsx, "3.2.0"},
   "hackney": {:hex, :hackney, "1.4.8"},
   "idna": {:hex, :idna, "1.0.3"},

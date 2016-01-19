@@ -45,3 +45,19 @@ but you can change that using the `thrift_output` option.
 
 You can also pass additional options to the Thrift compiler by listing them in
 the `thrift_options` option.
+
+## Thrift IDL Parsing
+
+This package also contains experimental support for parsing [Thrift IDL][idl]
+files. For the moment, only an Erlang lexer is available, but the goal is to
+provide more advanced parser support over time.
+
+```erlang
+:thrift_lexer.string('enum Colors { RED, GREEN, BLUE}')
+{:ok,
+ [{:enum, 1}, {:ident, 1, 'Colors'}, {:symbol, 1, '{'}, {:ident, 1, 'RED'},
+  {:symbol, 1, ','}, {:ident, 1, 'GREEN'}, {:symbol, 1, ','},
+  {:ident, 1, 'BLUE'}, {:symbol, 1, '}'}], 1}
+```
+
+[idl]: https://thrift.apache.org/docs/idl

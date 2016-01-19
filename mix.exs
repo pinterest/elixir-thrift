@@ -11,9 +11,9 @@ defmodule Thrift.Mixfile do
      deps: deps,
 
      # Build Environment
-     erlc_paths: ["ext/thrift/lib/erl/src"],
+     erlc_paths: ["src", "ext/thrift/lib/erl/src"],
      erlc_include_path: "ext/thrift/lib/erl/include",
-     compilers: [:erlang, :elixir, :app],
+     compilers: [:leex, :erlang, :elixir, :app],
 
      # Testing
      test_coverage: [tool: ExCoveralls],
@@ -49,6 +49,7 @@ defmodule Thrift.Mixfile do
      [maintainers: ["Jon Parise", "Steve Cohen"],
       licenses: ["Apache 2.0"],
       links: %{"GitHub" => @project_url},
-      files: ~w(README.md LICENSE mix.exs ext lib)]
+      files: ~w(README.md LICENSE mix.exs ext lib) ++
+             ~w(src/thrift_lexer.xrl)]
   end
 end

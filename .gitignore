@@ -1,5 +1,6 @@
 /_build
 /deps
+/src/thrift_lexer.erl
 erl_crash.dump
 *.ez
 log.*

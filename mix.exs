@@ -49,6 +49,6 @@ defmodule Thrift.Mixfile do
      [maintainers: ["Jon Parise", "Steve Cohen"],
       licenses: ["Apache 2.0"],
       links: %{"GitHub" => @project_url},
-      files: ["ext", "lib", "mix.exs", "README.md", "LICENSE"]]
+      files: ~w(README.md LICENSE mix.exs ext lib)]
   end
 end

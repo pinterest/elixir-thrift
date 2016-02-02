@@ -22,6 +22,8 @@ defmodule Mix.Tasks.Compile.Thrift do
 
     * `:thrift_options` - list of additional options that will be passed to
       the Thrift compiler.
+
+    * `:thrift_version` - thrift compiler `Version` requirement
   """
 
   @spec run(OptionParser.argv) :: :ok | :noop
@@ -32,15 +34,29 @@ defmodule Mix.Tasks.Compile.Thrift do
     project        = Mix.Project.config
     thrift_files   = project[:thrift_files]
     thrift_options = project[:thrift_options] || []
+    thrift_version = project[:thrift_version]
     output_dir     = project[:thrift_output] || "src"
 
     stale_files = Enum.filter(thrift_files, fn file ->
       force || stale?(file, output_dir)
     end)
 
+    if(thrift_version && !Enum.empty?(stale_files)) do
+      unless(Version.match?(v = get_thrift_version, thrift_version)) do
+        Mix.raise "Unsupported Thrift version #{v} (requires #{thrift_version})"
+      end
+    end
+
     unless(Enum.empty?(stale_files), do: File.mkdir_p!(output_dir))
 
     Enum.each stale_files, &generate(&1, output_dir, thrift_options)
+  end
+
+  defp get_thrift_version do
+    case System.cmd("thrift", ~w[-version]) do
+      {s, 0} -> hd(Regex.run(~r/\b(\d+\.\d+\.\d+)\b/, s, capture: :first) || [])
+      {_, e} -> Mix.raise "Failed to execute `thrift -version` (error #{e})"
+    end
   end
 
   defp get_generated_files(thrift_file, output_dir) do

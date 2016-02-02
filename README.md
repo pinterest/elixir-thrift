@@ -37,7 +37,7 @@ Next, define the list of `:thrift_files` that should be compiled. In this
 example, we gather all of the `.thrift` files under the `thrift` directory:
 
 ```elixir
-thrift_files: Mix.Utils.extract_files(["thrift"], [:thrift]),
+thrift_files: Mix.Utils.extract_files(["thrift"], [:thrift])
 ```
 
 By default, the generated source files will be written to the `src` directory,
@@ -45,6 +45,14 @@ but you can change that using the `thrift_output` option.
 
 You can also pass additional options to the Thrift compiler by listing them in
 the `thrift_options` option.
+
+If you require a specific version of the Thrift compiler, you can specify a
+version requirement using the `thrift_version` option. Version requirements
+use the [SemVer 2.0 schema][semver]. For example:
+
+```elixir
+thrift_version: ">= 0.9.3"  # Erlang maps support
+```
 
 ## Thrift IDL Parsing
 
@@ -60,4 +68,5 @@ provide more advanced parser support over time.
   {:ident, 1, 'BLUE'}, {:symbol, 1, '}'}], 1}
 ```
 
+[semver]: http://semver.org/
 [idl]: https://thrift.apache.org/docs/idl

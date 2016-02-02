@@ -26,7 +26,11 @@ defmodule Thrift.Mixfile do
      # Hex
      description: description,
      package: package,
-     ]
+
+
+     # Docs
+     name: "Thrift",
+     docs: [source_ref: "v#{@version}", main: "Thrift", source_url: @project_url]]
   end
 
   def application do
@@ -34,7 +38,9 @@ defmodule Thrift.Mixfile do
   end
 
   defp deps do
-     [{:excoveralls, github: "parroty/excoveralls", tag: "v0.4.5", override: true, only: :test}]
+     [{:ex_doc, "~> 0.10", only: :dev},
+      {:earmark, "~> 0.1", only: :dev},
+      {:excoveralls, github: "parroty/excoveralls", tag: "v0.4.5", override: true, only: :test}]
   end
 
   defp description do

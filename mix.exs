@@ -55,7 +55,9 @@ defmodule Thrift.Mixfile do
      [maintainers: ["Jon Parise", "Steve Cohen"],
       licenses: ["Apache 2.0"],
       links: %{"GitHub" => @project_url},
-      files: ~w(README.md LICENSE mix.exs ext lib) ++
+      files: ~w(README.md LICENSE mix.exs lib) ++
+             ~w(ext/thrift/CHANGES ext/thrift/LICENSE ext/thrift/NOTICE) ++
+             ~w(ext/thrift/README.md ext/thrift/doc ext/thrift/lib/erl) ++
              ~w(src/thrift_lexer.xrl)]
   end
 end

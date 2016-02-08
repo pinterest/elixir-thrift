@@ -46,10 +46,10 @@ defmodule Mix.Tasks.Compile.Thrift do
         Mix.raise "Unsupported Thrift version #{v} (requires #{thrift_version})"
       end
     end
-
     unless(Enum.empty?(stale_files), do: File.mkdir_p!(output_dir))
 
-    Enum.each stale_files, &generate(&1, output_dir, thrift_options)
+    options = get_thrift_options(output_dir, thrift_options)
+    Enum.each stale_files, &generate(&1, options)
   end
 
   defp get_thrift_version do
@@ -70,8 +70,16 @@ defmodule Mix.Tasks.Compile.Thrift do
     Enum.empty?(targets) || Mix.Utils.stale?([thrift_file], targets)
   end
 
-  defp generate(thrift_file, output_dir, options) do
-    args = ~w[--gen erl --out] ++ [output_dir] ++ options ++ [thrift_file]
+  defp get_thrift_options(output_dir, user_options) do
+    opts = ~w[--out] ++ [output_dir]
+    # add --gen erl if user options doesn't contain --gen
+    opts = opts ++ unless Enum.member?(user_options, "--gen"), do: ~w[--gen erl]
+    # merge user options
+    opts ++ user_options
+  end
+
+  defp generate(thrift_file, options) do
+    args = options ++ [thrift_file]
     case System.cmd("thrift", args) do
       {_, 0} -> Mix.shell.info "Compiled #{thrift_file}"
       {_, e} -> Mix.shell.error "Failed to compile #{thrift_file} (error #{e})"

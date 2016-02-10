@@ -44,7 +44,11 @@ By default, the generated source files will be written to the `src` directory,
 but you can change that using the `thrift_output` option.
 
 You can also pass additional options to the Thrift compiler by listing them in
-the `thrift_options` option.
+the `thrift_options` option:
+
+```elixir
+thrift_options: ~w[-I my/include/dir]
+```
 
 If you require a specific version of the Thrift compiler, you can specify a
 version requirement using the `thrift_version` option. Version requirements
@@ -53,6 +57,15 @@ use the [SemVer 2.0 schema][semver]. For example:
 ```elixir
 thrift_version: ">= 0.9.3"  # Erlang maps support
 ```
+
+
+If you get something like `type set() undefined` when compiling the generated files
+you can try:
+
+```elixir
+thrift_options: ~w[--gen erl:maps]
+```
+
 
 ## Thrift IDL Parsing
 

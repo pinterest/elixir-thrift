@@ -48,7 +48,7 @@ defmodule Mix.Tasks.Compile.Thrift do
     end
     unless(Enum.empty?(stale_files), do: File.mkdir_p!(output_dir))
 
-    options = get_thrift_options(output_dir, thrift_options)
+    options = build_options(output_dir, thrift_options)
     Enum.each stale_files, &generate(&1, options)
   end
 
@@ -70,11 +70,11 @@ defmodule Mix.Tasks.Compile.Thrift do
     Enum.empty?(targets) || Mix.Utils.stale?([thrift_file], targets)
   end
 
-  defp get_thrift_options(output_dir, user_options) do
+  defp build_options(output_dir, user_options) do
     opts = ~w[--out] ++ [output_dir]
-    # add --gen erl if user options doesn't contain --gen
-    opts = opts ++ unless Enum.member?(user_options, "--gen"), do: ~w[--gen erl]
-    # merge user options
+    unless Enum.member?(user_options, "--gen") do
+      opts = opts ++ ~w[--gen erl]
+    end
     opts ++ user_options
   end
 

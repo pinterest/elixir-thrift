@@ -40,7 +40,7 @@ defmodule Thrift.Mixfile do
   defp deps do
      [{:ex_doc, "~> 0.10", only: :dev},
       {:earmark, "~> 0.1", only: :dev},
-      {:excoveralls, github: "parroty/excoveralls", tag: "v0.4.5", override: true, only: :test}]
+      {:excoveralls, github: "parroty/excoveralls", tag: "v0.4.6", override: true, only: :test}]
   end
 
   defp description do

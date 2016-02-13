@@ -38,8 +38,8 @@ defmodule Thrift.Mixfile do
   end
 
   defp deps do
-     [{:ex_doc, "~> 0.10", only: :dev},
-      {:earmark, "~> 0.1", only: :dev},
+     [{:ex_doc, "~> 0.11.4", only: :dev},
+      {:earmark, "~> 0.2.1", only: :dev},
       {:excoveralls, github: "parroty/excoveralls", tag: "v0.4.6", override: true, only: :test}]
   end
 

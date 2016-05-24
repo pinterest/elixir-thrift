@@ -1,8 +1,8 @@
 language: elixir
 elixir:
-  - 1.1.1
+  - 1.2.5
 otp_release:
-  - 18.1
+  - 18.3.3
 sudo: false
 install: true
 before_script:

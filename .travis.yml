@@ -5,7 +5,6 @@ elixir:
 otp_release:
   - 18.2.1
 sudo: false
-install: true
 addons:
   apt:
     packages:
@@ -20,6 +19,9 @@ addons:
     - libtool
     - libssl-dev
     - pkg-config
+before_install:
+  - make install-thrift
+  - export PATH=$HOME/bin:$PATH
 before_script:
   - mix local.hex --force
 script:
@@ -31,3 +33,4 @@ after_script:
 cache:
   directories:
   - $HOME/.mix/archives
+  - $HOME/vendor

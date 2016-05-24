@@ -6,6 +6,20 @@ otp_release:
   - 18.2.1
 sudo: false
 install: true
+addons:
+  apt:
+    packages:
+    - automake
+    - bison
+    - flex
+    - g++
+    - libboost-dev
+    - libboost-test-dev
+    - libboost-program-options-dev
+    - libevent-dev
+    - libtool
+    - libssl-dev
+    - pkg-config
 before_script:
   - mix local.hex --force
 script:
@@ -17,4 +31,3 @@ after_script:
 cache:
   directories:
   - $HOME/.mix/archives
-

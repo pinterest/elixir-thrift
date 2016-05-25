@@ -46,10 +46,12 @@ defmodule Mix.Tasks.Compile.Thrift do
         Mix.raise "Unsupported Thrift version #{v} (requires #{thrift_version})"
       end
     end
-    unless(Enum.empty?(stale_files), do: File.mkdir_p!(output_dir))
 
-    options = build_options(output_dir, thrift_options)
-    Enum.each stale_files, &generate(&1, options)
+    unless Enum.empty?(stale_files) do
+      File.mkdir_p!(output_dir)
+      options = build_options(output_dir, thrift_options)
+      Enum.each stale_files, &generate(&1, options)
+    end
   end
 
   defp get_thrift_version do

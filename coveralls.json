@@ -1,5 +1,6 @@
 {
   "skip_files": [
-    "ext"
+    "ext",
+    "src/thrift_lexer.erl"
   ]
 }

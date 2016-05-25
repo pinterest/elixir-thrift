@@ -32,7 +32,7 @@ defmodule Mix.Tasks.Compile.Thrift do
     force        = opts[:force]
 
     project        = Mix.Project.config
-    thrift_files   = project[:thrift_files]
+    thrift_files   = project[:thrift_files] || []
     thrift_options = project[:thrift_options] || []
     thrift_version = project[:thrift_version]
     output_dir     = project[:thrift_output] || "src"

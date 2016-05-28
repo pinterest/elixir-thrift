@@ -31,17 +31,16 @@ defmodule Mix.Tasks.Compile.Thrift do
   @spec run(OptionParser.argv) :: :ok | :noop
   def run(args) do
     {opts, _, _} = OptionParser.parse(args, switches: [force: :boolean])
-    force        = opts[:force]
 
-    project           = Mix.Project.config
-    thrift_files      = project[:thrift_files] || []
-    thrift_executable = project[:thrift_executable] || "thrift"
-    thrift_options    = project[:thrift_options] || []
-    thrift_version    = project[:thrift_version]
-    output_dir        = project[:thrift_output] || "src"
+    config            = Mix.Project.config
+    thrift_files      = Keyword.get(config, :thrift_files, [])
+    thrift_executable = Keyword.get(config, :thrift_executable, "thrift")
+    thrift_options    = Keyword.get(config, :thrift_options, [])
+    thrift_version    = Keyword.get(config, :thrift_version)
+    output_dir        = Keyword.get(config, :thrift_output, "src")
 
     stale_files = Enum.filter(thrift_files, fn file ->
-      force || stale?(file, output_dir)
+      opts[:force] || stale?(file, output_dir)
     end)
 
     unless(System.find_executable(thrift_executable)) do

@@ -57,7 +57,7 @@ defmodule Mix.Tasks.Compile.Thrift do
     unless Enum.empty?(stale_files) do
       File.mkdir_p!(output_dir)
       options = build_options(output_dir, thrift_options)
-      Enum.each stale_files, &generate(&1, thrift_executable, options)
+      Enum.each stale_files, &generate(thrift_executable, options, &1)
     end
   end
 
@@ -87,7 +87,7 @@ defmodule Mix.Tasks.Compile.Thrift do
     opts ++ user_options
   end
 
-  defp generate(thrift_file, exec, options) do
+  defp generate(exec, options, thrift_file) do
     args = options ++ [thrift_file]
     case System.cmd(exec, args) do
       {_, 0} -> Mix.shell.info "Compiled #{thrift_file}"

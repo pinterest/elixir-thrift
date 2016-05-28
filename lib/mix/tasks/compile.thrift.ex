@@ -23,6 +23,8 @@ defmodule Mix.Tasks.Compile.Thrift do
     * `:thrift_options` - list of additional options that will be passed to
       the Thrift compiler.
 
+    * `:thrift_executable` - thrift compiler executable. Defaults to `"thrift"`.
+
     * `:thrift_version` - thrift compiler `Version` requirement
   """
 
@@ -31,18 +33,24 @@ defmodule Mix.Tasks.Compile.Thrift do
     {opts, _, _} = OptionParser.parse(args, switches: [force: :boolean])
     force        = opts[:force]
 
-    project        = Mix.Project.config
-    thrift_files   = project[:thrift_files] || []
-    thrift_options = project[:thrift_options] || []
-    thrift_version = project[:thrift_version]
-    output_dir     = project[:thrift_output] || "src"
+    project           = Mix.Project.config
+    thrift_files      = project[:thrift_files] || []
+    thrift_executable = project[:thrift_executable] || "thrift"
+    thrift_options    = project[:thrift_options] || []
+    thrift_version    = project[:thrift_version]
+    output_dir        = project[:thrift_output] || "src"
 
     stale_files = Enum.filter(thrift_files, fn file ->
       force || stale?(file, output_dir)
     end)
 
+    unless(System.find_executable(thrift_executable)) do
+      Mix.raise "`#{thrift_executable}` not found in the current path"
+    end
+
     if(thrift_version && !Enum.empty?(stale_files)) do
-      unless(Version.match?(v = get_thrift_version, thrift_version)) do
+      v = get_thrift_version(thrift_executable)
+      unless(Version.match?(v, thrift_version)) do
         Mix.raise "Unsupported Thrift version #{v} (requires #{thrift_version})"
       end
     end
@@ -50,14 +58,14 @@ defmodule Mix.Tasks.Compile.Thrift do
     unless Enum.empty?(stale_files) do
       File.mkdir_p!(output_dir)
       options = build_options(output_dir, thrift_options)
-      Enum.each stale_files, &generate(&1, options)
+      Enum.each stale_files, &generate(&1, thrift_executable, options)
     end
   end
 
-  defp get_thrift_version do
-    case System.cmd("thrift", ~w[-version]) do
+  defp get_thrift_version(exec) do
+    case System.cmd(exec, ~w[-version]) do
       {s, 0} -> hd(Regex.run(~r/\b(\d+\.\d+\.\d+)\b/, s, capture: :first) || [])
-      {_, e} -> Mix.raise "Failed to execute `thrift -version` (error #{e})"
+      {_, e} -> Mix.raise "Failed to execute `#{exec} -version` (error #{e})"
     end
   end
 
@@ -80,9 +88,9 @@ defmodule Mix.Tasks.Compile.Thrift do
     opts ++ user_options
   end
 
-  defp generate(thrift_file, options) do
+  defp generate(thrift_file, exec, options) do
     args = options ++ [thrift_file]
-    case System.cmd("thrift", args) do
+    case System.cmd(exec, args) do
       {_, 0} -> Mix.shell.info "Compiled #{thrift_file}"
       {_, e} -> Mix.shell.error "Failed to compile #{thrift_file} (error #{e})"
     end

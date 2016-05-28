@@ -60,6 +60,16 @@ defmodule Mix.Tasks.Compile.ThriftTest do
     end
   end
 
+  test "attempting to use a non-existent Thrift executable" do
+    in_fixture fn ->
+      with_project_config [thrift_executable: "nonexistentthrift"], fn ->
+        assert_raise Mix.Error, "`nonexistentthrift` not found in the current path", fn ->
+          run([])
+        end
+      end
+    end
+  end
+
   test "attempting to use an unsupported Thrift version" do
     in_fixture fn ->
       with_project_config [thrift_version: "< 0.0.0"], fn ->

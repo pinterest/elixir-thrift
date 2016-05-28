@@ -56,6 +56,11 @@ use the [SemVer 2.0 schema][semver]. For example:
 thrift_version: ">= 0.9.3"  # Erlang maps support
 ```
 
+You can also override the name of the Thrift compiler executable itself:
+
+```elixir
+thrift_executable: "thrift-0.9.3"
+```
 
 If you get something like `type set() undefined` when compiling the generated files
 you can try:

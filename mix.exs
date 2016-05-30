@@ -47,7 +47,7 @@ defmodule Thrift.Mixfile do
      """
      A collection of utilities for working with Thrift in Elixir.
 
-     Provides a copy of the Erlang Thrift runtime.
+     Provides a copy of the Apache Thrift Erlang runtime.
      """
   end
 

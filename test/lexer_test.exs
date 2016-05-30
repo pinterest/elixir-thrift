@@ -72,8 +72,129 @@ defmodule LexerTest do
     assert tokenize("'\"\"'") == [{:string, 1, '""'}]
   end
 
+  test "list literals" do
+    assert tokenize("[]") == [{:symbol, 1, '['}, {:symbol, 1, ']'}]
+    assert tokenize("[1]") == [{:symbol, 1, '['}, {:int, 1, 1}, {:symbol, 1, ']'}]
+    assert tokenize("[1,2]") == [
+     {:symbol, 1, '['},
+     {:int, 1, 1},
+     {:symbol, 1, ','},
+     {:int, 1, 2},
+     {:symbol, 1, ']'}]
+  end
+
+  test "map literals" do
+    assert tokenize("{}") == [{:symbol, 1, '{'}, {:symbol, 1, '}'}]
+    assert tokenize("{'hello':'world'}") == [
+      {:symbol, 1, '{'},
+      {:string, 1, 'hello'}, {:symbol, 1, ':'}, {:string, 1, 'world'},
+      {:symbol, 1, '}'}]
+    assert tokenize("{'a':1,'b':2}") == [
+      {:symbol, 1, '{'},
+      {:string, 1, 'a'}, {:symbol, 1, ':'}, {:int, 1, 1},
+      {:symbol, 1, ','},
+      {:string, 1, 'b'}, {:symbol, 1, ':'}, {:int, 1, 2},
+      {:symbol, 1, '}'}]
+  end
+
+  test "set literals" do
+    assert tokenize("{}") == [{:symbol, 1, '{'}, {:symbol, 1, '}'}]
+    assert tokenize("{1}") == [{:symbol, 1, '{'}, {:int, 1, 1}, {:symbol, 1, '}'}]
+    assert tokenize("{1,2}") == [
+      {:symbol, 1, '{'},
+      {:int, 1, 1},
+      {:symbol, 1, ','},
+      {:int, 1, 2},
+      {:symbol, 1, '}'}]
+  end
+
   test "identifiers" do
     assert tokenize("abc_123.xzy") == [{:ident, 1, 'abc_123.xzy'}]
     assert tokenize("abc-") == [{:st_ident, 1, 'abc-'}]
+  end
+
+  test "typedef" do
+    assert tokenize("typedef i32 Integer") == [{:typedef, 1}, {:i32, 1}, {:ident, 1, 'Integer'}]
+  end
+
+  test "enum definition" do
+    assert tokenize("""
+      enum Operation {
+        ADD = 1,
+        SUBTRACT = 2,
+        MULTIPLY = 3,
+        DIVIDE = 4
+      }
+    """) == [
+      {:enum, 1}, {:ident, 1, 'Operation'},
+      {:symbol, 1, '{'},
+      {:ident, 2, 'ADD'}, {:symbol, 2, '='}, {:int, 2, 1},
+      {:symbol, 2, ','},
+      {:ident, 3, 'SUBTRACT'}, {:symbol, 3, '='}, {:int, 3, 2},
+      {:symbol, 3, ','},
+      {:ident, 4, 'MULTIPLY'}, {:symbol, 4, '='}, {:int, 4, 3},
+      {:symbol, 4, ','},
+      {:ident, 5, 'DIVIDE'}, {:symbol, 5, '='}, {:int, 5, 4},
+      {:symbol, 6, '}'}]
+  end
+
+  test "struct definition" do
+    assert tokenize("""
+      struct Work {
+        1: i32 num1 = 0,
+        2: i32 num2,
+        3: Operation op,
+        4: optional string comment,
+      }
+    """) == [
+      {:struct, 1}, {:ident, 1, 'Work'},
+      {:symbol, 1, '{'},
+      {:int, 2, 1}, {:symbol, 2, ':'}, {:i32, 2}, {:ident, 2, 'num1'}, {:symbol, 2, '='}, {:int, 2, 0},
+      {:symbol, 2, ','},
+      {:int, 3, 2}, {:symbol, 3, ':'}, {:i32, 3}, {:ident, 3, 'num2'},
+      {:symbol, 3, ','},
+      {:int, 4, 3}, {:symbol, 4, ':'}, {:ident, 4, 'Operation'}, {:ident, 4, 'op'},
+      {:symbol, 4, ','},
+      {:int, 5, 4}, {:symbol, 5, ':'}, {:optional, 5}, {:string, 5}, {:ident, 5, 'comment'},
+      {:symbol, 5, ','},
+      {:symbol, 6, '}'}]
+  end
+
+  test "exception definition" do
+    assert tokenize("""
+      exception InvalidOperation {
+        1: i32 whatOp,
+        2: string why
+      }
+    """) == [
+      {:exception, 1}, {:ident, 1, 'InvalidOperation'},
+      {:symbol, 1, '{'},
+      {:int, 2, 1}, {:symbol, 2, ':'}, {:i32, 2}, {:ident, 2, 'whatOp'},
+      {:symbol, 2, ','},
+      {:int, 3, 2}, {:symbol, 3, ':'}, {:string, 3}, {:ident, 3, 'why'},
+      {:symbol, 4, '}'}]
+  end
+
+  test "service definition" do
+    assert tokenize("""
+      service Calculator extends shared.SharedService {
+        void ping(),
+        i32 add(1:i32 num1, 2:i32 num2),
+        oneway void zip()
+      }
+    """) == [
+      {:service, 1}, {:ident, 1, 'Calculator'}, {:extends, 1}, {:ident, 1, 'shared.SharedService'},
+      {:symbol, 1, '{'},
+      {:void, 2}, {:ident, 2, 'ping'}, {:symbol, 2, '('}, {:symbol, 2, ')'},
+      {:symbol, 2, ','},
+      {:i32, 3}, {:ident, 3, 'add'},
+        {:symbol, 3, '('},
+          {:int, 3, 1}, {:symbol, 3, ':'}, {:i32, 3}, {:ident, 3, 'num1'},
+          {:symbol, 3, ','},
+          {:int, 3, 2}, {:symbol, 3, ':'}, {:i32, 3}, {:ident, 3, 'num2'},
+        {:symbol, 3, ')'},
+      {:symbol, 3, ','},
+      {:oneway, 4}, {:void, 4}, {:ident, 4, 'zip'}, {:symbol, 4, '('}, {:symbol, 4, ')'},
+      {:symbol, 5, '}'}]
   end
 end

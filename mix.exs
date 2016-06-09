@@ -13,7 +13,7 @@ defmodule Thrift.Mixfile do
      # Build Environment
      erlc_paths: ["src", "ext/thrift/lib/erl/src"],
      erlc_include_path: "ext/thrift/lib/erl/include",
-     compilers: [:leex, :erlang, :elixir, :app],
+     compilers: [:leex, :yecc, :erlang, :elixir, :app],
 
      # Testing
      test_coverage: [tool: ExCoveralls],
@@ -40,7 +40,9 @@ defmodule Thrift.Mixfile do
   defp deps do
      [{:ex_doc, "~> 0.11.4", only: :dev},
       {:earmark, "~> 0.2.1", only: :dev},
-      {:excoveralls, "~> 0.5.4", only: :test}]
+      {:excoveralls, "~> 0.5.4", only: :test},
+      {:dialyze, "~> 0.2.0", only: [:dev, :test]}
+     ]
   end
 
   defp description do
@@ -58,6 +60,7 @@ defmodule Thrift.Mixfile do
       files: ~w(README.md LICENSE mix.exs lib) ++
              ~w(ext/thrift/CHANGES ext/thrift/LICENSE ext/thrift/NOTICE) ++
              ~w(ext/thrift/README.md ext/thrift/doc ext/thrift/lib/erl) ++
-             ~w(src/thrift_lexer.xrl)]
+             ~w(src/thrift_lexer.xrl src/thrift_parser.yrl)
+     ]
   end
 end

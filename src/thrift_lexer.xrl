@@ -7,13 +7,25 @@ HEX             = [+-]?0x[0-9A-Fa-f]+
 DOUBLE          = [+-]?[0-9]+(\.[0-9]+)?([eE][+-]?[0-9]+)?
 IDENTIFIER      = [a-zA-Z_](\.[a-zA-Z_0-9]|[a-zA-Z_0-9])*
 ST_IDENTIFIER   = [a-zA-Z-](\.[a-zA-Z_0-9-]|[a-zA-Z_0-9-])*
-SYMBOL          = [:;\,\{\}\(\)\=<>\[\]]
+SEMI            = [;]
 WHITESPACE      = [\s\t\r\n]+
 COMMENT         = //[^\n]*
 CCOMMENT        = /\\*/*([^*/]|[^*]/|\\*[^/])*\\**\\*/
 UNIXCOMMENT     = #[^\n]*
 STRING1         = '(\\\^.|\\.|[^'])*'
 STRING2         = "(\\\^.|\\.|[^"])*"
+OPEN_CURLY      = [\{]
+CLOSE_CURLY     = [\}]
+LT              = [<]
+GT              = [>]
+COMMA           = [,]
+COLON           = [:]
+OPEN_BRACKET    = [\[]
+CLOSE_BRACKET   = [\]]
+OPEN_PAREN      = [\(]
+CLOSE_PAREN     = [\)]
+EQUALS          = [=]
+ASTERISK        = [*]
 
 Rules.
 
@@ -21,9 +33,20 @@ Rules.
 {COMMENT}       : skip_token.
 {CCOMMENT}      : skip_token.
 {UNIXCOMMENT}   : skip_token.
+{SEMI}          : skip_token.
 
-{SYMBOL}        : {token, {symbol, TokenLine, TokenChars}}.
-
+{ASTERISK}      : {token, {'*', TokenLine}}.
+{OPEN_CURLY}    : {token, {'{', TokenLine}}.
+{CLOSE_CURLY}   : {token, {'}', TokenLine}}.
+{OPEN_BRACKET}  : {token, {'[', TokenLine}}.
+{CLOSE_BRACKET} : {token, {']', TokenLine}}.
+{OPEN_PAREN}    : {token, {'(', TokenLine}}.
+{CLOSE_PAREN}   : {token, {')', TokenLine}}.
+{EQUALS}        : {token, {'=', TokenLine}}.
+{GT}            : {token, {'>', TokenLine}}.
+{LT}            : {token, {'<', TokenLine}}.
+{COMMA}         : {token, {',', TokenLine}}.
+{COLON}         : {token, {':', TokenLine}}.
 namespace       : {token, {namespace, TokenLine}}.
 include         : {token, {include, TokenLine}}.
 

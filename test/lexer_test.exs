@@ -21,8 +21,8 @@ defmodule LexerTest do
   end
 
   test "symbols" do
-    assert tokenize(";") == [{:symbol, 1, ';'}]
-    assert tokenize("=") == [{:symbol, 1, '='}]
+    assert tokenize(";") == []
+    assert tokenize("=") == [{:=, 1}]
   end
 
   test "keywords" do
@@ -73,39 +73,40 @@ defmodule LexerTest do
   end
 
   test "list literals" do
-    assert tokenize("[]") == [{:symbol, 1, '['}, {:symbol, 1, ']'}]
-    assert tokenize("[1]") == [{:symbol, 1, '['}, {:int, 1, 1}, {:symbol, 1, ']'}]
+    assert tokenize("[]") == [{:"[", 1}, {:"]", 1}]
+    assert tokenize("[1]") == [{:"[", 1}, {:int, 1, 1}, {:"]", 1}]
     assert tokenize("[1,2]") == [
-     {:symbol, 1, '['},
+     {:"[", 1},
      {:int, 1, 1},
-     {:symbol, 1, ','},
+     {:",", 1},
      {:int, 1, 2},
-     {:symbol, 1, ']'}]
+     {:"]", 1}]
   end
 
   test "map literals" do
-    assert tokenize("{}") == [{:symbol, 1, '{'}, {:symbol, 1, '}'}]
+    assert tokenize("{}") == [{:"{", 1}, {:"}", 1}]
     assert tokenize("{'hello':'world'}") == [
-      {:symbol, 1, '{'},
-      {:string, 1, 'hello'}, {:symbol, 1, ':'}, {:string, 1, 'world'},
-      {:symbol, 1, '}'}]
+      {:"{", 1},
+      {:string, 1, 'hello'}, {:":", 1}, {:string, 1, 'world'},
+      {:"}", 1}]
+
     assert tokenize("{'a':1,'b':2}") == [
-      {:symbol, 1, '{'},
-      {:string, 1, 'a'}, {:symbol, 1, ':'}, {:int, 1, 1},
-      {:symbol, 1, ','},
-      {:string, 1, 'b'}, {:symbol, 1, ':'}, {:int, 1, 2},
-      {:symbol, 1, '}'}]
+      {:"{", 1},
+      {:string, 1, 'a'}, {:":", 1}, {:int, 1, 1},
+      {:",", 1},
+      {:string, 1, 'b'}, {:":", 1}, {:int, 1, 2},
+      {:"}", 1}]
   end
 
   test "set literals" do
-    assert tokenize("{}") == [{:symbol, 1, '{'}, {:symbol, 1, '}'}]
-    assert tokenize("{1}") == [{:symbol, 1, '{'}, {:int, 1, 1}, {:symbol, 1, '}'}]
+    assert tokenize("{}") == [{:"{", 1}, {:"}", 1}]
+    assert tokenize("{1}") == [{:"{", 1}, {:int, 1, 1}, {:"}", 1}]
     assert tokenize("{1,2}") == [
-      {:symbol, 1, '{'},
+      {:"{", 1},
       {:int, 1, 1},
-      {:symbol, 1, ','},
+      {:",", 1},
       {:int, 1, 2},
-      {:symbol, 1, '}'}]
+      {:"}", 1}]
   end
 
   test "identifiers" do
@@ -127,15 +128,15 @@ defmodule LexerTest do
       }
     """) == [
       {:enum, 1}, {:ident, 1, 'Operation'},
-      {:symbol, 1, '{'},
-      {:ident, 2, 'ADD'}, {:symbol, 2, '='}, {:int, 2, 1},
-      {:symbol, 2, ','},
-      {:ident, 3, 'SUBTRACT'}, {:symbol, 3, '='}, {:int, 3, 2},
-      {:symbol, 3, ','},
-      {:ident, 4, 'MULTIPLY'}, {:symbol, 4, '='}, {:int, 4, 3},
-      {:symbol, 4, ','},
-      {:ident, 5, 'DIVIDE'}, {:symbol, 5, '='}, {:int, 5, 4},
-      {:symbol, 6, '}'}]
+      {:"{", 1},
+      {:ident, 2, 'ADD'}, {:=, 2}, {:int, 2, 1},
+      {:",", 2},
+      {:ident, 3, 'SUBTRACT'}, {:=, 3}, {:int, 3, 2},
+      {:",", 3},
+      {:ident, 4, 'MULTIPLY'}, {:=, 4}, {:int, 4, 3},
+      {:",", 4},
+      {:ident, 5, 'DIVIDE'}, {:=, 5}, {:int, 5, 4},
+      {:"}", 6}]
   end
 
   test "struct definition" do
@@ -148,16 +149,16 @@ defmodule LexerTest do
       }
     """) == [
       {:struct, 1}, {:ident, 1, 'Work'},
-      {:symbol, 1, '{'},
-      {:int, 2, 1}, {:symbol, 2, ':'}, {:i32, 2}, {:ident, 2, 'num1'}, {:symbol, 2, '='}, {:int, 2, 0},
-      {:symbol, 2, ','},
-      {:int, 3, 2}, {:symbol, 3, ':'}, {:i32, 3}, {:ident, 3, 'num2'},
-      {:symbol, 3, ','},
-      {:int, 4, 3}, {:symbol, 4, ':'}, {:ident, 4, 'Operation'}, {:ident, 4, 'op'},
-      {:symbol, 4, ','},
-      {:int, 5, 4}, {:symbol, 5, ':'}, {:optional, 5}, {:string, 5}, {:ident, 5, 'comment'},
-      {:symbol, 5, ','},
-      {:symbol, 6, '}'}]
+      {:"{", 1},
+      {:int, 2, 1}, {:":", 2}, {:i32, 2}, {:ident, 2, 'num1'}, {:=, 2}, {:int, 2, 0},
+      {:",", 2},
+      {:int, 3, 2}, {:":", 3}, {:i32, 3}, {:ident, 3, 'num2'},
+      {:",", 3},
+      {:int, 4, 3}, {:":", 4}, {:ident, 4, 'Operation'}, {:ident, 4, 'op'},
+      {:",", 4},
+      {:int, 5, 4}, {:":", 5}, {:optional, 5}, {:string, 5}, {:ident, 5, 'comment'},
+      {:",", 5},
+      {:"}", 6}]
   end
 
   test "exception definition" do
@@ -168,11 +169,11 @@ defmodule LexerTest do
       }
     """) == [
       {:exception, 1}, {:ident, 1, 'InvalidOperation'},
-      {:symbol, 1, '{'},
-      {:int, 2, 1}, {:symbol, 2, ':'}, {:i32, 2}, {:ident, 2, 'whatOp'},
-      {:symbol, 2, ','},
-      {:int, 3, 2}, {:symbol, 3, ':'}, {:string, 3}, {:ident, 3, 'why'},
-      {:symbol, 4, '}'}]
+      {:"{", 1},
+      {:int, 2, 1}, {:":", 2}, {:i32, 2}, {:ident, 2, 'whatOp'},
+      {:",", 2},
+      {:int, 3, 2}, {:":", 3}, {:string, 3}, {:ident, 3, 'why'},
+      {:"}", 4}]
   end
 
   test "service definition" do
@@ -184,17 +185,30 @@ defmodule LexerTest do
       }
     """) == [
       {:service, 1}, {:ident, 1, 'Calculator'}, {:extends, 1}, {:ident, 1, 'shared.SharedService'},
-      {:symbol, 1, '{'},
-      {:void, 2}, {:ident, 2, 'ping'}, {:symbol, 2, '('}, {:symbol, 2, ')'},
-      {:symbol, 2, ','},
+      {:"{", 1},
+      {:void, 2}, {:ident, 2, 'ping'}, {:"(", 2}, {:")", 2},
+      {:",", 2},
       {:i32, 3}, {:ident, 3, 'add'},
-        {:symbol, 3, '('},
-          {:int, 3, 1}, {:symbol, 3, ':'}, {:i32, 3}, {:ident, 3, 'num1'},
-          {:symbol, 3, ','},
-          {:int, 3, 2}, {:symbol, 3, ':'}, {:i32, 3}, {:ident, 3, 'num2'},
-        {:symbol, 3, ')'},
-      {:symbol, 3, ','},
-      {:oneway, 4}, {:void, 4}, {:ident, 4, 'zip'}, {:symbol, 4, '('}, {:symbol, 4, ')'},
-      {:symbol, 5, '}'}]
+        {:"(", 3},
+          {:int, 3, 1}, {:":", 3}, {:i32, 3}, {:ident, 3, 'num1'},
+          {:",", 3},
+          {:int, 3, 2}, {:":", 3}, {:i32, 3}, {:ident, 3, 'num2'},
+        {:")", 3},
+      {:",", 3},
+      {:oneway, 4}, {:void, 4}, {:ident, 4, 'zip'}, {:"(", 4}, {:")", 4},
+      {:"}", 5}]
+  end
+
+  test "namespace definition" do
+    assert tokenize("""
+    namespace py foo.bar.baz
+    namespace java com.pinterest.foo.bar.baz
+    namespace * foo.bar
+    """) ==
+      [
+        {:namespace, 1}, {:ident, 1, 'py'}, {:ident, 1, 'foo.bar.baz'},
+        {:namespace, 2}, {:ident, 2, 'java'}, {:ident, 2, 'com.pinterest.foo.bar.baz'},
+        {:namespace, 3}, {:*, 3}, {:ident, 3, 'foo.bar'}
+      ]
   end
 end

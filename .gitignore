@@ -2,6 +2,7 @@
 /deps
 /doc
 /src/thrift_lexer.erl
+/src/thrift_parser.erl
 /test/fixtures/app/src
 erl_crash.dump
 *.ez

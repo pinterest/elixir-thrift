@@ -1,4 +1,8 @@
 defmodule Thrift.Parser do
+  @moduledoc """
+  This module provides functions for parsing `.thrift` files.
+  """
+
   @type path_element :: String.t | atom
 
   alias Thrift.Parser.Models

@@ -1,57 +1,104 @@
-  defmodule Thrift.Parser.Types do
-    defmodule Primitive do
-      @type t :: :bool | :i8 | :i16 | :i64 | :binary | :double | :byte | :string
-    end
-
-    defmodule Ident do
-      @type t :: String.t
-    end
-
-    defmodule Standalone do
-      @type t :: Ident.t | Primitive.t
-    end
-
-    defmodule List do
-      @type t :: {:list, Thrift.Parser.Types.t}
-    end
-
-    defmodule Map do
-      @type t  :: {:map, {Thrift.Parser.Types.t, Thrift.Parser.Types.t}}
-    end
-
-    defmodule Set do
-      @type t :: {:set, Thrift.Parser.Types.t}
-    end
-
-    defmodule Container do
-      @type t :: List.t | Map.t | Set.t
-    end
-
-    @type t :: Container.t | Standalone.t
+defmodule Thrift.Parser.Types do
+  @moduledoc """
+  A container module for modules containing typespecs for Thrift files.
+  """
+  defmodule Primitive do
+    @moduledoc """
+    Typespec for Thrift primitives
+    """
+    @type t :: :bool | :i8 | :i16 | :i64 | :binary | :double | :byte | :string
   end
 
-  defmodule Thrift.Parser.Literals do
-    defmodule Primitive do
-      @type t :: integer | boolean | String.t | float
-    end
-
-    defmodule List do
-      @type t :: [Thrift.Parser.Literals.t]
-    end
-
-    defmodule Map do
-      @type t :: %{Thrift.Parser.Literals.t => Thrift.Parser.Literals.t}
-    end
-
-    defmodule Container do
-      @type t :: Map.t | List.t
-    end
-
-    @type t :: Container.t | Primitive.t
-    @type s :: atom
+  defmodule Ident do
+    @moduledoc """
+    A Thrift identifier
+    """
+    @type t :: String.t
   end
+
+  defmodule Standalone do
+    @moduledoc """
+    A Thrift type that isn't a container
+    """
+    @type t :: Ident.t | Primitive.t
+  end
+
+  defmodule List do
+    @moduledoc """
+    A Thrift list.
+    """
+    @type t :: {:list, Thrift.Parser.Types.t}
+  end
+
+  defmodule Map do
+    @moduledoc """
+    A Thrift map
+    """
+    @type t  :: {:map, {Thrift.Parser.Types.t, Thrift.Parser.Types.t}}
+  end
+
+  defmodule Set do
+    @moduledoc """
+    A Thrift set
+    """
+    @type t :: {:set, Thrift.Parser.Types.t}
+  end
+
+  defmodule Container do
+    @moduledoc """
+    A Thrift contianer type
+    """
+    @type t :: List.t | Map.t | Set.t
+  end
+
+  @type t :: Container.t | Standalone.t
+end
+
+defmodule Thrift.Parser.Literals do
+  @moduledoc """
+  A module containing types for defining Thrift literals
+  Thrift literals are used when setting default values and constants.
+  """
+  defmodule Primitive do
+    @moduledoc """
+    A Thrift primitive type
+    """
+    @type t :: integer | boolean | String.t | float
+  end
+
+  defmodule List do
+    @moduledoc """
+    A Thrift list
+    """
+    @type t :: [Thrift.Parser.Literals.t]
+  end
+
+  defmodule Map do
+    @moduledoc """
+    A Thrift map
+    """
+    @type t :: %{Thrift.Parser.Literals.t => Thrift.Parser.Literals.t}
+  end
+
+  defmodule Container do
+    @moduledoc """
+    A Thrift container type
+    """
+    @type t :: Map.t | List.t
+  end
+
+  @type t :: Container.t | Primitive.t
+  @type s :: atom
+end
 
   defmodule Thrift.Parser.Conversions do
+    @moduledoc """
+    Conversion utilities useful for parsing Thrift.
+    """
+
+    @doc """
+    Ensures that the argument is an atom.
+    """
     def atomify(nil), do: nil
     def atomify(l) when is_list(l) do
       List.to_atom(l)
@@ -85,6 +132,12 @@
   end
 
   defmodule Thrift.Parser.Models do
+    @moduledoc """
+    Models used by the Thrift parser that represent different Thrift components.
+    The models defined here are returned by the parse functions in the
+    `Thrift.Parser` module.
+    """
+
     alias Thrift.Parser.Types
     alias Thrift.Parser.Literals
 
@@ -300,7 +353,9 @@
       @spec new(char_list, [%Field{}, ...]) :: %Union{}
       def new(name, fields) do
         name = atomify(name)
-        fields = Field.build_field_list(name, fields)
+
+        fields = name
+        |> Field.build_field_list(fields)
         |> Enum.map(fn(%Field{} = field) ->
           # According to Thrift docs, unions have implicitly optional
           # fields. See https://thrift.apache.org/docs/idl#union

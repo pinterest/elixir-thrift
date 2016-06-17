@@ -38,7 +38,7 @@ defmodule Thrift.Mixfile do
   end
 
   defp deps do
-     [{:ex_doc, "~> 0.11.4", only: :dev},
+     [{:ex_doc, "~> 0.12.0", only: :dev},
       {:earmark, "~> 0.2.1", only: :dev},
       {:excoveralls, "~> 0.5.4", only: :test},
       {:dialyze, "~> 0.2.0", only: [:dev, :test]}

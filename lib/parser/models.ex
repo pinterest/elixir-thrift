@@ -228,7 +228,7 @@
         fields
         |> Enum.with_index
         |> Enum.map(fn
-          {field=%__MODULE__{}, idx} ->
+          {%__MODULE__{} = field, idx} ->
             case field.id do
               nil ->
                 Shell.warn "Warning: id not set for field '#{parent_name}.#{field.name}'."
@@ -301,7 +301,7 @@
       def new(name, fields) do
         name = atomify(name)
         fields = Field.build_field_list(name, fields)
-        |> Enum.map(fn(field=%Field{}) ->
+        |> Enum.map(fn(%Field{} = field) ->
           # According to Thrift docs, unions have implicitly optional
           # fields. See https://thrift.apache.org/docs/idl#union
           %Field{field | required: false}

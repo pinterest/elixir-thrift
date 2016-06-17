@@ -37,7 +37,7 @@ defmodule Thrift.Parser do
     Enum.reduce(path, program, fn
       (_part, nil) ->
         nil
-      (part, next=%{}) ->
+      (part, %{} = next) ->
         Map.get(next, part)
     end)
   end

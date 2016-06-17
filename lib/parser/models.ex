@@ -392,6 +392,7 @@
       @type header :: %Include{} | %Namespace{}
       @type typedef :: {:typedef, Types.t, atom}
       @type definition :: %Service{} | %TEnum{} | %Exception{} | %Union{} | %Struct{} | %Constant{} | typedef
+      @type model :: header | definition
       @type t :: %Schema{
         thrift_namespace: String.t,
         namespaces: %{String.t => %Namespace{}},
@@ -427,45 +428,52 @@
       @doc """
       Constructs a schema with both headers and definitions.
       """
-      @spec new([header], [definition]) :: %Schema{}
+      @spec new([header], [definition]) :: t
       def new(headers, defs) do
-        program = headers
+        schema = headers
         |> Enum.reverse
-        |> Enum.reduce(
-          %Schema{},
-          fn
-            (inc=%Include{}, program) ->
-              %Schema{program | includes: [inc | program.includes]}
-
-            (ns=%Namespace{}, program) ->
-              %Schema{program | namespaces: Map.put(program.namespaces, ns.name, ns)}
-          end)
+        |> Enum.reduce(%Schema{}, &merge(&2, &1))
 
         defs
         |> Enum.reverse
-        |> Enum.reduce(
-          program,
-          fn
-            (const=%Constant{}, program) ->
-              %Schema{program | constants: Map.put(program.constants, const.name, const)}
+        |> Enum.reduce(schema, &merge(&2, &1))
+      end
 
-            (enum=%TEnum{}, program) ->
-              %Schema{program | enums: Map.put(program.enums, enum.name, enum)}
+      @spec merge(t, model) :: t
+      defp merge(schema, %Include{} = inc) do
+        %Schema{schema | includes: [inc | schema.includes]}
+      end
 
-            (exc=%Exception{}, program) ->
-              %Schema{program | exceptions: Map.put(program.exceptions, exc.name, exc)}
+      defp merge(schema, %Namespace{} = ns) do
+        %Schema{schema | namespaces: Map.put(schema.namespaces, ns.name, ns)}
+      end
 
-            ({:typedef, actual_type, type_alias}, program) ->
-              %Schema{program | typedefs: Map.put(program.typedefs, atomify(type_alias), actual_type)}
+      defp merge(schema, %Constant{} = const) do
+        %Schema{schema | constants: Map.put(schema.constants, const.name, const)}
+      end
 
-            (struct=%Struct{}, program) ->
-              %Schema{program | structs: Map.put(program.structs, struct.name, struct)}
-            (union=%Union{}, program) ->
-              %Schema{program | unions: Map.put(program.unions, union.name, union)}
+      defp merge(schema, %TEnum{} = enum) do
+        %Schema{schema | enums: Map.put(schema.enums, enum.name, enum)}
+      end
 
-            (service=%Service{}, program) ->
-              %Schema{program | services: Map.put(program.services, service.name, service)}
-          end)
+      defp merge(schema, %Exception{} = exc) do
+        %Schema{schema | exceptions: Map.put(schema.exceptions, exc.name, exc)}
+      end
+
+      defp merge(schema, %Struct{} = s) do
+        %Schema{schema | structs: Map.put(schema.structs, s.name, s)}
+      end
+
+      defp merge(schema, %Union{} = union) do
+        %Schema{schema | unions: Map.put(schema.unions, union.name, union)}
+      end
+
+      defp merge(schema, %Service{} = service) do
+        %Schema{schema | services: Map.put(schema.services, service.name, service)}
+      end
+
+      defp merge(schema, {:typedef, actual_type, type_alias}) do
+        %Schema{schema | typedefs: Map.put(schema.typedefs, atomify(type_alias), actual_type)}
       end
     end
 

@@ -43,13 +43,13 @@ defmodule Mix.Tasks.Compile.Thrift do
       opts[:force] || stale?(file, output_dir)
     end)
 
-    unless(System.find_executable(thrift_executable)) do
+    unless System.find_executable(thrift_executable)  do
       Mix.raise "`#{thrift_executable}` not found in the current path"
     end
 
-    if(thrift_version && !Enum.empty?(stale_files)) do
+    if thrift_version && !Enum.empty?(stale_files) do
       v = get_thrift_version(thrift_executable)
-      unless(Version.match?(v, thrift_version)) do
+      unless Version.match?(v, thrift_version)  do
         Mix.raise "Unsupported Thrift version #{v} (requires #{thrift_version})"
       end
     end

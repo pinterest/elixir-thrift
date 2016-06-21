@@ -138,8 +138,7 @@ end
     `Thrift.Parser` module.
     """
 
-    alias Thrift.Parser.Types
-    alias Thrift.Parser.Literals
+    alias Thrift.Parser.{Literals, Types}
 
     defmodule Namespace do
       @moduledoc """
@@ -472,13 +471,14 @@ end
       typedefs: %{}
 
       import Thrift.Parser.Conversions
-      alias Thrift.Parser.Models.Include
-      alias Thrift.Parser.Models.Namespace
-      alias Thrift.Parser.Models.Constant
-      alias Thrift.Parser.Models.Exception
-      alias Thrift.Parser.Models.Struct
-      alias Thrift.Parser.Models.TEnum
-      alias Thrift.Parser.Models.Union
+      alias Thrift.Parser.Models.{Constant,
+                                  Exception,
+                                  Include,
+                                  Namespace,
+                                  Struct,
+                                  TEnum,
+                                  Union
+                                 }
 
       @doc """
       Constructs a schema with both headers and definitions.

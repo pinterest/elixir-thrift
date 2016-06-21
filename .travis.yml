@@ -19,7 +19,6 @@ addons:
     - libssl-dev
     - pkg-config
 before_install:
-  - git submodule update --init
   - make install-thrift
   - export PATH=$HOME/bin:$PATH
 after_script:

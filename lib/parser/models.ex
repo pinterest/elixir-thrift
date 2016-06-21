@@ -264,9 +264,9 @@ end
         |> Enum.filter(fn {_, v} -> length(v) > 1 end)
 
         unless Enum.empty?(dupes) do
-          {id, fields} = List.first(dupes)
+          {id, dupe_fields} = List.first(dupes)
 
-          names = fields
+          names = dupe_fields
           |> Enum.map(&("#{name}.#{&1.name}"))
           |> Enum.join(", ")
 

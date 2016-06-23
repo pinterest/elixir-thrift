@@ -231,7 +231,7 @@ defmodule ParserTest do
     }
     """
 
-    expected_error = "Error: BadEx.evil, BadEx.bad share field number 1."
+    expected_error = "Error: BadEx.bad, BadEx.evil share field number 1."
     assert_raise RuntimeError, expected_error, fn ->
       parse(program)
     end

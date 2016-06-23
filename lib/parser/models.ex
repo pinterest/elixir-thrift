@@ -267,6 +267,7 @@ end
 
           names = dupe_fields
           |> Enum.map(&("#{name}.#{&1.name}"))
+          |> Enum.sort
           |> Enum.join(", ")
 
           raise "Error: #{names} share field number #{id}."

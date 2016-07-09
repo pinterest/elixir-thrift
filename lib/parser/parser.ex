@@ -16,19 +16,19 @@ defmodule Thrift.Parser do
     doc = String.to_char_list(doc)
 
     {:ok, tokens, _} = :thrift_lexer.string(doc)
-    {:ok, parse_tree} = :thrift_parser.parse(tokens)
+    {:ok, schema} = :thrift_parser.parse(tokens)
 
-    parse_tree
+    schema
   end
 
   @doc """
   Parses a Thrift document and returns a component to the caller.
 
-  The part of the thrift document that's returned is determined by
+  The part of the Thrift document that's returned is determined by
   the `path` parameter. It works a lot like the `find_in` function,
   which takes a map and can pull out nested pieces.
 
-  This makes it easy to get to a service definition:
+  For example, this makes it easy to get to a service definition:
 
       parse(doc, [:services, :MyService])
 
@@ -36,14 +36,13 @@ defmodule Thrift.Parser do
   """
   @spec parse(String.t, [path_element]) :: Models.all
   def parse(doc, path) do
-    program = parse(doc)
+    schema = parse(doc)
 
-    Enum.reduce(path, program, fn
+    Enum.reduce(path, schema, fn
       (_part, nil) ->
         nil
       (part, %{} = next) ->
         Map.get(next, part)
     end)
   end
-
 end

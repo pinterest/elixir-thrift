@@ -1,5 +1,5 @@
 defmodule LexerTest do
-  use ExUnit.Case
+  use ExUnit.Case, async: true
 
   defp tokenize(s) do
     {:ok, value, _} = :thrift_lexer.string(String.to_char_list(s))

@@ -1,5 +1,5 @@
 defmodule ParserTest do
-  use ExUnit.Case
+  use ExUnit.Case, async: true
 
   import Thrift.Parser, only: [parse: 1, parse: 2]
 

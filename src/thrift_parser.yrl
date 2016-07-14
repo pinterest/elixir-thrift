@@ -34,6 +34,10 @@ i8
 i16
 i32
 i64
+u8
+u16
+u32
+u64
 string
 binary
 list
@@ -88,6 +92,10 @@ base_type -> i8: i8.
 base_type -> i16: i16.
 base_type -> i32: i32.
 base_type -> i64: i64.
+base_type -> u8: u8.
+base_type -> u16: u16.
+base_type -> u32: u32.
+base_type -> u64: u64.
 base_type -> double: double.
 base_type -> string: string.
 base_type -> binary: binary.

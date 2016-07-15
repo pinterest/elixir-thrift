@@ -6,7 +6,7 @@ defmodule Thrift.Parser.Types do
     @moduledoc """
     Typespec for Thrift primitives
     """
-    @type t :: :bool | :i8 | :i16 | :i64 | :binary | :double | :byte | :string
+    @type t :: :bool | :i8 | :i16 | :i32 | :i64 | :u8 | :u16 | :u32 | :u64 |:binary | :double | :byte | :string
   end
 
   defmodule Ident do

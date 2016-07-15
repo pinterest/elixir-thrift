@@ -57,6 +57,10 @@ i8              : {token, {i8, TokenLine}}.
 i16             : {token, {i16, TokenLine}}.
 i32             : {token, {i32, TokenLine}}.
 i64             : {token, {i64, TokenLine}}.
+u8              : {token, {u8, TokenLine}}.
+u16             : {token, {u16, TokenLine}}.
+u32             : {token, {u32, TokenLine}}.
+u64             : {token, {u64, TokenLine}}.
 double          : {token, {double, TokenLine}}.
 string          : {token, {string, TokenLine}}.
 binary          : {token, {binary, TokenLine}}.

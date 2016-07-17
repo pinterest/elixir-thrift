@@ -10,7 +10,7 @@ ST_IDENTIFIER   = [a-zA-Z-](\.[a-zA-Z_0-9-]|[a-zA-Z_0-9-])*
 SEMI            = [;]
 WHITESPACE      = [\s\t\r\n]+
 COMMENT         = //[^\n]*
-CCOMMENT        = /\\*/*([^*/]|[^*]/|\\*[^/])*\\**\\*/
+CCOMMENT        = /\*/?([^/]|[^*]/)*\*/
 UNIXCOMMENT     = #[^\n]*
 STRING1         = '(\\\^.|\\.|[^'])*'
 STRING2         = "(\\\^.|\\.|[^"])*"
@@ -32,7 +32,7 @@ Rules.
 {WHITESPACE}    : skip_token.
 {COMMENT}       : skip_token.
 {CCOMMENT}      : skip_token.
-{UNIXCOMMENT}   : skip_token.
+{UNIXCOMMENT}   : {token, {comment, TokenLine, TokenChars}}.
 {SEMI}          : skip_token.
 
 {ASTERISK}      : {token, {'*', TokenLine}}.

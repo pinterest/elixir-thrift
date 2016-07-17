@@ -11,7 +11,7 @@ defmodule LexerTest do
   end
 
   test "comments" do
-    assert tokenize("# foo") == []
+    assert tokenize("# foo") == [{:comment, 1, '# foo'}]
     assert tokenize("// foo") == []
     assert tokenize("/* foo */") == []
     assert tokenize("

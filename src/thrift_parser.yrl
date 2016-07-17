@@ -18,7 +18,8 @@ functions function
 service_extends
 oneway_marker
 return_type
-throws_clause.
+throws_clause
+comments comment_t.
 
 Terminals
 '*' '{' '}' '[' ']' '(' ')' '=' '>' '<' ',' ':'
@@ -54,7 +55,8 @@ service
 extends
 oneway
 void
-throws.
+throws
+comment.
 
 
 Rootsymbol schema.
@@ -105,16 +107,16 @@ map_type -> map '<' type ',' type '>': {'$3', '$5'}.
 list_type -> list '<' type '>': '$3'.
 
 include_def ->
-    include string:
-        'Elixir.Thrift.Parser.Models.Include':new(unwrap('$2')).
+    comments include string:
+        'Elixir.Thrift.Parser.Models.Include':new('$1', unwrap('$3')).
 
 namespace_def ->
-    namespace ns_name ident:
-        'Elixir.Thrift.Parser.Models.Namespace':new('$2', unwrap('$3')).
+    comments namespace ns_name ident:
+        'Elixir.Thrift.Parser.Models.Namespace':new('$1', '$3', unwrap('$4')).
 
 constant_def ->
-    const type ident '=' literal:
-        'Elixir.Thrift.Parser.Models.Constant':new(unwrap('$3'), '$5', '$2').
+    comments const type ident '=' literal:
+        'Elixir.Thrift.Parser.Models.Constant':new('$1', unwrap('$4'), '$6', '$3').
 
 ns_name -> '*': "*".
 ns_name -> ident: unwrap('$1').
@@ -140,17 +142,17 @@ field_sep -> '$empty': nil.
 field_sep -> ',': nil.
 
 enum_def ->
-    enum ident '{' enum_body '}':
-        'Elixir.Thrift.Parser.Models.TEnum':new(unwrap('$2'), '$4').
+    comments enum ident '{' enum_body '}':
+        'Elixir.Thrift.Parser.Models.TEnum':new('$1', unwrap('$3'), '$5').
 enum_body -> enum_value field_sep: ['$1'].
 enum_body -> enum_value field_sep enum_body: ['$1'] ++ '$3'.
 
-enum_value -> ident: unwrap('$1').
-enum_value -> ident '=' int: {unwrap('$1'), unwrap('$3')}.
+enum_value -> comments ident: {unwrap('$2'), '$1'}.
+enum_value -> comments ident '=' int: {unwrap('$2'), unwrap('$4'), '$1'}.
 
 exception_def ->
-    exception ident '{' fields '}':
-        'Elixir.Thrift.Parser.Models.Exception':new(unwrap('$2'), '$4').
+    comments exception ident '{' fields '}':
+        'Elixir.Thrift.Parser.Models.Exception':new('$1', unwrap('$3'), '$5').
 
 fields -> '$empty': [].
 fields -> field_spec field_sep fields: ['$1'] ++ '$3'.
@@ -159,8 +161,8 @@ field_id -> int ':': unwrap('$1').
 field_id -> '$empty': nil.
 
 field_spec ->
-    field_id field_required type ident field_default:
-        'Elixir.Thrift.Parser.Models.Field':new('$1', '$2', '$3', unwrap('$4'), '$5').
+    comments field_id field_required type ident field_default:
+        'Elixir.Thrift.Parser.Models.Field':new('$1', '$2', '$3', '$4', unwrap('$5'), '$6').
 
 field_required -> required: true.
 field_required -> optional: false.
@@ -170,20 +172,20 @@ field_default -> '$empty': nil.
 field_default -> '=' literal: '$2'.
 
 typedef_def ->
-    typedef type ident:
-        {typedef, '$2', unwrap('$3')}.
+    comments typedef type ident:
+        {typedef, '$3', unwrap('$4'), '$1'}.
 
 struct_def ->
-    struct ident '{' fields '}':
-        'Elixir.Thrift.Parser.Models.Struct':new(unwrap('$2'), '$4').
+    comments struct ident '{' fields '}':
+        'Elixir.Thrift.Parser.Models.Struct':new('$1', unwrap('$3'), '$5').
 
 service_def ->
-    service ident service_extends '{' functions '}':
-        'Elixir.Thrift.Parser.Models.Service':new(unwrap('$2'), '$5', '$3').
+    comments service ident service_extends '{' functions '}':
+        'Elixir.Thrift.Parser.Models.Service':new('$1', unwrap('$3'), '$6', '$4').
 
 union_def ->
-    union ident '{' fields '}':
-        'Elixir.Thrift.Parser.Models.Union':new(unwrap('$2'), '$4').
+    comments union ident '{' fields '}':
+        'Elixir.Thrift.Parser.Models.Union':new('$1', unwrap('$3'), '$5').
 
 service_extends -> '(' extends ident ')': unwrap('$3').
 service_extends -> extends ident: unwrap('$2').
@@ -194,8 +196,8 @@ functions -> '$empty': [].
 functions -> function functions: ['$1'] ++ '$2'.
 
 function ->
-    oneway_marker return_type ident '(' fields ')' throws_clause field_sep:
-        'Elixir.Thrift.Parser.Models.Function':new('$1', '$2', unwrap('$3'), '$5', '$7').
+    comments oneway_marker return_type ident '(' fields ')' throws_clause field_sep:
+        'Elixir.Thrift.Parser.Models.Function':new('$1', '$2', '$3', unwrap('$4'), '$6', '$8').
 
 oneway_marker -> '$empty': false.
 oneway_marker -> oneway: true.
@@ -207,6 +209,11 @@ throws_clause -> '$empty': [].
 throws_clause ->
     throws '(' fields ')':
         '$3'.
+
+comments -> '$empty': [].
+comments -> comment_t comments: ['$1'] ++ '$2'.
+
+comment_t -> comment: 'Elixir.Thrift.Parser.Models.Comment':new(unwrap('$1')).
 
 Erlang code.
 

@@ -162,14 +162,14 @@ end
       placed.
       """
 
-      @type t :: %Namespace{comments: [%Comment{}], name: String.t, path: String.t}
-      defstruct comments: [], name: nil, path: nil
+      @type t :: %Namespace{name: String.t, path: String.t}
+      defstruct name: nil, path: nil
 
       import Thrift.Parser.Conversions
 
-      @spec new([%Comment{}, ...], char_list, char_list) :: %Namespace{}
-      def new(comments, name, path) do
-        %Namespace{comments: comments, name: atomify(name), path: List.to_string(path)}
+      @spec new(char_list, char_list) :: %Namespace{}
+      def new(name, path) do
+        %Namespace{name: atomify(name), path: List.to_string(path)}
       end
     end
 
@@ -179,14 +179,14 @@ end
       In Thrift, you can include other files to share structs, enums and the like.
       """
 
-      @type t :: %Include{comments: [%Comment{}], path: String.t}
-      defstruct comments: [], path: nil
+      @type t :: %Include{path: String.t}
+      defstruct path: nil
 
       import Thrift.Parser.Conversions
 
-      @spec new([%Comment{}, ...], char_list) :: %Include{}
-      def new(comments, path) do
-        %Include{comments: comments, path: List.to_string(path)}
+      @spec new(char_list) :: %Include{}
+      def new(path) do
+        %Include{path: List.to_string(path)}
       end
     end
 

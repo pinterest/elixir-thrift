@@ -107,12 +107,12 @@ map_type -> map '<' type ',' type '>': {'$3', '$5'}.
 list_type -> list '<' type '>': '$3'.
 
 include_def ->
-    comments include string:
-        'Elixir.Thrift.Parser.Models.Include':new('$1', unwrap('$3')).
+    include string:
+        'Elixir.Thrift.Parser.Models.Include':new(unwrap('$2')).
 
 namespace_def ->
-    comments namespace ns_name ident:
-        'Elixir.Thrift.Parser.Models.Namespace':new('$1', '$3', unwrap('$4')).
+    namespace ns_name ident:
+        'Elixir.Thrift.Parser.Models.Namespace':new('$2', unwrap('$3')).
 
 constant_def ->
     comments const type ident '=' literal:

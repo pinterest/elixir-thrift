@@ -9,9 +9,9 @@ IDENTIFIER      = [a-zA-Z_](\.[a-zA-Z_0-9]|[a-zA-Z_0-9])*
 ST_IDENTIFIER   = [a-zA-Z-](\.[a-zA-Z_0-9-]|[a-zA-Z_0-9-])*
 SEMI            = [;]
 WHITESPACE      = [\s\t\r\n]+
-COMMENT         = //[^\n]*
-CCOMMENT        = /\\*/*([^*/]|[^*]/|\\*[^/])*\\**\\*/
-UNIXCOMMENT     = #[^\n]*
+COMMENT         = //[^\r\n]*
+CCOMMENT        = /\*/?([^/]|[^*]/)*\*/
+UNIXCOMMENT     = #[^\r\n]*
 STRING1         = '(\\\^.|\\.|[^'])*'
 STRING2         = "(\\\^.|\\.|[^"])*"
 OPEN_CURLY      = [\{]
@@ -32,7 +32,7 @@ Rules.
 {WHITESPACE}    : skip_token.
 {COMMENT}       : skip_token.
 {CCOMMENT}      : skip_token.
-{UNIXCOMMENT}   : skip_token.
+{UNIXCOMMENT}   : {token, {comment, TokenLine, TokenChars}}.
 {SEMI}          : skip_token.
 
 {ASTERISK}      : {token, {'*', TokenLine}}.
@@ -57,6 +57,10 @@ i8              : {token, {i8, TokenLine}}.
 i16             : {token, {i16, TokenLine}}.
 i32             : {token, {i32, TokenLine}}.
 i64             : {token, {i64, TokenLine}}.
+u8              : {token, {u8, TokenLine}}.
+u16             : {token, {u16, TokenLine}}.
+u32             : {token, {u32, TokenLine}}.
+u64             : {token, {u64, TokenLine}}.
 double          : {token, {double, TokenLine}}.
 string          : {token, {string, TokenLine}}.
 binary          : {token, {binary, TokenLine}}.

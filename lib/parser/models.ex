@@ -6,7 +6,7 @@ defmodule Thrift.Parser.Types do
     @moduledoc """
     Typespec for Thrift primitives
     """
-    @type t :: :bool | :i8 | :i16 | :i64 | :binary | :double | :byte | :string
+    @type t :: :bool | :i8 | :i16 | :i32 | :i64 | :u8 | :u16 | :u32 | :u64 |:binary | :double | :byte | :string
   end
 
   defmodule Ident do
@@ -140,6 +140,21 @@ end
 
     alias Thrift.Parser.{Literals, Types}
 
+    defmodule Comment do
+      @moduledoc """
+      A Thrift comment.
+      The comment can be output to the generated source files
+      """
+
+      @type t :: %Comment{text: String.t}
+      defstruct text: nil
+
+      @spec new(String.t) :: %Comment{}
+      def new(text) do
+        %Comment{text: text}
+      end
+    end
+
     defmodule Namespace do
       @moduledoc """
       A Thrift namespace.
@@ -181,14 +196,14 @@ end
       Constants of any primitive or container type can be created in Thrift.
       """
 
-      @type t :: %Constant{name: String.t, value: Literal.t, type: Types.t}
-      defstruct name: nil, value: nil, type: nil
+      @type t :: %Constant{comments: [%Comment{}], name: String.t, value: Literal.t, type: Types.t}
+      defstruct comments: [], name: nil, value: nil, type: nil
 
       import Thrift.Parser.Conversions
 
-      @spec new(char_list, Literals.t, Types.t) :: %Constant{}
-      def new(name, val, type) do
-        %Constant{name: atomify(name), value: cast(type, val), type: type}
+      @spec new([%Comment{}, ...], char_list, Literals.t, Types.t) :: %Constant{}
+      def new(comments, name, val, type) do
+        %Constant{comments: comments, name: atomify(name), value: cast(type, val), type: type}
       end
     end
 
@@ -200,24 +215,24 @@ end
       """
 
       @type enum_value :: bitstring | integer
-      @type t :: %TEnum{name: String.t, values: %{String.t => enum_value}}
-      defstruct name: nil, values: []
+      @type t :: %TEnum{comments: [%Comment{}], name: String.t, values: %{String.t => enum_value}}
+      defstruct comments: [], name: nil, values: []
 
       import Thrift.Parser.Conversions
 
-      @spec new(char_list, %{char_list => enum_value}) :: %TEnum{}
-      def new(name, values) do
+      @spec new([%Comment{}, ...], char_list, %{char_list => enum_value}) :: %TEnum{}
+      def new(comments, name, values) do
         values = values
         |> Enum.with_index
         |> Enum.map(fn
-          {{name, value}, _index} ->
-            {atomify(name),  value}
+          {{name, value, comment}, _index} ->
+            {atomify(name), value, comment}
 
-          {name, index} ->
-            {atomify(name), index + 1}
+          {{name, comment}, index} ->
+            {atomify(name), index + 1, comment}
         end)
 
-        %TEnum{name: atomify(name), values: values}
+        %TEnum{comments: comments, name: atomify(name), values: values}
       end
     end
 
@@ -235,15 +250,16 @@ end
       """
 
       @type printable :: String.t | atom
-      @type t :: %Field{id: integer, name: String.t, type: Types.t,
+      @type t :: %Field{comments: [%Comment{}], id: integer, name: String.t, type: Types.t,
                         required: boolean, default: Literals.t}
-      defstruct id: nil, name: nil, type: nil, required: :default, default: nil
+      defstruct comments: [], id: nil, name: nil, type: nil, required: :default, default: nil
 
       import Thrift.Parser.Conversions
 
-      @spec new(integer, boolean, Types.t, char_list, Literals.t) :: %Field{}
-      def new(id, required, type, name, default) do
-        %Field{id: id,
+      @spec new([%Comment{}, ...], integer, boolean, Types.t, char_list, Literals.t) :: %Field{}
+      def new(comments, id, required, type, name, default) do
+        %Field{comments: comments,
+               id: id,
                type: type,
                name: atomify(name),
                required: required,
@@ -300,18 +316,18 @@ end
       Exceptions can happen when the remote service encounters an error.
       """
 
-      @type t :: %Exception{name: String.t, fields: [%Field{}]}
-      defstruct fields: %{}, name: nil
+      @type t :: %Exception{comments: [%Comment{}], name: String.t, fields: [%Field{}]}
+      defstruct comments: [], fields: %{}, name: nil
 
       import Thrift.Parser.Conversions
       alias Thrift.Parser.Models.Field
 
-      @spec new(char_list, [%Field{}, ...]) :: %Exception{}
-      def new(name, fields) do
+      @spec new([%Comment{}, ...], char_list, [%Field{}, ...]) :: %Exception{}
+      def new(comments, name, fields) do
         ex_name = atomify(name)
         updated_fields = Field.build_field_list(ex_name, fields)
 
-        %Exception{name: ex_name, fields: updated_fields}
+        %Exception{comments: comments, name: ex_name, fields: updated_fields}
       end
     end
 
@@ -322,18 +338,18 @@ end
       The basic datastructure in Thrift, structs have aa name and a field list.
       """
 
-      @type t :: %Struct{name: String.t, fields: %{String.t => %Field{}}}
-      defstruct name: nil, fields: %{}
+      @type t :: %Struct{comments: [%Comment{}], name: String.t, fields: %{String.t => %Field{}}}
+      defstruct comments: [], name: nil, fields: %{}
 
       import Thrift.Parser.Conversions
       alias Thrift.Parser.Models.Field
 
-      @spec new(char_list, [%Field{}, ...]) :: %Struct{}
-      def new(name, fields) do
+      @spec new([%Comment{}, ...], char_list, [%Field{}, ...]) :: %Struct{}
+      def new(comments, name, fields) do
         struct_name = atomify(name)
         fields = Field.build_field_list(struct_name, fields)
 
-        %Struct{name: struct_name, fields: fields}
+        %Struct{comments: comments, name: struct_name, fields: fields}
       end
     end
 
@@ -344,14 +360,14 @@ end
       Unions can have one field set at a time.
       """
 
-      @type t :: %Union{name: String.t, fields: %{String.t => %Field{}}}
-      defstruct name: nil, fields: %{}
+      @type t :: %Union{comments: [%Comment{}], name: String.t, fields: %{String.t => %Field{}}}
+      defstruct comments: [], name: nil, fields: %{}
 
       import Thrift.Parser.Conversions
       alias Thrift.Parser.Models.Field
 
-      @spec new(char_list, [%Field{}, ...]) :: %Union{}
-      def new(name, fields) do
+      @spec new([%Comment{}, ...], char_list, [%Field{}, ...]) :: %Union{}
+      def new(comments, name, fields) do
         name = atomify(name)
 
         fields = name
@@ -362,7 +378,7 @@ end
           %Field{field | required: false}
         end)
 
-        %Union{name: name, fields: fields}
+        %Union{comments: comments, name: name, fields: fields}
       end
     end
 
@@ -395,18 +411,19 @@ end
       """
 
       @type return :: :void | Types.t
-      @type t :: %Function{oneway: boolean, return_type: return, name: String.t,
+      @type t :: %Function{comments: [%Comment{}], oneway: boolean, return_type: return, name: String.t,
                            params: [%Field{}], exceptions: [%Exception{}]}
-      defstruct oneway: false, return_type: :void, name: nil, params: [], exceptions: []
+      defstruct comments: [], oneway: false, return_type: :void, name: nil, params: [], exceptions: []
       alias Thrift.Parser.Models.Field
       import Thrift.Parser.Conversions
 
-      @spec new(boolean, Types.t, char_list, [%Field{}, ...], [%Exception{}, ...]) :: %Function{}
-      def new(oneway, return_type, name, params, exceptions) do
+      @spec new([%Comment{}, ...], boolean, Types.t, char_list, [%Field{}, ...], [%Exception{}, ...]) :: %Function{}
+      def new(comments, oneway, return_type, name, params, exceptions) do
         name = atomify(name)
         params = Field.build_field_list(name, params)
 
         %Function{
+          comments: comments,
           oneway: oneway,
           return_type: return_type,
           name: name,
@@ -423,14 +440,14 @@ end
       Services hold RPC functions and can extend other services.
       """
 
-      @type t :: %Service{name: String.t, extends: String.t, functions: [%Function{}]}
-      defstruct name: nil, extends: nil, functions: []
+      @type t :: %Service{comments: [%Comment{}], name: String.t, extends: String.t, functions: [%Function{}]}
+      defstruct comments: [], name: nil, extends: nil, functions: []
 
       import Thrift.Parser.Conversions
 
-      @spec new(char_list, [%Function{}, ...], char_list) :: %Service{}
-      def new(name, functions, extends) do
-        %Service{name: atomify(name), extends: atomify(extends), functions: functions}
+      @spec new([%Comment{}, ...], char_list, [%Function{}, ...], char_list) :: %Service{}
+      def new(comments, name, functions, extends) do
+        %Service{comments: comments, name: atomify(name), extends: atomify(extends), functions: functions}
       end
     end
 
@@ -445,7 +462,7 @@ end
       """
 
       @type header :: %Include{} | %Namespace{}
-      @type typedef :: {:typedef, Types.t, atom}
+      @type typedef :: {:typedef, Types.t, atom, %Comment{}}
       @type definition :: %Service{} | %TEnum{} | %Exception{} | %Union{} | %Struct{} | %Constant{} | typedef
       @type model :: header | definition
       @type t :: %Schema{
@@ -533,5 +550,5 @@ end
       end
     end
 
-    @type all :: %Namespace{} | %Include{} | %Constant{} | %TEnum{} | %Field{} | %Exception{} | %Struct{} | %Union{} | %Function{} | %Service{} | %Schema{}
+    @type all :: %Comment{} | %Namespace{} | %Include{} | %Constant{} | %TEnum{} | %Field{} | %Exception{} | %Struct{} | %Union{} | %Function{} | %Service{} | %Schema{}
   end

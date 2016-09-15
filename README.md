@@ -14,7 +14,7 @@ In particular, it includes a copy of the Erlang Thrift runtime library.
 Start by adding this package to your project as a dependency:
 
 ```elixir
-{:thrift, "~> 1.2"}
+{:thrift, "~> 1.3.0"}
 ```
 
 Or to track the GitHub master branch:
@@ -79,15 +79,33 @@ thrift_options: ~w[--gen erl:maps]
 ## Thrift IDL Parsing
 
 This package also contains experimental support for parsing [Thrift IDL][idl]
-files. For the moment, only an Erlang lexer is available, but the goal is to
-provide more advanced parser support over time.
+files. It is built on a low-level Erlang lexer and parser:
 
 ```erlang
-:thrift_lexer.string('enum Colors { RED, GREEN, BLUE}')
+{:ok, tokens, _} = :thrift_lexer.string('enum Colors { RED, GREEN, BLUE}')
 {:ok,
  [{:enum, 1}, {:ident, 1, 'Colors'}, {:symbol, 1, '{'}, {:ident, 1, 'RED'},
   {:symbol, 1, ','}, {:ident, 1, 'GREEN'}, {:symbol, 1, ','},
   {:ident, 1, 'BLUE'}, {:symbol, 1, '}'}], 1}
+
+{:ok, schema} = :thrift_parser.parse(tokens)
+{:ok,
+ %Thrift.Parser.Models.Schema{constants: %{},
+  enums: %{Colors: %Thrift.Parser.Models.TEnum{name: :Colors,
+     values: [RED: 1, GREEN: 2, BLUE: 3]}}, exceptions: %{}, includes: [],
+  namespaces: %{}, services: %{}, structs: %{}, thrift_namespace: nil,
+  typedefs: %{}, unions: %{}}}
+```
+
+But also provides a high-level Elixir parsing interface:
+
+```elixir
+Thrift.Parser.parse("enum Colors { RED, GREEN, BLUE}")
+%Thrift.Parser.Models.Schema{constants: %{},
+ enums: %{Colors: %Thrift.Parser.Models.TEnum{name: :Colors,
+    values: [RED: 1, GREEN: 2, BLUE: 3]}}, exceptions: %{}, includes: [],
+ namespaces: %{}, services: %{}, structs: %{}, thrift_namespace: nil,
+ typedefs: %{}, unions: %{}}
 ```
 
 [semver]: http://semver.org/

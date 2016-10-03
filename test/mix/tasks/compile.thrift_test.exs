@@ -52,10 +52,20 @@ defmodule Mix.Tasks.Compile.ThriftTest do
     end
   end
 
-  test "specifying an empty :thrift_files list " do
+  test "specifying an empty :thrift_files list" do
     in_fixture fn ->
       with_project_config [thrift_files: []], fn ->
         assert capture_io(fn -> run([]) end) == ""
+      end
+    end
+  end
+
+  test "specifying a non-existent Thrift file" do
+    in_fixture fn ->
+      with_project_config [thrift_files: ~w("missing.thrift")], fn ->
+        capture_io fn ->
+          assert capture_io(:stderr, fn -> run([]) end) =~ "Failed to compile"
+        end
       end
     end
   end
@@ -64,6 +74,16 @@ defmodule Mix.Tasks.Compile.ThriftTest do
     in_fixture fn ->
       with_project_config [thrift_executable: "nonexistentthrift"], fn ->
         assert_raise Mix.Error, "`nonexistentthrift` not found in the current path", fn ->
+          run([])
+        end
+      end
+    end
+  end
+
+  test "attempting to use a broken Thrift executable" do
+    in_fixture fn ->
+      with_project_config [thrift_executable: "mix", thrift_version: "0.0.0"], fn ->
+        assert_raise Mix.Error, ~r/Failed to execute/, fn ->
           run([])
         end
       end

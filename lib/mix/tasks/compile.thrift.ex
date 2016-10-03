@@ -62,7 +62,7 @@ defmodule Mix.Tasks.Compile.Thrift do
   end
 
   defp get_thrift_version(exec) do
-    case System.cmd(exec, ~w[-version]) do
+    case System.cmd(exec, ~w[-version], stderr_to_stdout: true) do
       {s, 0} -> hd(Regex.run(~r/\b(\d+\.\d+\.\d+)\b/, s, capture: :first) || [])
       {_, e} -> Mix.raise "Failed to execute `#{exec} -version` (error #{e})"
     end
@@ -89,7 +89,7 @@ defmodule Mix.Tasks.Compile.Thrift do
 
   defp generate(exec, options, thrift_file) do
     args = options ++ [thrift_file]
-    case System.cmd(exec, args) do
+    case System.cmd(exec, args, stderr_to_stdout: true) do
       {_, 0} -> Mix.shell.info "Compiled #{thrift_file}"
       {_, e} -> Mix.shell.error "Failed to compile #{thrift_file} (error #{e})"
     end

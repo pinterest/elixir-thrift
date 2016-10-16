@@ -6,27 +6,14 @@ otp_release:
   - 18.2
   - 18.3
   - 19.0
-sudo: false
-addons:
-  apt:
-    packages:
-    - automake
-    - bison
-    - flex
-    - g++
-    - libboost-dev
-    - libboost-test-dev
-    - libboost-program-options-dev
-    - libevent-dev
-    - libtool
-    - libssl-dev
-    - pkg-config
+sudo: required
+group: edge
+services: docker
 before_install:
-  - make install-thrift
-  - export PATH=$HOME/bin:$PATH
+  - mv .thrift-docker thrift
+  - export PATH=$TRAVIS_BUILD_DIR:$PATH
 after_script:
   - MIX_ENV=test mix coveralls.travis
 cache:
   directories:
   - $HOME/.mix/archives
-  - $HOME/vendor

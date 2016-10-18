@@ -40,7 +40,7 @@ defmodule Thrift.Mixfile do
      [{:ex_doc, "~> 0.14.3", only: :dev},
       {:earmark, "~> 1.0.2", only: :dev},
       {:excoveralls, "~> 0.5.4", only: :test},
-      {:credo, "~> 0.4.11", only: [:dev, :test]},
+      {:credo, "~> 0.4.12", only: [:dev, :test]},
       {:dialyxir, "~> 0.3.5", only: [:dev, :test]}
      ]
   end

@@ -27,7 +27,6 @@ defmodule Thrift.Mixfile do
      description: description,
      package: package,
 
-
      # Docs
      name: "Thrift",
      docs: [source_ref: "v#{@version}", main: "Thrift", source_url: @project_url]]
@@ -38,8 +37,8 @@ defmodule Thrift.Mixfile do
   end
 
   defp deps do
-     [{:ex_doc, "~> 0.14.1", only: :dev},
-      {:earmark, "~> 1.0.1", only: :dev},
+     [{:ex_doc, "~> 0.14.3", only: :dev},
+      {:earmark, "~> 1.0.2", only: :dev},
       {:excoveralls, "~> 0.5.4", only: :test},
       {:credo, "~> 0.4.11", only: [:dev, :test]},
       {:dialyze, "~> 0.2.0", only: [:dev, :test]}

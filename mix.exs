@@ -41,7 +41,7 @@ defmodule Thrift.Mixfile do
       {:earmark, "~> 1.0.2", only: :dev},
       {:excoveralls, "~> 0.5.4", only: :test},
       {:credo, "~> 0.4.11", only: [:dev, :test]},
-      {:dialyze, "~> 0.2.0", only: [:dev, :test]}
+      {:dialyxir, "~> 0.3.5", only: [:dev, :test]}
      ]
   end
 

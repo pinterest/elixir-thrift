@@ -28,7 +28,7 @@ defmodule Mix.Tasks.Compile.Thrift do
     * `:thrift_version` - thrift compiler `Version` requirement
   """
 
-  @spec run(OptionParser.argv) :: :ok | :noop
+  @spec run(OptionParser.argv) :: :ok
   def run(args) do
     {opts, _, _} = OptionParser.parse(args, switches: [force: :boolean])
 

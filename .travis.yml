@@ -9,11 +9,8 @@ otp_release:
 sudo: required
 group: edge
 services: docker
-before_install:
-  - mv .thrift-docker thrift
-  - export PATH=$TRAVIS_BUILD_DIR:$PATH
 after_script:
-  - MIX_ENV=test mix coveralls.travis
+  - THRIFT=${TRAVIS_BUILD_DIR}/ci/thrift-docker MIX_ENV=test mix coveralls.travis
 cache:
   directories:
   - $HOME/.mix/archives

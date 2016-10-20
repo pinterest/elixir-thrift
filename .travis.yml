@@ -10,7 +10,7 @@ sudo: required
 group: edge
 services: docker
 env:
-  - THRIFT=${TRAVIS_BUILD_DIR}/ci/thrift-docker
+  - THRIFT="docker run -v ${TRAVIS_BUILD_DIR}:/thrift-elixir -w /thrift-elixir/test/fixtures/app --rm thrift:0.9.3 thrift"
 after_script:
   - MIX_ENV=test mix coveralls.travis
 cache:

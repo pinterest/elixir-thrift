@@ -249,6 +249,23 @@ defmodule ParserTest do
     assert typedefs[:string_list] == {:list, :string}
   end
 
+  test "parsing a struct with a bool" do
+    s = """
+    struct MyStruct {
+      1: optional bool negative;
+      2: optional bool positive = true;
+    }
+    """
+    |> parse([:structs, :MyStruct])
+
+    assert s == %Struct{
+      name: :MyStruct,
+      fields: [
+        %Field{id: 1, name: :negative, type: :bool, required: false, default: nil},
+        %Field{id: 2, name: :positive, type: :bool, required: false, default: true}
+      ]}
+  end
+
   test "parsing a struct with an int" do
     s = """
     struct MyStruct {

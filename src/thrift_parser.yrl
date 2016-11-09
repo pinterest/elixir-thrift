@@ -29,6 +29,8 @@ int
 double
 const
 bool
+true
+false
 byte
 i8
 i16
@@ -121,6 +123,8 @@ mappings -> mapping ',' mappings: ['$1'] ++ '$3'.
 literal_list -> literal: ['$1'].
 literal_list -> literal ',' literal_list: ['$1'] ++ '$3'.
 
+literal -> true: unwrap('$1').
+literal -> false: unwrap('$1').
 literal -> int: unwrap('$1').
 literal -> double: unwrap('$1').
 literal -> string: unwrap('$1').

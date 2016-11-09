@@ -423,14 +423,15 @@ end
       Services hold RPC functions and can extend other services.
       """
 
-      @type t :: %Service{name: String.t, extends: String.t, functions: [%Function{}]}
-      defstruct name: nil, extends: nil, functions: []
+      @type t :: %Service{name: String.t, extends: String.t, functions: %{atom => %Function{}}}
+      defstruct name: nil, extends: nil, functions: {}
 
       import Thrift.Parser.Conversions
 
       @spec new(char_list, [%Function{}, ...], char_list) :: %Service{}
       def new(name, functions, extends) do
-        %Service{name: atomify(name), extends: atomify(extends), functions: functions}
+        fn_map = Enum.into(functions, %{}, fn(f) -> {f.name, f} end)
+        %Service{name: atomify(name), extends: atomify(extends), functions: fn_map}
       end
     end
 
@@ -449,6 +450,8 @@ end
       @type definition :: %Service{} | %TEnum{} | %Exception{} | %Union{} | %Struct{} | %Constant{} | typedef
       @type model :: header | definition
       @type t :: %Schema{
+        absolute_path: Path.t,
+        module: String.t,
         thrift_namespace: String.t,
         namespaces: %{String.t => %Namespace{}},
         structs: %{String.t => %Struct{}},
@@ -460,7 +463,9 @@ end
         exceptions: %{String.t => %Exception{}},
         typedefs: %{String.t => Types.t}
       }
-      defstruct thrift_namespace: nil,
+      defstruct absolute_path: nil,
+      module: nil,
+      thrift_namespace: nil,
       namespaces: %{},
       structs: %{},
       services: %{},
@@ -484,15 +489,27 @@ end
       @doc """
       Constructs a schema with both headers and definitions.
       """
-      @spec new([header], [definition]) :: t
-      def new(headers, defs) do
+      @spec new(Path.t, [header], [definition]) :: t
+      def new(file_absolute_path, headers, defs) do
+        orig_schema = %Schema{absolute_path: file_absolute_path,
+                              module: module_name(file_absolute_path)}
+
         schema = headers
         |> Enum.reverse
-        |> Enum.reduce(%Schema{}, &merge(&2, &1))
+        |> Enum.reduce(orig_schema, &merge(&2, &1))
 
         defs
         |> Enum.reverse
         |> Enum.reduce(schema, &merge(&2, &1))
+      end
+
+      defp module_name(nil), do: nil
+
+      defp module_name(path_name) when is_bitstring(path_name) do
+        path_name
+        |> Path.basename
+        |> Path.rootname
+        |> String.to_atom
       end
 
       @spec merge(t, model) :: t
@@ -509,27 +526,39 @@ end
       end
 
       defp merge(schema, %TEnum{} = enum) do
-        %Schema{schema | enums: Map.put(schema.enums, enum.name, enum)}
+        %Schema{schema | enums: Map.put(schema.enums, enum.name, update_name(schema, enum))}
       end
 
       defp merge(schema, %Exception{} = exc) do
-        %Schema{schema | exceptions: Map.put(schema.exceptions, exc.name, exc)}
+        %Schema{schema | exceptions: Map.put(schema.exceptions, exc.name, update_name(schema, exc))}
       end
 
       defp merge(schema, %Struct{} = s) do
-        %Schema{schema | structs: Map.put(schema.structs, s.name, s)}
+        %Schema{schema | structs: Map.put(schema.structs, s.name, update_name(schema, s))}
       end
 
       defp merge(schema, %Union{} = union) do
-        %Schema{schema | unions: Map.put(schema.unions, union.name, union)}
+        %Schema{schema | unions: Map.put(schema.unions, union.name, update_name(schema, union))}
       end
 
       defp merge(schema, %Service{} = service) do
-        %Schema{schema | services: Map.put(schema.services, service.name, service)}
+        %Schema{schema | services: Map.put(schema.services, service.name, update_name(schema, service))}
       end
 
       defp merge(schema, {:typedef, actual_type, type_alias}) do
         %Schema{schema | typedefs: Map.put(schema.typedefs, atomify(type_alias), actual_type)}
+      end
+
+      defp update_name(%{module: nil}, model) do
+        model
+      end
+
+      defp update_name(schema, %{name: name}=model) do
+        %{model | name: :"#{schema.module}.#{name}"}
+      end
+
+      defp update_name(_schema, model) do
+        model
       end
     end
 

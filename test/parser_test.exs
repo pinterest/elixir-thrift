@@ -410,9 +410,7 @@ defmodule ParserTest do
 
     assert service == %Service{
       name: :MyService,
-      functions: [
-        %Function{name: :hi, return_type: :void, params: []}
-      ]
+      functions: %{hi: %Function{name: :hi, return_type: :void, params: []}}
     }
   end
 
@@ -429,11 +427,11 @@ defmodule ParserTest do
 
     assert service == %Service{
       name: :MyService,
-      functions: [
+      functions: %{usernames_to_ids:
         %Function{name: :usernames_to_ids, oneway: false, return_type: {:map, {:string, :i64}},
                   params: [%Field{id: 1, name: :user, type: %StructRef{referenced_type: :User}}]
                  }
-      ]
+      }
     }
   end
 
@@ -447,14 +445,14 @@ defmodule ParserTest do
 
     assert service == %Service{
       name: :OneWay,
-      functions: [
-        %Function{
+      functions: %{
+        fireAndForget: %Function{
           name: :fireAndForget, oneway: true, return_type: :void,
           params: [
             %Field{id: 1, name: :value, type: :i64}
           ]
         }
-      ]
+      }
     }
   end
 
@@ -471,7 +469,7 @@ defmodule ParserTest do
     """
     |> parse([:services, :Thrower])
 
-    [function] = service.functions
+    %{blowup: function} = service.functions
     assert function.exceptions == [
       %Field{id: 1, name: :svc, type: %StructRef{referenced_type: :ServiceException}}
     ]
@@ -498,7 +496,7 @@ defmodule ParserTest do
     capture_io fn ->
       service = parse(code, [:services, :MultipleFns])
 
-      [ping, update, get_users] = service.functions
+      %{ping: ping, update: update, get_users: get_users} = service.functions
 
       assert ping == %Function{name: :ping}
       assert update == %Function{

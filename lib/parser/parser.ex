@@ -5,7 +5,7 @@ defmodule Thrift.Parser do
 
   @type path_element :: String.t | atom
 
-  alias Thrift.Parser.Models
+  alias Thrift.Parser.{FileGroup, FileRef, Models, ParsedFile, Resolver}
   alias Thrift.Parser.Models.Schema
 
   @doc """
@@ -44,5 +44,25 @@ defmodule Thrift.Parser do
       (part, %{} = next) ->
         Map.get(next, part)
     end)
+  end
+
+  @doc """
+  Takes a directory that contains thrift files and a list
+  of the contents of each and runs them through the thrift parser
+  """
+  @spec parse_file(Path.t) :: %FileGroup{}
+  def parse_file(file_path) do
+    Resolver.start_link()
+    parsed_file = file_path
+    |> FileRef.new
+    |> ParsedFile.new
+
+    file_group = %FileGroup{}
+    |> FileGroup.add(parsed_file)
+
+    resolutions = Resolver.get()
+    Resolver.stop()
+
+    %{file_group | resolutions: resolutions}
   end
 end

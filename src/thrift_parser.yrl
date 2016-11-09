@@ -1,6 +1,7 @@
 
 Nonterminals
 schema
+file_def
 headers header
 definitions definition
 namespace_def constant_def include_def
@@ -22,6 +23,7 @@ throws_clause.
 
 Terminals
 '*' '{' '}' '[' ']' '(' ')' '=' '>' '<' ',' ':'
+file
 namespace
 include
 ident
@@ -58,8 +60,12 @@ throws.
 Rootsymbol schema.
 
 schema ->
-    headers definitions:
-        'Elixir.Thrift.Parser.Models.Schema':new('$1', '$2').
+    file_def headers definitions:
+        'Elixir.Thrift.Parser.Models.Schema':new('$1', '$2', '$3').
+
+file_def -> '$empty': nil.
+file_def ->
+    file string: 'Elixir.List':to_string(unwrap('$2')).
 
 headers -> '$empty': [].
 headers -> header headers: ['$1'] ++ '$2'.

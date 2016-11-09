@@ -35,6 +35,11 @@ struct SharedStruct {
   2: string value
 }
 
+exception SharedException {
+  1: string message,
+  2: i32 code
+}
+
 service SharedService {
   SharedStruct getStruct(1: i32 key)
 }

@@ -47,6 +47,8 @@ Rules.
 {LT}            : {token, {'<', TokenLine}}.
 {COMMA}         : {token, {',', TokenLine}}.
 {COLON}         : {token, {':', TokenLine}}.
+
+__file__        : {token, {file, TokenLine}}.
 namespace       : {token, {namespace, TokenLine}}.
 include         : {token, {include, TokenLine}}.
 

@@ -144,6 +144,7 @@ service Calculator extends shared.SharedService {
     */
    oneway void zip()
 
+   shared.SharedStruct sharingTest(1: shared.SharedStruct s) throws (1: shared.SharedException ex)
 }
 
 /**

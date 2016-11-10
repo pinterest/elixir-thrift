@@ -526,34 +526,34 @@ end
       end
 
       defp merge(schema, %TEnum{} = enum) do
-        %Schema{schema | enums: Map.put(schema.enums, enum.name, update_name(schema, enum))}
+        %Schema{schema | enums: Map.put(schema.enums, enum.name, canonicalize_name(schema, enum))}
       end
 
       defp merge(schema, %Exception{} = exc) do
-        %Schema{schema | exceptions: Map.put(schema.exceptions, exc.name, update_name(schema, exc))}
+        %Schema{schema | exceptions: Map.put(schema.exceptions, exc.name, canonicalize_name(schema, exc))}
       end
 
       defp merge(schema, %Struct{} = s) do
-        %Schema{schema | structs: Map.put(schema.structs, s.name, update_name(schema, s))}
+        %Schema{schema | structs: Map.put(schema.structs, s.name, canonicalize_name(schema, s))}
       end
 
       defp merge(schema, %Union{} = union) do
-        %Schema{schema | unions: Map.put(schema.unions, union.name, update_name(schema, union))}
+        %Schema{schema | unions: Map.put(schema.unions, union.name, canonicalize_name(schema, union))}
       end
 
       defp merge(schema, %Service{} = service) do
-        %Schema{schema | services: Map.put(schema.services, service.name, update_name(schema, service))}
+        %Schema{schema | services: Map.put(schema.services, service.name, canonicalize_name(schema, service))}
       end
 
       defp merge(schema, {:typedef, actual_type, type_alias}) do
         %Schema{schema | typedefs: Map.put(schema.typedefs, atomify(type_alias), actual_type)}
       end
 
-      defp update_name(%{module: nil}, model) do
+      defp canonicalize_name(%{module: nil}, model) do
         model
       end
 
-      defp update_name(schema, %{name: name}=model) do
+      defp canonicalize_name(schema, %{name: name}=model) do
         %{model | name: :"#{schema.module}.#{name}"}
       end
     end

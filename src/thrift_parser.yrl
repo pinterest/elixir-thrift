@@ -60,8 +60,8 @@ throws.
 Rootsymbol schema.
 
 schema ->
-    file_def headers definitions:
-        'Elixir.Thrift.Parser.Models.Schema':new('$1', '$2', '$3').
+    headers definitions file_def:
+        'Elixir.Thrift.Parser.Models.Schema':new('$3', '$1', '$2').
 
 file_def -> '$empty': nil.
 file_def ->

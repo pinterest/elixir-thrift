@@ -4,11 +4,7 @@ defmodule Thrift.Parser.FileRef do
   defstruct path: nil, include_name: nil, contents: nil
 
   def new(path) do
-    thrift_file = """
-    __file__ "#{path}"
-
-    #{File.read!(path)}
-    """
+    thrift_file = File.read!(path) <> "\n__file__ \"#{path}\""
     %__MODULE__{path: path, include_name: include_name(path), contents: thrift_file}
   end
 

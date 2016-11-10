@@ -113,4 +113,22 @@ defmodule Thrift.Generator.ModelsTest do
       end
       """
   end
+
+  test "namespaces", %{dir: dir} do
+    File.write! "#{dir}/test.thrift", """
+      namespace elixir my.project.namespace
+      struct MyStruct {
+        1: optional i32 num;
+      }
+      """
+
+    generate! "#{dir}/test.thrift", dir
+
+    assert_generated "#{dir}/my/project/namespace/my_struct.ex", """
+      defmodule(My.Project.Namespace.MyStruct) do
+        @moduledoc("Auto-generated Thrift struct My.Project.Namespace.MyStruct")
+        defstruct(num: 0)
+      end
+      """
+  end
 end

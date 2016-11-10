@@ -24,9 +24,7 @@ defmodule Thrift.Generator.Models do
 
   def namespace(%{namespaces: namespaces}) do
     case namespaces do
-      %{ex: %{path: path}} ->
-        path |> String.split(".") |> Enum.map(&Macro.camelize/1) |> Enum.join(".")
-      %{py: %{path: path}} ->
+      %{elixir: %{path: path}} ->
         path |> String.split(".") |> Enum.map(&Macro.camelize/1) |> Enum.join(".")
       %{} ->
         raise "Schema has no namespace"

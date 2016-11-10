@@ -143,11 +143,6 @@ defmodule Thrift.Generator.Models do
     end
   end
 
-  # defp zero(_schema, other) do
-  #   IO.inspect other
-  #   nil
-  # end
-
   defp load_refs(path) when is_binary(path) do
     load_refs([path], %{})
   end

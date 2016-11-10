@@ -22,7 +22,7 @@ defmodule Thrift.Generator.Models do
     end)
   end
 
-  def namespace(%{namespaces: namespaces}) do
+  defp namespace(%{namespaces: namespaces}) do
     case namespaces do
       %{elixir: %{path: path}} ->
         path |> String.split(".") |> Enum.map(&Macro.camelize/1) |> Enum.join(".")
@@ -31,14 +31,14 @@ defmodule Thrift.Generator.Models do
     end
   end
 
-  def generate_enums(schema) do
+  defp generate_enums(schema) do
     for {name, %{values: values}} <- schema.enums do
       full_name = namespace(schema) |> Module.concat(name)
       {full_name, generate_enum(full_name, values)}
     end
   end
 
-  def generate_enum(name, values) do
+  defp generate_enum(name, values) do
     parts = Enum.map(values, fn {key, value} ->
       macro_name = key |> to_string |> String.downcase |> String.to_atom
       quote do
@@ -53,14 +53,14 @@ defmodule Thrift.Generator.Models do
     end
   end
 
-  def generate_structs(schema) do
+  defp generate_structs(schema) do
     for {name, %{fields: fields}} <- schema.structs do
       full_name = namespace(schema) |> Module.concat(name)
       {full_name, generate_struct(schema, full_name, fields)}
     end
   end
 
-  def generate_struct(schema, name, fields) do
+  defp generate_struct(schema, name, fields) do
     parts = Enum.map(fields, fn
       %{name: name, default: nil, type: type} ->
         {name, zero(schema, type)}
@@ -75,14 +75,14 @@ defmodule Thrift.Generator.Models do
     end
   end
 
-  def generate_exceptions(schema) do
+  defp generate_exceptions(schema) do
     for {name, %{fields: fields}} <- schema.exceptions do
       full_name = namespace(schema) |> Module.concat(name)
       {full_name, generate_exception(schema, full_name, fields)}
     end
   end
 
-  def generate_exception(schema, name, fields) do
+  defp generate_exception(schema, name, fields) do
     parts = Enum.map(fields, fn
       %{name: name, default: nil, type: type} ->
         {name, zero(schema, type)}
@@ -98,27 +98,27 @@ defmodule Thrift.Generator.Models do
   end
 
   # Zero values for base types
-  def zero(_schema, :bool), do: false
-  def zero(_schema, :byte), do: 0
-  def zero(_schema, :i8), do: 0
-  def zero(_schema, :i16), do: 0
-  def zero(_schema, :i32), do: 0
-  def zero(_schema, :i64), do: 0
-  def zero(_schema, :double), do: 0.0
-  def zero(_schema, :string), do: ""
-  def zero(_schema, :binary), do: ""
-  def zero(_schema, :slist), do: ""
+  defp zero(_schema, :bool), do: false
+  defp zero(_schema, :byte), do: 0
+  defp zero(_schema, :i8), do: 0
+  defp zero(_schema, :i16), do: 0
+  defp zero(_schema, :i32), do: 0
+  defp zero(_schema, :i64), do: 0
+  defp zero(_schema, :double), do: 0.0
+  defp zero(_schema, :string), do: ""
+  defp zero(_schema, :binary), do: ""
+  defp zero(_schema, :slist), do: ""
 
-  def zero(_schema, {:list, _}) do
+  defp zero(_schema, {:list, _}) do
     []
   end
 
-  def zero(_schema, %{values: [{_, value} | _]}) do
+  defp zero(_schema, %{values: [{_, value} | _]}) do
     value
   end
 
   # Zero values for referenced types
-  def zero(schema, %{referenced_type: type}) do
+  defp zero(schema, %{referenced_type: type}) do
     cond do
       Map.has_key?(schema.enums, type) ->
         zero(schema, schema.enums[type])
@@ -137,7 +137,7 @@ defmodule Thrift.Generator.Models do
     end
   end
 
-  # def zero(_schema, other) do
+  # defp zero(_schema, other) do
   #   IO.inspect other
   #   nil
   # end

@@ -27,7 +27,7 @@ defmodule Thrift.Generator.Models do
       %{elixir: %{path: path}} ->
         path |> String.split(".") |> Enum.map(&Macro.camelize/1) |> Enum.join(".")
       %{} ->
-        raise "Schema has no namespace"
+        nil
     end
   end
 

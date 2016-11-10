@@ -27,10 +27,11 @@ defmodule ThriftTestHelpers do
   end
 
   def tmp_dir do
-    'mktemp -d'
-    |> :os.cmd
-    |> List.to_string
-    |> String.strip
+    tmp_path = System.tmp_dir!
+    |> Path.join(Integer.to_string(System.unique_integer))
+
+    File.mkdir(tmp_path)
+    tmp_path
   end
 
   def parse(_root_dir, nil) do

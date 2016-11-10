@@ -1,4 +1,10 @@
 defmodule Thrift.Parser.Resolver do
+  @moduledoc """
+  A resolver for references.
+  During file parsing, all new generated thrift concepts flow through this resolver
+  and are added to its global database of names. At the end, the database is dumped into
+  the FileGroup so it can resolve references.
+  """
   alias Thrift.Parser.ParsedFile
   alias Thrift.Parser.Models.StructRef
 

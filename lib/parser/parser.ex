@@ -47,8 +47,8 @@ defmodule Thrift.Parser do
   end
 
   @doc """
-  Takes a directory that contains thrift files and a list
-  of the contents of each and runs them through the thrift parser
+  Takes a path to a file and parses it, adding any includes to the
+  parsed results.
   """
   @spec parse_file(Path.t) :: %FileGroup{}
   def parse_file(file_path) do

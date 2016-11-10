@@ -1,9 +1,9 @@
 defmodule Thrift.Generator.Models do
-  def generate(path) do
-    schema = path
+  def generate!(thrift_filename, output_dir) do
+    schema = thrift_filename
     |> File.read!
     |> Thrift.Parser.parse
-    |> Map.put(:refs, load_refs(path))
+    |> Map.put(:refs, load_refs(thrift_filename))
 
     List.flatten([
       generate_enums(schema),
@@ -17,8 +17,14 @@ defmodule Thrift.Generator.Models do
       |> Enum.map(&Macro.underscore/1)
       |> Enum.join("/")
       |> Kernel.<>(".ex")
+
       source = Macro.to_string(quoted)
-      {filename, source}
+
+      path = Path.join(output_dir, filename)
+      path |> Path.dirname |> File.mkdir_p!
+      path |> File.write!(source)
+
+      filename
     end)
   end
 

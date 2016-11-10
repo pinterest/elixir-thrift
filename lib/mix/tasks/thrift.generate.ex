@@ -17,14 +17,9 @@ defmodule Mix.Tasks.Thrift.Generate do
     lib_dir = Keyword.get(opts, :lib_dir, "lib")
 
     for thrift_file <- Mix.Utils.extract_files([thrift_dir], "*.thrift") do
-      thrift_file
-      |> Thrift.Generator.Models.generate
-      |> Enum.each(fn {model_file, source} ->
-        path = Path.join(lib_dir, model_file)
-        path |> Path.dirname |> File.mkdir_p!
-        path |> File.write!(source)
-        Mix.shell.info "Generated #{path}"
-      end)
+      for output_file <- Thrift.Generator.Models.generate!(thrift_file, lib_dir) do
+        Mix.shell.info "Generated #{output_file}"
+      end
     end
   end
 end

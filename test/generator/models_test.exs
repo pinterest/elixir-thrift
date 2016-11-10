@@ -1,11 +1,28 @@
 defmodule Thrift.Generator.ModelsTest do
   use ExUnit.Case, async: true
 
-  import Thrift.Parser, only: [parse: 1]
   import Thrift.Generator.Models
 
-  test "generating enum" do
-    thrift = """
+  setup %{test: test} do
+    dir = Path.join([System.tmp_dir!, to_string(__MODULE__), to_string(test)])
+    File.rm_rf!(dir)
+    File.mkdir_p!(dir)
+    on_exit fn ->
+      # IO.inspect dir
+      File.rm_rf!(dir)
+      :ok
+    end
+    {:ok, dir: dir}
+  end
+
+  defmacro assert_generated(filename, expected_contents) do
+    quote do
+      assert String.trim(File.read!(unquote(filename))) == String.trim(unquote(expected_contents))
+    end
+  end
+
+  test "generating enum", %{dir: dir} do
+    File.write! "#{dir}/test.thrift", """
       enum UserStatus {
         ACTIVE,
         INACTIVE,
@@ -13,9 +30,9 @@ defmodule Thrift.Generator.ModelsTest do
         EVIL = 0x20
       }
       """
-    files = thrift |> parse |> generate
-    assert [{"user_status.ex", contents}] = files
-    assert contents == String.trim """
+    generate! "#{dir}/test.thrift", dir
+
+    assert_generated "#{dir}/user_status.ex", """
       defmodule(UserStatus) do
         @moduledoc("Auto-generated Thrift enum UserStatus")
         defmacro(active) do
@@ -34,8 +51,8 @@ defmodule Thrift.Generator.ModelsTest do
       """
   end
 
-  test "generating exception" do
-    thrift = """
+  test "generating exception", %{dir: dir} do
+    File.write! "#{dir}/test.thrift", """
       exception ApplicationException {
         1: string message,
         2: required i32 count,
@@ -44,9 +61,10 @@ defmodule Thrift.Generator.ModelsTest do
         optional string fixed = "foo"
       }
       """
-    files = thrift |> parse |> generate
-    assert [{"application_exception.ex", contents}] = files
-    assert contents == String.trim """
+
+    generate! "#{dir}/test.thrift", dir
+
+    assert_generated "#{dir}/application_exception.ex", """
       defmodule(ApplicationException) do
         @moduledoc("Auto-generated Thrift exception ApplicationException")
         defstruct(message: "", count: 0, reason: "", other: "", fixed: "foo")
@@ -54,8 +72,8 @@ defmodule Thrift.Generator.ModelsTest do
       """
   end
 
-  test "generating struct" do
-    thrift = """
+  test "generating struct", %{dir: dir} do
+    File.write! "#{dir}/test.thrift", """
       struct MyStruct {
         1: optional string name;
         2: optional i32 num1;
@@ -65,9 +83,10 @@ defmodule Thrift.Generator.ModelsTest do
         # 5: optional bool b2 = true;
       }
       """
-    files = thrift |> parse |> generate
-    assert [{"my_struct.ex", contents}] = files
-    assert contents == String.trim """
+
+    generate! "#{dir}/test.thrift", dir
+
+    assert_generated "#{dir}/my_struct.ex", """
       defmodule(MyStruct) do
         @moduledoc("Auto-generated Thrift struct MyStruct")
         defstruct(name: "", num1: 0, num2: 5, b1: false)
@@ -75,8 +94,8 @@ defmodule Thrift.Generator.ModelsTest do
       """
   end
 
-  test "typedefs" do
-    thrift = """
+  test "typedefs", %{dir: dir} do
+    File.write! "#{dir}/test.thrift", """
       typedef i32 MyInteger
       typedef string MyString
       struct MyStruct {
@@ -84,9 +103,10 @@ defmodule Thrift.Generator.ModelsTest do
         2: optional MyString str;
       }
       """
-    files = thrift |> parse |> generate
-    assert [{"my_struct.ex", contents}] = files
-    assert contents == String.trim """
+
+    generate! "#{dir}/test.thrift", dir
+
+    assert_generated "#{dir}/my_struct.ex", """
       defmodule(MyStruct) do
         @moduledoc("Auto-generated Thrift struct MyStruct")
         defstruct(num: 0, str: "")

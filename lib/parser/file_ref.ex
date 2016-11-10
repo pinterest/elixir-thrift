@@ -4,7 +4,7 @@ defmodule Thrift.Parser.FileRef do
   defstruct path: nil, include_name: nil, contents: nil
 
   def new(path) do
-    # We include the __file__ here to hack around the fact that leex and yeec don't
+    # We include the __file__ here to hack around the fact that leex and yecc don't
     # operate on files and lose the file info. This is relevant because the filename is
     # turned into the thrift module, and is necessary for resolution.
     thrift_file = File.read!(path) <> "\n__file__ \"#{path}\""

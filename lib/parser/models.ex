@@ -424,7 +424,7 @@ end
       """
 
       @type t :: %Service{name: String.t, extends: String.t, functions: %{atom => %Function{}}}
-      defstruct name: nil, extends: nil, functions: {}
+      defstruct name: nil, extends: nil, functions: %{}
 
       import Thrift.Parser.Conversions
 
@@ -555,10 +555,6 @@ end
 
       defp update_name(schema, %{name: name}=model) do
         %{model | name: :"#{schema.module}.#{name}"}
-      end
-
-      defp update_name(_schema, model) do
-        model
       end
     end
 

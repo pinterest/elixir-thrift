@@ -4,6 +4,7 @@ defmodule ResolverTest do
 
   alias Thrift.Parser.FileGroup
   alias Thrift.Parser.Models.{
+    Field,
     TEnum,
     Service,
     Struct,
@@ -12,7 +13,7 @@ defmodule ResolverTest do
 
   use ThriftTestHelpers
 
-  test "it should be able resolve Struct Refs" do
+  test "it should be able resolve Struct Refs and fields" do
     with_thrift_files([
       "core/shared.thrift": """
       struct User {
@@ -25,16 +26,36 @@ defmodule ResolverTest do
        include "core/shared.thrift"
        service Users {
          shared.User find_by_id(1: i64 user_id);
+         void delete_user(1: shared.User user);
        }
        """, as: :file_group, parse: "utils.thrift"]) do
 
-      return_ref = file_group.schemas["utils"].services[:"Users"].functions[:find_by_id].return_type
+      service = file_group.schemas["utils"].services[:"Users"]
+      return_ref = service.functions[:find_by_id].return_type
 
       refute is_nil(return_ref)
 
       resolved_struct = FileGroup.resolve(file_group, return_ref)
 
       assert resolved_struct == file_group.schemas["shared"].structs[:User]
+
+      [field] = service.functions[:delete_user].params
+      resolved = FileGroup.resolve(file_group, field)
+
+      assert %Field{} = resolved
+      assert resolved.type == file_group.schemas["shared"].structs[:User]
+    end
+  end
+
+  test "resolving non-resolvable types is a no-op" do
+    with_thrift_files([
+      "utils.thrift": """
+       service NoOp {
+       }
+       """, as: :file_group, parse: "utils.thrift"]) do
+
+      assert 43 == FileGroup.resolve(file_group, 43)
+      assert [1, 2, 3] == FileGroup.resolve(file_group, [1, 2, 3])
     end
   end
 

@@ -12,8 +12,6 @@ defmodule Thrift.Parser.FileGroup do
     Schema,
   }
 
-  defdelegate fix_refs(), to: Resolver
-
   @type t :: %FileGroup{
     parsed_files: %{FileRef.thrift_include => %ParsedFile{}},
     schemas: %{FileRef.thrift_include => %Schema{}}}

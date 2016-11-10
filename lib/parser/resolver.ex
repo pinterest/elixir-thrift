@@ -24,6 +24,7 @@ defmodule Thrift.Parser.Resolver do
       |> update(f.name, f.schema.exceptions)
       |> update(f.name, f.schema.unions)
       |> update(f.name, f.schema.enums)
+      |> update(f.name, f.schema.typedefs)
     end)
   end
 
@@ -34,7 +35,12 @@ defmodule Thrift.Parser.Resolver do
   defp update(%{}=state, include_name, %{}=local_mappings) do
     new_mappings = local_mappings
     |> Map.new(fn {name, val} ->
-      {:"#{include_name}.#{name}", Map.put(val, :name, :"#{include_name}.#{name}")}
+      case val do
+        val when is_atom(val) ->
+          {:"#{include_name}.#{name}", val}
+        val when is_map(val) ->
+          {:"#{include_name}.#{name}", Map.put(val, :name, :"#{include_name}.#{name}")}
+      end
     end)
 
     Map.merge(state, new_mappings)

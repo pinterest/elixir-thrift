@@ -1,10 +1,16 @@
 defmodule Thrift.Generator.Models do
   def generate!(thrift_filename, output_dir) do
-    schema = thrift_filename
-    |> File.read!
-    |> Thrift.Parser.parse
-    |> Map.put(:refs, load_refs(thrift_filename))
+    file_group = thrift_filename
+    |> Thrift.Parser.parse_file
 
+    Enum.flat_map(file_group.schemas, fn {_, schema} ->
+      schema
+      |> Map.put(:file_group, file_group)
+      |> generate_schema(output_dir)
+    end)
+  end
+
+  def generate_schema(schema, output_dir) do
     List.flatten([
       generate_enums(schema),
       generate_structs(schema),
@@ -15,7 +21,7 @@ defmodule Thrift.Generator.Models do
       |> inspect
       |> String.split(".")
       |> Enum.map(&Macro.underscore/1)
-      |> Enum.join("/")
+      |> Path.join
       |> Kernel.<>(".ex")
 
       source = Macro.to_string(quoted)
@@ -124,51 +130,25 @@ defmodule Thrift.Generator.Models do
   end
 
   # Zero values for referenced types
-  defp zero(schema, %{referenced_type: type}) do
+  defp zero(schema, %{referenced_type: type}=ref) do
     cond do
+      # Local references
       Map.has_key?(schema.enums, type) ->
         zero(schema, schema.enums[type])
       Map.has_key?(schema.typedefs, type) ->
         zero(schema, schema.typedefs[type])
       Map.has_key?(schema.structs, type) ->
         model_name = namespace(schema) |> Module.concat(type)
-        quote do
-          %unquote(model_name){}
-        end
-      Map.has_key?(schema.refs, type) ->
-        {schema, name, _value} = schema.refs[type]
-        zero(schema, %{referenced_type: name})
+        quote do: %unquote(model_name){}
+
+      # Included references
       true ->
-        raise "Unknown type: #{inspect type}"
+        case Thrift.Parser.FileGroup.resolve(schema.file_group, ref) do
+          nil ->
+            raise "Unknown type: #{inspect type}"
+          thing ->
+            zero(schema, thing)
+        end
     end
-  end
-
-  defp load_refs(path) when is_binary(path) do
-    load_refs([path], %{})
-  end
-
-  defp load_refs([], refs) do
-    refs
-  end
-
-  defp load_refs([path | paths], refs) do
-    schema = path |> File.read! |> Thrift.Parser.parse
-
-    paths = paths ++ Enum.map(schema.includes, &Path.expand(&1.path, Path.dirname(path)))
-
-    refs = refs
-    |> add_refs(path, schema, schema.enums)
-    |> add_refs(path, schema, schema.structs)
-    |> add_refs(path, schema, schema.exceptions)
-
-    load_refs(paths, refs)
-  end
-
-  defp add_refs(refs, path, schema, types) do
-    basename = Path.basename(path, ".thrift")
-
-    Enum.reduce(types, refs, fn {name, value}, refs ->
-      Map.put(refs, :"#{basename}.#{name}", {schema, name, value})
-    end)
   end
 end

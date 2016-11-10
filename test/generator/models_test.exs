@@ -114,6 +114,25 @@ defmodule Thrift.Generator.ModelsTest do
       """
   end
 
+  test "transitive typedefs", %{dir: dir} do
+    File.write! "#{dir}/test.thrift", """
+      typedef i32 MyInteger
+      typedef MyInteger DefinitelyNumber
+      struct MyStruct {
+        1: optional DefinitelyNumber num;
+      }
+      """
+
+    generate! "#{dir}/test.thrift", dir
+
+    assert_generated "#{dir}/my_struct.ex", """
+      defmodule(MyStruct) do
+        @moduledoc("Auto-generated Thrift struct MyStruct")
+        defstruct(num: 0)
+      end
+      """
+  end
+
   test "namespaces", %{dir: dir} do
     File.write! "#{dir}/test.thrift", """
       namespace elixir my.project.namespace
@@ -130,5 +149,83 @@ defmodule Thrift.Generator.ModelsTest do
         defstruct(num: 0)
       end
       """
+  end
+
+  test "includes", %{dir: dir} do
+    File.write! "#{dir}/test.thrift", """
+      include "shared.thrift"
+      struct MyStruct {
+        1: optional shared.MyInteger num;
+      }
+      """
+
+    File.write! "#{dir}/shared.thrift", """
+      typedef i32 MyInteger
+      """
+
+    generate! "#{dir}/test.thrift", dir
+
+    assert_generated "#{dir}/my_struct.ex", """
+      defmodule(MyStruct) do
+        @moduledoc("Auto-generated Thrift struct MyStruct")
+        defstruct(num: 0)
+      end
+      """
+  end
+
+  test "struct uses local enum", %{dir: dir} do
+    File.write! "#{dir}/test.thrift", """
+      enum UserStatus {
+        ACTIVE,
+        INACTIVE,
+        BANNED = 6,
+        EVIL = 0x20
+      }
+
+      struct MyStruct {
+        1: optional UserStatus status;
+      }
+      """
+
+    generate! "#{dir}/test.thrift", dir
+
+    assert_generated "#{dir}/my_struct.ex", """
+      defmodule(MyStruct) do
+        @moduledoc("Auto-generated Thrift struct MyStruct")
+        defstruct(status: 1)
+      end
+      """
+  end
+
+  test "struct containing another struct", %{dir: dir} do
+    File.write! "#{dir}/test.thrift", """
+      struct InnerStruct {
+        1: optional i32 num;
+      }
+      struct OuterStruct {
+        1: optional InnerStruct inner;
+      }
+      """
+
+    generate! "#{dir}/test.thrift", dir
+
+    assert_generated "#{dir}/outer_struct.ex", """
+      defmodule(OuterStruct) do
+        @moduledoc("Auto-generated Thrift struct OuterStruct")
+        defstruct(inner: %InnerStruct{})
+      end
+      """
+  end
+
+  test "unknown type", %{dir: dir} do
+    File.write! "#{dir}/test.thrift", """
+      struct MyStruct {
+        1: optional Foo num;
+      }
+      """
+
+    assert_raise RuntimeError, fn ->
+      generate! "#{dir}/test.thrift", dir
+    end
   end
 end

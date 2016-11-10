@@ -42,7 +42,7 @@ defmodule ThriftTestHelpers do
     Parser.parse_file(file_path)
   end
 
-  @spec with_thrift_files(keyword, String.t) :: nil
+  @spec with_thrift_files(Keyword.t, String.t) :: nil
   defmacro with_thrift_files(opts, do: block) do
     {var_name, opts_1} = Keyword.pop(opts, :as, :file_group)
     {parsed_file, specs} = Keyword.pop(opts_1, :parse, nil)

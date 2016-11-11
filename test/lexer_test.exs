@@ -14,10 +14,41 @@ defmodule LexerTest do
     assert tokenize("# foo") == []
     assert tokenize("// foo") == []
     assert tokenize("/* foo */") == []
-    assert tokenize("
-    /*
-      foo
-    */") == []
+    assert tokenize("""
+      /**
+       * foo
+       */
+      """) == []
+  end
+
+  test "juxtaposed comments" do
+    assert tokenize("true # foo") == [{true, 1}]
+    assert tokenize("true // foo") == [{true, 1}]
+    assert tokenize("/* foo */ true /* bar */") == [{true, 1}]
+    assert tokenize("""
+      # foo
+      true
+      # bar
+      """) == [{true, 2}]
+    assert tokenize("""
+      // foo
+      true
+      // bar
+      """) == [{true, 2}]
+    assert tokenize("""
+      /* foo */
+      true
+      /* bar */
+      """) == [{true, 2}]
+    assert tokenize("""
+      /**
+       * foo
+       */
+      true
+      /**
+       * bar
+       */
+      """) == [{true, 4}]
   end
 
   test "symbols" do

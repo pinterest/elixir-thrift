@@ -17,7 +17,15 @@ defmodule Thrift.Generator.ModelsTest do
 
   defmacro assert_generated(filename, expected_contents) do
     quote do
-      assert String.strip(File.read!(unquote(filename))) == String.strip(unquote(expected_contents))
+      actual_contents = unquote(filename)
+      |> File.read!
+      |> String.strip
+      |> String.replace(~r/  def\(.*/s, "  # ...\nend")
+
+      expected_contents = unquote(expected_contents)
+      |> String.strip
+
+      assert actual_contents == expected_contents
     end
   end
 
@@ -34,7 +42,7 @@ defmodule Thrift.Generator.ModelsTest do
 
     assert_generated "#{dir}/user_status.ex", """
       defmodule(UserStatus) do
-        @moduledoc("Auto-generated Thrift enum UserStatus")
+        @moduledoc("Auto-generated Thrift enum test.UserStatus")
         defmacro(active) do
           1
         end
@@ -66,8 +74,14 @@ defmodule Thrift.Generator.ModelsTest do
 
     assert_generated "#{dir}/application_exception.ex", """
       defmodule(ApplicationException) do
-        @moduledoc("Auto-generated Thrift exception ApplicationException")
+        _ = "Auto-generated Thrift exception test.ApplicationException"
+        _ = "message :string"
+        _ = "count :i32"
+        _ = "reason :string"
+        _ = "other :string"
+        _ = "fixed :string"
         defstruct(message: "", count: 0, reason: "", other: "", fixed: "foo")
+        # ...
       end
       """
   end
@@ -88,8 +102,13 @@ defmodule Thrift.Generator.ModelsTest do
 
     assert_generated "#{dir}/my_struct.ex", """
       defmodule(MyStruct) do
-        @moduledoc("Auto-generated Thrift struct MyStruct")
+        _ = "Auto-generated Thrift struct test.MyStruct"
+        _ = "name :string"
+        _ = "num1 :i32"
+        _ = "num2 :i32"
+        _ = "b1 :bool"
         defstruct(name: "", num1: 0, num2: 5, b1: false)
+        # ...
       end
       """
   end
@@ -108,8 +127,11 @@ defmodule Thrift.Generator.ModelsTest do
 
     assert_generated "#{dir}/my_struct.ex", """
       defmodule(MyStruct) do
-        @moduledoc("Auto-generated Thrift struct MyStruct")
+        _ = "Auto-generated Thrift struct test.MyStruct"
+        _ = "num %Thrift.Parser.Models.StructRef{referenced_type: :MyInteger}"
+        _ = "str %Thrift.Parser.Models.StructRef{referenced_type: :MyString}"
         defstruct(num: 0, str: "")
+        # ...
       end
       """
   end
@@ -127,8 +149,10 @@ defmodule Thrift.Generator.ModelsTest do
 
     assert_generated "#{dir}/my_struct.ex", """
       defmodule(MyStruct) do
-        @moduledoc("Auto-generated Thrift struct MyStruct")
+        _ = "Auto-generated Thrift struct test.MyStruct"
+        _ = "num %Thrift.Parser.Models.StructRef{referenced_type: :DefinitelyNumber}"
         defstruct(num: 0)
+        # ...
       end
       """
   end
@@ -145,8 +169,10 @@ defmodule Thrift.Generator.ModelsTest do
 
     assert_generated "#{dir}/my/project/namespace/my_struct.ex", """
       defmodule(My.Project.Namespace.MyStruct) do
-        @moduledoc("Auto-generated Thrift struct My.Project.Namespace.MyStruct")
+        _ = "Auto-generated Thrift struct test.MyStruct"
+        _ = "num :i32"
         defstruct(num: 0)
+        # ...
       end
       """
   end
@@ -167,8 +193,10 @@ defmodule Thrift.Generator.ModelsTest do
 
     assert_generated "#{dir}/my_struct.ex", """
       defmodule(MyStruct) do
-        @moduledoc("Auto-generated Thrift struct MyStruct")
+        _ = "Auto-generated Thrift struct test.MyStruct"
+        _ = "num %Thrift.Parser.Models.StructRef{referenced_type: :\\"shared.MyInteger\\"}"
         defstruct(num: 0)
+        # ...
       end
       """
   end
@@ -191,8 +219,10 @@ defmodule Thrift.Generator.ModelsTest do
 
     assert_generated "#{dir}/my_struct.ex", """
       defmodule(MyStruct) do
-        @moduledoc("Auto-generated Thrift struct MyStruct")
+        _ = "Auto-generated Thrift struct test.MyStruct"
+        _ = "status %Thrift.Parser.Models.StructRef{referenced_type: :UserStatus}"
         defstruct(status: 1)
+        # ...
       end
       """
   end
@@ -211,8 +241,10 @@ defmodule Thrift.Generator.ModelsTest do
 
     assert_generated "#{dir}/outer_struct.ex", """
       defmodule(OuterStruct) do
-        @moduledoc("Auto-generated Thrift struct OuterStruct")
+        _ = "Auto-generated Thrift struct test.OuterStruct"
+        _ = "inner %Thrift.Parser.Models.StructRef{referenced_type: :InnerStruct}"
         defstruct(inner: %InnerStruct{})
+        # ...
       end
       """
   end

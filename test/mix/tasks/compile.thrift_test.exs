@@ -16,6 +16,7 @@ defmodule Mix.Tasks.Compile.ThriftTest do
       with_project_config [], fn ->
         assert capture_io(fn -> run([]) end) =~ """
           Compiled thrift/shared.thrift
+          Compiled thrift/simple.thrift
           Compiled thrift/tutorial.thrift
           """
         assert File.exists?("src/shared_types.hrl")

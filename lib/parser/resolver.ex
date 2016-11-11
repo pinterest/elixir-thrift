@@ -9,15 +9,15 @@ defmodule Thrift.Parser.Resolver do
   alias Thrift.Parser.Models.StructRef
 
   def start_link do
-    Agent.start_link(&Map.new/0, name: __MODULE__)
+    Agent.start_link(&Map.new/0)
   end
 
-  def stop do
-    Agent.stop(__MODULE__)
+  def stop(pid) do
+    Agent.stop(pid)
   end
 
-  def add(f=%ParsedFile{}) do
-    Agent.update(__MODULE__, fn(state) ->
+  def add(pid, f=%ParsedFile{}) do
+    Agent.update(pid, fn(state) ->
       state
       |> update(f.name, f.schema.services)
       |> update(f.name, f.schema.structs)
@@ -28,8 +28,8 @@ defmodule Thrift.Parser.Resolver do
     end)
   end
 
-  def get do
-    Agent.get(__MODULE__, &(&1))
+  def get(pid) do
+    Agent.get(pid, &(&1))
   end
 
   defp update(%{}=state, include_name, %{}=local_mappings) do

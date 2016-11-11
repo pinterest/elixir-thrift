@@ -52,17 +52,14 @@ defmodule Thrift.Parser do
   """
   @spec parse_file(Path.t) :: %FileGroup{}
   def parse_file(file_path) do
-    Resolver.start_link()
     parsed_file = file_path
     |> FileRef.new
     |> ParsedFile.new
 
-    file_group = %FileGroup{}
+    file_group = FileGroup.new(file_path)
     |> FileGroup.add(parsed_file)
 
-    resolutions = Resolver.get()
-    Resolver.stop()
-
-    %{file_group | resolutions: resolutions}
+    file_group = FileGroup.update_resolutions(file_group)
+    file_group
   end
 end

@@ -17,7 +17,7 @@ defmodule Thrift.Generator.ModelsTest do
 
   defmacro assert_generated(filename, expected_contents) do
     quote do
-      assert String.trim(File.read!(unquote(filename))) == String.trim(unquote(expected_contents))
+      assert String.strip(File.read!(unquote(filename))) == String.strip(unquote(expected_contents))
     end
   end
 

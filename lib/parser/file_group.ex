@@ -62,7 +62,7 @@ defmodule Thrift.Parser.FileGroup do
     to_update = resolutions
     |> Enum.map(fn {name, v}=kvp ->
       case String.split(Atom.to_string(name), ".") do
-        [initial_module, rest] ->
+        [_initial_module, rest] ->
           {:"#{rest}", v}
         _ ->
           kvp

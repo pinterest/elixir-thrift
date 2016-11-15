@@ -1,7 +1,7 @@
 defmodule Thrift.Protocols.Binary do
   alias Thrift.Parser.FileGroup
 
-  # field types
+  # field types, which are the type ids from the thrift spec.
   @bool 2
   @byte 3
   @double 4
@@ -35,10 +35,6 @@ defmodule Thrift.Protocols.Binary do
     TEnum,
   }
 
-  def bool_to_int(false), do: 0
-  def bool_to_int(nil), do: 0
-  def bool_to_int(_), do: 1
-
   def primitive_serializers do
     type_converters = for {atom_type, int_type} <- @types do
       quote do
@@ -54,7 +50,7 @@ defmodule Thrift.Protocols.Binary do
         []
       end
       def serialize(:bool, value) do
-        value = Thrift.Protocols.Binary.bool_to_int(value)
+        value = bool_to_int(value)
         unquote(integer_serializer(8))
       end
       def serialize(:i8, value) do
@@ -100,6 +96,11 @@ defmodule Thrift.Protocols.Binary do
         0::size(5), to_message_type(message_type)::size(3),
         byte_size(name)::32-signed, sequence_id::32-signed>>
       end
+
+      defp bool_to_int(false), do: 0
+      defp bool_to_int(nil), do: 0
+      defp bool_to_int(_), do: 1
+
       defp to_mesage_type(:call), do: 1
       defp to_mesage_type(:reply), do: 2
       defp to_mesage_type(:exception), do: 3
@@ -154,15 +155,14 @@ defmodule Thrift.Protocols.Binary do
     end
   end
 
-  defp generate_field_call(file_group, generated_struct_module, %Field{type: %Struct{}}=field) do
+  defp generate_field_call(_file_group, generated_struct_module, %Field{type: %Struct{}}=_field) do
     quote do
       unquote(generated_struct_module).BinaryProtocol.serialize(:struct, value)
     end
   end
 
-  defp generate_field_call(file_group, generated_struct_module, %Field{}=field) do
+  defp generate_field_call(file_group, _generated_struct_module, %Field{}=field) do
     field = FileGroup.resolve(file_group, field)
-    protocol_module = Module.concat(generated_struct_module, BinaryProtocol)
     generic_type = to_generic_type(field.type)
     quote do
       case value.unquote(field.name) do

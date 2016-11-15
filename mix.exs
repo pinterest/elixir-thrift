@@ -37,19 +37,19 @@ defmodule Thrift.Mixfile do
      []
   end
 
-  def erlc_paths(:prod) do
+  defp erlc_paths(:prod) do
     ["src", "ext/thrift/lib/erl/src"]
   end
 
-  def erlc_paths(_) do
+  defp erlc_paths(_) do
     erlc_paths(:prod) ++ ["test/support/src"]
   end
 
-  def elixirc_paths(:prod) do
+  defp elixirc_paths(:prod) do
     ["lib"]
   end
 
-  def elixirc_paths(_) do
+  defp elixirc_paths(_) do
     elixirc_paths(:prod) ++ ["test/support/lib"]
   end
 

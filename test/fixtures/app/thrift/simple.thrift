@@ -14,18 +14,3 @@ struct User {
   10: set<i32> blocked_user_ids,
   11: optional list<i32> optional_integers,
 }
-
-/*
-struct TestStruct {
-  1: bool bool_field,
-  2: byte byte_field,
-  3: double double_field,
-  4: i16 i_sixteen,
-  5: i32 i_thirty_two,
-  6: i64 i_sixty_four,
-  7: string string_field,
-  8: map<string, i16> map_field,
-  9: list<User> user_list,
-  10: set<i32> number_set,
-}
-*/

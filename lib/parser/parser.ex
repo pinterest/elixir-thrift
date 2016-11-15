@@ -5,7 +5,7 @@ defmodule Thrift.Parser do
 
   @type path_element :: String.t | atom
 
-  alias Thrift.Parser.{FileGroup, FileRef, Models, ParsedFile, Resolver}
+  alias Thrift.Parser.{FileGroup, FileRef, Models, ParsedFile}
   alias Thrift.Parser.Models.Schema
 
   @doc """
@@ -59,7 +59,6 @@ defmodule Thrift.Parser do
     file_group = FileGroup.new(file_path)
     |> FileGroup.add(parsed_file)
 
-    file_group = FileGroup.update_resolutions(file_group)
-    file_group
+    FileGroup.update_resolutions(file_group)
   end
 end

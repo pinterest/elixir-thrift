@@ -6,7 +6,6 @@ defmodule Thrift.Parser.Resolver do
   the FileGroup so it can resolve references.
   """
   alias Thrift.Parser.ParsedFile
-  alias Thrift.Parser.Models.StructRef
 
   def start_link do
     Agent.start_link(&Map.new/0)

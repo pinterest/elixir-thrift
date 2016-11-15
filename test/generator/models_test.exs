@@ -8,7 +8,6 @@ defmodule Thrift.Generator.ModelsTest do
     File.rm_rf!(dir)
     File.mkdir_p!(dir)
     on_exit fn ->
-      # IO.inspect dir
       File.rm_rf!(dir)
       :ok
     end

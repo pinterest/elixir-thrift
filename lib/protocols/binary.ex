@@ -138,8 +138,8 @@ defmodule Thrift.Protocols.Binary do
 
   defp to_generic_type(type) do
     case type do
-      {:map, key_type, val_type} ->
-        {:map, to_generic_type(key_type), to_generic_type(val_type)}
+      {:map, {key_type, val_type}} ->
+        {:map, {to_generic_type(key_type), to_generic_type(val_type)}}
 
       {:list, elem_type} ->
         {:list, to_generic_type(elem_type)}

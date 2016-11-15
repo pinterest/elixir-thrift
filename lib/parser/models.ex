@@ -553,7 +553,7 @@ end
         model
       end
 
-      defp canonicalize_name(schema, %{name: name}=model) do
+      defp canonicalize_name(schema, %{name: name} = model) do
         %{model | name: :"#{schema.module}.#{name}"}
       end
     end

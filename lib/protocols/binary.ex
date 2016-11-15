@@ -101,9 +101,9 @@ defmodule Thrift.Protocols.Binary do
       defp bool_to_int(nil), do: 0
       defp bool_to_int(_), do: 1
 
-      defp to_mesage_type(:call), do: 1
-      defp to_mesage_type(:reply), do: 2
-      defp to_mesage_type(:exception), do: 3
+      defp to_message_type(:call), do: 1
+      defp to_message_type(:reply), do: 2
+      defp to_message_type(:exception), do: 3
       defp to_message_type(:oneway), do: 4
     end
   end

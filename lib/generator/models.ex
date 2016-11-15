@@ -141,7 +141,6 @@ defmodule Thrift.Generator.Models do
   defp zero(_schema, :double), do: 0.0
   defp zero(_schema, :string), do: ""
   defp zero(_schema, :binary), do: ""
-  defp zero(_schema, :slist), do: ""
   defp zero(_schema, {:map, _}), do: %{}
   defp zero(_schema, {:list, _}), do: []
   defp zero(_schema, {:set, _}), do: quote do: MapSet.new

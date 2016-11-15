@@ -10,7 +10,7 @@ struct User {
   6: double mint_gum,
   7: string username,
   8: list<User> friends,
-  9: map<i8, string> my_map,
+  9: map<byte, string> my_map,
   10: set<i32> blocked_user_ids,
   11: optional list<i32> optional_integers,
 }

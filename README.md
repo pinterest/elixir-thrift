@@ -14,7 +14,7 @@ In particular, it includes a copy of the Erlang Thrift runtime library.
 Start by adding this package to your project as a dependency:
 
 ```elixir
-{:thrift, "~> 1.3.0"}
+{:thrift, "~> 1.3"}
 ```
 
 Or to track the GitHub master branch:

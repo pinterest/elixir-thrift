@@ -52,6 +52,14 @@ defmodule Mix.Tasks.Compile.ThriftTest do
     end
   end
 
+  test "specifying a custom --gen compiler option" do
+    in_fixture fn ->
+      with_project_config [thrift_options: ~w[--gen erl:maps]], fn ->
+        assert capture_io(fn -> run([]) end) =~ "Compiled thrift/tutorial.thrift"
+      end
+    end
+  end
+
   test "specifying an empty :thrift_files list" do
     in_fixture fn ->
       with_project_config [thrift_files: []], fn ->

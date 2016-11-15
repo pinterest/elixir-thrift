@@ -80,11 +80,12 @@ defmodule Mix.Tasks.Compile.Thrift do
   end
 
   defp build_options(output_dir, user_options) do
-    opts = ~w[--out] ++ [output_dir]
-    opts = unless Enum.member?(user_options, "--gen") do
-      opts ++ ~w[--gen erl]
+    opts = if Enum.member?(user_options, "--gen") do
+      user_options
+    else
+      ~w[--gen erl] ++ user_options
     end
-    opts ++ user_options
+    opts ++ ~w[--out] ++ [output_dir]
   end
 
   defp generate(exec, options, thrift_file) do

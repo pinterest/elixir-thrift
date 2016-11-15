@@ -1,7 +1,7 @@
 defmodule Thrift.Mixfile do
   use Mix.Project
 
-  @version "1.3.0"
+  @version "1.3.1"
   @project_url "https://github.com/pinterest/elixir-thrift"
 
   def project do

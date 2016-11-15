@@ -1,6 +1,8 @@
 /_build
+/bench/snapshots
 /deps
 /doc
+/lib/generated
 /src/thrift_lexer.erl
 /src/thrift_parser.erl
 /test/fixtures/app/src

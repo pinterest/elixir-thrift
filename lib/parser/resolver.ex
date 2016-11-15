@@ -15,7 +15,7 @@ defmodule Thrift.Parser.Resolver do
     Agent.stop(__MODULE__)
   end
 
-  def add(f=%ParsedFile{}) do
+  def add(%ParsedFile{} = f) do
     Agent.update(__MODULE__, fn(state) ->
       state
       |> update(f.name, f.schema.services)
@@ -30,7 +30,7 @@ defmodule Thrift.Parser.Resolver do
     Agent.get(__MODULE__, &(&1))
   end
 
-  defp update(%{}=state, include_name, %{}=local_mappings) do
+  defp update(%{} = state, include_name, %{} = local_mappings) do
     new_mappings = local_mappings
     |> Map.new(fn {name, val} ->
       {:"#{include_name}.#{name}", Map.put(val, :name, :"#{include_name}.#{name}")}

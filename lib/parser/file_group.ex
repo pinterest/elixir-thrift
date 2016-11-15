@@ -35,7 +35,7 @@ defmodule Thrift.Parser.FileGroup do
                 schemas: new_schemas}
   end
 
-  def add_includes(group=%__MODULE__{},
+  def add_includes(%__MODULE__{} = group,
                    %ParsedFile{schema: schema, file_ref: file_ref}) do
 
     Enum.reduce(schema.includes, group, fn(include, file_group) ->
@@ -48,7 +48,7 @@ defmodule Thrift.Parser.FileGroup do
     end)
   end
 
-  def resolve(%FileGroup{}=group, %Field{type: %StructRef{}=ref}=field) do
+  def resolve(%FileGroup{} = group, %Field{type: %StructRef{} = ref} = field) do
     %Field{field | type: resolve(group, ref)}
   end
 

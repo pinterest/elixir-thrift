@@ -41,7 +41,7 @@ defmodule Thrift.Generator.BinaryProtocolTest do
     load_generated_file "#{dir}/my_struct.ex"
 
     struct = MyStruct.new
-    binary = MyStruct.serialize(:struct, struct) |> :erlang.iolist_to_binary
+    binary = MyStruct.BinaryProtocol.serialize(:struct, struct) |> :erlang.iolist_to_binary
     assert binary == <<
       # string field 1 = "asdf"
       11, 0, 1, 0, 0, 0, 4, ?a, ?s, ?d, ?f,
@@ -63,5 +63,24 @@ defmodule Thrift.Generator.BinaryProtocolTest do
 
       # stop
       0>>
+
+    assert {^struct, ""} = MyStruct.BinaryProtocol.deserialize(binary)
+  end
+
+
+  test "list of lists", %{dir: dir} do
+    File.write! "#{dir}/test.thrift", """
+      namespace elixir #{__MODULE__};
+      struct ListOfLists {
+        1: optional list<list<i32>> outer;
+      }
+      """
+    generate! "#{dir}/test.thrift", dir
+    load_generated_file "#{dir}/thrift/generator/binary_protocol_test/list_of_lists.ex"
+    alias __MODULE__.ListOfLists
+
+    struct = %{ListOfLists.new | outer: [[1, 2, 3], [4, 5, 6]]}
+    binary = ListOfLists.BinaryProtocol.serialize(:struct, struct) |> :erlang.iolist_to_binary
+    assert {^struct, ""} = ListOfLists.BinaryProtocol.deserialize(binary)
   end
 end

@@ -74,51 +74,33 @@ defmodule Thrift.Generator.Models do
   defp generate_structs(schema) do
     for {name, struct} <- schema.structs do
       full_name = namespace(schema) |> Module.concat(name)
-      {full_name, generate_struct(schema, full_name, struct)}
-    end
-  end
-
-  defp generate_struct(schema, name, struct) do
-    struct_parts = Enum.map(struct.fields, fn
-      %{name: name, default: nil, type: type} ->
-        {name, zero(schema, type)}
-      %{name: name, default: default} when not is_nil(default) ->
-        {name, default}
-    end)
-    binary_serializer = Binary.generate_serializer(name, schema.file_group, struct)
-    quote do
-      defmodule unquote(name) do
-        _ = unquote "Auto-generated Thrift struct #{struct.name}"
-        unquote_splicing(for field <- struct.fields do
-          quote do
-            _ = unquote "#{field.name} #{inspect field.type}"
-          end
-        end)
-        defstruct unquote(struct_parts)
-        def new, do: %__MODULE__{}
-        unquote(binary_serializer)
-      end
+      {full_name, generate_struct("struct", schema, full_name, struct)}
     end
   end
 
   defp generate_exceptions(schema) do
     for {name, struct} <- schema.exceptions do
       full_name = namespace(schema) |> Module.concat(name)
-      {full_name, generate_exception(schema, full_name, struct)}
+      {full_name, generate_struct("exception", schema, full_name, struct)}
     end
   end
 
-  defp generate_exception(schema, name, struct) do
+  defp generate_struct(label, schema, name, struct) do
     struct_parts = Enum.map(struct.fields, fn
       %{name: name, default: nil, type: type} ->
         {name, zero(schema, type)}
       %{name: name, default: default} when not is_nil(default) ->
         {name, default}
     end)
-    binary_serializer = Binary.generate_serializer(name, schema.file_group, struct)
+
+    binary_protocol = [
+      Thrift.Generator.Models.BinaryProtocol.struct_deserializer(struct, name, schema.file_group),
+      Binary.generate_serializer(name, schema.file_group, struct),
+    ] |> Thrift.Generator.Models.BinaryProtocol.merge_blocks
+
     quote do
       defmodule unquote(name) do
-        _ = unquote "Auto-generated Thrift exception #{struct.name}"
+        _ = unquote "Auto-generated Thrift #{label} #{struct.name}"
         unquote_splicing(for field <- struct.fields do
           quote do
             _ = unquote "#{field.name} #{inspect field.type}"
@@ -126,7 +108,9 @@ defmodule Thrift.Generator.Models do
         end)
         defstruct unquote(struct_parts)
         def new, do: %__MODULE__{}
-        unquote(binary_serializer)
+        defmodule BinaryProtocol do
+          unquote_splicing(binary_protocol)
+        end
       end
     end
   end

@@ -54,6 +54,7 @@ defmodule Thrift.Generator.ModelsTest do
         defmacro(evil) do
           32
         end
+        # ...
       end
       """
   end

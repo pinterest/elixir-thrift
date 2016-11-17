@@ -242,7 +242,7 @@ defmodule Thrift.Generator.ModelsTest do
       defmodule(OuterStruct) do
         _ = "Auto-generated Thrift struct test.OuterStruct"
         _ = "inner %Thrift.Parser.Models.StructRef{referenced_type: :InnerStruct}"
-        defstruct(inner: InnerStruct.new())
+        defstruct(inner: nil)
         # ...
       end
       """

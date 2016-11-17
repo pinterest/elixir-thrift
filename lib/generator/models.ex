@@ -150,12 +150,11 @@ defmodule Thrift.Generator.Models do
       Map.has_key?(schema.typedefs, type) ->
         zero(schema, schema.typedefs[type])
       Map.has_key?(schema.structs, type) ->
-        model_name = namespace(schema) |> Module.concat(type)
-        quote do: unquote(model_name).new
+        quote do: nil
 
       # Included references
       true ->
-        case Thrift.Parser.FileGroup.resolve(schema.file_group, ref) do
+        case FileGroup.resolve(schema.file_group, ref) do
           nil ->
             raise "Unknown type: #{inspect type}"
           thing ->

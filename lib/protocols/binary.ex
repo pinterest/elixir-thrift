@@ -35,6 +35,19 @@ defmodule Thrift.Protocols.Binary do
     TEnum,
   }
 
+  def build(file_group, struct) do
+    alias Thrift.Generator.Models.BinaryProtocol, as: Deserializer
+    name = FileGroup.dest_module(file_group, struct.name)
+
+    quote do
+      defmodule BinaryProtocol do
+        unquote(primitive_serializers)
+        unquote(generate_serializer(file_group, struct))
+        unquote(Deserializer.struct_deserializer(struct, name, file_group))
+      end
+    end
+  end
+
   def primitive_serializers do
     type_converters = for {atom_type, int_type} <- @types do
       quote do
@@ -113,24 +126,11 @@ defmodule Thrift.Protocols.Binary do
     end
   end
 
-  def build(file_group, struct) do
-    alias Thrift.Generator.Models.BinaryProtocol, as: Deserializer
-    name = FileGroup.dest_module(file_group, struct.name)
-
-    quote do
-      defmodule BinaryProtocol do
-        unquote(primitive_serializers)
-        unquote(generate_serializer(file_group, struct))
-        unquote(Deserializer.struct_deserializer(struct, name, file_group))
-      end
-    end
-  end
-
-  def generate_serializer(file_group, %Struct{}=struct) do
+  defp generate_serializer(file_group, %Struct{}=struct) do
     generate_generic_serializer(file_group, struct, :struct)
   end
 
-  def generate_serializer(file_group, %Exception{}=ex) do
+  defp generate_serializer(file_group, %Exception{}=ex) do
     generate_generic_serializer(file_group, ex, :exception)
   end
 
@@ -194,7 +194,7 @@ defmodule Thrift.Protocols.Binary do
                     composite
 
                   %TEnum{} ->
-                    :i8
+                    :i32
 
                   %Struct{} ->
                     :struct
@@ -204,7 +204,7 @@ defmodule Thrift.Protocols.Binary do
     |> build_struct_field_header(field)
   end
 
-  def build_struct_field_header(type, field) do
+  defp build_struct_field_header(type, field) do
     quote do
       <<unquote(type)::size(8), unquote(field.id)::size(16)>>
     end
@@ -216,7 +216,7 @@ defmodule Thrift.Protocols.Binary do
     end
   end
 
-  def append_struct_stop(serializers) do
+  defp append_struct_stop(serializers) do
     quoted_stop = quote do
       <<0::size(8)>>
     end
@@ -235,7 +235,7 @@ defmodule Thrift.Protocols.Binary do
       {:%{}, [], match_kw}]}
   end
 
-  def field_serializer_stanza(serializer_module, %Field{}=field) do
+  defp field_serializer_stanza(serializer_module, %Field{}=field) do
     field_var = Macro.var(field.name, Elixir)
     field_type = to_generic_type(field.type)
     quote do

@@ -35,6 +35,19 @@ defmodule Thrift.Protocols.Binary do
     TEnum,
   }
 
+  def build(file_group, struct) do
+    alias Thrift.Generator.Models.BinaryProtocol, as: Deserializer
+    name = FileGroup.dest_module(file_group, struct.name)
+
+    quote do
+      defmodule BinaryProtocol do
+        unquote(primitive_serializers)
+        unquote(generate_serializer(file_group, struct))
+        unquote(Deserializer.struct_deserializer(struct, name, file_group))
+      end
+    end
+  end
+
   def primitive_serializers do
     type_converters = for {atom_type, int_type} <- @types do
       quote do
@@ -45,6 +58,20 @@ defmodule Thrift.Protocols.Binary do
     end
 
     quote location: :keep do
+      unquote_splicing(type_converters)
+      def int_type({:map, _}), do: 13
+      def int_type({:set, _}), do: 14
+      def int_type({:list, _}), do: 15
+
+      defp bool_to_int(false), do: 0
+      defp bool_to_int(nil), do: 0
+      defp bool_to_int(_), do: 1
+
+      defp to_message_type(:call), do: 1
+      defp to_message_type(:reply), do: 2
+      defp to_message_type(:exception), do: 3
+      defp to_message_type(:oneway), do: 4
+
       def serialize(_, nil) do
         []
       end
@@ -87,7 +114,8 @@ defmodule Thrift.Protocols.Binary do
         end)
         [<<int_type(key_type)::size(8), int_type(val_type)::size(8), elem_count::32-signed>>, rest]
       end
-      def serialize(:message_begin, sequence_id, message_type, name) do
+
+      def serialize(:message_begin, {sequence_id, message_type, name}) do
         # Taken from https://erikvanoosten.github.io/thrift-missing-specification/#_message_encoding
 
         <<1::size(1), 1::size(15), 0::size(8),
@@ -95,48 +123,31 @@ defmodule Thrift.Protocols.Binary do
         0::size(5), to_message_type(message_type)::size(3),
         byte_size(name)::32-signed, sequence_id::32-signed>>
       end
-
-      unquote_splicing(type_converters)
-      def int_type({:map, _}), do: 13
-      def int_type({:set, _}), do: 14
-      def int_type({:list, _}), do: 15
-
-      defp bool_to_int(false), do: 0
-      defp bool_to_int(nil), do: 0
-      defp bool_to_int(_), do: 1
-
-      defp to_message_type(:call), do: 1
-      defp to_message_type(:reply), do: 2
-      defp to_message_type(:exception), do: 3
-      defp to_message_type(:oneway), do: 4
     end
   end
 
-  def build(file_group, dest_module) do
-    schema = file_group.schemas["simple"]
-    user_struct = schema.structs[:User]
-    generate_serializer(dest_module, file_group, user_struct)
+  defp generate_serializer(file_group, %Struct{}=struct) do
+    generate_generic_serializer(file_group, struct, :struct)
   end
 
-  def generate_serializer(generated_struct_module, file_group, %Struct{}=struct) do
-    generate_generic_serializer(generated_struct_module, file_group, struct, :struct)
+  defp generate_serializer(file_group, %Exception{}=ex) do
+    generate_generic_serializer(file_group, ex, :exception)
   end
 
-  def generate_serializer(generated_struct_module, file_group, %Exception{}=ex) do
-    generate_generic_serializer(generated_struct_module, file_group, ex, :exception)
-  end
-
-  defp generate_generic_serializer(generated_struct_module, file_group, %{fields: fields}, match_type) do
+  defp generate_generic_serializer(file_group, %{fields: fields, name: name}, match_type) do
     serializers = fields
+    |> Enum.sort_by(&(&1.id))
     |> Enum.map(&FileGroup.resolve(file_group, &1))
-    |> Enum.map(&generate_field_call(file_group, generated_struct_module, &1))
+    |> Enum.map(&generate_field_call(file_group, &1))
     |> append_struct_stop
 
+    dest_module = FileGroup.dest_module(file_group, name)
+    field_match = generate_field_match(dest_module, fields)
+
     quote do
-      def serialize(unquote(match_type), %unquote(generated_struct_module){}=value) do
+      def serialize(unquote(match_type), unquote(field_match)) do
         unquote(serializers)
       end
-      unquote(primitive_serializers)
     end
   end
 
@@ -159,23 +170,19 @@ defmodule Thrift.Protocols.Binary do
     end
   end
 
-  defp generate_field_call(_file_group, generated_struct_module, %Field{type: %Struct{}}=_field) do
-    quote do
-      unquote(generated_struct_module).BinaryProtocol.serialize(:struct, value)
-    end
+  defp generate_field_call(file_group, %Field{type: %Struct{}}=field) do
+    dest_module = file_group
+    |> FileGroup.dest_module(field.type)
+    |> Module.concat(BinaryProtocol)
+    |> field_serializer_stanza(field)
   end
 
-  defp generate_field_call(file_group, _generated_struct_module, %Field{}=field) do
+  defp generate_field_call(file_group, %Field{}=field) do
     field = FileGroup.resolve(file_group, field)
     generic_type = to_generic_type(field.type)
-    quote do
-      case value.unquote(field.name) do
-        nil ->
-          []
-        field_value ->
-          [unquote(header_for(field)), serialize(unquote(generic_type), field_value)]
-      end
-    end
+
+    self = quote do: __MODULE__
+    field_serializer_stanza(self, field)
   end
 
   def header_for(%Field{type: type}=field) do
@@ -186,15 +193,18 @@ defmodule Thrift.Protocols.Binary do
                   {composite, _} ->
                     composite
 
-                    %TEnum{} ->
-                    :i8
+                  %TEnum{} ->
+                    :i32
+
+                  %Struct{} ->
+                    :struct
                 end
     @types
     |> Map.get(type_name)
     |> build_struct_field_header(field)
   end
 
-  def build_struct_field_header(type, field) do
+  defp build_struct_field_header(type, field) do
     quote do
       <<unquote(type)::size(8), unquote(field.id)::size(16)>>
     end
@@ -206,11 +216,35 @@ defmodule Thrift.Protocols.Binary do
     end
   end
 
-  def append_struct_stop(serializers) do
+  defp append_struct_stop(serializers) do
     quoted_stop = quote do
       <<0::size(8)>>
     end
 
     serializers ++ [quoted_stop]
+  end
+
+  defp generate_field_match(dest_module, field_list) do
+    match_kw = field_list
+    |> Enum.map(fn(field) ->
+      {field.name, Macro.var(field.name, Elixir)}
+    end)
+
+    {:%, [],
+     [{:__aliases__, [alias: false], [dest_module]},
+      {:%{}, [], match_kw}]}
+  end
+
+  defp field_serializer_stanza(serializer_module, %Field{}=field) do
+    field_var = Macro.var(field.name, Elixir)
+    field_type = to_generic_type(field.type)
+    quote do
+      case unquote(field_var) do
+        nil ->
+          []
+        field_value ->
+          [unquote(header_for(field)), unquote(serializer_module).serialize(unquote(field_type), field_value)]
+      end
+    end
   end
 end

@@ -64,8 +64,8 @@ defmodule Thrift.Generator.ModelsTest do
         1: string message,
         2: required i32 count,
         3: optional string reason
-        optional string other;
-        optional string fixed = "foo"
+        4: optional string other;
+        5: optional string fixed = "foo"
       }
       """
 
@@ -242,7 +242,7 @@ defmodule Thrift.Generator.ModelsTest do
       defmodule(OuterStruct) do
         _ = "Auto-generated Thrift struct test.OuterStruct"
         _ = "inner %Thrift.Parser.Models.StructRef{referenced_type: :InnerStruct}"
-        defstruct(inner: %InnerStruct{})
+        defstruct(inner: nil)
         # ...
       end
       """

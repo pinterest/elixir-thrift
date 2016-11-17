@@ -1,5 +1,4 @@
-struct Primitives {
-}
+include "shared.thrift"
 
 struct User {
   1: bool is_evil,
@@ -13,4 +12,9 @@ struct User {
   9: map<byte, string> my_map,
   10: set<i32> blocked_user_ids,
   11: optional list<i32> optional_integers,
+}
+
+struct Nesting {
+  1: User user,
+  2: shared.SharedStruct nested
 }

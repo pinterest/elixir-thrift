@@ -63,17 +63,17 @@ defmodule Thrift.Generator.Models do
         defmacro unquote(Macro.var(macro_name, nil)), do: unquote(value)
       end
     end)
-    valid_defs = Enum.map(enum.values, fn {_key, value} ->
+    member_defs = Enum.map(enum.values, fn {_key, value} ->
       quote do
-        def valid?(unquote(value)), do: true
+        def member?(unquote(value)), do: true
       end
     end)
     quote do
       defmodule unquote(name) do
         @moduledoc unquote("Auto-generated Thrift enum #{enum.name}")
         unquote_splicing(macro_defs)
-        unquote_splicing(valid_defs)
-        def valid?(_), do: false
+        unquote_splicing(member_defs)
+        def member?(_), do: false
       end
     end
   end

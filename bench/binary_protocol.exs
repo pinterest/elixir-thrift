@@ -34,7 +34,7 @@ defmodule BinaryProtocolBenchmark do
 
   bench "erlang serialization (converted to binary)" do
     for user <- bench_context[:erlang_users] do
-      serialize_user(user)
+      serialize_user(user, convert_to_binary: true)
     end
 
     :ok
@@ -51,7 +51,7 @@ defmodule BinaryProtocolBenchmark do
 
   bench "elixir serializtion (converted to binary)" do
     for user <- bench_context[:elixir_users] do
-      serialize_user(user)
+      serialize_user(user, convert_to_binary: true)
     end
     :ok
   end

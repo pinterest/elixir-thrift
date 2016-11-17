@@ -45,6 +45,20 @@ defmodule Thrift.Protocols.Binary do
     end
 
     quote location: :keep do
+      unquote_splicing(type_converters)
+      def int_type({:map, _}), do: 13
+      def int_type({:set, _}), do: 14
+      def int_type({:list, _}), do: 15
+
+      defp bool_to_int(false), do: 0
+      defp bool_to_int(nil), do: 0
+      defp bool_to_int(_), do: 1
+
+      defp to_message_type(:call), do: 1
+      defp to_message_type(:reply), do: 2
+      defp to_message_type(:exception), do: 3
+      defp to_message_type(:oneway), do: 4
+
       def serialize(_, nil) do
         []
       end
@@ -96,20 +110,6 @@ defmodule Thrift.Protocols.Binary do
         0::size(5), to_message_type(message_type)::size(3),
         byte_size(name)::32-signed, sequence_id::32-signed>>
       end
-
-      unquote_splicing(type_converters)
-      def int_type({:map, _}), do: 13
-      def int_type({:set, _}), do: 14
-      def int_type({:list, _}), do: 15
-
-      defp bool_to_int(false), do: 0
-      defp bool_to_int(nil), do: 0
-      defp bool_to_int(_), do: 1
-
-      defp to_message_type(:call), do: 1
-      defp to_message_type(:reply), do: 2
-      defp to_message_type(:exception), do: 3
-      defp to_message_type(:oneway), do: 4
     end
   end
 

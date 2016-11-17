@@ -14,17 +14,21 @@ defmodule Thrift.Parser.FileGroup do
 
   alias Thrift.Parser.Models.{
     Field,
+    Namespace,
     StructRef,
     Schema,
+    Struct,
   }
 
   @type t :: %FileGroup{
     resolver: pid,
     initial_file: Path.t,
     parsed_files: %{FileRef.thrift_include => %ParsedFile{}},
-    schemas: %{FileRef.thrift_include => %Schema{}}}
+    schemas: %{FileRef.thrift_include => %Schema{}},
+    ns_mappings: %{atom => %Namespace{}}
+  }
 
-  defstruct resolver: nil, initial_file: nil, parsed_files: %{}, schemas: %{}, resolutions: %{}
+  defstruct resolver: nil, initial_file: nil, parsed_files: %{}, schemas: %{}, resolutions: %{}, ns_mappings: %{}
 
   def new(initial_file) do
     {:ok, resolver} = Resolver.start_link()
@@ -71,9 +75,12 @@ defmodule Thrift.Parser.FileGroup do
     |> Map.new
 
     resolutions = Map.merge(resolutions, to_update)
+    ns_mappings = build_ns_mappings(file_group.schemas)
     Resolver.stop(file_group.resolver)
 
-    %FileGroup{file_group | resolutions: resolutions}
+    %FileGroup{file_group |
+               resolutions: resolutions,
+               ns_mappings: ns_mappings}
   end
 
   def resolve(%FileGroup{} = group, %Field{type: %StructRef{} = ref} = field) do
@@ -92,4 +99,35 @@ defmodule Thrift.Parser.FileGroup do
     other
   end
 
+
+  def dest_module(file_group, %Struct{name: name}) do
+    dest_module(file_group, name)
+  end
+
+  def dest_module(file_group, name) do
+    [thrift_module, struct_name] = name
+    |> Atom.to_string
+    |> String.split(".")
+    |> Enum.map(&String.to_atom/1)
+
+    case file_group.ns_mappings[thrift_module] do
+      nil ->
+        Module.concat(Elixir, struct_name)
+      namespace = %Namespace{} ->
+        namespace.path
+        |> String.split(".")
+        |> Enum.map(&Macro.camelize/1)
+        |> Enum.join(".")
+        |> String.to_atom
+        |> Module.concat(struct_name)
+    end
+  end
+
+  defp build_ns_mappings(schemas) do
+    schemas
+    |> Enum.map(fn {module_name, %Schema{namespaces: ns}} ->
+      {String.to_atom(module_name), ns[:elixir]}
+    end)
+    |> Map.new
+  end
 end

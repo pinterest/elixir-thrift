@@ -10,10 +10,6 @@
 
 -export([struct_info/1, struct_info_ext/1, enum_info/1, enum_names/0, struct_names/0, exception_names/0]).
 
-struct_info('Primitives') ->
-  {struct, []}
-;
-
 struct_info('User') ->
   {struct, [{1, bool},
           {2, i64},
@@ -28,11 +24,12 @@ struct_info('User') ->
           {11, {list, i32}}]}
 ;
 
-struct_info(_) -> erlang:error(function_clause).
-
-struct_info_ext('Primitives') ->
-  {struct, []}
+struct_info('Nesting') ->
+  {struct, [{1, {struct, {'simple_types', 'User'}}},
+          {2, {struct, {'shared_types', 'SharedStruct'}}}]}
 ;
+
+struct_info(_) -> erlang:error(function_clause).
 
 struct_info_ext('User') ->
   {struct, [{1, undefined, bool, 'is_evil', undefined},
@@ -48,10 +45,15 @@ struct_info_ext('User') ->
           {11, optional, {list, i32}, 'optional_integers', []}]}
 ;
 
+struct_info_ext('Nesting') ->
+  {struct, [{1, undefined, {struct, {'simple_types', 'User'}}, 'user', #'User'{}},
+          {2, undefined, {struct, {'shared_types', 'SharedStruct'}}, 'nested', #'SharedStruct'{}}]}
+;
+
 struct_info_ext(_) -> erlang:error(function_clause).
 
 struct_names() ->
-  ['Primitives', 'User'].
+  ['User', 'Nesting'].
 
 enum_info(_) -> erlang:error(function_clause).
 

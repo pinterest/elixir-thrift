@@ -328,10 +328,11 @@ defmodule Thrift.Generator.Models.BinaryProtocol do
     end
   end
 
-  def list_deserializer(struct=%Struct{}, name, _file_group) do
+  def list_deserializer(struct=%Struct{}, name, file_group) do
+    dest_module = FileGroup.dest_module(file_group, struct.name)
     quote do
       defp unquote(name)(rest, [list, remaining | stack]) do
-        {element, rest} = unquote(struct.name).BinaryProtocol.deserialize(rest)
+        {element, rest} = unquote(dest_module).BinaryProtocol.deserialize(rest)
         unquote(name)(rest, [[element | list], remaining - 1 | stack])
       end
     end

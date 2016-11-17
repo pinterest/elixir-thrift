@@ -12,16 +12,34 @@ defmodule Thrift.Generator.Models do
     Enum.flat_map(file_group.schemas, fn {_, schema} ->
       schema
       |> Map.put(:file_group, file_group)
-      |> generate_schema(output_dir)
+      |> generate_schema
+      |> write_schema_to_file(output_dir)
     end)
   end
 
-  def generate_schema(schema, output_dir) do
+  def generate_to_string!(%FileGroup{}=file_group) do
+    Enum.flat_map(file_group.schemas, fn {_, schema} ->
+      schema
+      |> Map.put(:file_group, file_group)
+      |> generate_schema
+    end)
+    |> Enum.reverse
+    |> Enum.map(fn {_, code} ->
+      Macro.to_string(code)
+    end)
+    |> Enum.join("\n")
+  end
+
+  def generate_schema(schema) do
     List.flatten([
       generate_enums(schema),
       generate_structs(schema),
       generate_exceptions(schema),
     ])
+  end
+
+  defp write_schema_to_file(generated_modules, output_dir) do
+    generated_modules
     |> Enum.map(fn {name, quoted} ->
       filename = name
       |> inspect
@@ -29,7 +47,6 @@ defmodule Thrift.Generator.Models do
       |> Enum.map(&Macro.underscore/1)
       |> Path.join
       |> Kernel.<>(".ex")
-
       source = Macro.to_string(quoted)
 
       path = Path.join(output_dir, filename)
@@ -92,12 +109,7 @@ defmodule Thrift.Generator.Models do
       %{name: name, default: default} when not is_nil(default) ->
         {name, default}
     end)
-
-    binary_protocol = [
-      Thrift.Generator.Models.BinaryProtocol.struct_deserializer(struct, name, schema.file_group),
-      Binary.generate_serializer(name, schema.file_group, struct),
-    ] |> Thrift.Generator.Models.BinaryProtocol.merge_blocks
-
+    binary_protocol = Binary.build(schema.file_group, struct)
     quote do
       defmodule unquote(name) do
         _ = unquote "Auto-generated Thrift #{label} #{struct.name}"
@@ -108,9 +120,7 @@ defmodule Thrift.Generator.Models do
         end)
         defstruct unquote(struct_parts)
         def new, do: %__MODULE__{}
-        defmodule BinaryProtocol do
-          unquote_splicing(binary_protocol)
-        end
+        unquote(binary_protocol)
       end
     end
   end
@@ -129,6 +139,7 @@ defmodule Thrift.Generator.Models do
   defp zero(_schema, {:list, _}), do: []
   defp zero(_schema, {:set, _}), do: quote do: MapSet.new
   defp zero(_schema, %{values: [{_, value} | _]}), do: value
+  defp zero(_schema, %Thrift.Parser.Models.Struct{}), do: nil
 
   # Zero values for user defined types
   defp zero(schema, %{referenced_type: type}=ref) do
@@ -140,7 +151,7 @@ defmodule Thrift.Generator.Models do
         zero(schema, schema.typedefs[type])
       Map.has_key?(schema.structs, type) ->
         model_name = namespace(schema) |> Module.concat(type)
-        quote do: %unquote(model_name){}
+        quote do: unquote(model_name).new
 
       # Included references
       true ->
@@ -152,4 +163,5 @@ defmodule Thrift.Generator.Models do
         end
     end
   end
+
 end

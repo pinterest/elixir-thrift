@@ -53,4 +53,28 @@ defmodule BinaryProtocolTest do
     assert <<0>> == serialize_user(user(:elixir, optional_integers: nil))
     assert user(:erlang, optional_integers: [])  == serialize_user_to_erlang(optional_integers: [])
   end
+
+  test "serializing structs across thrift modules" do
+    erlang_nested = serialize_nesting_to_erlang(
+      user: user(:elixir, username: "esteban"),
+      nested: %Shared.SharedStruct{key: 124, value: "hi"})
+
+    assert {:Nesting, user, nested} = erlang_nested
+    assert nested == {:SharedStruct, 124, "hi"}
+    assert user == user(:erlang, username: "esteban")
+  end
+
+  test "nil nested fields get their default value" do
+    erlang_nested = serialize_nesting_to_erlang(user: user(:elixir, username: "frank"))
+
+    assert {:Nesting, user, nested} = erlang_nested
+    assert user == user(:erlang, username: "frank")
+    assert nested == {:SharedStruct, 44291, "Look at my value..."}
+
+    erlang_nested = serialize_nesting_to_erlang(nested: %Shared.SharedStruct{key: 2916, value: "my value"})
+
+    assert {:Nesting, user, nested} = erlang_nested
+    assert nested == {:SharedStruct, 2916, "my value"}
+    assert user == user(:erlang)
+  end
 end

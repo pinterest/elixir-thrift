@@ -14,6 +14,7 @@ defmodule ParserTest do
   alias Thrift.Parser.Models.Struct
   alias Thrift.Parser.Models.StructRef
   alias Thrift.Parser.Models.TEnum
+  alias Thrift.Parser.Models.TEnumValue
   alias Thrift.Parser.Models.Union
 
   import ExUnit.CaptureIO
@@ -174,6 +175,132 @@ defmodule ParserTest do
                                  type: {:list, :i32}}
   end
 
+  test "parsing an enum value constant" do
+    constant = "const string SUNNY = Weather.SUNNY;"
+    |> parse([:constants, :SUNNY])
+
+    assert constant == %Constant{
+      name: :SUNNY,
+      value: %TEnumValue{enum_name: :Weather, enum_value: :SUNNY, type: :string},
+      type: :string}
+  end
+
+  test "parsing a list constant with enum values" do
+    constant = """
+    const list<string> WEATHER_TYPES = [
+      Weather.SUNNY,
+      Weather.CLOUDY,
+      Weather.RAINY,
+      Weather.SNOWY
+    ]
+    """
+    |> parse([:constants, :WEATHER_TYPES])
+
+    assert constant == %Constant{
+      name: :WEATHER_TYPES,
+      type: {:list, :string},
+      value: [
+        %TEnumValue{enum_name: :Weather, enum_value: :SUNNY, type: :string},
+        %TEnumValue{enum_name: :Weather, enum_value: :CLOUDY, type: :string},
+        %TEnumValue{enum_name: :Weather, enum_value: :RAINY, type: :string},
+        %TEnumValue{enum_name: :Weather, enum_value: :SNOWY, type: :string},
+      ]}
+  end
+
+  test "parsing a set constant with enum values" do
+    constant = """
+    const set<string> WEATHER_TYPES = {
+      Weather.SUNNY,
+      Weather.CLOUDY,
+      Weather.RAINY,
+      Weather.SNOWY
+    }
+    """
+    |> parse([:constants, :WEATHER_TYPES])
+
+    assert constant == %Constant{
+      name: :WEATHER_TYPES,
+      type: {:set, :string},
+      value: MapSet.new([
+        %TEnumValue{enum_name: :Weather, enum_value: :SUNNY, type: :string},
+        %TEnumValue{enum_name: :Weather, enum_value: :CLOUDY, type: :string},
+        %TEnumValue{enum_name: :Weather, enum_value: :RAINY, type: :string},
+        %TEnumValue{enum_name: :Weather, enum_value: :SNOWY, type: :string},
+      ])}
+  end
+
+  test "parsing a map constant with enum keys" do
+    constant = """
+    const map<Weather, string> weather_messages = {
+      Weather.SUNNY: "Yay, it's sunny!",
+      Weather.CLOUDY: "Welcome to Cleveland!",
+      Weather.RAINY: "Welcome to Seattle!",
+      Weather.SNOWY: "Welcome to Canada!"
+    }
+    """
+    |> parse([:constants, :weather_messages])
+
+    assert constant == %Constant{
+      name: :weather_messages,
+      type: {:map, {%StructRef{referenced_type: :Weather}, :string}},
+      value: %{
+        %TEnumValue{
+          enum_name: :Weather,
+          enum_value: :CLOUDY,
+          type: %StructRef{referenced_type: :Weather}} => "Welcome to Cleveland!",
+
+        %TEnumValue{
+          enum_name: :Weather,
+          enum_value: :RAINY,
+          type: %StructRef{referenced_type: :Weather}} => "Welcome to Seattle!",
+
+        %TEnumValue{
+          enum_name: :Weather,
+          enum_value: :SNOWY,
+          type: %StructRef{referenced_type: :Weather}} => "Welcome to Canada!",
+
+        %TEnumValue{
+          enum_name: :Weather,
+          enum_value: :SUNNY,
+          type: %StructRef{referenced_type: :Weather}} => "Yay, it's sunny!"}}
+  end
+
+  test "parsing a map constant with enum values as values" do
+    constant = """
+    const map<string, Weather> clothes_to_wear = {
+      "gloves": Weather.SNOWY,
+      "umbrella": Weather.RAINY,
+      "sweater": Weather.CLOUDY,
+      "sunglasses": Weather.SUNNY
+    }
+    """
+    |> parse([:constants, :clothes_to_wear])
+
+    assert constant == %Constant{
+      name: :clothes_to_wear,
+      type: {:map, {:string, %StructRef{referenced_type: :Weather}}},
+      value: %{
+        "gloves" => %TEnumValue{
+          enum_name: :Weather,
+          enum_value: :SNOWY,
+          type: %StructRef{referenced_type: :Weather}},
+
+        "sunglasses" => %TEnumValue{
+          enum_name: :Weather,
+          enum_value: :SUNNY,
+          type: %StructRef{referenced_type: :Weather}},
+
+        "sweater" => %TEnumValue{
+          enum_name: :Weather,
+          enum_value: :CLOUDY,
+          type: %StructRef{referenced_type: :Weather}},
+
+        "umbrella" => %TEnumValue{
+          enum_name: :Weather,
+          enum_value: :RAINY,
+          type: %StructRef{referenced_type: :Weather}}}}
+  end
+
   test "parsing an enum" do
     user_status = """
     enum UserStatus {
@@ -329,6 +456,24 @@ defmodule ParserTest do
       warning = "Warning: id not set for field 'Optionals.#{field_name}'."
       assert warning in warnings
     end)
+  end
+
+  test "parsing an empty map default value" do
+    struct = """
+    struct EmptyDefault {
+      1: i64 id,
+      2: map<string, string> myMap={},
+    }
+    """
+    |> parse([:structs, :EmptyDefault])
+
+    assert struct == %Struct{
+      name: :EmptyDefault,
+      fields: [
+        %Field{default: nil, id: 1, name: :id, required: :default, type: :i64},
+        %Field{default: %{}, id: 2, name: :myMap,
+               required: :default, type: {:map, {:string, :string}}}
+      ]}
   end
 
   test "when default ids conflict with explicit ids" do

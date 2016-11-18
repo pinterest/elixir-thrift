@@ -108,6 +108,11 @@ end
       nil
     end
 
+    def cast(type, %{}=val) do
+      # this is for TEnumValues
+      %{val | type: type}
+    end
+
     def cast(:double, val) do
       val
     end
@@ -123,6 +128,12 @@ end
     def cast({:map, {key_type, val_type}}, val) do
       Enum.into(val, %{}, fn {k, v} ->
         {cast(key_type, k), cast(val_type, v)}
+      end)
+    end
+
+    def cast({:list, elem_type}, val) do
+      Enum.map(val, fn elem ->
+        cast(elem_type, elem)
       end)
     end
 
@@ -218,6 +229,29 @@ end
         end)
 
         %TEnum{name: atomify(name), values: values}
+      end
+    end
+
+    defmodule TEnumValue do
+      @moduledoc """
+      A reference to an enum value
+      For example, in a constant or default value.
+
+         const string DEFAULT_WEATHER = Weather.SUNNY;
+     """
+      @type t :: %TEnumValue{enum_name: atom, enum_value: atom, type: atom}
+      defstruct enum_name: nil, enum_value: nil, type: nil
+
+      import Thrift.Parser.Conversions
+
+      @spec new(char_list) :: %TEnumValue{}
+      def new(enum_value) do
+        [enum_name, enum_value] = enum_value
+        |> List.to_string
+        |> String.split(".")
+        |> Enum.map(&String.to_atom/1)
+
+        %TEnumValue{enum_name: enum_name, enum_value: enum_value}
       end
     end
 

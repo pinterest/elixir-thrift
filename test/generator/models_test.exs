@@ -1,5 +1,5 @@
 defmodule Thrift.Generator.ModelsTest do
-  use ThriftTestCase, cleanup: false
+  use ThriftTestCase
 
   @thrift_file name: "enums.thrift", contents: """
   enum Status {
@@ -80,7 +80,7 @@ defmodule Thrift.Generator.ModelsTest do
     assert s.num2 == 5
     assert s.b1 == false
     assert s.b2 == true
-    assert s.local_struct == %LocalStruct{}
+    assert s.local_struct == nil
     assert s.remote_struct == nil
   end
 

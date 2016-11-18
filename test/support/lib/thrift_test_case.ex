@@ -80,7 +80,7 @@ defmodule ThriftTestCase do
 
       unquote_splicing(tests)
     end
-    |> inspect_quoted
+    # |> inspect_quoted
   end
 
   defmacro thrift_test(name, do: block) do

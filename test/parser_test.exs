@@ -267,23 +267,23 @@ defmodule ParserTest do
 
   test "parsing a map constant with enum values as values" do
     constant = """
-    const map<string, Weather> clothes_to_weather = {
+    const map<string, Weather> clothes_to_wear = {
       "gloves": Weather.SNOWY,
       "umbrella": Weather.RAINY,
       "sweater": Weather.CLOUDY,
       "sunglasses": Weather.SUNNY
     }
     """
-    |> parse([:constants, :clothes_to_weather])
+    |> parse([:constants, :clothes_to_wear])
 
     assert constant == %Constant{
-      name: :clothes_to_weather,
+      name: :clothes_to_wear,
       type: {:map, {:string, %StructRef{referenced_type: :Weather}}},
       value: %{
         "gloves" => %TEnumValue{
-        enum_name: :Weather,
-        enum_value: :SNOWY,
-        type: %StructRef{referenced_type: :Weather}},
+          enum_name: :Weather,
+          enum_value: :SNOWY,
+          type: %StructRef{referenced_type: :Weather}},
 
         "sunglasses" => %TEnumValue{
           enum_name: :Weather,

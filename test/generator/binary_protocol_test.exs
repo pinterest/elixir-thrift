@@ -11,18 +11,16 @@ defmodule Thrift.Generator.BinaryProtocolTest do
     File.rm_rf!(dir)
     File.mkdir_p!(dir)
     on_exit fn ->
-      File.rm_rf!(dir)
+      # File.rm_rf!(dir)
+      :ok
     end
     {:ok, dir: dir}
   end
 
   def load_generated_file(filename) do
-    try do
-      Code.eval_file(filename)
-    rescue exception ->
-      File.read!(filename) |> IO.puts
-      flunk inspect(exception)
-    end
+    IO.puts filename
+    # File.read!(filename) |> IO.puts
+    Code.eval_file(filename)
   end
 
   test "generating struct", %{dir: dir} do

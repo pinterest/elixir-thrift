@@ -37,8 +37,8 @@ defmodule Thrift.Generator.ModelsTest do
     1: string message,
     2: required i32 count,
     3: optional string reason
-    optional string other;
-    optional string fixed = "foo"
+    4: optional string other;
+    5: optional string fixed = "foo"
   }
   """
 

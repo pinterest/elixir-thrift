@@ -11,18 +11,16 @@ defmodule Thrift.Generator.BinaryProtocolTest do
     File.rm_rf!(dir)
     File.mkdir_p!(dir)
     on_exit fn ->
-      File.rm_rf!(dir)
+      # File.rm_rf!(dir)
+      :ok
     end
     {:ok, dir: dir}
   end
 
   def load_generated_file(filename) do
-    try do
-      Code.eval_file(filename)
-    rescue exception ->
-      File.read!(filename) |> IO.puts
-      flunk inspect(exception)
-    end
+    IO.puts filename
+    # File.read!(filename) |> IO.puts
+    Code.eval_file(filename)
   end
 
   test "generating struct", %{dir: dir} do
@@ -68,19 +66,39 @@ defmodule Thrift.Generator.BinaryProtocolTest do
   end
 
 
-  test "list of lists", %{dir: dir} do
+  test "lists", %{dir: dir} do
     File.write! "#{dir}/test.thrift", """
       namespace elixir #{__MODULE__};
-      struct ListOfLists {
-        1: optional list<list<i32>> outer;
+      struct Lists {
+        1: optional list<bool> list_of_bool;
+        2: optional list<byte> list_of_byte;
+        3: optional list<double> list_of_double;
+        4: optional list<i16> list_of_i16;
+        5: optional list<i32> list_of_i32;
+        6: optional list<i64> list_of_i64;
+        7: optional list<string> list_of_string;
+        8: optional list<list<i32>> list_of_lists_of_i32;
+        9: optional list<list<list<i32>>> list_of_lists_of_lists_of_i32;
+        10: optional list<map<string, i32>> list_of_maps;
       }
       """
     generate! "#{dir}/test.thrift", dir
-    load_generated_file "#{dir}/thrift/generator/binary_protocol_test/list_of_lists.ex"
-    alias __MODULE__.ListOfLists
+    load_generated_file "#{dir}/thrift/generator/binary_protocol_test/lists.ex"
+    alias __MODULE__.Lists
 
-    struct = %{ListOfLists.new | outer: [[1, 2, 3], [4, 5, 6]]}
-    binary = ListOfLists.BinaryProtocol.serialize(:struct, struct) |> :erlang.iolist_to_binary
-    assert {^struct, ""} = ListOfLists.BinaryProtocol.deserialize(binary)
+    struct = %{Lists.new |
+      list_of_bool: [true, false, true],
+      list_of_byte: [3, 4, 5, 0],
+      list_of_double: [0.0, 1.0, 2.0],
+      list_of_i16: [4, 5, 6, 7],
+      list_of_i32: [40, 50, 60],
+      list_of_i64: [500, 600],
+      list_of_string: ["", "a", "bb", "ccc"],
+      list_of_lists_of_i32: [[], [1], [2, 3, 4]],
+      list_of_lists_of_lists_of_i32: [[], [[], [1, 2, 3]]],
+      list_of_maps: [%{"a" => 1, "b" => 2}, %{"c" => 3}],
+    }
+    binary = Lists.BinaryProtocol.serialize(:struct, struct) |> :erlang.iolist_to_binary
+    assert {^struct, ""} = Lists.BinaryProtocol.deserialize(binary)
   end
 end

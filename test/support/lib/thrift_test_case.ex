@@ -176,7 +176,7 @@ defmodule ThriftTestCase do
         end
 
         def unquote(serialize_fn_name)({unquote(underscored_record_name), unquote_splicing(match)}=record, opts \\ []) do
-          record = :erlang.setelement(1 , record, unquote(record_name))
+          record = :erlang.setelement(1, record, unquote(record_name))
           struct_info = {:struct, {unquote(erlang_module), unquote(record_name)}}
           iolist_struct = with({:ok, tf} <- :thrift_memory_buffer.new_transport_factory(),
                                {:ok, pf} <- :thrift_binary_protocol.new_protocol_factory(tf, []),

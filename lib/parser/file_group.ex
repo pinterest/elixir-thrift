@@ -83,6 +83,9 @@ defmodule Thrift.Parser.FileGroup do
                ns_mappings: ns_mappings}
   end
 
+  for type <- [:bool, :byte, :i8, :i16, :i32, :i64, :double, :string, :binary] do
+    def resolve(_, unquote(type)), do: unquote(type)
+  end
   def resolve(%FileGroup{}=group, %Field{type: %StructRef{}=ref}=field) do
     %Field{field | type: resolve(group, ref)}
   end
@@ -95,14 +98,9 @@ defmodule Thrift.Parser.FileGroup do
   def resolve(%FileGroup{}=group, %Field{type: {:map, {key_type, val_type}}}=field) do
     %Field{field | type: {:map, {resolve(group, key_type), resolve(group, val_type)}}}
   end
-
   def resolve(%FileGroup{resolutions: resolutions}, %StructRef{referenced_type: type_name}) do
     resolutions[type_name]
   end
-  for type <- [:bool, :byte, :i8, :i16, :i32, :i64, :double, :string, :binary] do
-    def resolve(_, unquote(type)), do: unquote(type)
-  end
-
   def resolve(%FileGroup{resolutions: resolutions}, path) when is_atom(path) do
     # this can resolve local mappings like :Weather or
     # remote mappings like :"common.Weather"

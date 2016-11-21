@@ -1,5 +1,6 @@
 defmodule Thrift.Generator.BinaryProtocolTest do
-  use ExUnit.Case, async: true
+  use ThriftTestCase, cleanup: false
+  # use ExUnit.Case, async: true
 
   import Thrift.Generator.Models
 
@@ -70,6 +71,9 @@ defmodule Thrift.Generator.BinaryProtocolTest do
   test "lists", %{dir: dir} do
     File.write! "#{dir}/test.thrift", """
       namespace elixir #{__MODULE__};
+      struct StructElement {
+        1: optional i32 num;
+      }
       struct Lists {
         1: optional list<bool> list_of_bool;
         2: optional list<byte> list_of_byte;
@@ -78,14 +82,18 @@ defmodule Thrift.Generator.BinaryProtocolTest do
         5: optional list<i32> list_of_i32;
         6: optional list<i64> list_of_i64;
         7: optional list<string> list_of_string;
-        8: optional list<list<i32>> list_of_lists_of_i32;
-        9: optional list<list<list<i32>>> list_of_lists_of_lists_of_i32;
-        10: optional list<map<string, i32>> list_of_maps;
+        # 8: optional list<StructElement> list_of_structs;
+        9: optional list<map<string, i32>> list_of_maps;
+        10: optional list<set<string>> list_of_sets;
+        11: optional list<list<i32>> list_of_lists_of_i32;
+        12: optional list<list<list<i32>>> list_of_lists_of_lists_of_i32;
       }
       """
     generate! "#{dir}/test.thrift", dir
     load_generated_file "#{dir}/thrift/generator/binary_protocol_test/lists.ex"
+    load_generated_file "#{dir}/thrift/generator/binary_protocol_test/struct_element.ex"
     alias __MODULE__.Lists
+    alias __MODULE__.StructElement
 
     struct = %{Lists.new |
       list_of_bool: [true, false, true],
@@ -95,9 +103,12 @@ defmodule Thrift.Generator.BinaryProtocolTest do
       list_of_i32: [40, 50, 60],
       list_of_i64: [500, 600],
       list_of_string: ["", "a", "bb", "ccc"],
+      # TODO: Support lists of structs.
+      # list_of_structs: [%{StructElement.new | num: 1}, %{StructElement.new | num: 2}],
+      list_of_maps: [%{"a" => 1, "b" => 2}, %{"c" => 3}],
+      list_of_sets: [MapSet.new(["a", "b"]), MapSet.new(["c"])],
       list_of_lists_of_i32: [[], [1], [2, 3, 4]],
       list_of_lists_of_lists_of_i32: [[], [[], [1, 2, 3]]],
-      list_of_maps: [%{"a" => 1, "b" => 2}, %{"c" => 3}],
     }
     binary = Lists.BinaryProtocol.serialize(:struct, struct) |> :erlang.iolist_to_binary
     assert {^struct, ""} = Lists.BinaryProtocol.deserialize(binary)

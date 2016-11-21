@@ -11,7 +11,20 @@ defmodule ThriftTestCase do
   end
 
   defmacro __before_compile__(env) do
-    opts = Module.get_attribute(__CALLER__.module, :thrift_test_opts)
+    tag = Module.get_attribute(__CALLER__.module, :moduletag)
+    |> Map.new(fn tag ->  {tag, true} end)
+
+    config = ExUnit.configuration
+    case ExUnit.Filters.eval(config[:include], config[:exclude], tag, []) do
+      :ok ->
+        compile_and_build_erlang_helpers(__CALLER__, env)
+      {:error, _} ->
+        nil
+    end
+  end
+
+  defp compile_and_build_erlang_helpers(caller, env) do
+    opts = Module.get_attribute(caller.module, :thrift_test_opts)
 
     namespace = inspect(env.module)
 
@@ -20,7 +33,7 @@ defmodule ThriftTestCase do
     File.mkdir_p!(dir)
 
 
-    modules = __CALLER__.module
+    modules = caller.module
     |> Module.get_attribute(:thrift_file)
     |> Enum.reverse
     |> Enum.map(fn [name: filename, contents: contents] ->
@@ -49,7 +62,7 @@ defmodule ThriftTestCase do
     end)
 
     record_requires = if opts[:gen_erl] do
-      __CALLER__.module
+      caller.module
       |> Module.get_attribute(:thrift_file)
       |> Enum.reverse
       |> generate_erlang_files(dir)
@@ -57,7 +70,7 @@ defmodule ThriftTestCase do
       []
     end
 
-    tests = __CALLER__.module
+    tests = caller.module
     |> Module.get_attribute(:thrift_test)
     |> Enum.reverse
     |> Enum.map(fn {test_name, block} ->

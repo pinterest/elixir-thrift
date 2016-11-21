@@ -1,16 +1,49 @@
 defmodule Thrift.Generator.Utils do
+  @moduledoc """
+  Collection of utilities for working with generated code.
+  """
+
+  @doc """
+  When nesting a quote with multiple defs into another quote, the defs end up
+  wrapped in blocks. Take the following code, for example.
+
+    foo_bar = quote do
+      def foo, do: 1
+      def bar, do: 2
+    end
+    quote do
+      unquote(foo_bar)
+      def baz, do: 3
+    end
+
+  This generates code like the following.
+
+    (
+      def foo, do: 1
+      def bar, do: 2
+    )
+    def baz, do: 3
+
+  Running it through merge_blocks turns it into this:
+
+    def foo, do: 1
+    def bar, do: 2
+    def baz, do: 3
+  """
   def merge_blocks([{:__block__, _, contents} | rest]) do
     merge_blocks(contents) ++ merge_blocks(rest)
   end
-
   def merge_blocks([statement | rest]) do
     [statement | merge_blocks(rest)]
   end
-
   def merge_blocks([]) do
     []
   end
 
+  @doc """
+  Sort a list of quoted def/defp function clauses by name and arity. When
+  similar clauses are not grouped together, Elixir prints a warning.
+  """
   def sort_defs(statements) do
     Enum.sort_by(statements, fn
       {:def, _, [{:when, _, [{name, _, args} | _]} | _]} ->

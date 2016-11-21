@@ -44,10 +44,10 @@ defmodule Thrift.Generator.ModelsTest do
 
   thrift_test "generating exception" do
     e = %ApplicationException{}
-    assert e.message == ""
-    assert e.count == 0
-    assert e.reason == ""
-    assert e.other == ""
+    assert e.message == nil
+    assert e.count == nil
+    assert e.reason == nil
+    assert e.other == nil
     assert e.fixed == "foo"
   end
 
@@ -75,10 +75,10 @@ defmodule Thrift.Generator.ModelsTest do
 
   thrift_test "generating struct" do
     s = %MyStruct{}
-    assert s.name == ""
-    assert s.num1 == 0
+    assert s.name == nil
+    assert s.num1 == nil
     assert s.num2 == 5
-    assert s.b1 == false
+    assert s.b1 == nil
     assert s.b2 == true
     assert s.local_struct == nil
     assert s.remote_struct == nil
@@ -98,7 +98,7 @@ defmodule Thrift.Generator.ModelsTest do
 
   thrift_test "generating typedefs" do
     s = %StructWithTypedefs{}
-    assert s.str == ""
+    assert s.str == nil
     assert s.num1 == 1
     assert s.num2 == 2
   end

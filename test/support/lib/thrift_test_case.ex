@@ -49,13 +49,12 @@ defmodule ThriftTestCase do
     end)
 
     record_requires = if opts[:gen_erl] do
-
       __CALLER__.module
       |> Module.get_attribute(:thrift_file)
       |> Enum.reverse
       |> generate_erlang_files(dir)
     else
-      nil
+      []
     end
 
     tests = __CALLER__.module

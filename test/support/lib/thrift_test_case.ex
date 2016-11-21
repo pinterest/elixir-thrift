@@ -109,7 +109,7 @@ defmodule ThriftTestCase do
     thrift_executable = System.get_env("THRIFT") || "thrift"
     erlang_source_dir = Path.join(dir, "src")
 
-    File.mkdir(erlang_source_dir)
+    File.mkdir_p!(erlang_source_dir)
 
     file_names = list_of_files
     |> Enum.map(fn file ->

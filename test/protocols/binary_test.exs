@@ -2,6 +2,8 @@ defmodule BinaryProtocolTest do
   use ThriftTestCase, gen_erl: true
   use ExUnit.Case
 
+  @moduletag :integration
+
   def round_trip_struct(data, serializer_mf, deserializer_mf) do
     {serializer_mod, serializer_fn} = serializer_mf
     {deserializer_mod, deserializer_fn} = deserializer_mf

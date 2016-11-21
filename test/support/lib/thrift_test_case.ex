@@ -106,14 +106,13 @@ defmodule ThriftTestCase do
   end
 
   defp generate_erlang_files(list_of_files, dir) do
-    thrift_executable = System.get_env("THRIFT") || "thrift"
     erlang_source_dir = Path.join(dir, "src")
 
     File.mkdir(erlang_source_dir)
 
     file_names = list_of_files
     |> Enum.map(fn file ->
-      System.cmd(thrift_executable,
+      System.cmd("thrift",
                  ["-out", erlang_source_dir,
                   "--gen", "erl", "-r", file[:name]],
                  cd: dir)

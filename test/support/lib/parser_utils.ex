@@ -81,10 +81,20 @@ defmodule ParserUtils do
       serialized
     end
   end
-
   def serialize_user(erlang_user, opts) when is_tuple(erlang_user) do
     struct_info = {:struct, {:simple_types, :User}}
     serialize_to_erlang(erlang_user, struct_info, opts)
+  end
+
+  def serialize_user2(user, opts) when is_map(user) do
+    alias User.BinaryProtocol
+    serialized = BinaryProtocol.serialize2(user)
+
+    if Keyword.get(opts, :convert_to_binary, true) do
+      IO.iodata_to_binary(serialized)
+    else
+      serialized
+    end
   end
 
   def deserialize_user(binary_data, :erlang) do

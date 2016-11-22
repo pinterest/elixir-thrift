@@ -44,8 +44,7 @@ defmodule Thrift.Protocols.Binary do
     defs = [
       primitive_serializers,
       generate_serializer(file_group, struct),
-      # Commented out due to compilation failures
-      # Deserializer.struct_deserializer(struct, name, file_group),
+      Deserializer.struct_deserializer(struct, name, file_group),
     ]
     |> Utils.merge_blocks
     |> Utils.sort_defs

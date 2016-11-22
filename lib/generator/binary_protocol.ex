@@ -134,6 +134,9 @@ defmodule Thrift.Generator.Models.BinaryProtocol do
       end
     end
   end
+  def field_deserializer(%TEnum{}, field, name, file_group) do
+    field_deserializer(:i32, field, name, file_group)
+  end
   def field_deserializer(:i64, field, name, _file_group) do
     quote do
       defp unquote(name)(<<10, unquote(field.id)::size(16), value::size(64), rest::binary>>, acc) do
@@ -209,6 +212,9 @@ defmodule Thrift.Generator.Models.BinaryProtocol do
       end
     end
   end
+  def map_key_deserializer(%TEnum{}, name, file_group) do
+    map_key_deserializer(:i32, name, file_group)
+  end
   def map_key_deserializer(:i64, name, _file_group) do
     quote do
       defp unquote(name)(<<key::size(64), rest::binary>>, stack) do
@@ -259,6 +265,9 @@ defmodule Thrift.Generator.Models.BinaryProtocol do
         unquote(name)(rest, [Map.put(map, key, value), remaining - 1 | stack])
       end
     end
+  end
+  def map_value_deserializer(%TEnum{}, name, file_group) do
+    map_value_deserializer(:i32, name, file_group)
   end
   def map_value_deserializer(:i64, name, _file_group) do
     quote do
@@ -330,6 +339,9 @@ defmodule Thrift.Generator.Models.BinaryProtocol do
         unquote(name)(rest, [[element | list], remaining - 1 | stack])
       end
     end
+  end
+  def list_deserializer(%TEnum{}, name, file_group) do
+    list_deserializer(:i32, name, file_group)
   end
   def list_deserializer(:i64, name, _file_group) do
     quote do
@@ -410,6 +422,7 @@ defmodule Thrift.Generator.Models.BinaryProtocol do
   def value_serializer(:i32,     var, _file_group), do: quote do: <<unquote(var) :: 32-signed>>
   def value_serializer(%TEnum{}, var, _file_group), do: quote do: <<unquote(var) :: 32-signed>>
   def value_serializer(:i64,     var, _file_group), do: quote do: <<unquote(var) :: 64-signed>>
+  def value_serializer(:binary,  var, _file_group), do: quote do: [<<byte_size(unquote(var)) :: size(32)>>, unquote(var)]
   def value_serializer(:string,  var, _file_group), do: quote do: [<<byte_size(unquote(var)) :: size(32)>>, unquote(var)]
   def value_serializer({:map, {key_type, val_type}}, var, file_group) do
     quote do
@@ -460,6 +473,7 @@ defmodule Thrift.Generator.Models.BinaryProtocol do
   def type_id(%TEnum{}, _file_group), do: 8
   def type_id(:i64, _file_group), do: 10
   def type_id(:string, _file_group), do: 11
+  def type_id(:binary, _file_group), do: 11
   def type_id(%Struct{}, _file_group), do: 12
   def type_id({:map, _}, _file_group), do: 13
   def type_id({:set, _}, _file_group), do: 14

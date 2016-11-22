@@ -9,7 +9,10 @@ defmodule Thrift.Generator.ModelsTest do
     EVIL = 0x20,
   }
   struct StructWithEnum {
-    1: Status status
+    1: Status status_field,
+    2: map<Status, Status> status_map,
+    3: set<Status> status_set,
+    4: list<Status> status_list,
   }
   """
 
@@ -29,7 +32,10 @@ defmodule Thrift.Generator.ModelsTest do
     assert Status.member?(7) == false
 
     struct = %StructWithEnum{}
-    assert struct.status == Status.active
+    assert struct.status_field == Status.active
+    assert struct.status_map == nil
+    assert struct.status_set == nil
+    assert struct.status_list == nil
   end
 
   @thrift_file name: "exceptions.thrift", contents: """

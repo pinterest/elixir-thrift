@@ -77,7 +77,7 @@ defmodule Thrift.Generator.Models.BinaryProtocol do
 
     field_deserializers = fields
     |> Enum.map(&field_deserializer(&1.type, &1, :deserialize, file_group))
-    |> merge_blocks
+    |> Utils.merge_blocks
 
     quote do
       def serialize2(unquote(struct_matcher)) do
@@ -622,17 +622,5 @@ defmodule Thrift.Generator.Models.BinaryProtocol do
   end
   def simplify_iolist(other) do
     other
-  end
-
-
-  def merge_blocks([{:__block__, [], a} | rest]) do
-    merge_blocks(a) ++ merge_blocks(rest)
-  end
-  def merge_blocks([a | rest]) do
-    # IO.inspect a
-    [a] ++ merge_blocks(rest)
-  end
-  def merge_blocks([]) do
-    []
   end
 end

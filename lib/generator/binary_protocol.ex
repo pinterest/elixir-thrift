@@ -79,10 +79,6 @@ defmodule Thrift.Generator.Models.BinaryProtocol do
     |> merge_blocks
 
     quote do
-      # defp bool_to_int(nil), do: 0
-      # defp bool_to_int(false), do: 0
-      # defp bool_to_int(_), do: 1
-
       def serialize2(unquote(struct_matcher)) do
         unquote([field_serializers, <<0>>] |> merge_binaries |> merge_binaries)
       end
@@ -224,6 +220,15 @@ defmodule Thrift.Generator.Models.BinaryProtocol do
     quote do
       defp unquote(name)(<<string_size::32-signed, rest::binary>>, stack) do
         <<key::binary-size(string_size), rest::binary>> = rest
+        unquote(name)(rest, key, stack)
+      end
+    end
+  end
+  def map_key_deserializer(struct=%Struct{}, name, file_group) do
+    dest_module = FileGroup.dest_module(file_group, struct)
+    quote do
+      defp unquote(name)(rest, stack) do
+        {key, rest} = unquote(dest_module).BinaryProtocol.deserialize(rest)
         unquote(name)(rest, key, stack)
       end
     end

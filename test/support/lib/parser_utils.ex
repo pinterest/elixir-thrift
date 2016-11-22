@@ -22,7 +22,8 @@ defmodule ParserUtils do
     |> Code.compile_string
   end
 
-  defp print_compiled_code(code_string) do
+  # Debugging aid. Non-private in order to mute "function is unused" warning.
+  def print_compiled_code(code_string) do
     code_string
     |> String.split("\n")
     |> Enum.with_index

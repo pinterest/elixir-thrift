@@ -38,6 +38,7 @@ defmodule Thrift.Generator.Models.BinaryProtocol do
   been generated for that struct.
   """
 
+  alias Thrift.Generator.Utils
   alias Thrift.Parser.FileGroup
   alias Thrift.Parser.Models.{
     # Exception,
@@ -69,7 +70,7 @@ defmodule Thrift.Generator.Models.BinaryProtocol do
             unquote([
               quote do <<unquote(type_id(type, file_group)), unquote(id) :: size(16)>> end,
               value_serializer(type, var, file_group)
-            ] |> merge_binaries |> simplify_iolist)
+            ] |> Utils.merge_binaries |> simplify_iolist)
         end
       end
     end)
@@ -80,7 +81,7 @@ defmodule Thrift.Generator.Models.BinaryProtocol do
 
     quote do
       def serialize2(unquote(struct_matcher)) do
-        unquote([field_serializers, <<0>>] |> merge_binaries |> merge_binaries)
+        unquote([field_serializers, <<0>>] |> Utils.merge_binaries)
       end
 
       def deserialize(binary) do
@@ -559,7 +560,7 @@ defmodule Thrift.Generator.Models.BinaryProtocol do
           unquote([
             value_serializer(key_type, Macro.var(:k, nil), file_group),
             value_serializer(val_type, Macro.var(:v, nil), file_group),
-          ] |> merge_binaries |> simplify_iolist)
+          ] |> Utils.merge_binaries |> simplify_iolist)
         end
       ]
     end
@@ -569,7 +570,7 @@ defmodule Thrift.Generator.Models.BinaryProtocol do
       [
         <<unquote(type_id(type, file_group)), MapSet.size(unquote(var)) :: size(32)>>,
         for unquote(Macro.var(:e, nil)) <- unquote(var) do
-          unquote(value_serializer(type, Macro.var(:e, nil), file_group) |> merge_binaries |> simplify_iolist)
+          unquote(value_serializer(type, Macro.var(:e, nil), file_group) |> Utils.merge_binaries |> simplify_iolist)
         end,
       ]
     end
@@ -579,7 +580,7 @@ defmodule Thrift.Generator.Models.BinaryProtocol do
       [
         <<unquote(type_id(type, file_group)), length(unquote(var)) :: size(32)>>,
         for unquote(Macro.var(:e, nil)) <- unquote(var) do
-          unquote(value_serializer(type, Macro.var(:e, nil), file_group) |> merge_binaries |> simplify_iolist)
+          unquote(value_serializer(type, Macro.var(:e, nil), file_group) |> Utils.merge_binaries |> simplify_iolist)
         end,
       ]
     end
@@ -622,24 +623,6 @@ defmodule Thrift.Generator.Models.BinaryProtocol do
   def simplify_iolist(other) do
     other
   end
-
-
-  def merge_binaries([a | rest]) when is_list(a) do
-    merge_binaries(a ++ rest)
-  end
-  def merge_binaries([a, b | rest]) when is_list(b) do
-    merge_binaries([a] ++ b ++ rest)
-  end
-  def merge_binaries([{:<<>>, [], a}, {:<<>>, [], b} | rest]) do
-    merge_binaries([{:<<>>, [], a ++ b} | rest])
-  end
-  def merge_binaries([a | rest]) do
-    [a] ++ merge_binaries(rest)
-  end
-  def merge_binaries(a) do
-    a
-  end
-
 
 
   def merge_blocks([{:__block__, [], a} | rest]) do

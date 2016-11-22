@@ -58,4 +58,25 @@ defmodule Thrift.Generator.Utils do
         nil
     end)
   end
+
+  @doc """
+  Merge the binaries in an iolist.
+
+    ["a", "b", ["c", [var]]] => ["abc", var]
+  """
+  def merge_binaries([a | rest]) when is_list(a) do
+    merge_binaries(a ++ rest)
+  end
+  def merge_binaries([a, b | rest]) when is_list(b) do
+    merge_binaries([a] ++ b ++ rest)
+  end
+  def merge_binaries([{:<<>>, [], a}, {:<<>>, [], b} | rest]) do
+    merge_binaries([{:<<>>, [], a ++ b} | rest])
+  end
+  def merge_binaries([a | rest]) do
+    [a] ++ merge_binaries(rest)
+  end
+  def merge_binaries(a) do
+    a
+  end
 end

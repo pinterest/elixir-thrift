@@ -1,5 +1,5 @@
 defmodule Thrift.Generator.BinaryProtocolTest do
-  use ThriftTestCase, cleanup: false
+  use ThriftTestCase
 
   @thrift_file name: "struct.thrift", contents: """
   struct MyStruct {

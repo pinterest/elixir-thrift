@@ -63,25 +63,35 @@ defmodule Thrift.Generator.ModelsTest do
     1: optional i32 num;
   }
   struct MyStruct {
-    1: optional string name;
-    2: optional i32 num1;
-    3: optional i32 num2 = 5;
-    4: optional bool b1;
-    5: optional bool b2 = true;
-    6: optional LocalStruct local_struct;
-    7: optional struct_includes.RemoteStruct remote_struct;
+    1: optional bool my_bool;
+    2: optional byte my_byte;
+    3: optional double my_double;
+    4: optional i8 my_i8;
+    5: optional i16 my_i16;
+    6: optional i32 my_i32;
+    7: optional i64 my_i64;
+    8: optional string my_string;
+    9: optional LocalStruct local_struct;
+    10: optional struct_includes.RemoteStruct remote_struct;
+    11: optional list<LocalStruct> local_struct_list;
+    12: optional map<LocalStruct, LocalStruct> local_struct_map;
   }
   """
 
   thrift_test "generating struct" do
     s = %MyStruct{}
-    assert s.name == nil
-    assert s.num1 == nil
-    assert s.num2 == 5
-    assert s.b1 == nil
-    assert s.b2 == true
+    assert s.my_bool == nil
+    assert s.my_byte == nil
+    assert s.my_double == nil
+    assert s.my_i8 == nil
+    assert s.my_i16 == nil
+    assert s.my_i32 == nil
+    assert s.my_i64 == nil
+    assert s.my_string == nil
     assert s.local_struct == nil
     assert s.remote_struct == nil
+    assert s.local_struct_list == nil
+    assert s.local_struct_map == nil
   end
 
   @thrift_file name: "typedefs.thrift", contents: """

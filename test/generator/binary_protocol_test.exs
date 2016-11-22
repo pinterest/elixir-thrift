@@ -113,7 +113,7 @@ defmodule Thrift.Generator.BinaryProtocolTest do
   struct Composite {
     # 1: map<map<byte, byte>, map<byte, byte>> map_of_maps;
     # 2: map<set<byte>, set<byte>> map_of_sets;
-    # 3: map<byte, list<byte>> map_of_lists;
+    3: map<list<byte>, list<byte>> map_of_lists;
     4: set<map<byte, byte>> set_of_maps;
     5: set<set<byte>> set_of_sets;
     6: set<list<byte>> set_of_lists;
@@ -124,6 +124,12 @@ defmodule Thrift.Generator.BinaryProtocolTest do
   """
 
   thrift_test "composite serialization" do
-    assert_serializes %Composite{},                              <<0>>
+    assert_serializes %Composite{},                                           <<0>>
+    assert_serializes %Composite{map_of_lists: %{}},                          <<13, 0, 3, 15, 15, 0, 0, 0, 0, 0>>
+    assert_serializes %Composite{map_of_lists: %{[91] => [92, 93]}},          <<13, 0, 3, 15, 15, 0, 0, 0, 1, 3, 0, 0, 0, 1, 91, 3, 0, 0, 0, 2, 92, 93, 0>>
+    assert_serializes %Composite{set_of_lists: MapSet.new},                   <<14, 0, 6, 15, 0, 0, 0, 0, 0>>
+    assert_serializes %Composite{set_of_lists: MapSet.new([[91], [92, 93]])}, <<14, 0, 6, 15, 0, 0, 0, 2, 3, 0, 0, 0, 1, 91, 3, 0, 0, 0, 2, 92, 93, 0>>
+    assert_serializes %Composite{list_of_lists: []},                          <<15, 0, 9, 15, 0, 0, 0, 0, 0>>
+    assert_serializes %Composite{list_of_lists: [[91], [92, 93]]},            <<15, 0, 9, 15, 0, 0, 0, 2, 3, 0, 0, 0, 1, 91, 3, 0, 0, 0, 2, 92, 93, 0>>
   end
 end

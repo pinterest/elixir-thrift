@@ -290,6 +290,18 @@ defmodule Thrift.Generator.Models.BinaryProtocol do
   #     unquote(map_value_deserializer(value_type, sub_name, file_group))
   #   end
   # end
+  def map_key_deserializer({:list, element_type}, name, file_group) do
+    sub_name = :"#{name}__key__element"
+    quote do
+      defp unquote(name)(<<unquote(type_id(element_type, file_group)), remaining::size(32), rest::binary>>, stack) do
+        unquote(sub_name)(rest, [[], remaining | stack])
+      end
+      defp unquote(sub_name)(rest, [key, 0 | stack]) do
+        unquote(name)(rest, Enum.reverse(key), stack)
+      end
+      unquote(list_deserializer(element_type, sub_name, file_group))
+    end
+  end
   def map_key_deserializer(%StructRef{referenced_type: type}, name, file_group) do
     FileGroup.resolve(file_group, type)
     |> map_key_deserializer(name, file_group)
@@ -357,7 +369,7 @@ defmodule Thrift.Generator.Models.BinaryProtocol do
       end
     end
   end
-  # def map_value_deserializer({:list, element_type}, name, file_group) do
+  # def map_value_deserializer({:map, element_type}, name, file_group) do
   #   sub_name = :"#{name}__element"
   #   quote do
   #     defp unquote(name)(<<unquote(type_id(element_type, file_group)), remaining::size(32), rest::binary>>, stack) do
@@ -370,19 +382,18 @@ defmodule Thrift.Generator.Models.BinaryProtocol do
   #     unquote(list_deserializer(element_type, sub_name, file_group))
   #   end
   # end
-  # def map_value_deserializer({:list, element_type}, name, file_group) do
-  #   sub_name = :"#{name}__element"
-  #   quote do
-  #     defp unquote(name)(<<unquote(type_id(element_type, file_group)), remaining::size(32), rest::binary>>, stack) do
-  #       unquote(sub_name)(rest, [[], remaining | stack])
-  #     end
-  #     defp unquote(sub_name)(rest, key, [value, 0, map, remaining | stack]) do
-  #       unquote(name)(rest, [Map.put(map, key, Enum.reverse(value)), remaining - 1 | stack])
-  #       # unquote(name)(rest, [[Enum.reverse(child) | parent], remaining - 1 | stack])
-  #     end
-  #     unquote(list_deserializer(element_type, sub_name, file_group))
-  #   end
-  # end
+  def map_value_deserializer({:list, element_type}, name, file_group) do
+    sub_name = :"#{name}__value__element"
+    quote do
+      defp unquote(name)(<<unquote(type_id(element_type, file_group)), remaining::size(32), rest::binary>>, key, stack) do
+        unquote(sub_name)(rest, [[], remaining, key | stack])
+      end
+      defp unquote(sub_name)(rest, [value, 0, key, map, remaining | stack]) do
+        unquote(name)(rest, [Map.put(map, key, Enum.reverse(value)), remaining - 1 | stack])
+      end
+      unquote(list_deserializer(element_type, sub_name, file_group))
+    end
+  end
   def map_value_deserializer(%StructRef{referenced_type: type}, name, file_group) do
     FileGroup.resolve(file_group, type)
     |> map_value_deserializer(name, file_group)

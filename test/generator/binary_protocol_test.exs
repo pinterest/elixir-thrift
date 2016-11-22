@@ -1,82 +1,129 @@
 defmodule Thrift.Generator.BinaryProtocolTest do
-  use ThriftTestCase
+  use ThriftTestCase, cleanup: false
 
-  @thrift_file name: "struct.thrift", contents: """
-  struct MyStruct {
-    1: optional string name = "asdf";
-    2: optional byte num8 = 8;
-    3: optional i16 num16 = 16;
-    4: optional i32 num32 = 32;
-    5: optional i64 num64 = 64;
-    6: optional bool b1;
-  }
-  """
-
-  thrift_test "generating struct" do
-    struct = %MyStruct{}
-    binary = MyStruct.BinaryProtocol.serialize(:struct, struct) |> :erlang.iolist_to_binary
-    assert binary == <<
-      # string field 1 = "asdf"
-      11, 0, 1, 0, 0, 0, 4, ?a, ?s, ?d, ?f,
-
-      # i32 field 2 = 8
-      3, 0, 2, 8,
-
-      # i32 field 3 = 16
-      6, 0, 3, 0, 16,
-
-      # i32 field 4 = 32
-      8, 0, 4, 0, 0, 0, 32,
-
-      # i64 field 5 = 64
-      10, 0, 5, 0, 0, 0, 0, 0, 0, 0, 64,
-
-      # bool field 6 = false, don't serialize default
-      # 2, 0, 6, 0,
-
-      # stop
-      0>>
-
-    assert {^struct, ""} = MyStruct.BinaryProtocol.deserialize(binary)
+  def assert_serializes(struct=%{__struct__: mod}, binary) do
+    assert ^binary = mod.serialize(struct) |> IO.iodata_to_binary
+    assert ^binary = mod.serialize(struct, :binary2) |> IO.iodata_to_binary
+    assert {^struct, ""} = mod.deserialize(binary)
   end
 
-  @thrift_file name: "lists.thrift", contents: """
-  struct StructElement {
-    1: optional i32 num;
-  }
-  struct Lists {
-    1: optional list<bool> list_of_bool;
-    2: optional list<byte> list_of_byte;
-    3: optional list<double> list_of_double;
-    4: optional list<i16> list_of_i16;
-    5: optional list<i32> list_of_i32;
-    6: optional list<i64> list_of_i64;
-    7: optional list<string> list_of_string;
-    # 8: optional list<StructElement> list_of_structs;
-    9: optional list<map<string, i32>> list_of_maps;
-    10: optional list<set<string>> list_of_sets;
-    11: optional list<list<i32>> list_of_lists_of_i32;
-    12: optional list<list<list<i32>>> list_of_lists_of_lists_of_i32;
+  def assert_serializes(struct=%{__struct__: mod}, binary, deserialized_struct=%{__struct__: mod}) do
+    assert ^binary = mod.serialize(struct) |> IO.iodata_to_binary
+    assert ^binary = mod.serialize(struct, :binary2) |> IO.iodata_to_binary
+    assert {^deserialized_struct, ""} = mod.deserialize(binary)
+  end
+
+  @thrift_file name: "bool.thrift", contents: """
+  struct Bool {
+    1: bool val;
+    2: map<bool, bool> val_map;
+    3: set<bool> val_set;
+    4: list<bool> val_list;
   }
   """
 
-  thrift_test "lists" do
-    struct = %Lists{
-      list_of_bool: [true, false, true],
-      list_of_byte: [3, 4, 5, 0],
-      list_of_double: [0.0, 1.0, 2.0],
-      list_of_i16: [4, 5, 6, 7],
-      list_of_i32: [40, 50, 60],
-      list_of_i64: [500, 600],
-      list_of_string: ["", "a", "bb", "ccc"],
-      # TODO: Support lists of structs.
-      # list_of_structs: [%{StructElement.new | num: 1}, %{StructElement.new | num: 2}],
-      list_of_maps: [%{"a" => 1, "b" => 2}, %{"c" => 3}],
-      list_of_sets: [MapSet.new(["a", "b"]), MapSet.new(["c"])],
-      list_of_lists_of_i32: [[], [1], [2, 3, 4]],
-      list_of_lists_of_lists_of_i32: [[], [[], [1, 2, 3]]],
-    }
-    binary = Lists.BinaryProtocol.serialize(:struct, struct) |> :erlang.iolist_to_binary
-    assert {^struct, ""} = Lists.BinaryProtocol.deserialize(binary)
+  thrift_test "bool serialization" do
+    assert_serializes %Bool{},                            <<0>>
+    assert_serializes %Bool{val: false},                  <<2, 0, 1, 0, 0>>
+    assert_serializes %Bool{val: true},                   <<2, 0, 1, 1, 0>>
+    assert_serializes %Bool{val_map: %{}},                <<13, 0, 2, 2, 2, 0, 0, 0, 0, 0>>
+    assert_serializes %Bool{val_map: %{false => true}},   <<13, 0, 2, 2, 2, 0, 0, 0, 1, 0, 1, 0>>
+    assert_serializes %Bool{val_set: MapSet.new},         <<14, 0, 3, 2, 0, 0, 0, 0, 0>>
+    assert_serializes %Bool{val_set: MapSet.new([true])}, <<14, 0, 3, 2, 0, 0, 0, 1, 1, 0>>
+    assert_serializes %Bool{val_list: []},                <<15, 0, 4, 2, 0, 0, 0, 0, 0>>
+    assert_serializes %Bool{val_list: [true]},            <<15, 0, 4, 2, 0, 0, 0, 1, 1, 0>>
+    assert_serializes %Bool{val_list: [true, false]},     <<15, 0, 4, 2, 0, 0, 0, 2, 1, 0, 0>>
+  end
+
+  @thrift_file name: "byte.thrift", contents: """
+  struct Byte {
+    1: byte val;
+    2: map<byte, byte> val_map;
+    3: set<byte> val_set;
+    4: list<byte> val_list;
+  }
+  """
+
+  thrift_test "byte serialization" do
+    assert_serializes %Byte{},                          <<0>>
+    assert_serializes %Byte{val: 0},                    <<3, 0, 1, 0, 0>>
+    assert_serializes %Byte{val: 1},                    <<3, 0, 1, 1, 0>>
+    assert_serializes %Byte{val: 255},                  <<3, 0, 1, 255, 0>>
+    assert_serializes %Byte{val: 256},                  <<3, 0, 1, 0, 0>>, %Byte{val: 0}
+    assert_serializes %Byte{val_map: %{}},              <<13, 0, 2, 3, 3, 0, 0, 0, 0, 0>>
+    assert_serializes %Byte{val_map: %{91 => 92}},      <<13, 0, 2, 3, 3, 0, 0, 0, 1, 91, 92, 0>>
+    assert_serializes %Byte{val_set: MapSet.new},       <<14, 0, 3, 3, 0, 0, 0, 0, 0>>
+    assert_serializes %Byte{val_set: MapSet.new([91])}, <<14, 0, 3, 3, 0, 0, 0, 1, 91, 0>>
+    assert_serializes %Byte{val_list: []},              <<15, 0, 4, 3, 0, 0, 0, 0, 0>>
+    assert_serializes %Byte{val_list: [91]},            <<15, 0, 4, 3, 0, 0, 0, 1, 91, 0>>
+    assert_serializes %Byte{val_list: [91, 92]},        <<15, 0, 4, 3, 0, 0, 0, 2, 91, 92, 0>>
+    assert_serializes %Byte{val_list: [91, 92, 93]},    <<15, 0, 4, 3, 0, 0, 0, 3, 91, 92, 93, 0>>
+  end
+
+  @thrift_file name: "i16.thrift", contents: """
+  struct I16 {
+    1: i16 val;
+    2: map<i16, i16> val_map;
+    3: set<i16> val_set;
+    4: list<i16> val_list;
+  }
+  """
+
+  thrift_test "i16 serialization" do
+    assert_serializes %I16{},                           <<0>>
+    assert_serializes %I16{val: 0},                     <<6, 0, 1, 0, 0, 0>>
+    assert_serializes %I16{val: 1},                     <<6, 0, 1, 0, 1, 0>>
+    assert_serializes %I16{val: 255},                   <<6, 0, 1, 0, 255, 0>>
+    assert_serializes %I16{val: 256},                   <<6, 0, 1, 1, 0, 0>>
+    assert_serializes %I16{val: 65535},                 <<6, 0, 1, 255, 255, 0>>
+    assert_serializes %I16{val: 65536},                 <<6, 0, 1, 0, 0, 0>>, %I16{val: 0}
+    assert_serializes %I16{val_map: %{}},               <<13, 0, 2, 6, 6, 0, 0, 0, 0, 0>>
+    assert_serializes %I16{val_map: %{91 => 92}},       <<13, 0, 2, 6, 6, 0, 0, 0, 1, 0, 91, 0, 92, 0>>
+    assert_serializes %I16{val_set: MapSet.new},        <<14, 0, 3, 6, 0, 0, 0, 0, 0>>
+    assert_serializes %I16{val_set: MapSet.new([91])},  <<14, 0, 3, 6, 0, 0, 0, 1, 0, 91, 0>>
+    assert_serializes %I16{val_list: []},               <<15, 0, 4, 6, 0, 0, 0, 0, 0>>
+    assert_serializes %I16{val_list: [91]},             <<15, 0, 4, 6, 0, 0, 0, 1, 0, 91, 0>>
+    assert_serializes %I16{val_list: [91, 92]},         <<15, 0, 4, 6, 0, 0, 0, 2, 0, 91, 0, 92, 0>>
+    assert_serializes %I16{val_list: [91, 92, 93]},     <<15, 0, 4, 6, 0, 0, 0, 3, 0, 91, 0, 92, 0, 93, 0>>
+  end
+
+  @thrift_file name: "string.thrift", contents: """
+  struct String {
+    1: string val;
+    2: map<string, string> val_map;
+    3: set<string> val_set;
+    4: list<string> val_list;
+  }
+  """
+
+  thrift_test "string serialization" do
+    assert_serializes %String{},                              <<0>>
+    assert_serializes %String{val: ""},                       <<11, 0, 1, 0, 0, 0, 0, 0>>
+    assert_serializes %String{val: "abc"},                    <<11, 0, 1, 0, 0, 0, 3, "abc", 0>>
+    assert_serializes %String{val_map: %{}},                  <<13, 0, 2, 11, 11, 0, 0, 0, 0, 0>>
+    assert_serializes %String{val_map: %{"abc" => "def"}},    <<13, 0, 2, 11, 11, 0, 0, 0, 1, 0, 0, 0, 3, "abc", 0, 0, 0, 3, "def", 0>>
+    assert_serializes %String{val_set: MapSet.new},           <<14, 0, 3, 11, 0, 0, 0, 0, 0>>
+    assert_serializes %String{val_set: MapSet.new(["abc"])},  <<14, 0, 3, 11, 0, 0, 0, 1, 0, 0, 0, 3, "abc", 0>>
+    assert_serializes %String{val_list: []},                  <<15, 0, 4, 11, 0, 0, 0, 0, 0>>
+    assert_serializes %String{val_list: ["abc"]},             <<15, 0, 4, 11, 0, 0, 0, 1, 0, 0, 0, 3, "abc", 0>>
+    assert_serializes %String{val_list: ["abc", "def"]},      <<15, 0, 4, 11, 0, 0, 0, 2, 0, 0, 0, 3, "abc", 0, 0, 0, 3, "def", 0>>
+  end
+
+  @thrift_file name: "composite.thrift", contents: """
+  struct Composite {
+    # 1: map<map<byte, byte>, map<byte, byte>> map_of_maps;
+    # 2: map<set<byte>, set<byte>> map_of_sets;
+    # 3: map<byte, list<byte>> map_of_lists;
+    4: set<map<byte, byte>> set_of_maps;
+    5: set<set<byte>> set_of_sets;
+    6: set<list<byte>> set_of_lists;
+    7: list<map<byte, byte>> list_of_maps;
+    8: list<set<byte>> list_of_sets;
+    9: list<list<byte>> list_of_lists;
+  }
+  """
+
+  thrift_test "composite serialization" do
+    assert_serializes %Composite{},                              <<0>>
   end
 end

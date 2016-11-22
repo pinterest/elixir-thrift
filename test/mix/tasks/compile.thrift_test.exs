@@ -4,9 +4,15 @@ defmodule Mix.Tasks.Compile.ThriftTest do
   import Mix.Tasks.Compile.Thrift, only: [run: 1]
   import ExUnit.CaptureIO
 
-  @fixture_project Path.expand("../../fixtures/app", __DIR__)
+  @project_root Path.expand("../../../", __DIR__)
+  @fixture_project_relative "test/fixtures/app"
+  @fixture_project Path.join(@project_root, @fixture_project_relative)
 
   setup do
+    # so that the docker-based tests will work
+    System.put_env("DOCKER_THRIFT_OUT_ROOT", @fixture_project_relative)
+    on_exit fn -> System.delete_env("DOCKER_THRIFT_OUT_ROOT") end
+
     in_fixture(fn -> File.rm_rf!("src") end)
     :ok
   end

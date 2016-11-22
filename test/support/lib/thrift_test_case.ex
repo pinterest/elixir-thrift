@@ -1,4 +1,6 @@
 defmodule ThriftTestCase do
+  @project_root Path.expand("../../../", __DIR__)
+
   defmacro __using__(opts \\ []) do
     quote do
       @thrift_test_opts unquote(opts)
@@ -28,7 +30,8 @@ defmodule ThriftTestCase do
 
     namespace = inspect(env.module)
 
-    dir = Path.join([System.tmp_dir!, inspect(__MODULE__), namespace])
+    out_root = Path.join(@project_root, "tmp")
+    dir = Path.join([out_root, inspect(__MODULE__), namespace])
     File.rm_rf!(dir)
     File.mkdir_p!(dir)
 
@@ -110,19 +113,22 @@ defmodule ThriftTestCase do
 
     File.mkdir(erlang_source_dir)
 
-    file_names = list_of_files
-    |> Enum.map(fn file ->
-      System.cmd("thrift",
-                 ["-out", erlang_source_dir,
-                  "--gen", "erl", "-r", file[:name]],
-                 cd: dir)
+    outdir = Path.relative_to(erlang_source_dir, @project_root)
+    reldir = Path.relative_to(dir, @project_root)
 
+    list_of_files
+    |> Enum.map(fn file ->
+      filename = Path.join(reldir, file[:name])
+      System.cmd(System.get_env("THRIFT") || "thrift",
+                 ["-out", outdir,
+                  "--gen", "erl", "-r", filename],
+                 cd: @project_root)
     end)
 
     Path.wildcard("#{erlang_source_dir}/*.erl")
     |> Enum.map(fn source_file ->
       {:ok, mod_name, code} = source_file
-      |> String.to_charlist
+      |> String.to_char_list
       |> :compile.file([:binary])
 
       :code.load_binary(mod_name, [], code)

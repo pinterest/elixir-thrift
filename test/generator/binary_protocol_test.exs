@@ -31,8 +31,8 @@ defmodule Thrift.Generator.BinaryProtocolTest do
       # i64 field 5 = 64
       10, 0, 5, 0, 0, 0, 0, 0, 0, 0, 64,
 
-      # bool field 6 = false
-      2, 0, 6, 0,
+      # bool field 6 = false, don't serialize default
+      # 2, 0, 6, 0,
 
       # stop
       0>>

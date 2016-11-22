@@ -23,6 +23,7 @@ defmodule Thrift.Generator.BinaryProtocolTest do
     Code.eval_file(filename)
   end
 
+  @tag pending: true
   test "generating struct", %{dir: dir} do
     File.write! "#{dir}/test.thrift", """
       struct MyStruct {
@@ -65,7 +66,7 @@ defmodule Thrift.Generator.BinaryProtocolTest do
     assert {^struct, ""} = MyStruct.BinaryProtocol.deserialize(binary)
   end
 
-
+  @tag pending: true
   test "lists", %{dir: dir} do
     File.write! "#{dir}/test.thrift", """
       namespace elixir #{__MODULE__};

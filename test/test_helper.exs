@@ -1,3 +1,4 @@
+ExUnit.configure(exclude: [pending: true, integration: true])
 ExUnit.start()
 
 

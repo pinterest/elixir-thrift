@@ -133,18 +133,18 @@ defmodule Thrift.Generator.Models do
   end
 
   # Zero values for built-in types
-  defp zero(_schema, :bool), do: false
-  defp zero(_schema, :byte), do: 0
-  defp zero(_schema, :i8), do: 0
-  defp zero(_schema, :i16), do: 0
-  defp zero(_schema, :i32), do: 0
-  defp zero(_schema, :i64), do: 0
-  defp zero(_schema, :double), do: 0.0
-  defp zero(_schema, :string), do: ""
-  defp zero(_schema, :binary), do: ""
-  defp zero(_schema, {:map, _}), do: %{}
-  defp zero(_schema, {:list, _}), do: []
-  defp zero(_schema, {:set, _}), do: quote do: MapSet.new
+  defp zero(_schema, :bool), do: nil
+  defp zero(_schema, :byte), do: nil
+  defp zero(_schema, :i8), do: nil
+  defp zero(_schema, :i16), do: nil
+  defp zero(_schema, :i32), do: nil
+  defp zero(_schema, :i64), do: nil
+  defp zero(_schema, :double), do: nil
+  defp zero(_schema, :string), do: nil
+  defp zero(_schema, :binary), do: nil
+  defp zero(_schema, {:map, _}), do: nil
+  defp zero(_schema, {:list, _}), do: nil
+  defp zero(_schema, {:set, _}), do: quote do: nil
   defp zero(_schema, %{values: [{_, value} | _]}), do: value
   defp zero(_schema, %Thrift.Parser.Models.Struct{}), do: nil
 

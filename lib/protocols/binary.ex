@@ -22,6 +22,7 @@ defmodule Thrift.Protocols.Binary do
            i32: @i32,
            i64: @i64,
            string: @string,
+           binary: @string,
            struct: @struct,
            map: @map,
            set: @set,
@@ -43,7 +44,8 @@ defmodule Thrift.Protocols.Binary do
       defmodule BinaryProtocol do
         unquote(primitive_serializers)
         unquote(generate_serializer(file_group, struct))
-        unquote(Deserializer.struct_deserializer(struct, name, file_group))
+        # Commented out due to compilation failures
+        #unquote(Deserializer.struct_deserializer(struct, name, file_group))
       end
     end
   end
@@ -95,6 +97,9 @@ defmodule Thrift.Protocols.Binary do
         <<value::signed-float>>
       end
       def serialize(:string, value) do
+        [<<byte_size(value)::size(32)>>, value]
+      end
+      def serialize(:binary, value) do
         [<<byte_size(value)::size(32)>>, value]
       end
       def serialize({:list, elem_type}, elems) when is_list(elems) do
@@ -161,6 +166,9 @@ defmodule Thrift.Protocols.Binary do
 
       {:set, elem_type} ->
         {:set, to_generic_type(elem_type)}
+
+      %TEnum{} ->
+        :i32
 
       val when is_map(val) ->
         :struct

@@ -128,6 +128,21 @@ defmodule Thrift.Generator.Models do
         defstruct unquote(struct_parts)
         def new, do: %__MODULE__{}
         unquote(binary_protocol)
+        def serialize(struct) do
+          BinaryProtocol.serialize(:struct, struct)
+        end
+        def serialize(struct, :binary) do
+          BinaryProtocol.serialize(:struct, struct)
+        end
+        def serialize(struct, :binary2) do
+          BinaryProtocol.serialize2(struct)
+        end
+        def serialize(struct, :compact) do
+          CompactProtocol.serialize(:struct, struct)
+        end
+        def deserialize(binary) do
+          BinaryProtocol.deserialize(binary)
+        end
       end
     end
   end

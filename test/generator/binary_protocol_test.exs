@@ -2,14 +2,14 @@ defmodule Thrift.Generator.BinaryProtocolTest do
   use ThriftTestCase
 
   def assert_serializes(struct=%{__struct__: mod}, binary) do
-    assert ^binary = mod.serialize(struct) |> IO.iodata_to_binary
-    assert ^binary = mod.serialize(struct, :binary2) |> IO.iodata_to_binary
+    # assert ^binary = mod.serialize(struct) |> IO.iodata_to_binary
+    assert binary == mod.serialize(struct, :binary2) |> IO.iodata_to_binary
     assert {^struct, ""} = mod.deserialize(binary)
   end
 
   def assert_serializes(struct=%{__struct__: mod}, binary, deserialized_struct=%{__struct__: mod}) do
-    assert ^binary = mod.serialize(struct) |> IO.iodata_to_binary
-    assert ^binary = mod.serialize(struct, :binary2) |> IO.iodata_to_binary
+    # assert ^binary = mod.serialize(struct) |> IO.iodata_to_binary
+    assert binary == mod.serialize(struct, :binary2) |> IO.iodata_to_binary
     assert {^deserialized_struct, ""} = mod.deserialize(binary)
   end
 
@@ -107,6 +107,32 @@ defmodule Thrift.Generator.BinaryProtocolTest do
     assert_serializes %String{val_list: []},                  <<15, 0, 4, 11, 0, 0, 0, 0, 0>>
     assert_serializes %String{val_list: ["abc"]},             <<15, 0, 4, 11, 0, 0, 0, 1, 0, 0, 0, 3, "abc", 0>>
     assert_serializes %String{val_list: ["abc", "def"]},      <<15, 0, 4, 11, 0, 0, 0, 2, 0, 0, 0, 3, "abc", 0, 0, 0, 3, "def", 0>>
+  end
+
+  @thrift_file name: "struct.thrift", contents: """
+  struct Val {
+    99: byte num;
+  }
+  struct Struct {
+    1: Val val;
+    2: map<Val, Val> val_map;
+    3: set<Val> val_set;
+    4: list<Val> val_list;
+  }
+  """
+
+  thrift_test "struct serialization" do
+    assert_serializes %Struct{},                                      <<0>>
+    assert_serializes %Struct{val: %Val{}},                           <<12, 0, 1, 0, 0>>
+    assert_serializes %Struct{val: %Val{num: 91}},                    <<12, 0, 1, 3, 0, 99, 91, 0, 0>>
+    assert_serializes %Struct{val_map: %{}},                          <<13, 0, 2, 12, 12, 0, 0, 0, 0, 0>>
+    assert_serializes %Struct{val_map: %{%Val{num: 91} => %Val{num: 92}}},
+                                                                      <<13, 0, 2, 12, 12, 0, 0, 0, 1, 3, 0, 99, 91, 0, 3, 0, 99, 92, 0, 0>>
+    assert_serializes %Struct{val_set: MapSet.new},                   <<14, 0, 3, 12, 0, 0, 0, 0, 0>>
+    assert_serializes %Struct{val_set: MapSet.new([%Val{num: 91}])},  <<14, 0, 3, 12, 0, 0, 0, 1, 3, 0, 99, 91, 0, 0>>
+    assert_serializes %Struct{val_list: []},                          <<15, 0, 4, 12, 0, 0, 0, 0, 0>>
+    assert_serializes %Struct{val_list: [%Val{num: 91}]},             <<15, 0, 4, 12, 0, 0, 0, 1, 3, 0, 99, 91, 0, 0>>
+    # assert_serializes %Struct{val_list: ["abc", "def"]},      <<15, 0, 4, 11, 0, 0, 0, 2, 0, 0, 0, 3, "abc", 0, 0, 0, 3, "def", 0>>
   end
 
   @thrift_file name: "composite.thrift", contents: """

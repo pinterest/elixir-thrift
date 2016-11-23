@@ -588,7 +588,7 @@ defmodule Thrift.Generator.Models.BinaryProtocol do
   def value_serializer(struct=%Struct{name: _name}, var, file_group) do
     dest_module = FileGroup.dest_module(file_group, struct)
     quote do
-      unquote(dest_module).BinaryProtocol.serialize(unquote(var))
+      unquote(dest_module).serialize(unquote(var))
     end
   end
   def value_serializer(%StructRef{referenced_type: type}, var, file_group) do

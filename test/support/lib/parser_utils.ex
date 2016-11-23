@@ -92,7 +92,7 @@ defmodule ParserUtils do
 
   def serialize_user2(user, opts) when is_map(user) do
     alias User.BinaryProtocol
-    serialized = BinaryProtocol.serialize2(user)
+    serialized = BinaryProtocol.serialize(user)
 
     if Keyword.get(opts, :convert_to_binary, true) do
       IO.iodata_to_binary(serialized)

@@ -129,13 +129,10 @@ defmodule Thrift.Generator.Models do
         def new, do: %__MODULE__{}
         unquote(binary_protocol)
         def serialize(struct) do
-          BinaryProtocol.serialize(:struct, struct)
+          BinaryProtocol.serialize(struct)
         end
         def serialize(struct, :binary) do
-          BinaryProtocol.serialize(:struct, struct)
-        end
-        def serialize(struct, :binary2) do
-          BinaryProtocol.serialize2(struct)
+          BinaryProtocol.serialize(struct)
         end
         def serialize(struct, :compact) do
           CompactProtocol.serialize(:struct, struct)

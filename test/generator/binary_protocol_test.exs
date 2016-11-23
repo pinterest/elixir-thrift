@@ -1,5 +1,5 @@
 defmodule Thrift.Generator.BinaryProtocolTest do
-  use ThriftTestCase, cleanup: false
+  use ThriftTestCase
 
   def assert_serializes(struct=%{__struct__: mod}, binary) do
     assert ^binary = mod.serialize(struct) |> IO.iodata_to_binary

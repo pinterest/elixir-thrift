@@ -36,7 +36,6 @@ defmodule ParserUtils do
 
   def user(type, opts \\ [])
   def user(:erlang, opts) do
-
     is_evil = Keyword.get(opts, :is_evil, :undefined)
     user_id = Keyword.get(opts, :user_id, :undefined)
     number_of_hairs_on_head = Keyword.get(opts, :number_of_hairs_on_head, :undefined)
@@ -46,14 +45,16 @@ defmodule ParserUtils do
     username = Keyword.get(opts, :username, :undefined)
     friends = Keyword.get(opts, :friends, :undefined)
     my_map = Keyword.get(opts, :my_map, :undefined)
-    blocked_user_ids = Keyword.get(opts, :blocked_user_ids, :undefined)
+    blocked_user_ids = case Keyword.get(opts, :blocked_user_ids) do
+      nil -> :undefined
+      list when is_list(list) -> :sets.from_list(list)
+    end
     optional_integers = Keyword.get(opts, :optional_integers, :undefined)
 
     {:User, is_evil, user_id, number_of_hairs_on_head,
      amount_of_red, nineties_era_color, mint_gum, username,
      friends, my_map, blocked_user_ids, optional_integers}
   end
-
   def user(:elixir, opts) do
     %{__struct__: User,
       is_evil: Keyword.get(opts, :is_evil),
@@ -64,7 +65,10 @@ defmodule ParserUtils do
       mint_gum: Keyword.get(opts, :mint_gum),
       friends: Keyword.get(opts, :friends),
       my_map: Keyword.get(opts, :my_map),
-      blocked_user_ids: Keyword.get(opts, :blocked_user_ids),
+      blocked_user_ids: case Keyword.get(opts, :blocked_user_ids) do
+        nil -> nil
+        list when is_list(list) -> MapSet.new(list)
+      end,
       username: Keyword.get(opts, :username),
       optional_integers: Keyword.get(opts, :optional_integers)
      }
@@ -81,10 +85,24 @@ defmodule ParserUtils do
       serialized
     end
   end
-
   def serialize_user(erlang_user, opts) when is_tuple(erlang_user) do
     struct_info = {:struct, {:simple_types, :User}}
     serialize_to_erlang(erlang_user, struct_info, opts)
+  end
+
+  def serialize_user2(user, opts) when is_map(user) do
+    alias User.BinaryProtocol
+    serialized = BinaryProtocol.serialize2(user)
+
+    if Keyword.get(opts, :convert_to_binary, true) do
+      IO.iodata_to_binary(serialized)
+    else
+      serialized
+    end
+  end
+
+  def deserialize_user(binary_data, :elixir) do
+    {%User{}, ""} = User.BinaryProtocol.deserialize(binary_data)
   end
 
   def deserialize_user(binary_data, :erlang) do

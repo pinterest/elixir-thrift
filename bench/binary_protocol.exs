@@ -14,12 +14,19 @@ defmodule BinaryProtocolBenchmark do
   end
 
   before_each_bench _ do
-    user_options = [username: "esteban",
-                    is_evil: true,
-                    number_of_hairs_on_head: 26482,
-                    amount_of_red: 382,
-                    mint_gum: 28.282
-                   ]
+    user_options = [
+      is_evil: true,
+      user_id: 1234567,
+      number_of_hairs_on_head: 26482,
+      amount_of_red: 182,
+      nineties_era_color: 24345,
+      mint_gum: 28.282,
+      username: "esteban",
+      friends: [],
+      # # my_map: %{1 => "abc", 2 => "def", 3 => "asldfkjlasdkjf"},
+      # blocked_user_ids: [2234, 2345, 654365, 4356, 3456, 1234, 234, 2345, 3456, 4567],
+      optional_integers: [2234, 2345, 654365, 4356, 3456, 1234, 234, 2345, 3456, 4567],
+    ]
 
     erlang_users = for _ <- 1..1000 do
       user(:erlang, user_options)
@@ -29,14 +36,21 @@ defmodule BinaryProtocolBenchmark do
       user(:elixir, user_options)
     end
 
-    {:ok, elixir_users: elixir_users, erlang_users: erlang_users}
+    user_binary = user(:elixir, user_options)
+    |> serialize_user(convert_to_binary: true)
+
+    context = [
+      elixir_users: elixir_users,
+      erlang_users: erlang_users,
+      user_binary: user_binary,
+    ]
+    {:ok, context}
   end
 
   bench "erlang serialization (converted to binary)" do
     for user <- bench_context[:erlang_users] do
       serialize_user(user, convert_to_binary: true)
     end
-
     :ok
   end
 
@@ -44,21 +58,47 @@ defmodule BinaryProtocolBenchmark do
     for user <- bench_context[:erlang_users] do
       serialize_user(user, convert_to_binary: false)
     end
-
     :ok
   end
 
-
-  bench "elixir serializtion (converted to binary)" do
+  bench "elixir serialization (converted to binary)" do
     for user <- bench_context[:elixir_users] do
       serialize_user(user, convert_to_binary: true)
     end
     :ok
   end
 
-  bench "elixir serializtion (left as IOList)" do
+  bench "elixir serialization (left as IOList)" do
     for user <- bench_context[:elixir_users] do
       serialize_user(user, convert_to_binary: false)
+    end
+    :ok
+  end
+
+  bench "elixir serialization2 (converted to binary)" do
+    for user <- bench_context[:elixir_users] do
+      serialize_user2(user, convert_to_binary: true)
+    end
+    :ok
+  end
+
+  bench "elixir serialization2 (left as IOList)" do
+    for user <- bench_context[:elixir_users] do
+      serialize_user2(user, convert_to_binary: false)
+    end
+    :ok
+  end
+
+  bench "erlang deserialization" do
+    for _ <- 1..1000 do
+      deserialize_user(bench_context[:user_binary], :erlang)
+    end
+    :ok
+  end
+
+  bench "elixir deserialization" do
+    for _ <- 1..1000 do
+      deserialize_user(bench_context[:user_binary], :elixir)
     end
     :ok
   end

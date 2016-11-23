@@ -64,12 +64,12 @@ defmodule Thrift.Generator.Models.BinaryProtocol do
       quote do
         case unquote(var) do
           nil ->
-            []
+            <<>>
           _ ->
             unquote([
               quote do <<unquote(type_id(type, file_group)), unquote(id) :: size(16)>> end,
               value_serializer(type, var, file_group)
-            ] |> merge_binaries)
+            ] |> merge_binaries |> simplify_iolist)
         end
       end
     end)
@@ -434,20 +434,27 @@ defmodule Thrift.Generator.Models.BinaryProtocol do
           unquote([
             value_serializer(key_type, Macro.var(:k, nil), file_group),
             value_serializer(val_type, Macro.var(:v, nil), file_group),
-          ] |> merge_binaries)
+          ] |> merge_binaries |> simplify_iolist)
         end
       ]
     end
   end
   def value_serializer({:set, type}, var, file_group) do
-    value_serializer({:list, type}, var, file_group)
+    quote do
+      [
+        <<unquote(type_id(type, file_group)), MapSet.size(unquote(var)) :: size(32)>>,
+        for unquote(Macro.var(:e, nil)) <- unquote(var) do
+          unquote(value_serializer(type, Macro.var(:e, nil), file_group) |> merge_binaries |> simplify_iolist)
+        end,
+      ]
+    end
   end
   def value_serializer({:list, type}, var, file_group) do
     quote do
       [
         <<unquote(type_id(type, file_group)), length(unquote(var)) :: size(32)>>,
         for unquote(Macro.var(:e, nil)) <- unquote(var) do
-          unquote(value_serializer(type, Macro.var(:e, nil), file_group) |> merge_binaries)
+          unquote(value_serializer(type, Macro.var(:e, nil), file_group) |> merge_binaries |> simplify_iolist)
         end,
       ]
     end
@@ -481,6 +488,14 @@ defmodule Thrift.Generator.Models.BinaryProtocol do
   def type_id(%StructRef{referenced_type: type}, file_group) do
     FileGroup.resolve(file_group, type)
     |> type_id(file_group)
+  end
+
+
+  def simplify_iolist([{:<<>>, _, _}=binary]) do
+    binary
+  end
+  def simplify_iolist(other) do
+    other
   end
 
 

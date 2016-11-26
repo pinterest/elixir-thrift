@@ -8,7 +8,7 @@ defmodule BinaryProtocolTest do
     {serializer_mod, serializer_fn} = serializer_mf
     {deserializer_mod, deserializer_fn} = deserializer_mf
 
-    serialized = :erlang.apply(serializer_mod, serializer_fn, [:struct, data])
+    serialized = :erlang.apply(serializer_mod, serializer_fn, [data, :binary])
     |> IO.iodata_to_binary
 
     :erlang.apply(deserializer_mod, deserializer_fn, [serialized])
@@ -27,7 +27,7 @@ defmodule BinaryProtocolTest do
   }
   """
   thrift_test "encoding enums" do
-    encoder = {StructWithEnum.BinaryProtocol, :serialize}
+    encoder = {StructWithEnum, :serialize}
     decoder = {Erlang.Enums, :deserialize_struct_with_enum}
 
     assert {:StructWithEnum, 1} == round_trip_struct(StructWithEnum.new, encoder, decoder)
@@ -56,7 +56,7 @@ defmodule BinaryProtocolTest do
   """
 
   thrift_test "it should be able to encode scalar values" do
-    encoder = {Scalars.BinaryProtocol, :serialize}
+    encoder = {Scalars, :serialize}
     decoder = {Erlang.Scalars, :deserialize_scalars}
 
     assert Erlang.Scalars.new_scalars(is_true: true) == round_trip_struct(%Scalars{is_true: true}, encoder, decoder)
@@ -77,7 +77,7 @@ defmodule BinaryProtocolTest do
   end
 
   thrift_test "it should not encode unset fields" do
-    encoded =  Scalars.BinaryProtocol.serialize(:struct, %Scalars{})
+    encoded =  Scalars.serialize(%Scalars{})
     |> IO.iodata_to_binary
 
     assert <<0>> == encoded
@@ -109,7 +109,7 @@ defmodule BinaryProtocolTest do
   """
 
   thrift_test "containers serialize properly" do
-    encoder = {Containers.BinaryProtocol, :serialize}
+    encoder = {Containers, :serialize}
     decoder = {Erlang.Containers, :deserialize_containers}
 
     # unset containers become undefined
@@ -155,7 +155,7 @@ defmodule BinaryProtocolTest do
   """
 
   thrift_test "serializing structs across modules" do
-    encoder = {User.BinaryProtocol, :serialize}
+    encoder = {User, :serialize}
     decoder = {Erlang.Across, :deserialize_user}
 
     erl_user = Erlang.Across.new_user(

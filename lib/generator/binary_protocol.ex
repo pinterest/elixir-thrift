@@ -80,9 +80,12 @@ defmodule Thrift.Generator.Models.BinaryProtocol do
     |> Utils.merge_blocks
 
     quote do
-      def serialize2(unquote(struct_matcher)) do
+      def serialize(unquote(struct_matcher)) do
         unquote([field_serializers, <<0>>] |> Utils.merge_binaries)
       end
+      def bool_to_int(false), do: 0
+      def bool_to_int(nil), do: 0
+      def bool_to_int(_), do: 1
 
       def deserialize(binary) do
         deserialize(binary, %unquote(name){})

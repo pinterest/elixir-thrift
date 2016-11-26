@@ -1,15 +1,15 @@
 defmodule Thrift.Generator.BinaryProtocolTest do
   use ThriftTestCase
 
+  alias Thrift.Protocols.Binary
+
   def assert_serializes(struct=%{__struct__: mod}, binary) do
-    # assert ^binary = mod.serialize(struct) |> IO.iodata_to_binary
-    assert binary == mod.serialize(struct, :binary2) |> IO.iodata_to_binary
+    assert binary == Binary.serialize(:struct, struct) |> IO.iodata_to_binary
     assert {^struct, ""} = mod.deserialize(binary)
   end
 
   def assert_serializes(struct=%{__struct__: mod}, binary, deserialized_struct=%{__struct__: mod}) do
-    # assert ^binary = mod.serialize(struct) |> IO.iodata_to_binary
-    assert binary == mod.serialize(struct, :binary2) |> IO.iodata_to_binary
+    assert binary == Binary.serialize(:struct, struct) |> IO.iodata_to_binary
     assert {^deserialized_struct, ""} = mod.deserialize(binary)
   end
 

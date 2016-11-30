@@ -36,9 +36,6 @@ defmodule Thrift.Generator.StructGenerator do
         def serialize(struct, :binary) do
           BinaryProtocol.serialize(struct)
         end
-        def serialize(struct, :compact) do
-          CompactProtocol.serialize(:struct, struct)
-        end
         def deserialize(binary) do
           BinaryProtocol.deserialize(binary)
         end

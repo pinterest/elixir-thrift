@@ -60,22 +60,21 @@ defmodule Thrift.Generator do
 
   defp generate_enum_modules(schema) do
     for {_, enum} <- schema.enums do
-      full_name = FileGroup.dest_module(schema.file_group, enum.name)
-      # full_name = namespace(schema) |> Module.concat(name)
+      full_name = FileGroup.dest_module(schema.file_group, enum)
       {full_name, EnumGenerator.generate(full_name, enum)}
     end
   end
 
   defp generate_struct_modules(schema) do
     for {_, struct} <- schema.structs do
-      full_name = FileGroup.dest_module(schema.file_group, struct.name)
+      full_name = FileGroup.dest_module(schema.file_group, struct)
       {full_name, StructGenerator.generate("struct", schema, full_name, struct)}
     end
   end
 
   defp generate_exception_modules(schema) do
     for {_, exception} <- schema.exceptions do
-      full_name = FileGroup.dest_module(schema.file_group, exception.name)
+      full_name = FileGroup.dest_module(schema.file_group, exception)
       {full_name, StructGenerator.generate("exception", schema, full_name, exception)}
     end
   end

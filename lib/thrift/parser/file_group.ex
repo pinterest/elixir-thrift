@@ -13,6 +13,7 @@ defmodule Thrift.Parser.FileGroup do
   }
 
   alias Thrift.Parser.Models.{
+    TEnum,
     Exception,
     Field,
     Namespace,
@@ -116,6 +117,10 @@ defmodule Thrift.Parser.FileGroup do
   end
 
   def dest_module(file_group, %Exception{name: name}) do
+    dest_module(file_group, name)
+  end
+
+  def dest_module(file_group, %TEnum{name: name}) do
     dest_module(file_group, name)
   end
 

@@ -44,7 +44,7 @@ defmodule ThriftTestCase do
       File.write!(filename, "namespace elixir #{namespace}\n" <> contents)
       filename
     end)
-    |> Enum.flat_map(&Thrift.Generator.Models.generate!(&1, dir))
+    |> Enum.flat_map(&Thrift.Generator.generate!(&1, dir))
     |> Enum.uniq
     |> Enum.map(fn output_file ->
       output_file

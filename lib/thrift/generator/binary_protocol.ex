@@ -1,4 +1,4 @@
-defmodule Thrift.Generator.Models.BinaryProtocol do
+defmodule Thrift.Generator.BinaryProtocol do
   @moduledoc """
   This module implements code generation of binary protocol deserialization.
 
@@ -47,6 +47,22 @@ defmodule Thrift.Generator.Models.BinaryProtocol do
     StructRef,
     TEnum,
   }
+
+  def build(file_group, struct) do
+    name = FileGroup.dest_module(file_group, struct.name)
+
+    defs = [
+      struct_deserializer(struct, name, file_group),
+    ]
+    |> Utils.merge_blocks
+    |> Utils.sort_defs
+
+    quote do
+      defmodule BinaryProtocol do
+        unquote_splicing(defs)
+      end
+    end
+  end
 
   @doc """
   Generate a deserializer for a Thrift struct or exception.

@@ -18,7 +18,7 @@ defmodule ParserUtils do
   end
 
   def compile_module(file_group) do
-    Thrift.Generator.Models.generate_to_string!(file_group)
+    Thrift.Generator.generate_to_string!(file_group)
     |> Code.compile_string
   end
 

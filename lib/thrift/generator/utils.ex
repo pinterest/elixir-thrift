@@ -79,4 +79,11 @@ defmodule Thrift.Generator.Utils do
   def merge_binaries(a) do
     a
   end
+
+  def simplify_iolist([{:<<>>, _, _}=binary]) do
+    binary
+  end
+  def simplify_iolist(other) do
+    other
+  end
 end

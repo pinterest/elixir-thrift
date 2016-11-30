@@ -83,14 +83,10 @@ defmodule Thrift.Parser.FileGroup do
                ns_mappings: ns_mappings}
   end
 
-<<<<<<< HEAD
-  def resolve(%FileGroup{} = group, %Field{type: %StructRef{} = ref} = field) do
-=======
   for type <- [:bool, :byte, :i8, :i16, :i32, :i64, :double, :string, :binary] do
     def resolve(_, unquote(type)), do: unquote(type)
   end
-  def resolve(%FileGroup{}=group, %Field{type: %StructRef{}=ref}=field) do
->>>>>>> Added full thrift testing framework (#45)
+  def resolve(%FileGroup{} = group, %Field{type: %StructRef{} = ref} = field) do
     %Field{field | type: resolve(group, ref)}
   end
   def resolve(%FileGroup{}=group, %Field{type: {:list, elem_type}}=field) do

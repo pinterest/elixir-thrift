@@ -11,8 +11,9 @@ defmodule Thrift.Mixfile do
      deps: deps,
 
      # Build Environment
-     erlc_paths: ["src", "ext/thrift/lib/erl/src"],
+     erlc_paths: erlc_paths(Mix.env),
      erlc_include_path: "ext/thrift/lib/erl/include",
+     elixirc_paths: elixirc_paths(Mix.env),
      compilers: [:leex, :yecc, :erlang, :elixir, :app],
 
      # Testing
@@ -36,12 +37,29 @@ defmodule Thrift.Mixfile do
      []
   end
 
+  defp erlc_paths(:prod) do
+    ["src", "ext/thrift/lib/erl/src"]
+  end
+
+  defp erlc_paths(_) do
+    erlc_paths(:prod) ++ ["test/support/src"]
+  end
+
+  defp elixirc_paths(:prod) do
+    ["lib"]
+  end
+
+  defp elixirc_paths(_) do
+    elixirc_paths(:prod) ++ ["test/support/lib"]
+  end
+
   defp deps do
      [{:ex_doc, "~> 0.14.3", only: :dev},
       {:earmark, "~> 1.0.2", only: :dev},
       {:excoveralls, "~> 0.5.7", only: :test},
       {:credo, "~> 0.5.2", only: [:dev, :test]},
-      {:dialyxir, "~> 0.4.0", only: [:dev, :test]}
+      {:dialyxir, "~> 0.4.0", only: [:dev, :test]},
+      {:benchfella, "~> 0.3.0", only: [:dev, :test]}
      ]
   end
 

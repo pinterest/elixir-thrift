@@ -30,13 +30,6 @@ defmodule Thrift.Protocols.Binary do
            list: @list
           }
 
-  alias Thrift.Parser.Models.{
-    Exception,
-    Field,
-    Struct,
-    TEnum,
-  }
-
   def build(file_group, struct) do
     alias Thrift.Generator.Models.BinaryProtocol, as: Deserializer
     name = FileGroup.dest_module(file_group, struct.name)

@@ -1,5 +1,6 @@
 defmodule Thrift.Generator.StructGenerator do
-  alias Thrift.Generator.BinaryProtocol
+  alias Thrift.Generator.StructBinaryProtocol
+  alias Thrift.Generator.Utils
   alias Thrift.Parser.FileGroup
 
   def generate(label, schema, name, struct) do
@@ -9,7 +10,13 @@ defmodule Thrift.Generator.StructGenerator do
       %{name: name, default: default} when not is_nil(default) ->
         {name, default}
     end)
-    binary_protocol = BinaryProtocol.build(schema.file_group, struct)
+
+    binary_protocol_defs = [
+      StructBinaryProtocol.struct_deserializer(struct, name, schema.file_group),
+    ]
+    |> Utils.merge_blocks
+    |> Utils.sort_defs
+
     quote do
       defmodule unquote(name) do
         _ = unquote "Auto-generated Thrift #{label} #{struct.name}"
@@ -20,7 +27,9 @@ defmodule Thrift.Generator.StructGenerator do
         end)
         defstruct unquote(struct_parts)
         def new, do: %__MODULE__{}
-        unquote(binary_protocol)
+        defmodule BinaryProtocol do
+          unquote_splicing(binary_protocol_defs)
+        end
         def serialize(struct) do
           BinaryProtocol.serialize(struct)
         end

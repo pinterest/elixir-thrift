@@ -2,12 +2,10 @@ defmodule BinaryProtocolBenchmark do
   use Benchfella
 
   @thrift_file_path "./test/fixtures/app/thrift/simple.thrift"
-  alias Thrift.Parser
-  alias Thrift.Protocols.Binary
   import ParserUtils
 
   setup_all do
-    file_group = parse_thrift(@thrift_file_path)
+    parse_thrift(@thrift_file_path)
     |> compile_module
 
     {:ok, :ok}
@@ -37,7 +35,7 @@ defmodule BinaryProtocolBenchmark do
     end
 
     user_binary = user(:elixir, user_options)
-    |> serialize_user(convert_to_binary: true)
+    |> serialize_user_elixir(convert_to_binary: true)
 
     context = [
       elixir_users: elixir_users,
@@ -49,56 +47,50 @@ defmodule BinaryProtocolBenchmark do
 
   bench "erlang serialization (converted to binary)" do
     for user <- bench_context[:erlang_users] do
-      serialize_user(user, convert_to_binary: true)
+      serialize_user_erlang(user, convert_to_binary: true)
     end
     :ok
   end
 
   bench "erlang serialization left as IOList" do
     for user <- bench_context[:erlang_users] do
-      serialize_user(user, convert_to_binary: false)
+      serialize_user_erlang(user, convert_to_binary: false)
+    end
+    :ok
+  end
+
+  bench "elixir serialization (iolist_size)" do
+    for user <- bench_context[:elixir_users] do
+      serialize_user_elixir(user, convert_to_binary: false)
+      |> :erlang.iolist_size
     end
     :ok
   end
 
   bench "elixir serialization (converted to binary)" do
     for user <- bench_context[:elixir_users] do
-      serialize_user(user, convert_to_binary: true)
+      serialize_user_elixir(user, convert_to_binary: true)
     end
     :ok
   end
 
   bench "elixir serialization (left as IOList)" do
     for user <- bench_context[:elixir_users] do
-      serialize_user(user, convert_to_binary: false)
-    end
-    :ok
-  end
-
-  bench "elixir serialization2 (converted to binary)" do
-    for user <- bench_context[:elixir_users] do
-      serialize_user2(user, convert_to_binary: true)
-    end
-    :ok
-  end
-
-  bench "elixir serialization2 (left as IOList)" do
-    for user <- bench_context[:elixir_users] do
-      serialize_user2(user, convert_to_binary: false)
+      serialize_user_elixir(user, convert_to_binary: false)
     end
     :ok
   end
 
   bench "erlang deserialization" do
     for _ <- 1..1000 do
-      deserialize_user(bench_context[:user_binary], :erlang)
+      deserialize_user_erlang(bench_context[:user_binary])
     end
     :ok
   end
 
   bench "elixir deserialization" do
     for _ <- 1..1000 do
-      deserialize_user(bench_context[:user_binary], :elixir)
+      deserialize_user_elixir(bench_context[:user_binary])
     end
     :ok
   end

@@ -74,25 +74,12 @@ defmodule ParserUtils do
      }
   end
 
-  def serialize_user(user, opts \\ [])
-  def serialize_user(user, opts) when is_map(user) do
-    alias User.BinaryProtocol
-    serialized = BinaryProtocol.serialize(:struct, user)
-
-    if Keyword.get(opts, :convert_to_binary, true) do
-      IO.iodata_to_binary(serialized)
-    else
-      serialized
-    end
-  end
-  def serialize_user(erlang_user, opts) when is_tuple(erlang_user) do
+  def serialize_user_erlang(user, opts \\ []) do
     struct_info = {:struct, {:simple_types, :User}}
-    serialize_to_erlang(erlang_user, struct_info, opts)
+    serialize_to_erlang(user, struct_info, opts)
   end
-
-  def serialize_user2(user, opts) when is_map(user) do
-    alias User.BinaryProtocol
-    serialized = BinaryProtocol.serialize(user)
+  def serialize_user_elixir(user, opts \\ []) do
+    serialized = User.BinaryProtocol.serialize(user)
 
     if Keyword.get(opts, :convert_to_binary, true) do
       IO.iodata_to_binary(serialized)
@@ -101,19 +88,13 @@ defmodule ParserUtils do
     end
   end
 
-  def deserialize_user(binary_data, :elixir) do
+  def deserialize_user_elixir(binary_data) do
     {%User{}, ""} = User.BinaryProtocol.deserialize(binary_data)
   end
 
-  def deserialize_user(binary_data, :erlang) do
+  def deserialize_user_erlang(binary_data) do
     struct_definition = {:struct, {:simple_types, :User}}
     deserialize_to_erlang(binary_data, struct_definition)
-  end
-
-  def serialize_user_to_erlang(opts) do
-    user(:elixir, opts)
-    |> serialize_user
-    |> deserialize_user(:erlang)
   end
 
   def shared_struct(:elixir, opts \\ []) do

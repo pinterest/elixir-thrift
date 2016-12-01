@@ -31,7 +31,7 @@ defmodule Thrift.Generator.EnumGenerator do
         unquote_splicing(macro_defs)
 
         unquote_splicing(ordinal_defs)
-        def ordinal(_), do: :"!!INVALID"
+        def ordinal(_), do: nil
 
         def ordinals, do: unquote(ordinals)
 

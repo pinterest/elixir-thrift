@@ -35,7 +35,7 @@ defmodule Thrift.Generator.ModelsTest do
     assert Status.ordinal(2) == :inactive
     assert Status.ordinal(6) == :banned
     assert Status.ordinal(32) == :evil
-    assert Status.ordinal(65536) == :"!!INVALID"
+    assert Status.ordinal(65536) == nil
 
     assert Status.ordinals == [:active, :inactive, :banned, :evil]
 

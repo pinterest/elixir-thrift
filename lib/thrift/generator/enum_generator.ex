@@ -2,7 +2,7 @@ defmodule Thrift.Generator.EnumGenerator do
 
   def generate(name, enum) do
     macro_defs = Enum.map(enum.values, fn {key, value} ->
-      macro_name = to_ordinal(key)
+      macro_name = to_name(key)
       quote do
         defmacro unquote(Macro.var(macro_name, nil)), do: unquote(value)
       end
@@ -14,26 +14,35 @@ defmodule Thrift.Generator.EnumGenerator do
       end
     end)
 
-    ordinal_defs = Enum.map(enum.values, fn {key, value} ->
-      ordinal_name = to_ordinal(key)
+    value_to_name_defs = Enum.map(enum.values, fn {key, value} ->
+      enum_name = to_name(key)
       quote do
-        def ordinal(unquote(value)), do: unquote(ordinal_name)
+        def value_to_name(unquote(value)), do: {:ok, unquote(enum_name)}
       end
     end)
 
-    ordinals = enum.values
+    bang_value_to_name_defs = Enum.map(enum.values, fn {key, value} ->
+      enum_name = to_name(key)
+      quote do
+        def value_to_name!(unquote(value)), do: unquote(enum_name)
+      end
+    end)
+
+    names = enum.values
     |> Keyword.keys
-    |> Enum.map(&to_ordinal/1)
+    |> Enum.map(&to_name/1)
 
     quote do
       defmodule unquote(name) do
         @moduledoc unquote("Auto-generated Thrift enum #{enum.name}")
         unquote_splicing(macro_defs)
 
-        unquote_splicing(ordinal_defs)
-        def ordinal(_), do: nil
+        unquote_splicing(value_to_name_defs)
+        def value_to_name(_), do: {:error, :invalid_enum_value}
 
-        def ordinals, do: unquote(ordinals)
+        unquote_splicing(bang_value_to_name_defs)
+
+        def names, do: unquote(names)
 
         unquote_splicing(member_defs)
         def member?(_), do: false
@@ -41,7 +50,7 @@ defmodule Thrift.Generator.EnumGenerator do
     end
   end
 
-  defp to_ordinal(key) do
+  defp to_name(key) do
     key |> to_string |> String.downcase |> String.to_atom
   end
 end

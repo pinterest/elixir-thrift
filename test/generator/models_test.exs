@@ -31,13 +31,19 @@ defmodule Thrift.Generator.ModelsTest do
     assert Status.member?(6) == true
     assert Status.member?(7) == false
 
-    assert Status.ordinal(1) == :active
-    assert Status.ordinal(2) == :inactive
-    assert Status.ordinal(6) == :banned
-    assert Status.ordinal(32) == :evil
-    assert Status.ordinal(65536) == nil
+    assert Status.value_to_name(1) == {:ok, :active}
+    assert Status.value_to_name(2) == {:ok, :inactive}
+    assert Status.value_to_name(6) == {:ok, :banned}
+    assert Status.value_to_name(32) == {:ok, :evil}
+    assert Status.value_to_name(65536) == {:error, :invalid_enum_value}
 
-    assert Status.ordinals == [:active, :inactive, :banned, :evil]
+    assert Status.value_to_name!(1) == :active
+    assert Status.value_to_name!(2) == :inactive
+    assert Status.value_to_name!(6) == :banned
+    assert Status.value_to_name!(32) == :evil
+    assert_raise FunctionClauseError, fn -> Status.value_to_name!(38210) end
+
+    assert Status.names == [:active, :inactive, :banned, :evil]
 
     struct = %StructWithEnum{}
     assert struct.status_field == Status.active

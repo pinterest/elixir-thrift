@@ -31,6 +31,14 @@ defmodule Thrift.Generator.ModelsTest do
     assert Status.member?(6) == true
     assert Status.member?(7) == false
 
+    assert Status.ordinal(1) == :active
+    assert Status.ordinal(2) == :inactive
+    assert Status.ordinal(6) == :banned
+    assert Status.ordinal(32) == :evil
+    assert Status.ordinal(65536) == :"!!INVALID"
+
+    assert Status.ordinals == [:active, :inactive, :banned, :evil]
+
     struct = %StructWithEnum{}
     assert struct.status_field == Status.active
     assert struct.status_map == nil

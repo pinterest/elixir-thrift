@@ -21,13 +21,6 @@ defmodule Thrift.Generator.EnumGenerator do
       end
     end)
 
-    bang_value_to_name_defs = Enum.map(enum.values, fn {key, value} ->
-      enum_name = to_name(key)
-      quote do
-        def value_to_name!(unquote(value)), do: unquote(enum_name)
-      end
-    end)
-
     names = enum.values
     |> Keyword.keys
     |> Enum.map(&to_name/1)
@@ -38,9 +31,12 @@ defmodule Thrift.Generator.EnumGenerator do
         unquote_splicing(macro_defs)
 
         unquote_splicing(value_to_name_defs)
-        def value_to_name(_), do: {:error, :invalid_enum_value}
+        def value_to_name(v), do: {:error, {:invalid_enum_value, v}}
 
-        unquote_splicing(bang_value_to_name_defs)
+        def value_to_name!(value) do
+          {:ok, name} = value_to_name(value)
+          name
+        end
 
         def names, do: unquote(names)
 

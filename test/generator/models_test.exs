@@ -35,13 +35,13 @@ defmodule Thrift.Generator.ModelsTest do
     assert Status.value_to_name(2) == {:ok, :inactive}
     assert Status.value_to_name(6) == {:ok, :banned}
     assert Status.value_to_name(32) == {:ok, :evil}
-    assert Status.value_to_name(65536) == {:error, :invalid_enum_value}
+    assert Status.value_to_name(65536) == {:error, {:invalid_enum_value, 65536}}
 
     assert Status.value_to_name!(1) == :active
     assert Status.value_to_name!(2) == :inactive
     assert Status.value_to_name!(6) == :banned
     assert Status.value_to_name!(32) == :evil
-    assert_raise FunctionClauseError, fn -> Status.value_to_name!(38210) end
+    assert_raise MatchError, fn -> Status.value_to_name!(38210) end
 
     assert Status.names == [:active, :inactive, :banned, :evil]
 

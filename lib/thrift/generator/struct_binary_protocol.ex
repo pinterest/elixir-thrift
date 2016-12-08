@@ -48,6 +48,19 @@ defmodule Thrift.Generator.StructBinaryProtocol do
     TEnum,
   }
 
+  @bool 2
+  @byte 3
+  @double 4
+  @i16 6
+  @i32 8
+  @i64 10
+  @string 11
+  @struct 12
+  @map 13
+  @set 14
+  @list 15
+
+
   @doc """
   Generate a deserializer for a Thrift struct or exception.
 
@@ -93,16 +106,88 @@ defmodule Thrift.Generator.StructBinaryProtocol do
       defp deserialize(<<0, rest::binary>>, acc=%unquote(name){}) do
         {acc, rest}
       end
+
       unquote_splicing(field_deserializers)
+
+      defp deserialize(<<field_type, _id::16-signed, rest::binary>>, acc) do
+        # this is for unknown fields. This can happen if you have an
+        # outdated schema
+        rest
+        |> skip_field(field_type)
+        |> deserialize(acc)
+      end
+
+      unquote(field_skippers)
+    end
+  end
+
+  def field_skippers do
+
+    quote do
+      defp skip_field(<<_value, rest::binary>>, unquote(@bool)), do: rest
+      defp skip_field(<<_value, rest::binary>>, unquote(@byte)), do: rest
+      defp skip_field(<<_::signed-float, rest::binary>>, unquote(@double)), do: rest
+      defp skip_field(<<_::size(16), rest::binary>>, unquote(@i16)), do: rest
+      defp skip_field(<<_::size(32), rest::binary>>, unquote(@i32)), do: rest
+      defp skip_field(<<_::size(64), rest::binary>>, unquote(@i64)), do: rest
+      defp skip_field(<<string_size::32-signed, rest::binary>>, unquote(@string)) do
+        << _::binary-size(string_size), remainder::binary>> = rest
+        remainder
+      end
+
+      # sets and lists
+      defp skip_field(<<elem_type, length::size(32), rest::binary>>, field_type)
+        when field_type == unquote(@set) or field_type == unquote(@list) do
+        skip_list_field(rest, elem_type, length)
+      end
+
+      defp skip_list_field(<<rest::binary>>, _, 0) do
+        rest
+      end
+      defp skip_list_field(<<rest::binary>>, elem_type, remaining) do
+        rest
+        |> skip_field(elem_type)
+        |> skip_list_field(elem_type, remaining - 1)
+      end
+
+      # maps
+      defp skip_field(<<key_type, val_type, length::size(32), rest::binary>>, unquote(@map)) do
+        skip_map_field(rest, key_type, val_type, length)
+      end
+
+      defp skip_map_field(<<rest::binary>>, _, _, 0) do
+        rest
+      end
+      defp skip_map_field(<<rest::binary>>, key_type, val_type, remaining) do
+        rest
+        |> skip_field(key_type)
+        |> skip_field(val_type)
+        |> skip_map_field(key_type, val_type, remaining - 1)
+      end
+
+      defp skip_field(<<rest::binary>>, unquote(@struct)) do
+        skip_struct(rest)
+      end
+
+      defp skip_struct(<<type, _id::16-signed, rest::binary>>) do
+        case skip_field(rest, type) do
+          <<0::size(8), rest::binary>> ->
+            # we have a struct stop
+            rest
+
+          remaining_fields when is_binary(remaining_fields) ->
+            skip_struct(remaining_fields)
+        end
+      end
     end
   end
 
   def field_deserializer(:bool, field, name, _file_group) do
     quote do
-      defp unquote(name)(<<2, unquote(field.id)::size(16), 1, rest::binary>>, acc) do
+      defp unquote(name)(<<unquote(@bool), unquote(field.id)::size(16), 1, rest::binary>>, acc) do
         unquote(name)(rest, %{acc | unquote(field.name) => true})
       end
-      defp unquote(name)(<<2, unquote(field.id)::size(16), 0, rest::binary>>, acc) do
+      defp unquote(name)(<<unquote(@bool), unquote(field.id)::size(16), 0, rest::binary>>, acc) do
         unquote(name)(rest, %{acc | unquote(field.name) => false})
       end
     end
@@ -112,28 +197,28 @@ defmodule Thrift.Generator.StructBinaryProtocol do
   end
   def field_deserializer(:i8, field, name, _file_group) do
     quote do
-      defp unquote(name)(<<3, unquote(field.id)::size(16), value, rest::binary>>, acc) do
+      defp unquote(name)(<<unquote(@byte), unquote(field.id)::size(16), value, rest::binary>>, acc) do
         unquote(name)(rest, %{acc | unquote(field.name) => value})
       end
     end
   end
   def field_deserializer(:double, field, name, _file_group) do
     quote do
-      defp unquote(name)(<<4, unquote(field.id)::size(16), value::signed-float, rest::binary>>, acc) do
+      defp unquote(name)(<<unquote(@double), unquote(field.id)::size(16), value::signed-float, rest::binary>>, acc) do
         unquote(name)(rest, %{acc | unquote(field.name) => value})
       end
     end
   end
   def field_deserializer(:i16, field, name, _file_group) do
     quote do
-      defp unquote(name)(<<6, unquote(field.id)::size(16), value::size(16), rest::binary>>, acc) do
+      defp unquote(name)(<<unquote(@i16), unquote(field.id)::size(16), value::size(16), rest::binary>>, acc) do
         unquote(name)(rest, %{acc | unquote(field.name) => value})
       end
     end
   end
   def field_deserializer(:i32, field, name, _file_group) do
     quote do
-      defp unquote(name)(<<8, unquote(field.id)::size(16), value::size(32), rest::binary>>, acc) do
+      defp unquote(name)(<<unquote(@i32), unquote(field.id)::size(16), value::size(32), rest::binary>>, acc) do
         unquote(name)(rest, %{acc | unquote(field.name) => value})
       end
     end
@@ -143,7 +228,7 @@ defmodule Thrift.Generator.StructBinaryProtocol do
   end
   def field_deserializer(:i64, field, name, _file_group) do
     quote do
-      defp unquote(name)(<<10, unquote(field.id)::size(16), value::size(64), rest::binary>>, acc) do
+      defp unquote(name)(<<unquote(@i64), unquote(field.id)::size(16), value::size(64), rest::binary>>, acc) do
         unquote(name)(rest, %{acc | unquote(field.name) => value})
       end
     end
@@ -153,7 +238,7 @@ defmodule Thrift.Generator.StructBinaryProtocol do
   end
   def field_deserializer(:string, field, name, _file_group) do
     quote do
-      defp unquote(name)(<<11, unquote(field.id)::16-signed, string_size::32-signed, rest::binary>>, acc) do
+      defp unquote(name)(<<unquote(@string), unquote(field.id)::16-signed, string_size::32-signed, rest::binary>>, acc) do
         <<value::binary-size(string_size), rest::binary>> = rest
         unquote(name)(rest, %{acc | unquote(field.name) => value})
       end
@@ -162,7 +247,7 @@ defmodule Thrift.Generator.StructBinaryProtocol do
   def field_deserializer(struct=%Struct{}, field, name, file_group) do
     dest_module = FileGroup.dest_module(file_group, struct)
     quote do
-      defp unquote(name)(<<12, unquote(field.id)::16-signed, rest::binary>>, acc) do
+      defp unquote(name)(<<unquote(@struct), unquote(field.id)::16-signed, rest::binary>>, acc) do
         {value, rest} = unquote(dest_module).BinaryProtocol.deserialize(rest)
         unquote(name)(rest, %{acc | unquote(field.name) => value})
       end
@@ -172,7 +257,7 @@ defmodule Thrift.Generator.StructBinaryProtocol do
     key_name = :"#{name}__#{field.name}__key"
     value_name = :"#{name}__#{field.name}__value"
     quote do
-      defp unquote(name)(<<13,
+      defp unquote(name)(<<unquote(@map),
                            unquote(field.id)::size(16),
                            unquote(type_id(key_type, file_group)),
                            unquote(type_id(value_type, file_group)),
@@ -190,7 +275,7 @@ defmodule Thrift.Generator.StructBinaryProtocol do
   def field_deserializer({:set, element_type}, field, name, file_group) do
     sub_name = :"#{name}__#{field.name}"
     quote do
-      defp unquote(name)(<<14, unquote(field.id)::size(16), unquote(type_id(element_type, file_group)), remaining::size(32), rest::binary>>, struct) do
+      defp unquote(name)(<<unquote(@set), unquote(field.id)::size(16), unquote(type_id(element_type, file_group)), remaining::size(32), rest::binary>>, struct) do
         unquote(sub_name)(rest, [[], remaining, struct])
       end
       defp unquote(sub_name)(<<rest::binary>>, [list, 0, struct]) do
@@ -202,7 +287,7 @@ defmodule Thrift.Generator.StructBinaryProtocol do
   def field_deserializer({:list, element_type}, field, name, file_group) do
     sub_name = :"#{name}__#{field.name}"
     quote do
-      defp unquote(name)(<<15, unquote(field.id)::size(16), unquote(type_id(element_type, file_group)), remaining::size(32), rest::binary>>, struct) do
+      defp unquote(name)(<<unquote(@list), unquote(field.id)::size(16), unquote(type_id(element_type, file_group)), remaining::size(32), rest::binary>>, struct) do
         unquote(sub_name)(rest, [[], remaining, struct])
       end
       defp unquote(sub_name)(<<rest::binary>>, [list, 0, struct]) do

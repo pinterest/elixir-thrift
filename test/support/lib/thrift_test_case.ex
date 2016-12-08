@@ -180,7 +180,12 @@ defmodule ThriftTestCase do
           :erlang.setelement(1, record, unquote(record_name))
         end
 
-        def unquote(serialize_fn_name)({unquote(underscored_record_name), unquote_splicing(match)}=record, opts \\ []) do
+        def unquote(serialize_fn_name)(record, opts \\ [])
+        def unquote(serialize_fn_name)({unquote(record_name), unquote_splicing(match)}=record, opts) do
+          :erlang.setelement(1, record, unquote(underscored_record_name))
+          |> unquote(serialize_fn_name)(opts)
+        end
+        def unquote(serialize_fn_name)({unquote(underscored_record_name), unquote_splicing(match)}=record, opts) do
           record = :erlang.setelement(1, record, unquote(record_name))
           struct_info = {:struct, {unquote(erlang_module), unquote(record_name)}}
           iolist_struct = with({:ok, tf} <- :thrift_memory_buffer.new_transport_factory(),

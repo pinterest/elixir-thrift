@@ -60,28 +60,6 @@ defmodule Thrift.Generator.BinaryProtocolTest do
     assert_serializes %Byte{val_list: [91, 92, 93]},    <<15, 0, 4, 3, 0, 0, 0, 3, 91, 92, 93, 0>>
   end
 
-  @thrift_file name: "double.thrift", contents: """
-  struct Double {
-    1: double val;
-    2: map<double, double> val_map;
-    3: set<double> val_set;
-    4: list<double> val_list;
-  }
-  """
-
-  thrift_test "double serialization" do
-    assert_serializes %Double{},                            <<0>>
-    assert_serializes %Double{val: 0.0},                    <<4, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0>>
-    assert_serializes %Double{val: 1.0},                    <<4, 0, 1, 1::signed-float, 0>>
-    assert_serializes %Double{val: 255.0},                  <<4, 0, 1, 255::signed-float, 0>>
-    assert_serializes %Double{val_map: %{}},                <<13, 0, 2, 4, 4, 0, 0, 0, 0, 0>>
-    assert_serializes %Double{val_map: %{91.0 => 92.0}},    <<13, 0, 2, 4, 4, 0, 0, 0, 1, 91::signed-float, 92::signed-float, 0>>
-    assert_serializes %Double{val_set: MapSet.new},         <<14, 0, 3, 4, 0, 0, 0, 0, 0>>
-    assert_serializes %Double{val_set: MapSet.new([91.0])}, <<14, 0, 3, 4, 0, 0, 0, 1, 91::signed-float, 0>>
-    assert_serializes %Double{val_list: []},                <<15, 0, 4, 4, 0, 0, 0, 0, 0>>
-    assert_serializes %Double{val_list: [91.0]},            <<15, 0, 4, 4, 0, 0, 0, 1, 91::signed-float, 0>>
-  end
-
   @thrift_file name: "i16.thrift", contents: """
   struct I16 {
     1: i16 val;
@@ -107,56 +85,6 @@ defmodule Thrift.Generator.BinaryProtocolTest do
     assert_serializes %I16{val_list: [91]},             <<15, 0, 4, 6, 0, 0, 0, 1, 0, 91, 0>>
     assert_serializes %I16{val_list: [91, 92]},         <<15, 0, 4, 6, 0, 0, 0, 2, 0, 91, 0, 92, 0>>
     assert_serializes %I16{val_list: [91, 92, 93]},     <<15, 0, 4, 6, 0, 0, 0, 3, 0, 91, 0, 92, 0, 93, 0>>
-  end
-
-  @thrift_file name: "i32.thrift", contents: """
-  struct I32 {
-    1: i32 val;
-    2: map<i32, i32> val_map;
-    3: set<i32> val_set;
-    4: list<i32> val_list;
-  }
-  """
-
-  thrift_test "i32 serialization" do
-    assert_serializes %I32{},                           <<0>>
-    assert_serializes %I32{val: 0},                     <<8, 0, 1, 0, 0, 0, 0, 0>>
-    assert_serializes %I32{val: 1},                     <<8, 0, 1, 0, 0, 0, 1, 0>>
-    assert_serializes %I32{val: 255},                   <<8, 0, 1, 0, 0, 0, 255, 0>>
-    assert_serializes %I32{val: 256},                   <<8, 0, 1, 0, 0, 1, 0, 0>>
-    assert_serializes %I32{val: 65535},                 <<8, 0, 1, 0, 0, 255, 255, 0>>
-    assert_serializes %I32{val_map: %{}},               <<13, 0, 2, 8, 8, 0, 0, 0, 0, 0>>
-    assert_serializes %I32{val_map: %{91 => 92}},       <<13, 0, 2, 8, 8, 0, 0, 0, 1, 0, 0, 0, 91, 0, 0, 0, 92, 0>>
-    assert_serializes %I32{val_set: MapSet.new},        <<14, 0, 3, 8, 0, 0, 0, 0, 0>>
-    assert_serializes %I32{val_set: MapSet.new([91])},  <<14, 0, 3, 8, 0, 0, 0, 1, 0, 0, 0, 91, 0>>
-    assert_serializes %I32{val_list: []},               <<15, 0, 4, 8, 0, 0, 0, 0, 0>>
-    assert_serializes %I32{val_list: [91]},             <<15, 0, 4, 8, 0, 0, 0, 1, 0, 0, 0, 91, 0>>
-    assert_serializes %I32{val_list: [91, 92]},         <<15, 0, 4, 8, 0, 0, 0, 2, 0, 0, 0, 91, 0, 0, 0, 92, 0>>
-  end
-
-  @thrift_file name: "i64.thrift", contents: """
-  struct I64 {
-    1: i64 val;
-    2: map<i64, i64> val_map;
-    3: set<i64> val_set;
-    4: list<i64> val_list;
-  }
-  """
-
-  thrift_test "i64 serialization" do
-    assert_serializes %I64{},                           <<0>>
-    assert_serializes %I64{val: 0},                     <<10, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0>>
-    assert_serializes %I64{val: 1},                     <<10, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0>>
-    assert_serializes %I64{val: 255},                   <<10, 0, 1, 0, 0, 0, 0, 0, 0, 0, 255, 0>>
-    assert_serializes %I64{val: 256},                   <<10, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0>>
-    assert_serializes %I64{val: 65535},                 <<10, 0, 1, 0, 0, 0, 0, 0, 0, 255, 255, 0>>
-    assert_serializes %I64{val_map: %{}},               <<13, 0, 2, 10, 10, 0, 0, 0, 0, 0>>
-    assert_serializes %I64{val_map: %{91 => 92}},       <<13, 0, 2, 10, 10, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 91, 0, 0, 0, 0, 0, 0, 0, 92, 0>>
-    assert_serializes %I64{val_set: MapSet.new},        <<14, 0, 3, 10, 0, 0, 0, 0, 0>>
-    assert_serializes %I64{val_set: MapSet.new([91])},  <<14, 0, 3, 10, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 91, 0>>
-    assert_serializes %I64{val_list: []},               <<15, 0, 4, 10, 0, 0, 0, 0, 0>>
-    assert_serializes %I64{val_list: [91]},             <<15, 0, 4, 10, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 91, 0>>
-    assert_serializes %I64{val_list: [91, 92]},         <<15, 0, 4, 10, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 91, 0, 0, 0, 0, 0, 0, 0, 92, 0>>
   end
 
   @thrift_file name: "string.thrift", contents: """
@@ -204,6 +132,7 @@ defmodule Thrift.Generator.BinaryProtocolTest do
     assert_serializes %Struct{val_set: MapSet.new([%Val{num: 91}])},  <<14, 0, 3, 12, 0, 0, 0, 1, 3, 0, 99, 91, 0, 0>>
     assert_serializes %Struct{val_list: []},                          <<15, 0, 4, 12, 0, 0, 0, 0, 0>>
     assert_serializes %Struct{val_list: [%Val{num: 91}]},             <<15, 0, 4, 12, 0, 0, 0, 1, 3, 0, 99, 91, 0, 0>>
+    # assert_serializes %Struct{val_list: ["abc", "def"]},      <<15, 0, 4, 11, 0, 0, 0, 2, 0, 0, 0, 3, "abc", 0, 0, 0, 3, "def", 0>>
   end
 
   @thrift_file name: "composite.thrift", contents: """

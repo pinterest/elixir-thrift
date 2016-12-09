@@ -8,7 +8,7 @@ defmodule Thrift.Mixfile do
     [app: :thrift,
      version: @version,
      elixir: "~> 1.2",
-     deps: deps,
+     deps: deps(),
 
      # Build Environment
      erlc_paths: ["src", "ext/thrift/lib/erl/src"],
@@ -24,8 +24,8 @@ defmodule Thrift.Mixfile do
      homepage_url: @project_url,
 
      # Hex
-     description: description,
-     package: package,
+     description: description(),
+     package: package(),
 
      # Docs
      name: "Thrift",

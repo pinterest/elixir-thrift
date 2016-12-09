@@ -29,7 +29,6 @@ namespace java shared
 namespace perl shared
 namespace php shared
 namespace haxe shared
-namespace elixir shared
 
 struct SharedStruct {
   1: i32 key

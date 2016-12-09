@@ -60,7 +60,7 @@ defmodule Mix.Tasks.Thrift.GenerateTest do
       }
       """
 
-    output = capture_io(fn -> run([dir, "--output-dir", dir]) end)
+    output = capture_io(fn -> run(["--thrift-dir", dir, "--output-dir", dir]) end)
 
     assert String.contains? output, "Generated shared/shared_struct.ex"
     assert String.contains? output, "Generated shared/shared_exception.ex"

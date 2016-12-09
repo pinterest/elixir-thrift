@@ -134,38 +134,42 @@ defmodule Thrift.Generator.StructBinaryProtocol do
         rest
       end
 
-      # sets and lists
-      defp skip_field(<<elem_type, length::size(32), rest::binary>>, field_type)
-        when field_type == unquote(@set) or field_type == unquote(@list) do
-        skip_list_field(rest, elem_type, length)
-      end
-
-      defp skip_list_field(<<rest::binary>>, _, 0) do
-        rest
-      end
-      defp skip_list_field(<<rest::binary>>, elem_type, remaining) do
-        rest
-        |> skip_field(elem_type)
-        |> skip_list_field(elem_type, remaining - 1)
+      defp skip_field(<<rest::binary>>, unquote(@struct)) do
+        skip_struct(rest)
       end
 
       # maps
       defp skip_field(<<key_type, val_type, length::size(32), rest::binary>>, unquote(@map)) do
-        skip_map_field(rest, key_type, val_type, length)
+        skip_map_entry(rest, key_type, val_type, length)
       end
 
-      defp skip_map_field(<<rest::binary>>, _, _, 0) do
+      # sets
+      defp skip_field(<<elem_type, length::size(32), rest::binary>>, unquote(@set)) do
+        skip_list_element(rest, elem_type, length)
+      end
+
+      # lists
+      defp skip_field(<<elem_type, length::size(32), rest::binary>>, unquote(@list)) do
+        skip_list_element(rest, elem_type, length)
+      end
+
+      defp skip_list_element(<<rest::binary>>, _, 0) do
         rest
       end
-      defp skip_map_field(<<rest::binary>>, key_type, val_type, remaining) do
+      defp skip_list_element(<<rest::binary>>, elem_type, remaining) do
+        rest
+        |> skip_field(elem_type)
+        |> skip_list_element(elem_type, remaining - 1)
+      end
+
+      defp skip_map_entry(<<rest::binary>>, _, _, 0) do
+        rest
+      end
+      defp skip_map_entry(<<rest::binary>>, key_type, val_type, remaining) do
         rest
         |> skip_field(key_type)
         |> skip_field(val_type)
-        |> skip_map_field(key_type, val_type, remaining - 1)
-      end
-
-      defp skip_field(<<rest::binary>>, unquote(@struct)) do
-        skip_struct(rest)
+        |> skip_map_entry(key_type, val_type, remaining - 1)
       end
 
       defp skip_struct(<<type, _id::16-signed, rest::binary>>) do
@@ -174,8 +178,8 @@ defmodule Thrift.Generator.StructBinaryProtocol do
             # we have a struct stop
             rest
 
-          remaining_fields when is_binary(remaining_fields) ->
-            skip_struct(remaining_fields)
+          <<remaining::binary>> ->
+            skip_struct(remaining)
         end
       end
     end

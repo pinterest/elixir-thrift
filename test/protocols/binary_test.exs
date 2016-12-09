@@ -167,6 +167,164 @@ defmodule BinaryProtocolTest do
           best_friend: %Friend{id: 3282, username: "stinkypants"}}, encoder, decoder)
   end
 
+  @thrift_file name: "old.thrift", contents: """
+    struct OldChangeyStruct {
+      1: i64 id,
+      2: string username
+    }
+  """
+  @thrift_file name: "new.thrift", contents: """
+    struct SubSubStruct {
+      1: bool is_this_excessive;
+    }
+
+    struct SubStruct {
+      1: string password,
+      2: optional SubSubStruct sub_sub;
+    }
+
+    enum Grooviness {
+      ALL_GOOD
+      PARTIALLY_GOOD
+      NOT_SO_GOOD
+    }
+
+    struct ChangeyStruct {
+      1: i64 id,
+      2: string username,
+      3: optional bool new_bool
+      4: optional byte new_byte,
+      5: optional double new_double,
+      6: optional i16 new_i16,
+      7: optional i32 new_i32,
+      8: optional i64 new_i64,
+      9: optional string new_string,
+      10: optional Grooviness new_enum,
+      11: optional SubStruct new_substruct,
+      12: optional list<SubStruct> new_list,
+      13: optional set<SubStruct> new_set,
+      14: optional map<i16, SubStruct> new_map,
+      15: optional ChangeyStruct my_twin
+    }
+
+  """
+  thrift_test "deserializing scalar fields you don't know about" do
+    changey = Erlang.New.new_changey_struct(
+      id: 12345,
+      username: "stinkypants",
+      my_bool: false,
+      new_byte: 3,
+      new_double: 19.3,
+      new_i16: 4821,
+      new_i32: 1_284_291,
+      new_i64: 128_382_100_315,
+      new_string: "suprise! an unexpected field!",
+      grooviness: 1
+    )
+    {deserialized, ""} = changey
+    |> Erlang.New.serialize_changey_struct
+    |> OldChangeyStruct.BinaryProtocol.deserialize
+
+    assert %OldChangeyStruct{id: 12345, username: "stinkypants"} == deserialized
+  end
+
+  thrift_test "deserializing a substruct you don't know about" do
+    sub_struct = Erlang.New.new_sub_struct(password: "letmein")
+
+    changey = Erlang.New.new_changey_struct(
+      id: 12345,
+      username: "stinkypants",
+      new_substruct: sub_struct
+    )
+    {deserialized, ""} = changey
+    |> Erlang.New.serialize_changey_struct
+    |> OldChangeyStruct.BinaryProtocol.deserialize
+
+    assert %OldChangeyStruct{id: 12345, username: "stinkypants"} == deserialized
+  end
+
+  thrift_test "deserializing nested structs you don't know about" do
+    sub_sub = Erlang.New.new_sub_sub_struct(is_this_excessive: true)
+    sub = Erlang.New.new_sub_struct(password: "1234", sub_sub: sub_sub)
+    changey = Erlang.New.new_changey_struct(id: 12345,
+                                            username: "stinkypants",
+                                            new_substruct: sub)
+
+    {deserialized, ""} = changey
+    |> Erlang.New.serialize_changey_struct
+    |> OldChangeyStruct.BinaryProtocol.deserialize
+
+    assert %OldChangeyStruct{id: 12345, username: "stinkypants"} == deserialized
+  end
+
+  thrift_test "deserializing a list of structs you don't know about" do
+    sub = Erlang.New.new_sub_struct(password: "1234")
+    changey = Erlang.New.new_changey_struct(id: 12345,
+                                            username: "stinkypants",
+                                            new_list: [sub])
+
+    {deserialized, ""} = changey
+    |> Erlang.New.serialize_changey_struct
+    |> OldChangeyStruct.BinaryProtocol.deserialize
+
+    assert %OldChangeyStruct{id: 12345, username: "stinkypants"} == deserialized
+  end
+
+  thrift_test "deserializing a set of structs you don't know about" do
+    sub = Erlang.New.new_sub_struct(password: "1234")
+    changey = Erlang.New.new_changey_struct(id: 12345,
+                                            username: "stinkypants",
+                                            new_set: :sets.from_list([sub, sub]))
+
+    {deserialized, ""} = changey
+    |> Erlang.New.serialize_changey_struct
+    |> OldChangeyStruct.BinaryProtocol.deserialize
+
+    assert %OldChangeyStruct{id: 12345, username: "stinkypants"} == deserialized
+  end
+
+  thrift_test "deserializing a map of structs you don't know about" do
+    sub = Erlang.New.new_sub_struct(password: "1234")
+    changey = Erlang.New.new_changey_struct(id: 12345,
+                                            username: "stinkypants",
+                                            new_map: :dict.from_list([{1, sub}, {2, sub}]))
+
+    {deserialized, ""} = changey
+    |> Erlang.New.serialize_changey_struct
+    |> OldChangeyStruct.BinaryProtocol.deserialize
+
+    assert %OldChangeyStruct{id: 12345, username: "stinkypants"} == deserialized
+  end
+
+  thrift_test "deserializing a recursive sub struct with all types" do
+    sub = Erlang.New.new_sub_struct(password: "1234")
+    twin = Erlang.New.new_changey_struct(
+      id: 6789,
+      new_bool: false,
+      new_byte: 4,
+      new_i16: 102,
+      new_i32: 919482,
+      new_i64: 18281038461,
+      new_double: 22.4,
+      new_list: [sub],
+      new_string: "This is in the sub struct",
+      new_set: :sets.from_list([sub, sub, sub]),
+      new_map: :dict.from_list([{16, sub}, {32, sub}]),
+      username: "mr. stinky")
+
+    changey = Erlang.New.new_changey_struct(
+      id: 12345,
+      username: "stinkypants",
+      my_twin: twin)
+
+    {deserialized, ""} = changey
+    |> Erlang.New.serialize_changey_struct
+    |> OldChangeyStruct.BinaryProtocol.deserialize
+
+    assert %OldChangeyStruct{id: 12345, username: "stinkypants"} == deserialized
+  end
+
+
   # test "nil nested fields get their default value" do
   #   erlang_nested = serialize_nesting_to_erlang(user: user(:elixir, username: "frank"))
 

@@ -242,20 +242,4 @@ defmodule LexerTest do
         {:namespace, 3}, {:*, 3}, {:ident, 3, 'foo.bar'}
       ]
   end
-
-  test "a const definition" do
-    assert tokenize("const my_const = 32")
-    ==
-    [
-      {:const, 1}, {:ident, 1, 'my_const'}, {:"=", 1}, {:int, 1, 32}
-    ]
-  end
-
-  test "a const definition of an enum value" do
-    assert tokenize("const string my_const = MyEnum.VALUE")
-    ==
-    [
-      {:const, 1}, {:string, 1}, {:ident, 1, 'my_const'}, {:"=", 1}, {:ident, 1, 'MyEnum.VALUE'}
-    ]
-  end
 end

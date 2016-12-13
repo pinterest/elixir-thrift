@@ -6,6 +6,21 @@ defmodule Thrift.Generator.BinaryProtocolTest do
   def assert_serializes(struct=%{__struct__: mod}, binary) do
     assert binary == Binary.serialize(:struct, struct) |> IO.iodata_to_binary
     assert {^struct, ""} = mod.deserialize(binary)
+
+    # If we randomly mutate any byte in the binary, it may deserialize to a
+    # struct of the proper type, or it may return :error. But it should never
+    # raise.
+    for i <- 1..byte_size(binary) do
+      mutated_binary = binary
+      |> :binary.bin_to_list
+      |> List.replace_at(i - 1, :rand.uniform(256) - 1)
+      |> :binary.list_to_bin
+
+      case mod.deserialize(mutated_binary) do
+        {%{__struct__: ^mod}, _} -> :ok
+        :error -> :ok
+      end
+    end
   end
 
   def assert_serializes(struct=%{__struct__: mod}, binary, deserialized_struct=%{__struct__: mod}) do

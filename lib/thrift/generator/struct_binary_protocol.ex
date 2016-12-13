@@ -118,6 +118,8 @@ defmodule Thrift.Generator.StructBinaryProtocol do
       end
 
       unquote(field_skippers)
+
+      defp deserialize(_, _), do: :error
     end
   end
 
@@ -153,6 +155,10 @@ defmodule Thrift.Generator.StructBinaryProtocol do
         skip_list_element(rest, elem_type, length)
       end
 
+      defp skip_field(_, _) do
+        :error
+      end
+
       defp skip_list_element(<<rest::binary>>, _, 0) do
         rest
       end
@@ -160,6 +166,9 @@ defmodule Thrift.Generator.StructBinaryProtocol do
         rest
         |> skip_field(elem_type)
         |> skip_list_element(elem_type, remaining - 1)
+      end
+      defp skip_list_element(:error, _, _) do
+        :error
       end
 
       defp skip_map_entry(<<rest::binary>>, _, _, 0) do
@@ -171,6 +180,9 @@ defmodule Thrift.Generator.StructBinaryProtocol do
         |> skip_field(val_type)
         |> skip_map_entry(key_type, val_type, remaining - 1)
       end
+      defp skip_map_entry(:error, _, _, _) do
+        :error
+      end
 
       defp skip_struct(<<type, _id::16-signed, rest::binary>>) do
         case skip_field(rest, type) do
@@ -180,7 +192,13 @@ defmodule Thrift.Generator.StructBinaryProtocol do
 
           <<remaining::binary>> ->
             skip_struct(remaining)
+
+          :error ->
+            :error
         end
+      end
+      defp skip_struct(_) do
+        :error
       end
     end
   end
@@ -255,8 +273,12 @@ defmodule Thrift.Generator.StructBinaryProtocol do
     dest_module = FileGroup.dest_module(file_group, struct)
     quote do
       defp unquote(name)(<<unquote(@struct), unquote(field.id)::16-signed, rest::binary>>, acc) do
-        {value, rest} = unquote(dest_module).BinaryProtocol.deserialize(rest)
-        unquote(name)(rest, %{acc | unquote(field.name) => value})
+        case unquote(dest_module).BinaryProtocol.deserialize(rest) do
+          {value, rest} ->
+            unquote(name)(rest, %{acc | unquote(field.name) => value})
+          :error ->
+            :error
+        end
       end
     end
   end
@@ -277,6 +299,8 @@ defmodule Thrift.Generator.StructBinaryProtocol do
       end
       unquote(map_key_deserializer(key_type, key_name, value_name, file_group))
       unquote(map_value_deserializer(value_type, key_name, value_name, file_group))
+      defp unquote(key_name)(_, _), do: :error
+      defp unquote(value_name)(_, _, _), do: :error
     end
   end
   def field_deserializer({:set, element_type}, field, name, file_group) do
@@ -289,6 +313,7 @@ defmodule Thrift.Generator.StructBinaryProtocol do
         unquote(name)(rest, %{struct | unquote(field.name) => MapSet.new(Enum.reverse(list))})
       end
       unquote(list_deserializer(element_type, sub_name, file_group))
+      defp unquote(sub_name)(_, _), do: :error
     end
   end
   def field_deserializer({:list, element_type}, field, name, file_group) do
@@ -301,6 +326,7 @@ defmodule Thrift.Generator.StructBinaryProtocol do
         unquote(name)(rest, %{struct | unquote(field.name) => Enum.reverse(list)})
       end
       unquote(list_deserializer(element_type, sub_name, file_group))
+      defp unquote(sub_name)(_, _), do: :error
     end
   end
   def field_deserializer(%StructRef{referenced_type: type}, field, name, file_group) do
@@ -371,8 +397,12 @@ defmodule Thrift.Generator.StructBinaryProtocol do
     dest_module = FileGroup.dest_module(file_group, struct)
     quote do
       defp unquote(key_name)(<<rest::binary>>, stack) do
-        {key, rest} = unquote(dest_module).BinaryProtocol.deserialize(rest)
-        unquote(value_name)(rest, key, stack)
+        case unquote(dest_module).BinaryProtocol.deserialize(rest) do
+          {key, rest} ->
+            unquote(value_name)(rest, key, stack)
+          :error ->
+            :error
+        end
       end
     end
   end
@@ -388,6 +418,8 @@ defmodule Thrift.Generator.StructBinaryProtocol do
       end
       unquote(map_key_deserializer(key_type, child_key_name, child_value_name, file_group))
       unquote(map_value_deserializer(value_type, child_key_name, child_value_name, file_group))
+      defp unquote(child_key_name)(_, _), do: :error
+      defp unquote(child_value_name)(_, _, _), do: :error
     end
   end
   def map_key_deserializer({:set, element_type}, key_name, value_name, file_group) do
@@ -400,6 +432,7 @@ defmodule Thrift.Generator.StructBinaryProtocol do
         unquote(value_name)(rest, MapSet.new(Enum.reverse(key)), stack)
       end
       unquote(list_deserializer(element_type, sub_name, file_group))
+      defp unquote(sub_name)(_, _), do: :error
     end
   end
   def map_key_deserializer({:list, element_type}, key_name, value_name, file_group) do
@@ -412,6 +445,7 @@ defmodule Thrift.Generator.StructBinaryProtocol do
         unquote(value_name)(rest, Enum.reverse(key), stack)
       end
       unquote(list_deserializer(element_type, sub_name, file_group))
+      defp unquote(sub_name)(_, _), do: :error
     end
   end
   def map_key_deserializer(%StructRef{referenced_type: type}, key_name, value_name, file_group) do
@@ -484,8 +518,12 @@ defmodule Thrift.Generator.StructBinaryProtocol do
     dest_module = FileGroup.dest_module(file_group, struct)
     quote do
       defp unquote(value_name)(<<rest::binary>>, key, [map, remaining | stack]) do
-        {value, rest} = unquote(dest_module).BinaryProtocol.deserialize(rest)
-        unquote(key_name)(rest, [Map.put(map, key, value), remaining - 1 | stack])
+        case unquote(dest_module).BinaryProtocol.deserialize(rest) do
+          {value, rest} ->
+            unquote(key_name)(rest, [Map.put(map, key, value), remaining - 1 | stack])
+          :error ->
+            :error
+        end
       end
     end
   end
@@ -501,6 +539,8 @@ defmodule Thrift.Generator.StructBinaryProtocol do
       end
       unquote(map_key_deserializer(key_type, child_key_name, child_value_name, file_group))
       unquote(map_value_deserializer(value_type, child_key_name, child_value_name, file_group))
+      defp unquote(child_key_name)(_, _), do: :error
+      defp unquote(child_value_name)(_, _, _), do: :error
     end
   end
   def map_value_deserializer({:set, element_type}, key_name, value_name, file_group) do
@@ -513,6 +553,7 @@ defmodule Thrift.Generator.StructBinaryProtocol do
         unquote(key_name)(rest, [Map.put(map, key, MapSet.new(Enum.reverse(value))), remaining - 1 | stack])
       end
       unquote(list_deserializer(element_type, sub_name, file_group))
+      defp unquote(sub_name)(_, _), do: :error
     end
   end
   def map_value_deserializer({:list, element_type}, key_name, value_name, file_group) do
@@ -525,6 +566,7 @@ defmodule Thrift.Generator.StructBinaryProtocol do
         unquote(key_name)(rest, [Map.put(map, key, Enum.reverse(value)), remaining - 1 | stack])
       end
       unquote(list_deserializer(element_type, sub_name, file_group))
+      defp unquote(sub_name)(_, _), do: :error
     end
   end
   def map_value_deserializer(%StructRef{referenced_type: type}, key_name, value_name, file_group) do
@@ -595,8 +637,12 @@ defmodule Thrift.Generator.StructBinaryProtocol do
     dest_module = FileGroup.dest_module(file_group, struct)
     quote do
       defp unquote(name)(<<rest::binary>>, [list, remaining | stack]) do
-        {element, rest} = unquote(dest_module).BinaryProtocol.deserialize(rest)
-        unquote(name)(rest, [[element | list], remaining - 1 | stack])
+        case unquote(dest_module).BinaryProtocol.deserialize(rest) do
+          {element, rest} ->
+            unquote(name)(rest, [[element | list], remaining - 1 | stack])
+          :error ->
+            :error
+        end
       end
     end
   end
@@ -616,6 +662,8 @@ defmodule Thrift.Generator.StructBinaryProtocol do
       end
       unquote(map_key_deserializer(key_type, key_name, value_name, file_group))
       unquote(map_value_deserializer(value_type, key_name, value_name, file_group))
+      defp unquote(key_name)(_, _), do: :error
+      defp unquote(value_name)(_, _, _), do: :error
     end
   end
   def list_deserializer({:set, element_type}, name, file_group) do
@@ -628,6 +676,7 @@ defmodule Thrift.Generator.StructBinaryProtocol do
         unquote(name)(rest, [[MapSet.new(Enum.reverse(inner_list)) | list], remaining - 1 | stack])
       end
       unquote(list_deserializer(element_type, sub_name, file_group))
+      defp unquote(sub_name)(_, _), do: :error
     end
   end
   def list_deserializer({:list, element_type}, name, file_group) do
@@ -640,6 +689,7 @@ defmodule Thrift.Generator.StructBinaryProtocol do
         unquote(name)(rest, [[Enum.reverse(inner_list) | list], remaining - 1 | stack])
       end
       unquote(list_deserializer(element_type, sub_name, file_group))
+      defp unquote(sub_name)(_, _), do: :error
     end
   end
   def list_deserializer(%StructRef{referenced_type: type}, name, file_group) do

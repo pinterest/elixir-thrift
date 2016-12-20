@@ -221,6 +221,31 @@ defmodule Thrift.Generator.BinaryProtocolTest do
     assert_serializes %Struct{val_list: [%Val{num: 91}]},             <<15, 0, 4, 12, 0, 0, 0, 1, 3, 0, 99, 91, 0, 0>>
   end
 
+  @thrift_file name: "exception.thrift", contents: """
+  exception Ex {
+    99: byte num;
+  }
+  struct Exception {
+    1: Ex val;
+    2: map<Ex, Ex> val_map;
+    3: set<Ex> val_set;
+    4: list<Ex> val_list;
+  }
+  """
+
+  thrift_test "exception serialization" do
+    assert_serializes %Exception{},                                     <<0>>
+    assert_serializes %Exception{val: %Ex{}},                           <<12, 0, 1, 0, 0>>
+    assert_serializes %Exception{val: %Ex{num: 91}},                    <<12, 0, 1, 3, 0, 99, 91, 0, 0>>
+    assert_serializes %Exception{val_map: %{}},                         <<13, 0, 2, 12, 12, 0, 0, 0, 0, 0>>
+    assert_serializes %Exception{val_map: %{%Ex{num: 91} => %Ex{num: 92}}},
+                                                                        <<13, 0, 2, 12, 12, 0, 0, 0, 1, 3, 0, 99, 91, 0, 3, 0, 99, 92, 0, 0>>
+    assert_serializes %Exception{val_set: MapSet.new},                  <<14, 0, 3, 12, 0, 0, 0, 0, 0>>
+    assert_serializes %Exception{val_set: MapSet.new([%Ex{num: 91}])},  <<14, 0, 3, 12, 0, 0, 0, 1, 3, 0, 99, 91, 0, 0>>
+    assert_serializes %Exception{val_list: []},                         <<15, 0, 4, 12, 0, 0, 0, 0, 0>>
+    assert_serializes %Exception{val_list: [%Ex{num: 91}]},             <<15, 0, 4, 12, 0, 0, 0, 1, 3, 0, 99, 91, 0, 0>>
+  end
+
   @thrift_file name: "composite.thrift", contents: """
   struct Composite {
     1: map<map<byte, byte>, map<byte, byte>> map_of_maps;

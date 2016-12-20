@@ -41,7 +41,7 @@ defmodule Thrift.Generator.StructBinaryProtocol do
   alias Thrift.Generator.Utils
   alias Thrift.Parser.FileGroup
   alias Thrift.Parser.Models.{
-    # Exception,
+    Exception,
     Field,
     Struct,
     StructRef,
@@ -282,6 +282,19 @@ defmodule Thrift.Generator.StructBinaryProtocol do
       end
     end
   end
+  def field_deserializer(struct=%Exception{}, field, name, file_group) do
+    dest_module = FileGroup.dest_module(file_group, struct)
+    quote do
+      defp unquote(name)(<<unquote(@struct), unquote(field.id)::16-signed, rest::binary>>, acc) do
+        case unquote(dest_module).BinaryProtocol.deserialize(rest) do
+          {value, rest} ->
+            unquote(name)(rest, %{acc | unquote(field.name) => value})
+          :error ->
+            :error
+        end
+      end
+    end
+  end
   def field_deserializer({:map, {key_type, value_type}}, field, name, file_group) do
     key_name = :"#{name}__#{field.name}__key"
     value_name = :"#{name}__#{field.name}__value"
@@ -394,6 +407,19 @@ defmodule Thrift.Generator.StructBinaryProtocol do
     end
   end
   def map_key_deserializer(struct=%Struct{}, key_name, value_name, file_group) do
+    dest_module = FileGroup.dest_module(file_group, struct)
+    quote do
+      defp unquote(key_name)(<<rest::binary>>, stack) do
+        case unquote(dest_module).BinaryProtocol.deserialize(rest) do
+          {key, rest} ->
+            unquote(value_name)(rest, key, stack)
+          :error ->
+            :error
+        end
+      end
+    end
+  end
+  def map_key_deserializer(struct=%Exception{}, key_name, value_name, file_group) do
     dest_module = FileGroup.dest_module(file_group, struct)
     quote do
       defp unquote(key_name)(<<rest::binary>>, stack) do
@@ -527,6 +553,19 @@ defmodule Thrift.Generator.StructBinaryProtocol do
       end
     end
   end
+  def map_value_deserializer(struct=%Exception{}, key_name, value_name, file_group) do
+    dest_module = FileGroup.dest_module(file_group, struct)
+    quote do
+      defp unquote(value_name)(<<rest::binary>>, key, [map, remaining | stack]) do
+        case unquote(dest_module).BinaryProtocol.deserialize(rest) do
+          {value, rest} ->
+            unquote(key_name)(rest, [Map.put(map, key, value), remaining - 1 | stack])
+          :error ->
+            :error
+        end
+      end
+    end
+  end
   def map_value_deserializer({:map, {key_type, value_type}}, key_name, value_name, file_group) do
     child_key_name = :"#{value_name}__key"
     child_value_name = :"#{value_name}__value"
@@ -646,6 +685,19 @@ defmodule Thrift.Generator.StructBinaryProtocol do
       end
     end
   end
+  def list_deserializer(struct=%Exception{}, name, file_group) do
+    dest_module = FileGroup.dest_module(file_group, struct)
+    quote do
+      defp unquote(name)(<<rest::binary>>, [list, remaining | stack]) do
+        case unquote(dest_module).BinaryProtocol.deserialize(rest) do
+          {element, rest} ->
+            unquote(name)(rest, [[element | list], remaining - 1 | stack])
+          :error ->
+            :error
+        end
+      end
+    end
+  end
   def list_deserializer({:map, {key_type, value_type}}, name, file_group) do
     key_name = :"#{name}__key"
     value_name = :"#{name}__value"
@@ -743,7 +795,13 @@ defmodule Thrift.Generator.StructBinaryProtocol do
       ]
     end
   end
-  def value_serializer(struct=%Struct{name: _name}, var, file_group) do
+  def value_serializer(struct=%Struct{}, var, file_group) do
+    dest_module = FileGroup.dest_module(file_group, struct)
+    quote do
+      unquote(dest_module).serialize(unquote(var))
+    end
+  end
+  def value_serializer(struct=%Exception{}, var, file_group) do
     dest_module = FileGroup.dest_module(file_group, struct)
     quote do
       unquote(dest_module).serialize(unquote(var))
@@ -766,6 +824,7 @@ defmodule Thrift.Generator.StructBinaryProtocol do
   def type_id(:string, _file_group), do: 11
   def type_id(:binary, _file_group), do: 11
   def type_id(%Struct{}, _file_group), do: 12
+  def type_id(%Exception{}, _file_group), do: 12
   def type_id({:map, _}, _file_group), do: 13
   def type_id({:set, _}, _file_group), do: 14
   def type_id({:list, _}, _file_group), do: 15

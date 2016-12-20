@@ -58,6 +58,7 @@ defmodule Thrift.Generator.StructGenerator do
   defp zero(_schema, {:set, _}), do: quote do: nil
   defp zero(_schema, %{values: [{_, value} | _]}), do: value
   defp zero(_schema, %Thrift.Parser.Models.Struct{}), do: nil
+  defp zero(_schema, %Thrift.Parser.Models.Exception{}), do: nil
 
   # Zero values for user defined types
   defp zero(schema, %{referenced_type: type}=ref) do
@@ -97,6 +98,9 @@ defmodule Thrift.Generator.StructGenerator do
     "#{name}"
   end
   def to_thrift(%Thrift.Parser.Models.Struct{name: name}, _file_group) do
+    "#{name}"
+  end
+  def to_thrift(%Thrift.Parser.Models.Exception{name: name}, _file_group) do
     "#{name}"
   end
   def to_thrift(%Thrift.Parser.Models.StructRef{referenced_type: type}, file_group) do

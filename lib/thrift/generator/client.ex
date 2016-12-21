@@ -1,4 +1,4 @@
-defmodule Thrift.Generator.ClientGenerator do
+defmodule Thrift.Generator.Client do
   defmodule Framed do
     alias Thrift.Generator.Service
     alias Thrift.Parser.Models.Function
@@ -10,12 +10,13 @@ defmodule Thrift.Generator.ClientGenerator do
 
       quote do
         defmodule Client.Framed do
-          alias Thrift.Protocols.Binary, as: BinaryBase
+          alias Thrift.Protocols.Binary
           alias Thrift.Exceptions.TApplicationException
 
           defmodule State do
             defstruct host: nil, port: nil, tcp_opts: nil, timeout: 5000, sock: nil
           end
+
           use Connection
 
           def init({host, port, tcp_opts, timeout}) do
@@ -40,12 +41,7 @@ defmodule Thrift.Generator.ClientGenerator do
 
           def close(conn), do: Connection.call(conn, :close)
 
-          def connect(_, %{sock: nil,
-                           host: host,
-                           port: port,
-                           tcp_opts: opts,
-                           timeout: timeout}=s) do
-
+          def connect(_, %{sock: nil, host: host, port: port, tcp_opts: opts, timeout: timeout} = s) do
             case :gen_tcp.connect(host, port, [active: false, packet: 4] ++ opts, timeout) do
               {:ok, sock} ->
                 {:ok, %{s | sock: sock}}
@@ -104,7 +100,7 @@ defmodule Thrift.Generator.ClientGenerator do
           end
 
           defp deserialize_message_reply(message, rpc_name, sequence_id, reply_module) do
-            case BinaryBase.deserialize(:message_begin, message) do
+            case Binary.deserialize(:message_begin, message) do
               {:ok, {^sequence_id, :reply, ^rpc_name, response}} ->
 
                 case reply_module.deserialize(response) do
@@ -140,14 +136,14 @@ defmodule Thrift.Generator.ClientGenerator do
                 message = "The server replied to #{mismatched_rpc_name}, but we sent #{rpc_name}"
                 exc = %TApplicationException{
                   message: message,
-                  type: BinaryBase.exception_type(3)}
+                  type: Binary.exception_type(3)}
                 {:error, {:exception, exc}}
 
               {:ok, {mismatched_sequence_id, _, ^rpc_name, _}} ->
                 message = "Invalid sequence id. The client sent #{sequence_id}, but the server replied with #{mismatched_sequence_id}"
 
                 exc = %TApplicationException{message: message,
-                                             type: BinaryBase.exception_type(4)
+                                             type: Binary.exception_type(4)
                                             }
                 {:error, {:exception, exc}}
 
@@ -160,6 +156,7 @@ defmodule Thrift.Generator.ClientGenerator do
               {:error, _}=err ->
                 err
             end
+
           end
 
           defp read_t_application_exception(
@@ -177,7 +174,7 @@ defmodule Thrift.Generator.ClientGenerator do
                 type::32-signed,
                 rest::binary>>, accum) do
             # read the type
-            exception_type = BinaryBase.exception_type(type)
+            exception_type = Binary.exception_type(type)
             read_t_application_exception(rest, Map.put(accum, :type, exception_type))
           end
           defp read_t_application_exception(<<0>>, accum) do
@@ -221,7 +218,7 @@ defmodule Thrift.Generator.ClientGenerator do
           |> unquote(args_module).BinaryProtocol.serialize
 
           sequence_id = :erlang.unique_integer([:positive])
-          message = BinaryBase.serialize(
+          message = Binary.serialize(
             :message_begin,
             {sequence_id, unquote(message_type(function)), unquote(rpc_name)})
 

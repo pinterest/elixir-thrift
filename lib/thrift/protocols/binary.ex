@@ -125,7 +125,8 @@ defmodule Thrift.Protocols.Binary do
     {:ok, {sequence_id, from_message_type(message_type), name, rest}}
   end
 
-  # the old format
+  # the old format, see here:
+  # https://erikvanoosten.github.io/thrift-missing-specification/#_message_encoding
   def deserialize(:message_begin, <<name_size::32-signed, name::binary-size(name_size),
                   0::size(5), message_type::size(3), sequence_id::32-signed, rest::binary>>) do
     {:ok, {sequence_id, from_message_type(message_type), name, rest}}

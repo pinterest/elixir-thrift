@@ -11,7 +11,6 @@ defmodule Thrift.Generator.StructGenerator do
         {name, default}
     end)
 
-
     binary_protocol_defs = [
       StructBinaryProtocol.struct_deserializer(struct, name, schema.file_group),
     ]

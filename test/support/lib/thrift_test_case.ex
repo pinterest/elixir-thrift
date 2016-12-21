@@ -76,12 +76,19 @@ defmodule ThriftTestCase do
     tests = caller.module
     |> Module.get_attribute(:thrift_test)
     |> Enum.reverse
-    |> Enum.map(fn {test_name, block} ->
-      quote location: :keep do
-        test unquote(test_name) do
-          unquote(block)
+    |> Enum.map(fn
+      {test_name, block} ->
+        quote location: :keep do
+          test unquote(test_name) do
+            unquote(block)
+           end
+         end
+      {test_name, context, block} ->
+        quote location: :keep do
+          test unquote(test_name), unquote(context) do
+            unquote(block)
+          end
         end
-      end
     end)
 
     quote do
@@ -232,6 +239,12 @@ defmodule ThriftTestCase do
   defmacro thrift_test(name, do: block) do
     quote do
       @thrift_test {unquote(name), unquote({:quote, [], [[do: block]]})}
+    end
+  end
+
+  defmacro thrift_test(name, ctx, do: block) do
+   quote do
+      @thrift_test {unquote(name), unquote({:quote, [], [[do: ctx]]}),  unquote({:quote, [], [[do: block]]})}
     end
   end
 

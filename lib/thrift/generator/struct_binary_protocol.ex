@@ -73,29 +73,46 @@ defmodule Thrift.Generator.StructBinaryProtocol do
 
     struct_matcher = {:%, [], [name, {:%{}, [], field_matchers}]}
 
-    field_serializers = Enum.map(fields, fn %Field{name: name, type: type, id: id} ->
-      var = Macro.var(name, nil)
-      quote do
-        case unquote(var) do
-          nil ->
-            <<>>
-          _ ->
-            unquote([
-              quote do <<unquote(type_id(type, file_group)), unquote(id) :: size(16)>> end,
-              value_serializer(type, var, file_group)
-            ] |> Utils.merge_binaries |> Utils.simplify_iolist)
+    reject_void_fields = fn %Field{type: type} -> type != :void end
+
+    field_serializers = Enum.filter_map(fields, reject_void_fields,
+      fn %Field{name: name, type: type, id: id} ->
+        var = Macro.var(name, nil)
+        quote do
+          case unquote(var) do
+            nil ->
+              <<>>
+              _ ->
+              unquote([
+                quote do <<unquote(type_id(type, file_group)), unquote(id) :: size(16)>> end,
+                value_serializer(type, var, file_group)
+              ] |> Utils.merge_binaries |> Utils.simplify_iolist)
+          end
         end
-      end
     end)
 
     field_deserializers = fields
-    |> Enum.map(&field_deserializer(&1.type, &1, :deserialize, file_group))
+    |> Enum.filter_map(reject_void_fields,
+      &field_deserializer(&1.type, &1, :deserialize, file_group))
     |> Utils.merge_blocks
 
+    struct_serialize_fn = case field_serializers do
+                            [] ->
+                              # this happens when we have a void return type
+                              quote do
+                                def serialize(%unquote(name){}), do: [<<0>>]
+                              end
+                            serializers when is_list(serializers) ->
+                              quote do
+                                def serialize(unquote(struct_matcher)) do
+                                  unquote([serializers, <<0>>] |> Utils.merge_binaries)
+                                end
+                              end
+                          end
+
     quote do
-      def serialize(unquote(struct_matcher)) do
-        unquote([field_serializers, <<0>>] |> Utils.merge_binaries)
-      end
+      unquote(struct_serialize_fn)
+
       def bool_to_int(false), do: 0
       def bool_to_int(nil), do: 0
       def bool_to_int(_), do: 1

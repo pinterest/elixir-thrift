@@ -1,6 +1,8 @@
 defmodule Thrift.Generator.Service do
   alias Thrift.Parser.FileGroup
   alias Thrift.Generator.StructGenerator
+  alias Thrift.Generator.ClientGenerator
+
   alias Thrift.Parser.Models.{
     Field,
     Function,
@@ -13,12 +15,16 @@ defmodule Thrift.Generator.Service do
 
     functions = service.functions |> Map.values
     arg_structs = Enum.map(functions, &generate_args_struct(schema, &1))
-    response_structs = Enum.map(functions, &generate_response_struct(schema, &1))
+    response_structs = Enum.filter_map(functions, &(!&1.oneway), &generate_response_struct(schema, &1))
+
+    framed_client = ClientGenerator.Framed.generate(dest_module, service)
 
     service_module = quote do
       defmodule unquote(dest_module) do
         unquote_splicing(arg_structs)
         unquote_splicing(response_structs)
+
+        unquote(framed_client)
       end
     end
 
@@ -57,4 +63,5 @@ defmodule Thrift.Generator.Service do
 
     Module.concat(Elixir, struct_name)
   end
+
 end

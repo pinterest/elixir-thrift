@@ -11,11 +11,18 @@ defmodule Thrift.Generator.StructGenerator do
         {name, default}
     end)
 
+
     binary_protocol_defs = [
       StructBinaryProtocol.struct_deserializer(struct, name, schema.file_group),
     ]
     |> Utils.merge_blocks
     |> Utils.sort_defs
+
+    define_block = if label in ["exception", :exception] do
+      quote do: defexception unquote(struct_parts)
+    else
+      quote do: defstruct unquote(struct_parts)
+    end
 
     quote do
       defmodule unquote(name) do
@@ -25,7 +32,7 @@ defmodule Thrift.Generator.StructGenerator do
             _ = unquote "#{field.id}: #{to_thrift(field.type, schema.file_group)} #{field.name}"
           end
         end)
-        defstruct unquote(struct_parts)
+        unquote(define_block)
         def new, do: %__MODULE__{}
         defmodule BinaryProtocol do
           unquote_splicing(binary_protocol_defs)
@@ -59,6 +66,7 @@ defmodule Thrift.Generator.StructGenerator do
   defp zero(_schema, %{values: [{_, value} | _]}), do: value
   defp zero(_schema, %Thrift.Parser.Models.Struct{}), do: nil
   defp zero(_schema, %Thrift.Parser.Models.Exception{}), do: nil
+  defp zero(_schema, :void), do: nil
 
   # Zero values for user defined types
   defp zero(schema, %{referenced_type: type} = ref) do

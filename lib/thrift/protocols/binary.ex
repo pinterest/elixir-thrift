@@ -36,6 +36,18 @@ defmodule Thrift.Protocols.Binary do
   def int_type({:set, _}), do: 14
   def int_type({:list, _}), do: 15
 
+  def exception_type(0), do: :unknown
+  def exception_type(1), do: :unknown_method
+  def exception_type(2), do: :invalid_message_type
+  def exception_type(3), do: :wrong_method_name
+  def exception_type(4), do: :bad_sequence_id
+  def exception_type(5), do: :missing_result
+  def exception_type(6), do: :internal_error
+  def exception_type(7), do: :protocol_error
+  def exception_type(8), do: :invalid_transform
+  def exception_type(9), do: :invalid_protocol
+  def exception_type(10), do: :unsupported_client_type
+
   defp bool_to_int(false), do: 0
   defp bool_to_int(nil), do: 0
   defp bool_to_int(_), do: 1
@@ -44,6 +56,11 @@ defmodule Thrift.Protocols.Binary do
   defp to_message_type(:reply), do: 2
   defp to_message_type(:exception), do: 3
   defp to_message_type(:oneway), do: 4
+
+  defp from_message_type(1), do: :call
+  defp from_message_type(2), do: :reply
+  defp from_message_type(3), do: :exception
+  defp from_message_type(4), do: :oneway
 
   def serialize(_, nil) do
     []
@@ -99,6 +116,22 @@ defmodule Thrift.Protocols.Binary do
     <<1::size(1), 1::size(15), 0::size(8),
     # ^^ Strange, I know. We could integrate the 8-bit zero here with the 5 bit zero below.
     0::size(5), to_message_type(message_type)::size(3),
-    byte_size(name)::32-signed, sequence_id::32-signed>>
+    byte_size(name)::32-signed, name::binary, sequence_id::32-signed>>
+  end
+
+  def deserialize(:message_begin,<<1::size(1), 1::size(15), 0::size(8),
+                  0::size(5), message_type::size(3),
+                  name_size::32-signed, name::binary-size(name_size), sequence_id::32-signed, rest::binary>>) do
+    {:ok, {sequence_id, from_message_type(message_type), name, rest}}
+  end
+
+  # the old format
+  def deserialize(:message_begin, <<name_size::32-signed, name::binary-size(name_size),
+                  0::size(5), message_type::size(3), sequence_id::32-signed, rest::binary>>) do
+    {:ok, {sequence_id, from_message_type(message_type), name, rest}}
+  end
+
+  def deserialize(:message_begin, rest) do
+    {:error, {:cant_decode_message, rest}}
   end
 end

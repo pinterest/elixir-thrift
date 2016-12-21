@@ -1,7 +1,7 @@
 defmodule Thrift.Generator do
   alias Thrift.Parser.FileGroup
+  alias Thrift.Generator
   alias Thrift.Generator.EnumGenerator
-  alias Thrift.Generator.Service, as: ServiceGenerator
   alias Thrift.Generator.StructGenerator
 
   def generate!(thrift_filename, output_dir) when is_bitstring(thrift_filename) do
@@ -37,7 +37,7 @@ defmodule Thrift.Generator do
       generate_enum_modules(schema),
       generate_struct_modules(schema),
       generate_exception_modules(schema),
-      generate_services(schema),
+      generate_services(schema)
     ])
   end
 
@@ -83,7 +83,7 @@ defmodule Thrift.Generator do
 
   defp generate_services(schema) do
     for {_, service} <- schema.services do
-      ServiceGenerator.generate(schema, service)
+      Generator.Service.generate(schema, service)
     end
   end
 end

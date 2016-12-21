@@ -11,7 +11,7 @@ defmodule Thrift.Generator.Client do
       quote do
         defmodule Client.Framed do
           alias Thrift.Protocols.Binary
-          alias Thrift.Exceptions.TApplicationException
+          alias Thrift.TApplicationException
 
           defmodule State do
             defstruct host: nil, port: nil, tcp_opts: nil, timeout: 5000, sock: nil
@@ -31,12 +31,6 @@ defmodule Thrift.Generator.Client do
 
           def start_link(host, port, tcp_opts, timeout \\ 5000) do
             Connection.start_link(__MODULE__, {host, port, tcp_opts, timeout})
-          end
-
-          def send(conn, data), do: Connection.call(conn, {:send, data})
-
-          def recv(conn, bytes, timeout \\ 5000) do
-            Connection.call(conn, {:recv, bytes, timeout})
           end
 
           def close(conn), do: Connection.call(conn, :close)
@@ -147,13 +141,13 @@ defmodule Thrift.Generator.Client do
                    {^sequence_id, mismatched_rpc_name} ->
                      message = "The server replied to #{mismatched_rpc_name}, but we sent #{rpc_name}"
                      %TApplicationException{message: message,
-                                            type: Binary.exception_type(3)}
+                                            type: TApplicationException.exception_type(3)}
 
                    {mismatched_sequence_id, ^rpc_name} ->
                      message = "Invalid sequence id. The client sent #{sequence_id}, but the server replied with #{mismatched_sequence_id}"
 
                      %TApplicationException{message: message,
-                                            type: Binary.exception_type(4)}
+                                            type: TApplicationException.exception_type(4)}
 
                    {_mismatched_sequence_id, _mismatched_rpc_name} ->
                      message = "Both sequence id and rpc name are wrong. The server is extremely uncompliant."
@@ -182,7 +176,7 @@ defmodule Thrift.Generator.Client do
                 type::32-signed,
                 rest::binary>>, accum) do
             # read the type
-            exception_type = Binary.exception_type(type)
+            exception_type = TApplicationException.exception_type(type)
             read_t_application_exception(rest, Map.put(accum, :type, exception_type))
           end
           defp read_t_application_exception(<<0>>, accum) do
@@ -230,7 +224,7 @@ defmodule Thrift.Generator.Client do
             :message_begin,
             {unquote(message_type(function)), sequence_id, unquote(rpc_name)})
 
-          __MODULE__.send(client, [message | serialized_args])
+          GenServer.call(client, {:send, [message | serialized_args]})
 
           unquote(build_response_handler(function, rpc_name, response_module))
         end
@@ -250,7 +244,7 @@ defmodule Thrift.Generator.Client do
     end
 
     defp message_type(%Function{oneway: true}), do: :oneway
-    defp message_type(_), do: :call
+    defp message_type(%Function{oneway: false}), do: :call
 
     defp build_response_handler(%Function{oneway: true}, _, _) do
       quote do
@@ -260,7 +254,7 @@ defmodule Thrift.Generator.Client do
     end
     defp build_response_handler(%Function{oneway: false}, rpc_name, response_module) do
       quote do
-        case  __MODULE__.recv(client, 0, timeout) do
+        case GenServer.call(client, {:recv, 0, timeout}) do
           {:ok, message} ->
 
             message

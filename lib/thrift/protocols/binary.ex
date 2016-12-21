@@ -36,18 +36,6 @@ defmodule Thrift.Protocols.Binary do
   def int_type({:set, _}), do: 14
   def int_type({:list, _}), do: 15
 
-  def exception_type(0), do: :unknown
-  def exception_type(1), do: :unknown_method
-  def exception_type(2), do: :invalid_message_type
-  def exception_type(3), do: :wrong_method_name
-  def exception_type(4), do: :bad_sequence_id
-  def exception_type(5), do: :missing_result
-  def exception_type(6), do: :internal_error
-  def exception_type(7), do: :protocol_error
-  def exception_type(8), do: :invalid_transform
-  def exception_type(9), do: :invalid_protocol
-  def exception_type(10), do: :unsupported_client_type
-
   defp bool_to_int(false), do: 0
   defp bool_to_int(nil), do: 0
   defp bool_to_int(_), do: 1
@@ -119,7 +107,7 @@ defmodule Thrift.Protocols.Binary do
     byte_size(name)::32-signed, name::binary, sequence_id::32-signed>>
   end
 
-  def deserialize(:message_begin,<<1::size(1), 1::size(15), 0::size(8),
+  def deserialize(:message_begin,<<1::size(1), 1::size(15), _::size(8),
                   0::size(5), message_type::size(3),
                   name_size::32-signed, name::binary-size(name_size), sequence_id::32-signed, rest::binary>>) do
     {:ok, {from_message_type(message_type), sequence_id, name, rest}}

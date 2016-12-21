@@ -70,7 +70,7 @@ defmodule Thrift.Generator.ServiceTest do
     end
   end
 
-  alias Thrift.Exceptions.TApplicationException
+  alias Thrift.TApplicationException
   alias Thrift.Generator.ServiceTest.User
   alias Thrift.Generator.ServiceTest.SimpleService.Client.Framed, as: FramedClient
     alias Thrift.Generator.ServiceTest.UsernameTakenException

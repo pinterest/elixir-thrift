@@ -1,4 +1,4 @@
-defmodule ServiceTest do
+defmodule Thrift.Generator.ServiceTest do
   use ThriftTestCase
 
   @thrift_file name: "simple_service.thrift", contents: """
@@ -22,7 +22,6 @@ defmodule ServiceTest do
     find_by_id_args = %SimpleService.UpdateUsernameArgs{id: 1234, new_username: "foobar"}
     assert find_by_id_args.id == 1234
     assert find_by_id_args.new_username == "foobar"
-
   end
 
   thrift_test "it should generate response structs" do

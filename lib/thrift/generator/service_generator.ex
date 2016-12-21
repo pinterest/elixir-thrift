@@ -28,7 +28,7 @@ defmodule Thrift.Generator.Service do
   def generate_args_struct(schema, function) do
     arg_module_name = service_module_name(function, :args)
 
-    struct = Struct.new(Atom.to_charlist(arg_module_name), function.params)
+    struct = Struct.new(Atom.to_char_list(arg_module_name), function.params)
 
     StructGenerator.generate(:struct, schema, struct.name, struct)
   end
@@ -37,7 +37,6 @@ defmodule Thrift.Generator.Service do
     success = %Field{id: 0,
                      name: :success,
                      required: true,
-
                      type: function.return_type}
 
     exceptions = function.exceptions

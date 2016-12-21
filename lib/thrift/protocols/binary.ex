@@ -110,7 +110,7 @@ defmodule Thrift.Protocols.Binary do
   def serialize(:struct, %{__struct__: mod} = struct) do
     mod.serialize(struct, :binary)
   end
-  def serialize(:message_begin, {sequence_id, message_type, name}) do
+  def serialize(:message_begin, {message_type, sequence_id, name}) do
     # Taken from https://erikvanoosten.github.io/thrift-missing-specification/#_message_encoding
 
     <<1::size(1), 1::size(15), 0::size(8),
@@ -122,14 +122,14 @@ defmodule Thrift.Protocols.Binary do
   def deserialize(:message_begin,<<1::size(1), 1::size(15), 0::size(8),
                   0::size(5), message_type::size(3),
                   name_size::32-signed, name::binary-size(name_size), sequence_id::32-signed, rest::binary>>) do
-    {:ok, {sequence_id, from_message_type(message_type), name, rest}}
+    {:ok, {from_message_type(message_type), sequence_id, name, rest}}
   end
 
   # the old format, see here:
   # https://erikvanoosten.github.io/thrift-missing-specification/#_message_encoding
   def deserialize(:message_begin, <<name_size::32-signed, name::binary-size(name_size),
                   0::size(5), message_type::size(3), sequence_id::32-signed, rest::binary>>) do
-    {:ok, {sequence_id, from_message_type(message_type), name, rest}}
+    {:ok, {from_message_type(message_type), sequence_id, name, rest}}
   end
 
   def deserialize(:message_begin, rest) do

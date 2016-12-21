@@ -100,63 +100,71 @@ defmodule Thrift.Generator.Client do
           end
 
           defp deserialize_message_reply(message, rpc_name, sequence_id, reply_module) do
-            case Binary.deserialize(:message_begin, message) do
-              {:ok, {^sequence_id, :reply, ^rpc_name, response}} ->
+            Binary.deserialize(:message_begin, message)
+            |> handle_message(sequence_id, rpc_name, reply_module)
+          end
 
-                case reply_module.deserialize(response) do
-                  {%{success: nil}=resp, ""} ->
+          def handle_message({:ok, {:reply, decoded_sequence_id, decoded_rpc_name, decoded_response}},
+                             sequence_id, rpc_name, reply_module)
+          when (decoded_sequence_id == sequence_id) and (decoded_rpc_name == rpc_name) do
 
-                    response = resp
-                    |> Map.delete(:__struct__)
-                    |> Map.values
-                    |> Enum.reject(&is_nil(&1))
+            case reply_module.deserialize(decoded_response) do
+              {%{success: nil}=resp, ""} ->
 
-                    case response do
-                      [exception] ->
-                        {:error, {:exception, exception}}
+                response = resp
+                |> Map.delete(:__struct__)
+                |> Map.values
+                |> Enum.reject(&is_nil(&1))
 
-                      [] ->
-                        # This case is when we have a void return on the
-                        # remote RPC
-                        {:ok, nil}
-                    end
+                case response do
+                  [exception] ->
+                    {:error, {:exception, exception}}
 
-                  {%{success: success}, ""} when not is_nil(success) ->
-                    {:ok, success}
-
-                  {resp, extra} ->
-                    {:error, {:extraneous_data, resp, extra}}
+                  [] ->
+                  # This case is when we have a void return on the
+                  # remote RPC
+                  {:ok, nil}
                 end
 
-              {:ok, {^sequence_id, :exception, ^rpc_name, response}} ->
-                exc = read_t_application_exception(response, %TApplicationException{})
-                {:error, {:exception, exc}}
+              {%{success: success}, ""} when not is_nil(success) ->
+                {:ok, success}
 
-              {:ok, {^sequence_id, _, mismatched_rpc_name, _}} ->
-                message = "The server replied to #{mismatched_rpc_name}, but we sent #{rpc_name}"
-                exc = %TApplicationException{
-                  message: message,
-                  type: Binary.exception_type(3)}
-                {:error, {:exception, exc}}
+                {resp, extra} ->
+                {:error, {:extraneous_data, resp, extra}}
+           end
+          end
 
-              {:ok, {mismatched_sequence_id, _, ^rpc_name, _}} ->
-                message = "Invalid sequence id. The client sent #{sequence_id}, but the server replied with #{mismatched_sequence_id}"
+          def handle_message({:ok, {:exception, decoded_sequence_id, decoded_rpc_name, response}}, sequence_id, rpc_name, _)
+          when decoded_sequence_id == sequence_id and decoded_rpc_name == rpc_name do
 
-                exc = %TApplicationException{message: message,
-                                             type: Binary.exception_type(4)
-                                            }
-                {:error, {:exception, exc}}
+            exc = read_t_application_exception(response, %TApplicationException{})
+            {:error, {:exception, exc}}
+          end
 
-              {:ok, {_mismatched_sequence_id, _mismatched_rpc_name, _}} ->
-                message = "Both sequence id and rpc name are wrong. The server is extremely uncompliant."
-                exc = %TApplicationException{message: message,
-                                             type: :sequence_id_and_rpc_name_mismatched}
-                {:error, {:exception, exc}}
+          def handle_message({:ok, {_, decoded_sequence_id, _, decoded_rpc_name, _}},
+                             sequence_id, rpc_name, _) do
+            ex = case {decoded_sequence_id, decoded_rpc_name} do
+                   {^sequence_id, mismatched_rpc_name} ->
+                     message = "The server replied to #{mismatched_rpc_name}, but we sent #{rpc_name}"
+                     %TApplicationException{message: message,
+                                            type: Binary.exception_type(3)}
 
-              {:error, _}=err ->
-                err
-            end
+                   {mismatched_sequence_id, ^rpc_name} ->
+                     message = "Invalid sequence id. The client sent #{sequence_id}, but the server replied with #{mismatched_sequence_id}"
 
+                     %TApplicationException{message: message,
+                                            type: Binary.exception_type(4)}
+
+                   {_mismatched_sequence_id, _mismatched_rpc_name} ->
+                     message = "Both sequence id and rpc name are wrong. The server is extremely uncompliant."
+                     %TApplicationException{message: message,
+                                            type: :sequence_id_and_rpc_name_mismatched}
+                 end
+            {:error, {:exception, ex}}
+          end
+
+          def handle_message({:error, _} = err, _, _, _) do
+            err
           end
 
           defp read_t_application_exception(
@@ -220,7 +228,7 @@ defmodule Thrift.Generator.Client do
           sequence_id = :erlang.unique_integer([:positive])
           message = Binary.serialize(
             :message_begin,
-            {sequence_id, unquote(message_type(function)), unquote(rpc_name)})
+            {unquote(message_type(function)), sequence_id, unquote(rpc_name)})
 
           __MODULE__.send(client, [message | serialized_args])
 

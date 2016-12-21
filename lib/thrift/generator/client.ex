@@ -183,6 +183,11 @@ defmodule Thrift.Generator.Client do
             # read the field stop and return
             accum
           end
+          defp read_t_application_exception(error, _) do
+            message = "Could not decode TApplicationException, remaining was #{inspect error}"
+            %TApplicationException{message: message,
+                                   type: TApplicationException.exception_type(7)}
+          end
         end
       end
     end

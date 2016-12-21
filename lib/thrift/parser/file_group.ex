@@ -19,6 +19,7 @@ defmodule Thrift.Parser.FileGroup do
     Namespace,
     StructRef,
     Schema,
+    Service,
     Struct,
   }
 
@@ -121,6 +122,10 @@ defmodule Thrift.Parser.FileGroup do
   end
 
   def dest_module(file_group, %TEnum{name: name}) do
+    dest_module(file_group, name)
+  end
+
+  def dest_module(file_group, %Service{name: name}) do
     dest_module(file_group, name)
   end
 

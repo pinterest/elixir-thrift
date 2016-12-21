@@ -1,8 +1,10 @@
 defmodule Thrift.Generator do
   alias Thrift.Parser.FileGroup
-  alias Thrift.Generator
-  alias Thrift.Generator.EnumGenerator
-  alias Thrift.Generator.StructGenerator
+  alias Thrift.{
+    Generator,
+    Generator.EnumGenerator,
+    Generator.StructGenerator
+  }
 
   def generate!(thrift_filename, output_dir) when is_bitstring(thrift_filename) do
     thrift_filename

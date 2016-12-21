@@ -45,7 +45,7 @@ defmodule Thrift.Generator.Service do
     fields = [success | exceptions]
 
     response_module_name = service_module_name(function, :response)
-    response_struct = Struct.new(Atom.to_charlist(response_module_name), fields)
+    response_struct = Struct.new(Atom.to_char_list(response_module_name), fields)
 
     StructGenerator.generate(:struct, schema, response_struct.name, response_struct)
   end

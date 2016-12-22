@@ -98,7 +98,7 @@ defmodule Thrift.Generator.Client do
             |> handle_message(sequence_id, rpc_name, reply_module)
           end
 
-          def handle_message({:ok, {:reply, decoded_sequence_id, decoded_rpc_name, decoded_response}},
+          defp handle_message({:ok, {:reply, decoded_sequence_id, decoded_rpc_name, decoded_response}},
                              sequence_id, rpc_name, reply_module)
           when (decoded_sequence_id == sequence_id) and (decoded_rpc_name == rpc_name) do
 
@@ -128,14 +128,14 @@ defmodule Thrift.Generator.Client do
            end
           end
 
-          def handle_message({:ok, {:exception, decoded_sequence_id, decoded_rpc_name, response}}, sequence_id, rpc_name, _)
+          defp handle_message({:ok, {:exception, decoded_sequence_id, decoded_rpc_name, response}}, sequence_id, rpc_name, _)
           when decoded_sequence_id == sequence_id and decoded_rpc_name == rpc_name do
 
             exc = read_t_application_exception(response, %TApplicationException{})
             {:error, {:exception, exc}}
           end
 
-          def handle_message({:ok, {_, decoded_sequence_id, _, decoded_rpc_name, _}},
+          defp handle_message({:ok, {_, decoded_sequence_id, _, decoded_rpc_name, _}},
                              sequence_id, rpc_name, _) do
             ex = case {decoded_sequence_id, decoded_rpc_name} do
                    {^sequence_id, mismatched_rpc_name} ->
@@ -157,7 +157,7 @@ defmodule Thrift.Generator.Client do
             {:error, {:exception, ex}}
           end
 
-          def handle_message({:error, _} = err, _, _, _) do
+          defp handle_message({:error, _} = err, _, _, _) do
             err
           end
 

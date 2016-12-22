@@ -3,10 +3,13 @@ defmodule Thrift.Clients.BinaryFramed do
   alias Thrift.TApplicationException
 
   defmodule State do
-    defstruct host: nil, port: nil, tcp_opts: nil, timeout: 5000, sock: nil
+    defstruct host: nil, port: nil, tcp_opts: nil, timeout: 5000, sock: nil, retry_count: 0
   end
 
+  require Logger
   use Connection
+
+  @backoff_values {100, 100, 200, 300, 500, 800, 1000}
 
   @default_tcp_opts [active: false, packet: 4, mode: :binary]
 
@@ -47,17 +50,22 @@ defmodule Thrift.Clients.BinaryFramed do
 
   def close(conn), do: Connection.call(conn, :close)
 
-  def connect(_, %{sock: nil, host: host, port: port, tcp_opts: opts, timeout: timeout} = s) do
+  def connect(_, %{sock: nil, host: host, port: port, tcp_opts: opts, timeout: timeout, retry_count: retries} = s) do
     opts = opts
     |> Keyword.merge(@default_tcp_opts)
     |> Keyword.put_new(:send_timeout, 1000)
 
     case :gen_tcp.connect(host, port, opts, timeout) do
       {:ok, sock} ->
-        {:ok, %{s | sock: sock}}
+        {:ok, %{s | sock: sock, retry_count: 0}}
 
       {:error, _} ->
-        {:backoff, 1000, s}
+        new_retries = retries + 1
+        backoff = elem(@backoff_values, min(tuple_size(@backoff_values), new_retries))
+
+        Logger.warn("Failed to connect to #{host} (after #{new_retries + 1} attempts), retrying in #{backoff}ms.")
+
+        {:backoff, backoff, %{s | retry_count: new_retries}}
     end
   end
 
@@ -68,11 +76,11 @@ defmodule Thrift.Clients.BinaryFramed do
         Connection.reply(from, :ok)
 
       {:error, :closed} ->
-        :error_logger.format("Connection closed~n", [])
+        Logger.error("Connection closed")
 
       {:error, reason} ->
         reason = :inet.format_error(reason)
-        :error_logger.format("Connection error: ~s~n", [reason])
+        Logger.error("Connection error: #{reason}")
     end
     {:connect, :reconnect, %{s | sock: nil}}
   end
@@ -147,9 +155,9 @@ defmodule Thrift.Clients.BinaryFramed do
             {:error, {:exception, exception}}
 
           [] ->
-            # This case is when we have a void return on the
-            # remote RPC
-            {:ok, nil}
+          # This case is when we have a void return on the
+          # remote RPC
+          {:ok, nil}
         end
 
       {%{success: success}, ""} when not is_nil(success) ->

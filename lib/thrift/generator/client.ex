@@ -36,7 +36,8 @@ defmodule Thrift.Generator.Client do
           def close(conn), do: Connection.call(conn, :close)
 
           def connect(_, %{sock: nil, host: host, port: port, tcp_opts: opts, timeout: timeout} = s) do
-            case :gen_tcp.connect(host, port, [active: false, packet: 4] ++ opts, timeout) do
+            opts = Keyword.put_new(opts, :send_timeout, 1000)
+            case :gen_tcp.connect(host, port, [active: false, packet: 4, mode: :binary] ++ opts, timeout) do
               {:ok, sock} ->
                 {:ok, %{s | sock: sock}}
 

@@ -1,4 +1,4 @@
-defmodule Thrift.Clients.Binary do
+defmodule Thrift.Clients.BinaryFramed do
   alias Thrift.Protocols.Binary
   alias Thrift.TApplicationException
 
@@ -9,7 +9,7 @@ defmodule Thrift.Clients.Binary do
   use Connection
 
   def init({host, port, tcp_opts, timeout}) do
-    s = %State{host: host,
+    s = %State{host: to_host(host),
                port: port,
                tcp_opts: tcp_opts,
                timeout: timeout,
@@ -56,10 +56,11 @@ defmodule Thrift.Clients.Binary do
   end
 
   def handle_call({:request, data, timeout}, _, %{sock: sock} = s) do
-    rsp = with :ok <- :gen_tcp.send(sock, data),
-    {:ok, _} = ok <- :gen_tcp.recv(sock, 0, timeout) do
+    rsp = with :ok              <- :gen_tcp.send(sock, data),
+               {:ok, _} = ok    <- :gen_tcp.recv(sock, 0, timeout) do
       ok
     end
+
     case rsp do
       {:ok, _} = ok ->
         {:reply, ok, s}
@@ -76,6 +77,7 @@ defmodule Thrift.Clients.Binary do
     case :gen_tcp.send(sock, data) do
       :ok ->
         {:reply, :ok, s}
+
       {:error, _} = error ->
         {:disconnect, error, error, s}
     end
@@ -90,9 +92,8 @@ defmodule Thrift.Clients.Binary do
     |> handle_message(sequence_id, rpc_name, reply_module)
   end
 
-  defp handle_message({:ok, {:reply, decoded_sequence_id, decoded_rpc_name, decoded_response}},
-                      sequence_id, rpc_name, reply_module)
-  when (decoded_sequence_id == sequence_id) and (decoded_rpc_name == rpc_name) do
+  defp handle_message({:ok, {:reply, sequence_id, rpc_name, decoded_response}},
+                      sequence_id, rpc_name, reply_module) do
 
     case reply_module.deserialize(decoded_response) do
       {%{success: nil}=resp, ""} ->
@@ -107,9 +108,9 @@ defmodule Thrift.Clients.Binary do
             {:error, {:exception, exception}}
 
           [] ->
-          # This case is when we have a void return on the
-          # remote RPC
-          {:ok, nil}
+            # This case is when we have a void return on the
+            # remote RPC
+            {:ok, nil}
         end
 
       {%{success: success}, ""} when not is_nil(success) ->
@@ -120,9 +121,7 @@ defmodule Thrift.Clients.Binary do
     end
   end
 
-  defp handle_message({:ok, {:exception, decoded_sequence_id, decoded_rpc_name, response}}, sequence_id, rpc_name, _)
-  when decoded_sequence_id == sequence_id and decoded_rpc_name == rpc_name do
-
+  defp handle_message({:ok, {:exception, sequence_id, rpc_name, response}}, sequence_id, rpc_name, _) do
     exc = read_t_application_exception(response, %TApplicationException{})
     {:error, {:exception, exc}}
   end
@@ -180,4 +179,9 @@ defmodule Thrift.Clients.Binary do
     %TApplicationException{message: message,
                            type: TApplicationException.exception_type(7)}
   end
+
+  defp to_host(host) when is_bitstring(host) do
+    String.to_char_list(host)
+  end
+  defp to_host(host) when is_list(host), do: host
 end

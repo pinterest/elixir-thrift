@@ -2,7 +2,7 @@ defmodule Thrift.Generator.Client do
   defmodule Framed do
     alias Thrift.Generator.Service
     alias Thrift.Parser.Models.Function
-    alias Thrift.Clients
+    alias Thrift.Clients.BinaryFramed
 
     def generate(service_module, service) do
       functions = service.functions
@@ -11,18 +11,18 @@ defmodule Thrift.Generator.Client do
 
       quote do
         defmodule Client.Framed do
-          alias Thrift.Clients
+          alias Thrift.Clients.BinaryFramed
           alias Thrift.Protocols.Binary
 
           def start_link(host, port, tcp_opts, timeout \\ 5000) do
-            Clients.Binary.start_link(host, port, tcp_opts, timeout)
+            BinaryFramed.start_link(host, port, tcp_opts, timeout)
           end
           unquote_splicing(functions)
         end
       end
     end
 
-    def generate_function(service_module, function) do
+    defp generate_function(service_module, function) do
 
       args_module = service_module
       |> Module.concat(Service.service_module_name(function, :args))
@@ -92,8 +92,7 @@ defmodule Thrift.Generator.Client do
         case GenServer.call(client, {:request, [message | serialized_args], timeout}) do
           {:ok, message} ->
             message
-            |> IO.iodata_to_binary
-            |> Clients.Binary.deserialize_message_reply(unquote(rpc_name), sequence_id, unquote(response_module))
+            |> BinaryFramed.deserialize_message_reply(unquote(rpc_name), sequence_id, unquote(response_module))
 
           {:error, _} = err ->
             err

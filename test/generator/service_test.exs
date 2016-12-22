@@ -73,7 +73,7 @@ defmodule Thrift.Generator.ServiceTest do
   alias Thrift.TApplicationException
   alias Thrift.Generator.ServiceTest.User
   alias Thrift.Generator.ServiceTest.SimpleService.Client.Framed, as: FramedClient
-    alias Thrift.Generator.ServiceTest.UsernameTakenException
+  alias Thrift.Generator.ServiceTest.UsernameTakenException
 
   setup do
     port = :erlang.unique_integer([:positive, :monotonic]) + 10000
@@ -84,7 +84,7 @@ defmodule Thrift.Generator.ServiceTest do
       framed: true,
       service: :simple_service_thrift)
 
-    {:ok, client} = FramedClient.start_link('127.0.0.1', port, [], 5000)
+    {:ok, client} = FramedClient.start_link("127.0.0.1", port, [], 5000)
     {:ok, handler_pid} = ServerSpy.start_link
 
     on_exit fn ->

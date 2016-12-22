@@ -7,12 +7,15 @@ defmodule Thrift.Generator.Client do
     def generate(service_module, service) do
       functions = service.functions
       |> Map.values
-      |> Enum.map(&generate_function(service_module, &1))
+      |> Enum.map(&generate_handler_function(service_module, &1))
 
       quote do
         defmodule Client.Framed do
           alias Thrift.Clients.BinaryFramed
           alias Thrift.Protocols.Binary
+
+          defdelegate close(conn), to: BinaryFramed
+          defdelegate connect(conn, opts), to: BinaryFramed
 
           def start_link(host, port, tcp_opts, timeout \\ 5000) do
             BinaryFramed.start_link(host, port, tcp_opts, timeout)
@@ -22,7 +25,7 @@ defmodule Thrift.Generator.Client do
       end
     end
 
-    defp generate_function(service_module, function) do
+    defp generate_handler_function(service_module, function) do
 
       args_module = service_module
       |> Module.concat(Service.service_module_name(function, :args))
@@ -34,7 +37,9 @@ defmodule Thrift.Generator.Client do
       |> Macro.underscore
       |> String.to_atom
 
+      underscored_options_name = :"#{underscored_name}_with_options"
       bang_name = :"#{underscored_name}!"
+      options_bang_name = :"#{underscored_options_name}!"
 
       vars = function.params
       |> Enum.map(&Macro.var(&1.name, nil))
@@ -49,8 +54,15 @@ defmodule Thrift.Generator.Client do
 
       rpc_name = Atom.to_string(function.name)
 
+      def_type = if function.oneway do
+        quote do: defp
+      else
+        quote do: def
+      end
+
       quote do
-        def unquote(underscored_name)(client, unquote_splicing(vars), timeout \\ 5000) do
+
+        unquote(def_type)(unquote(underscored_options_name)(client, unquote_splicing(vars), opts)) do
           serialized_args = %unquote(args_module){unquote_splicing(assignments)}
           |> unquote(args_module).BinaryProtocol.serialize
 
@@ -61,8 +73,13 @@ defmodule Thrift.Generator.Client do
 
           unquote(build_response_handler(function, rpc_name, response_module))
         end
-        def unquote(bang_name)(client, unquote_splicing(vars), timeout \\ 5000) do
-          case unquote(underscored_name)(client, unquote_splicing(vars), timeout) do
+
+        def unquote(underscored_name)(client, unquote_splicing(vars)) do
+          unquote(underscored_options_name)(client, unquote_splicing(vars), [])
+        end
+
+        unquote(def_type)(unquote(options_bang_name)(client, unquote_splicing(vars), opts)) do
+          case unquote(underscored_options_name)(client, unquote_splicing(vars), opts) do
             {:ok, rsp} ->
               rsp
 
@@ -73,6 +90,10 @@ defmodule Thrift.Generator.Client do
               raise err
           end
         end
+
+        def unquote(bang_name)(client, unquote_splicing(vars)) do
+          unquote(options_bang_name)(client, unquote_splicing(vars), [])
+        end
       end
     end
 
@@ -81,15 +102,16 @@ defmodule Thrift.Generator.Client do
 
     defp build_response_handler(%Function{oneway: true}, _, _) do
       quote do
-        _timeout = timeout
-        GenServer.call(client, {:oneway, [message | serialized_args]})
+        _ = opts
+        BinaryFramed.oneway(client, [message | serialized_args])
 
         {:ok, nil}
       end
     end
     defp build_response_handler(%Function{oneway: false}, rpc_name, response_module) do
       quote do
-        case GenServer.call(client, {:request, [message | serialized_args], timeout}) do
+
+        case BinaryFramed.request(client, [message | serialized_args], opts) do
           {:ok, message} ->
             message
             |> BinaryFramed.deserialize_message_reply(unquote(rpc_name), sequence_id, unquote(response_module))

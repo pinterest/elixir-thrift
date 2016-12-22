@@ -8,6 +8,28 @@ defmodule Thrift.Clients.BinaryFramed do
 
   use Connection
 
+  @default_tcp_opts [active: false, packet: 4, mode: :binary]
+
+  @type error :: {:error, atom}
+  @type success :: {:ok, binary}
+
+  @type protocol_response :: success | error
+
+  @type data :: iolist | binary
+  @type socket_opts :: [
+    timeout: integer,
+    send_timeout: integer
+  ]
+
+  @type genserver_call_options :: [
+    timeout: integer
+  ]
+
+  @type options :: [
+    socket_opts: socket_opts,
+    gen_server_opts: genserver_call_options
+  ]
+
   def init({host, port, tcp_opts, timeout}) do
     s = %State{host: to_host(host),
                port: port,
@@ -18,6 +40,7 @@ defmodule Thrift.Clients.BinaryFramed do
     {:connect, :init, s}
   end
 
+  @spec start_link(String.t, (0..65535), socket_opts, integer) :: GenServer.on_start
   def start_link(host, port, tcp_opts, timeout \\ 5000) do
     Connection.start_link(__MODULE__, {host, port, tcp_opts, timeout})
   end
@@ -25,8 +48,11 @@ defmodule Thrift.Clients.BinaryFramed do
   def close(conn), do: Connection.call(conn, :close)
 
   def connect(_, %{sock: nil, host: host, port: port, tcp_opts: opts, timeout: timeout} = s) do
-    opts = Keyword.put_new(opts, :send_timeout, 1000)
-    case :gen_tcp.connect(host, port, [active: false, packet: 4, mode: :binary] ++ opts, timeout) do
+    opts = opts
+    |> Keyword.merge(@default_tcp_opts)
+    |> Keyword.put_new(:send_timeout, 1000)
+
+    case :gen_tcp.connect(host, port, opts, timeout) do
       {:ok, sock} ->
         {:ok, %{s | sock: sock}}
 
@@ -51,14 +77,27 @@ defmodule Thrift.Clients.BinaryFramed do
     {:connect, :reconnect, %{s | sock: nil}}
   end
 
+  @spec oneway(pid, data) :: :ok
+  def oneway(conn, data), do: Connection.cast(conn, {:oneway, data})
+
+  @spec request(pid, data, options) :: protocol_response
+  def request(conn, data, options) do
+    socket_opts = Keyword.get(options, :socket_opts, [])
+    gen_server_opts = Keyword.get(options, :gen_server_opts, [])
+    gen_server_timeout = Keyword.get(gen_server_opts, :timeout, 5000)
+
+    Connection.call(conn, {:request, data, socket_opts}, gen_server_timeout)
+  end
+
   def handle_call(_, _, %{sock: nil} = s) do
     {:reply, {:error, :closed}, s}
   end
 
-  def handle_call({:request, data, timeout}, _, %{sock: sock} = s) do
-    rsp = with :ok              <- :gen_tcp.send(sock, data),
-               {:ok, _} = ok    <- :gen_tcp.recv(sock, 0, timeout) do
-      ok
+  def handle_call({:request, data, options}, _, %{sock: sock, timeout: default_timeout} = s) do
+    timeout = Keyword.get(options, :timeout, default_timeout)
+
+    rsp = with :ok <- :gen_tcp.send(sock, data) do
+      :gen_tcp.recv(sock, 0, timeout)
     end
 
     case rsp do
@@ -73,7 +112,11 @@ defmodule Thrift.Clients.BinaryFramed do
     end
   end
 
-  def handle_call({:oneway, data}, _, %{sock: sock} = s) do
+  def handle_call(:close, from, s) do
+    {:disconnect, {:close, from}, s}
+  end
+
+  def handle_cast({:oneway, data, _options}, %{sock: sock} = s) do
     case :gen_tcp.send(sock, data) do
       :ok ->
         {:reply, :ok, s}
@@ -81,10 +124,6 @@ defmodule Thrift.Clients.BinaryFramed do
       {:error, _} = error ->
         {:disconnect, error, error, s}
     end
-  end
-
-  def handle_call(:close, from, s) do
-    {:disconnect, {:close, from}, s}
   end
 
   def deserialize_message_reply(message, rpc_name, sequence_id, reply_module) do

@@ -57,13 +57,20 @@ defmodule Thrift.Generator.ServiceTest do
     def handle_function(name, args) do
       reply = ServerSpy.get_reply
       ServerSpy.set_args({name, args})
+
+      parse_reply(reply)
+    end
+
+    defp parse_reply(reply) do
       case reply do
         {:exception, e} ->
           throw e
 
         :noreply ->
           :ok
-
+        {:sleep, amount, reply} ->
+          :timer.sleep(amount)
+          parse_reply(reply)
         reply ->
           {:reply, reply}
       end
@@ -254,5 +261,36 @@ defmodule Thrift.Generator.ServiceTest do
 
     expected = MapSet.new(["sports", "debate", "motorcycles"])
     assert {:ok, expected} == FramedClient.tags(ctx.client, 91281)
+  end
+
+  thrift_test "it has a configurable gen_server timeout", ctx do
+    ServerSpy.set_reply({:sleep, 1000, [1, 3, 4]})
+
+    assert catch_exit(
+      FramedClient.friend_ids_of_with_options(ctx.client, 1234, [gen_server_opts: [timeout: 200]])
+    )
+  end
+
+  thrift_test "it has a configurable socket timeout", ctx do
+    ServerSpy.set_reply({:sleep, 1000, [1, 3, 4]})
+
+    assert {:error, :timeout} = FramedClient.friend_ids_of_with_options(ctx.client, 12914, [socket_opts: [timeout: 1]])
+  end
+
+  thrift_test "oneway functions should not have an options version" do
+    refute {:do_some_work_with_options, 3} in FramedClient.__info__(:functions)
+  end
+
+  thrift_test "functions that return values have an options version" do
+    defined_functions = FramedClient.__info__(:functions)
+
+    assert {:ping_with_options, 2}              in defined_functions
+    assert {:update_username_with_options, 4}   in defined_functions
+    assert {:get_by_id_with_options, 3}         in defined_functions
+    assert {:are_friends_with_options, 4}       in defined_functions
+    assert {:mark_inactive_with_options, 3}     in defined_functions
+    assert {:friend_ids_of_with_options, 3}     in defined_functions
+    assert {:friend_nicknames_with_options, 3}  in defined_functions
+    assert {:tags_with_options, 3}              in defined_functions
   end
 end

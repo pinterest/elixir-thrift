@@ -17,8 +17,8 @@ defmodule Thrift.Generator.Client do
           defdelegate close(conn), to: BinaryFramed
           defdelegate connect(conn, opts), to: BinaryFramed
 
-          def start_link(host, port, tcp_opts, timeout \\ 5000) do
-            BinaryFramed.start_link(host, port, tcp_opts, timeout)
+          def start_link(host, port, opts) do
+            BinaryFramed.start_link(host, port, opts)
           end
           unquote_splicing(functions)
         end
@@ -26,7 +26,6 @@ defmodule Thrift.Generator.Client do
     end
 
     defp generate_handler_function(service_module, function) do
-
       args_module = service_module
       |> Module.concat(Service.service_module_name(function, :args))
 
@@ -61,7 +60,6 @@ defmodule Thrift.Generator.Client do
       end
 
       quote do
-
         unquote(def_type)(unquote(underscored_options_name)(client, unquote_splicing(vars), opts)) do
           serialized_args = %unquote(args_module){unquote_splicing(assignments)}
           |> unquote(args_module).BinaryProtocol.serialize

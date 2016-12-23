@@ -91,7 +91,8 @@ defmodule Thrift.Generator.ServiceTest do
       framed: true,
       service: :simple_service_thrift)
 
-    {:ok, client} = FramedClient.start_link("127.0.0.1", port, [], 5000)
+    {:ok, client} = FramedClient.start_link("127.0.0.1", port,
+                                            [tcp_opts: [timeout: 5000]])
     {:ok, handler_pid} = ServerSpy.start_link
 
     on_exit fn ->
@@ -275,7 +276,7 @@ defmodule Thrift.Generator.ServiceTest do
   thrift_test "it has a configurable socket timeout", ctx do
     ServerSpy.set_reply({:sleep, 1000, [1, 3, 4]})
 
-    assert {:error, :timeout} = FramedClient.friend_ids_of_with_options(ctx.client, 12914, [socket_opts: [timeout: 1]])
+    assert {:error, :timeout} = FramedClient.friend_ids_of_with_options(ctx.client, 12914, [tcp_opts: [timeout: 1]])
   end
 
   thrift_test "oneway functions should not have an options version" do
@@ -308,9 +309,9 @@ defmodule Thrift.Generator.ServiceTest do
 
     assert_receive {:DOWN, ^ref, _, _, _}
 
-    {:ok, client} = FramedClient.start_link("127.0.0.1", ctx.port, [], 1)
+    {:ok, client} = FramedClient.start_link("127.0.0.1", ctx.port, [tcp_opts: [timeout: 1]])
 
-    assert :sys.get_state(client).mod_state.retry_count > 0
+    assert :sys.get_state(client).mod_state.retries > 0
   end
 
   thrift_test "clients are warned if they tray to use a closed client", ctx do
@@ -345,7 +346,7 @@ defmodule Thrift.Generator.ServiceTest do
     Process.exit(ctx.server, :kill)
     assert_receive {:DOWN, ^ref, _, _, _}
 
-    assert :sys.get_state(ctx.client).mod_state.retry_count > 0
+    assert :sys.get_state(ctx.client).mod_state.retries > 0
   end
 
   thrift_test "it reconnects on void oneway functions", ctx do

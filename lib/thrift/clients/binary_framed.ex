@@ -2,26 +2,22 @@ defmodule Thrift.Clients.BinaryFramed do
   alias Thrift.Protocols.Binary
   alias Thrift.TApplicationException
 
-  defmodule State do
-    defstruct host: nil, port: nil, tcp_opts: nil, timeout: 5000, sock: nil, retry_count: 0
-  end
-
-  require Logger
-  use Connection
-
-  @backoff_values {100, 100, 200, 300, 500, 800, 1000}
-
-  @default_tcp_opts [active: false, packet: 4, mode: :binary]
+  @immutable_tcp_opts [active: false, packet: 4, mode: :binary]
 
   @type error :: {:error, atom}
   @type success :: {:ok, binary}
 
   @type protocol_response :: success | error
 
+  @type retry_count :: integer
+  @type backoff_ms :: integer
+  @type backoff_fn :: ((retry_count) -> backoff_ms)
+
   @type data :: iolist | binary
-  @type socket_opts :: [
+  @type tcp_opts :: [
     timeout: integer,
-    send_timeout: integer
+    send_timeout: integer,
+    backoff_calculator: backoff_fn
   ]
 
   @type genserver_call_options :: [
@@ -29,43 +25,74 @@ defmodule Thrift.Clients.BinaryFramed do
   ]
 
   @type options :: [
-    socket_opts: socket_opts,
+    tcp_opts: tcp_opts,
     gen_server_opts: genserver_call_options
   ]
 
-  def init({host, port, tcp_opts, timeout}) do
+  defmodule State do
+    @type t :: %State{host: String.t,
+                      port: (1..65535),
+                      tcp_opts: BinaryFramed.tcp_opts,
+                      timeout: integer,
+                      sock: pid,
+                      retries: integer,
+                      backoff_calculator: BinaryFramed.backoff_fn}
+    defstruct host: nil,
+              port: nil,
+              tcp_opts: nil,
+              timeout: 5000,
+              sock: nil,
+              retries: 0,
+              backoff_calculator: nil
+  end
+
+  require Logger
+  use Connection
+
+  def init({host, port, opts}) do
+    tcp_opts = Keyword.get(opts, :tcp_opts, [])
+
+    backoff_calculator = Keyword.get(tcp_opts, :backoff_calculator, &calculate_backoff/1)
+    {timeout, tcp_opts} = Keyword.pop(tcp_opts, :timeout, 5000)
+
     s = %State{host: to_host(host),
                port: port,
                tcp_opts: tcp_opts,
                timeout: timeout,
+               backoff_calculator: backoff_calculator,
                sock: nil}
 
     {:connect, :init, s}
   end
 
-  @spec start_link(String.t, (0..65535), socket_opts, integer) :: GenServer.on_start
-  def start_link(host, port, tcp_opts, timeout \\ 5000) do
-    Connection.start_link(__MODULE__, {host, port, tcp_opts, timeout})
+  @spec start_link(String.t, (0..65535), options) :: GenServer.on_start
+  def start_link(host, port, opts) do
+    Connection.start_link(__MODULE__, {host, port, opts})
   end
 
   def close(conn), do: Connection.call(conn, :close)
 
-  def connect(_, %{sock: nil, host: host, port: port, tcp_opts: opts, timeout: timeout, retry_count: retries} = s) do
+  def connect(_, %{sock: nil, host: host, port: port, tcp_opts: opts, timeout: timeout, retries: retries, backoff_calculator: backoff_calculator} = s) do
     opts = opts
-    |> Keyword.merge(@default_tcp_opts)
+    |> Keyword.merge(@immutable_tcp_opts)
     |> Keyword.put_new(:send_timeout, 1000)
 
     case :gen_tcp.connect(host, port, opts, timeout) do
       {:ok, sock} ->
-        {:ok, %{s | sock: sock, retry_count: 0}}
+        {:ok, %{s | sock: sock, retries: 0}}
 
       {:error, _} ->
         new_retries = retries + 1
-        backoff = elem(@backoff_values, min(tuple_size(@backoff_values), new_retries))
+        backoff = backoff_calculator.(new_retries)
 
-        Logger.warn("Failed to connect to #{host} (after #{new_retries + 1} attempts), retrying in #{backoff}ms.")
+        msg = "Failed to connect to #{host} (after #{new_retries + 1} attempts), retrying in #{backoff}ms."
+        if retries <= 5 do
+          Logger.info(msg)
+        else
+          Logger.warn(msg)
+        end
 
-        {:backoff, backoff, %{s | retry_count: new_retries}}
+        {:backoff, backoff, %{s | retries: new_retries}}
     end
   end
 
@@ -92,11 +119,11 @@ defmodule Thrift.Clients.BinaryFramed do
 
   @spec request(pid, data, options) :: protocol_response
   def request(conn, data, options) do
-    socket_opts = Keyword.get(options, :socket_opts, [])
+    tcp_opts = Keyword.get(options, :tcp_opts, [])
     gen_server_opts = Keyword.get(options, :gen_server_opts, [])
     gen_server_timeout = Keyword.get(gen_server_opts, :timeout, 5000)
 
-    Connection.call(conn, {:request, data, socket_opts}, gen_server_timeout)
+    Connection.call(conn, {:request, data, tcp_opts}, gen_server_timeout)
   end
 
   def handle_call(_, _, %{sock: nil} = s) do
@@ -161,9 +188,9 @@ defmodule Thrift.Clients.BinaryFramed do
             {:error, {:exception, exception}}
 
           [] ->
-          # This case is when we have a void return on the
-          # remote RPC
-          {:ok, nil}
+            # This case is when we have a void return on the
+            # remote RPC
+            {:ok, nil}
         end
 
       {%{success: success}, ""} when not is_nil(success) ->
@@ -189,7 +216,6 @@ defmodule Thrift.Clients.BinaryFramed do
 
            {mismatched_sequence_id, ^rpc_name} ->
              message = "Invalid sequence id. The client sent #{sequence_id}, but the server replied with #{mismatched_sequence_id}"
-
              %TApplicationException{message: message,
                                     type: TApplicationException.exception_type(4)}
 
@@ -237,4 +263,12 @@ defmodule Thrift.Clients.BinaryFramed do
     String.to_char_list(host)
   end
   defp to_host(host) when is_list(host), do: host
+
+  defp calculate_backoff(0), do: 100
+  defp calculate_backoff(1), do: 100
+  defp calculate_backoff(2), do: 200
+  defp calculate_backoff(3), do: 300
+  defp calculate_backoff(4), do: 500
+  defp calculate_backoff(5), do: 800
+  defp calculate_backoff(_), do: 1000
 end

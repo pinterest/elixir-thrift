@@ -1,0 +1,10 @@
+engines:
+  credo:
+    enabled: true
+  fixme:
+    enabled: true
+  remark-lint:
+    enabled: true
+exclude_paths:
+- ext
+- test

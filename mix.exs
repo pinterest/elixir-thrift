@@ -43,7 +43,9 @@ defmodule Thrift.Mixfile do
   end
 
   def application do
-     []
+    [
+      applications: [:logger],
+    ]
   end
 
   defp erlc_paths(:prod) do

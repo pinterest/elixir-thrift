@@ -106,7 +106,7 @@ defmodule Thrift.Generator.ServiceTest do
       end)
     end
 
-    {:ok, port: port, client: client}
+    {:ok, port: port, client: client, server: server}
   end
 
   thrift_test "it should generate arg structs" do
@@ -239,6 +239,7 @@ defmodule Thrift.Generator.ServiceTest do
     ServerSpy.set_reply(:noreply)
 
     assert {:ok, nil} == FramedClient.do_some_work(ctx.client, "12345")
+    :timer.sleep(10)
   end
 
   thrift_test "it handles returning a list", ctx do
@@ -293,4 +294,69 @@ defmodule Thrift.Generator.ServiceTest do
     assert {:friend_nicknames_with_options, 3}  in defined_functions
     assert {:tags_with_options, 3}              in defined_functions
   end
+
+
+  # connection tests
+
+  thrift_test "clients can be closed", ctx do
+    :ok = FramedClient.close(ctx.client)
+  end
+
+  thrift_test "clients retry on a closed server", ctx do
+    ref = Process.monitor(ctx.server)
+    :thrift_socket_server.stop(ctx.server)
+
+    assert_receive {:DOWN, ^ref, _, _, _}
+
+    {:ok, client} = FramedClient.start_link("127.0.0.1", ctx.port, [], 1)
+
+    assert :sys.get_state(client).mod_state.retry_count > 0
+  end
+
+  thrift_test "clients are warned if they tray to use a closed client", ctx do
+    FramedClient.close(ctx.client)
+    ref = Process.monitor(ctx.server)
+    Process.exit(ctx.server, :normal)
+    assert_receive {:DOWN, ^ref, _, _, _}
+
+    {:error, _} = FramedClient.friend_ids_of(ctx.client, 1234)
+  end
+
+  thrift_test "clients retry if the server dies handling a message", ctx do
+    ref = Process.monitor(ctx.server)
+
+    ServerSpy.set_reply({:sleep, 5000, 1234})
+
+    # the server will sleep, so spawn a process to make a request,
+    # then kill the server out from under that process. It will
+    # trigger the generic error handler in the server
+    me = self
+    spawn fn ->
+      Process.send_after(me, :ok, 20)
+      FramedClient.friend_ids_of(ctx.client, 14821)
+    end
+
+    receive do
+      :ok ->
+        :ok
+    end
+
+    Process.unlink(ctx.server)
+    Process.exit(ctx.server, :kill)
+    assert_receive {:DOWN, ^ref, _, _, _}
+
+    assert :sys.get_state(ctx.client).mod_state.retry_count > 0
+  end
+
+  thrift_test "it reconnects on void oneway functions", ctx do
+    ServerSpy.set_reply(:noreply)
+
+    ref = Process.monitor(ctx.server)
+    Process.exit(ctx.server, :normal)
+    assert_receive {:DOWN, ^ref, _, _, _}
+
+    assert {:ok, nil} == FramedClient.do_some_work(ctx.client, "12345")
+    :timer.sleep(10)
+  end
+
 end

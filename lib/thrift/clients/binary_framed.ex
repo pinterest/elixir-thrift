@@ -86,7 +86,9 @@ defmodule Thrift.Clients.BinaryFramed do
   end
 
   @spec oneway(pid, data) :: :ok
-  def oneway(conn, data), do: Connection.cast(conn, {:oneway, data})
+  def oneway(conn, data) do
+    Connection.cast(conn, {:oneway, data})
+  end
 
   @spec request(pid, data, options) :: protocol_response
   def request(conn, data, options) do
@@ -124,13 +126,17 @@ defmodule Thrift.Clients.BinaryFramed do
     {:disconnect, {:close, from}, s}
   end
 
-  def handle_cast({:oneway, data, _options}, %{sock: sock} = s) do
+  def handle_cast(_, %{sock: nil} = s) do
+    {:noreply, s}
+  end
+
+  def handle_cast({:oneway, data}, %{sock: sock} = s) do
     case :gen_tcp.send(sock, data) do
       :ok ->
-        {:reply, :ok, s}
+        {:noreply, s}
 
       {:error, _} = error ->
-        {:disconnect, error, error, s}
+        {:disconnect, error, s}
     end
   end
 

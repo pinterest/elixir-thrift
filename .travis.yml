@@ -18,7 +18,7 @@ services: docker
 env:
   - THRIFT=${TRAVIS_BUILD_DIR}/ci/thrift-docker
 after_script:
-  - MIX_ENV=test mix coveralls.travis
+  - mix coveralls.travis
 cache:
   directories:
   - $HOME/.mix/archives

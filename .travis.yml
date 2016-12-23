@@ -4,15 +4,21 @@ elixir:
   - 1.3.4
 otp_release:
   - 18.2
-  - 18.3
-  - 19.0
+  - 19.1
+matrix:
+  # We are only interested on the newest/oldest pair
+  exclude:
+    - elixir: 1.3.4
+      otp_release: 18.2
+    - elixir: 1.2.6
+      otp_release: 19.1
 sudo: required
 group: edge
 services: docker
 env:
   - THRIFT=${TRAVIS_BUILD_DIR}/ci/thrift-docker
 after_script:
-  - MIX_ENV=test mix coveralls.travis
+  - mix coveralls.travis
 cache:
   directories:
   - $HOME/.mix/archives

@@ -18,7 +18,11 @@ defmodule Thrift.Mixfile do
 
      # Testing
      test_coverage: [tool: ExCoveralls],
-     preferred_cli_env: ["coveralls": :test, "coveralls.detail": :test, "coveralls.post": :test],
+     preferred_cli_env: [
+       "coveralls": :test,
+       "coveralls.detail": :test,
+       "coveralls.html": :test,
+       "coveralls.post": :test],
 
      # URLs
      source_url: @project_url,
@@ -30,7 +34,12 @@ defmodule Thrift.Mixfile do
 
      # Docs
      name: "Thrift",
-     docs: [source_ref: "v#{@version}", main: "Thrift", source_url: @project_url]]
+     docs: [
+       main: "readme",
+       extras: ["README.md": [group: "Documents", title: "README"]],
+       extra_section: "Overview",
+       source_ref: @version,
+       source_url: @project_url]]
   end
 
   def application do
@@ -54,10 +63,9 @@ defmodule Thrift.Mixfile do
   end
 
   defp deps do
-     [{:ex_doc, "~> 0.14.3", only: :dev},
-      {:earmark, "~> 1.0.2", only: :dev},
-      {:excoveralls, "~> 0.5.7", only: :test},
-      {:credo, "~> 0.5.2", only: [:dev, :test]},
+     [{:ex_doc, "~> 0.14", only: :dev},
+      {:excoveralls, "~> 0.5.7", only: [:dev, :test]},
+      {:credo, "~> 0.5", only: [:dev, :test]},
       {:dialyxir, "~> 0.4.0", only: [:dev, :test]},
       {:benchfella, "~> 0.3.0", only: [:dev, :test]}
      ]

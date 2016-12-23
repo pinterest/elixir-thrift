@@ -141,7 +141,6 @@ defmodule ParserTest do
     constant = "const set<string> SET_CONST = {\"hello\", \"bye\"}"
     |> parse([:constants, :SET_CONST])
 
-
     assert constant == %Constant{name: :SET_CONST,
                                  value: MapSet.new(["hello", "bye"]),
                                  type: {:set, :string}}
@@ -159,7 +158,6 @@ defmodule ParserTest do
   test "parsing a map constant" do
     constant = "const map<string, i32> MAP_CONST = {\"hello\": 1, \"world\": 2};"
     |> parse([:constants, :MAP_CONST])
-
 
     assert constant == %Constant{name: :MAP_CONST,
                                  value: %{"world" => 2, "hello" => 1},
@@ -551,7 +549,6 @@ defmodule ParserTest do
     }
     """
     |> parse([:services, :MyService])
-
 
     assert service == %Service{
       name: :MyService,

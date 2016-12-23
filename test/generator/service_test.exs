@@ -91,7 +91,7 @@ defmodule Thrift.Generator.ServiceTest do
       framed: true,
       service: :simple_service_thrift)
 
-    {:ok, client} = FramedClient.start_link("127.0.0.1", port,
+    {:ok, client} = FramedClient.start_link('127.0.0.1', port,
                                             [tcp_opts: [timeout: 5000]])
     {:ok, handler_pid} = ServerSpy.start_link
 

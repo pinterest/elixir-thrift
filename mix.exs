@@ -17,7 +17,11 @@ defmodule Thrift.Mixfile do
 
      # Testing
      test_coverage: [tool: ExCoveralls],
-     preferred_cli_env: ["coveralls": :test, "coveralls.detail": :test, "coveralls.post": :test],
+     preferred_cli_env: [
+       "coveralls": :test,
+       "coveralls.detail": :test,
+       "coveralls.html": :test,
+       "coveralls.post": :test],
 
      # URLs
      source_url: @project_url,
@@ -43,7 +47,7 @@ defmodule Thrift.Mixfile do
 
   defp deps do
      [{:ex_doc, "~> 0.14", only: :dev},
-      {:excoveralls, "~> 0.5.7", only: :test},
+      {:excoveralls, "~> 0.5.7", only: [:dev, :test]},
       {:credo, "~> 0.5", only: [:dev, :test]},
       {:dialyxir, "~> 0.4.0", only: [:dev, :test]}
      ]

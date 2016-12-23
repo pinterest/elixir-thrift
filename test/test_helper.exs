@@ -1,7 +1,6 @@
 ExUnit.configure(exclude: [pending: true])
 ExUnit.start()
 
-
 defmodule ThriftTestHelpers do
   @root_dir "test/fixtures/thrift/"
 
@@ -15,7 +14,6 @@ defmodule ThriftTestHelpers do
   def build_thrift_file(base_dir, {file_name, contents}) do
     file_relative_path = file_name
     |> Atom.to_string
-
 
     file_path = Path.join(base_dir, file_relative_path)
 

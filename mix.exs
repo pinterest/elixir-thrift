@@ -44,7 +44,7 @@ defmodule Thrift.Mixfile do
   defp deps do
      [{:ex_doc, "~> 0.14", only: :dev},
       {:excoveralls, "~> 0.5.7", only: :test},
-      {:credo, "~> 0.5.2", only: [:dev, :test]},
+      {:credo, "~> 0.5", only: [:dev, :test]},
       {:dialyxir, "~> 0.4.0", only: [:dev, :test]}
      ]
   end

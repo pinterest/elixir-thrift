@@ -10,7 +10,7 @@ defmodule Thrift.Generator do
     |> generate!(output_dir)
   end
 
-  def generate!(%FileGroup{}=file_group, output_dir) do
+  def generate!(%FileGroup{} = file_group, output_dir) do
     Enum.flat_map(file_group.schemas, fn {_, schema} ->
       schema
       |> Map.put(:file_group, file_group)
@@ -19,7 +19,7 @@ defmodule Thrift.Generator do
     end)
   end
 
-  def generate_to_string!(%FileGroup{}=file_group) do
+  def generate_to_string!(%FileGroup{} = file_group) do
     Enum.flat_map(file_group.schemas, fn {_, schema} ->
       schema
       |> Map.put(:file_group, file_group)

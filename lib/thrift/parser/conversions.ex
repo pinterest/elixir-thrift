@@ -15,7 +15,7 @@ defmodule Thrift.Parser.Conversions do
     nil
   end
 
-  def cast(type, %{}=val) do
+  def cast(type, %{} = val) do
     # this is for TEnumValues
     %{val | type: type}
   end

@@ -67,7 +67,7 @@ defmodule Thrift.Parser.FileGroup do
     # way, we add unqualified names to the resolutions map.
     resolutions = Resolver.get(file_group.resolver)
     to_update = resolutions
-    |> Enum.map(fn {name, v}=kvp ->
+    |> Enum.map(fn {name, v} = kvp ->
       case String.split(Atom.to_string(name), ".") do
         [_initial_module, rest] ->
           {:"#{rest}", v}
@@ -92,13 +92,13 @@ defmodule Thrift.Parser.FileGroup do
   def resolve(%FileGroup{} = group, %Field{type: %StructRef{} = ref} = field) do
     %Field{field | type: resolve(group, ref)}
   end
-  def resolve(%FileGroup{}=group, %Field{type: {:list, elem_type}}=field) do
+  def resolve(%FileGroup{} = group, %Field{type: {:list, elem_type}} = field) do
     %Field{field | type: {:list, resolve(group, elem_type)}}
   end
-  def resolve(%FileGroup{}=group, %Field{type: {:set, elem_type}}=field) do
+  def resolve(%FileGroup{} = group, %Field{type: {:set, elem_type}} = field) do
     %Field{field | type: {:set, resolve(group, elem_type)}}
   end
-  def resolve(%FileGroup{}=group, %Field{type: {:map, {key_type, val_type}}}=field) do
+  def resolve(%FileGroup{} = group, %Field{type: {:map, {key_type, val_type}}} = field) do
     %Field{field | type: {:map, {resolve(group, key_type), resolve(group, val_type)}}}
   end
   def resolve(%FileGroup{resolutions: resolutions}, %StructRef{referenced_type: type_name}) do

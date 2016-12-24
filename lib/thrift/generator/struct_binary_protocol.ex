@@ -103,7 +103,7 @@ defmodule Thrift.Generator.StructBinaryProtocol do
       def deserialize(binary) do
         deserialize(binary, %unquote(name){})
       end
-      defp deserialize(<<0, rest::binary>>, acc=%unquote(name){}) do
+      defp deserialize(<<0, rest::binary>>, %unquote(name){} = acc) do
         {acc, rest}
       end
 
@@ -269,7 +269,7 @@ defmodule Thrift.Generator.StructBinaryProtocol do
       end
     end
   end
-  def field_deserializer(struct=%Struct{}, field, name, file_group) do
+  def field_deserializer(%Struct{} = struct, field, name, file_group) do
     dest_module = FileGroup.dest_module(file_group, struct)
     quote do
       defp unquote(name)(<<unquote(@struct), unquote(field.id)::16-signed, rest::binary>>, acc) do
@@ -282,7 +282,7 @@ defmodule Thrift.Generator.StructBinaryProtocol do
       end
     end
   end
-  def field_deserializer(struct=%Exception{}, field, name, file_group) do
+  def field_deserializer(%Exception{} = struct, field, name, file_group) do
     dest_module = FileGroup.dest_module(file_group, struct)
     quote do
       defp unquote(name)(<<unquote(@struct), unquote(field.id)::16-signed, rest::binary>>, acc) do
@@ -406,7 +406,7 @@ defmodule Thrift.Generator.StructBinaryProtocol do
       end
     end
   end
-  def map_key_deserializer(struct=%Struct{}, key_name, value_name, file_group) do
+  def map_key_deserializer(%Struct{} = struct, key_name, value_name, file_group) do
     dest_module = FileGroup.dest_module(file_group, struct)
     quote do
       defp unquote(key_name)(<<rest::binary>>, stack) do
@@ -419,7 +419,7 @@ defmodule Thrift.Generator.StructBinaryProtocol do
       end
     end
   end
-  def map_key_deserializer(struct=%Exception{}, key_name, value_name, file_group) do
+  def map_key_deserializer(%Exception{} = struct, key_name, value_name, file_group) do
     dest_module = FileGroup.dest_module(file_group, struct)
     quote do
       defp unquote(key_name)(<<rest::binary>>, stack) do
@@ -540,7 +540,7 @@ defmodule Thrift.Generator.StructBinaryProtocol do
       end
     end
   end
-  def map_value_deserializer(struct=%Struct{}, key_name, value_name, file_group) do
+  def map_value_deserializer(%Struct{} = struct, key_name, value_name, file_group) do
     dest_module = FileGroup.dest_module(file_group, struct)
     quote do
       defp unquote(value_name)(<<rest::binary>>, key, [map, remaining | stack]) do
@@ -553,7 +553,7 @@ defmodule Thrift.Generator.StructBinaryProtocol do
       end
     end
   end
-  def map_value_deserializer(struct=%Exception{}, key_name, value_name, file_group) do
+  def map_value_deserializer(%Exception{} = struct, key_name, value_name, file_group) do
     dest_module = FileGroup.dest_module(file_group, struct)
     quote do
       defp unquote(value_name)(<<rest::binary>>, key, [map, remaining | stack]) do
@@ -672,7 +672,7 @@ defmodule Thrift.Generator.StructBinaryProtocol do
       end
     end
   end
-  def list_deserializer(struct=%Struct{}, name, file_group) do
+  def list_deserializer(%Struct{} = struct, name, file_group) do
     dest_module = FileGroup.dest_module(file_group, struct)
     quote do
       defp unquote(name)(<<rest::binary>>, [list, remaining | stack]) do
@@ -685,7 +685,7 @@ defmodule Thrift.Generator.StructBinaryProtocol do
       end
     end
   end
-  def list_deserializer(struct=%Exception{}, name, file_group) do
+  def list_deserializer(%Exception{} = struct, name, file_group) do
     dest_module = FileGroup.dest_module(file_group, struct)
     quote do
       defp unquote(name)(<<rest::binary>>, [list, remaining | stack]) do
@@ -795,13 +795,13 @@ defmodule Thrift.Generator.StructBinaryProtocol do
       ]
     end
   end
-  def value_serializer(struct=%Struct{}, var, file_group) do
+  def value_serializer(%Struct{} = struct, var, file_group) do
     dest_module = FileGroup.dest_module(file_group, struct)
     quote do
       unquote(dest_module).serialize(unquote(var))
     end
   end
-  def value_serializer(struct=%Exception{}, var, file_group) do
+  def value_serializer(%Exception{} = struct, var, file_group) do
     dest_module = FileGroup.dest_module(file_group, struct)
     quote do
       unquote(dest_module).serialize(unquote(var))

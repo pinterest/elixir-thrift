@@ -78,7 +78,7 @@ defmodule Thrift.Protocols.Binary do
 
     [<<int_type(elem_type)::size(8), Enum.count(elems)::32-signed>>, rest]
   end
-  def serialize({:set, elem_type}, %MapSet{}=elems) do
+  def serialize({:set, elem_type}, %MapSet{} = elems) do
     rest = Enum.map(elems, &serialize(elem_type, &1))
 
     [<<int_type(elem_type)::size(8), Enum.count(elems)::32-signed>>, rest]
@@ -90,7 +90,7 @@ defmodule Thrift.Protocols.Binary do
     end)
     [<<int_type(key_type)::size(8), int_type(val_type)::size(8), elem_count::32-signed>>, rest]
   end
-  def serialize(:struct, %{__struct__: mod}=struct) do
+  def serialize(:struct, %{__struct__: mod} = struct) do
     mod.serialize(struct, :binary)
   end
   def serialize(:message_begin, {sequence_id, message_type, name}) do

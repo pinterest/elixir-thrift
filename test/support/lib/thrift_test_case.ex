@@ -116,23 +116,21 @@ defmodule ThriftTestCase do
     outdir = Path.relative_to(erlang_source_dir, @project_root)
     reldir = Path.relative_to(dir, @project_root)
 
-    list_of_files
-    |> Enum.map(fn file ->
+    for file <- list_of_files do
       filename = Path.join(reldir, file[:name])
       System.cmd(System.get_env("THRIFT") || "thrift",
                  ["-out", outdir,
                   "--gen", "erl", "-r", filename],
                  cd: @project_root)
-    end)
+    end
 
-    Path.wildcard("#{erlang_source_dir}/*.erl")
-    |> Enum.map(fn source_file ->
+    for source_file <- Path.wildcard("#{erlang_source_dir}/*.erl") do
       {:ok, mod_name, code} = source_file
       |> String.to_char_list
       |> :compile.file([:binary])
 
       :code.load_binary(mod_name, [], code)
-    end)
+    end
 
     Path.wildcard("#{erlang_source_dir}/*_types.hrl")
     |> Enum.map(&build_records/1)

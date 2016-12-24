@@ -61,7 +61,7 @@ defmodule Thrift.Generator.StructGenerator do
   defp zero(_schema, %Thrift.Parser.Models.Exception{}), do: nil
 
   # Zero values for user defined types
-  defp zero(schema, %{referenced_type: type}=ref) do
+  defp zero(schema, %{referenced_type: type} = ref) do
     cond do
       # Local references
       Map.has_key?(schema.enums, type) ->

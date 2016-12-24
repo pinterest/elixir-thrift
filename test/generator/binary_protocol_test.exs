@@ -3,7 +3,7 @@ defmodule Thrift.Generator.BinaryProtocolTest do
 
   alias Thrift.Protocols.Binary
 
-  def assert_serializes(struct=%{__struct__: mod}, binary) do
+  def assert_serializes(%{__struct__: mod} = struct, binary) do
     assert binary == Binary.serialize(:struct, struct) |> IO.iodata_to_binary
     assert {^struct, ""} = mod.deserialize(binary)
 
@@ -23,7 +23,7 @@ defmodule Thrift.Generator.BinaryProtocolTest do
     end
   end
 
-  def assert_serializes(struct=%{__struct__: mod}, binary, deserialized_struct=%{__struct__: mod}) do
+  def assert_serializes(%{__struct__: mod} = struct, binary, %{__struct__: mod} = deserialized_struct) do
     assert binary == Binary.serialize(:struct, struct) |> IO.iodata_to_binary
     assert {^deserialized_struct, ""} = mod.deserialize(binary)
   end

@@ -59,12 +59,11 @@ defmodule Thrift.Generator.Service do
     StructGenerator.generate(:struct, schema, response_struct.name, response_struct)
   end
 
-  defp service_module_name(%Function{} = function, suffix) do
+  def service_module_name(%Function{} = function, suffix) do
     struct_name = "#{function.name}_#{suffix}"
     |> Macro.camelize
     |> String.to_atom
 
     Module.concat(Elixir, struct_name)
   end
-
 end

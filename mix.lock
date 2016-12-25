@@ -1,6 +1,7 @@
 %{"benchfella": {:hex, :benchfella, "0.3.3", "bbde48b5fe1ef556baa7ad933008e214e050e81ddb0916350715f5759fb35c0c", [:mix], []},
   "bunt": {:hex, :bunt, "0.1.6", "5d95a6882f73f3b9969fdfd1953798046664e6f77ec4e486e6fafc7caad97c6f", [:mix], []},
   "certifi": {:hex, :certifi, "0.4.0", "a7966efb868b179023618d29a407548f70c52466bf1849b9e8ebd0e34b7ea11f", [:rebar3], []},
+  "connection": {:hex, :connection, "1.0.4", "a1cae72211f0eef17705aaededacac3eb30e6625b04a6117c1b2db6ace7d5976", [:mix], []},
   "credo": {:hex, :credo, "0.5.2", "92e8c9f86e0ffbf9f688595e9f4e936bc96a52e5606d2c19713e9e4d191d5c74", [:mix], [{:bunt, "~> 0.1.6", [hex: :bunt, optional: false]}]},
   "dialyxir": {:hex, :dialyxir, "0.4.0", "53ac3014bb4aef647728a697052b4db3a84c6742de7aab0e0a1c863ea274007b", [:mix], []},
   "dialyze": {:hex, :dialyze, "0.2.1", "9fb71767f96649020d769db7cbd7290059daff23707d6e851e206b1fdfa92f9d", [:mix], []},

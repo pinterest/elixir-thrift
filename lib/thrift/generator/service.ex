@@ -1,6 +1,11 @@
 defmodule Thrift.Generator.Service do
+  @moduledoc false
   alias Thrift.Parser.FileGroup
-  alias Thrift.Generator.StructGenerator
+  alias Thrift.{
+    Generator,
+    Generator.StructGenerator
+  }
+
   alias Thrift.Parser.Models.{
     Field,
     Function,
@@ -13,12 +18,16 @@ defmodule Thrift.Generator.Service do
 
     functions = service.functions |> Map.values
     arg_structs = Enum.map(functions, &generate_args_struct(schema, &1))
-    response_structs = Enum.map(functions, &generate_response_struct(schema, &1))
+    response_structs = Enum.filter_map(functions, &(!&1.oneway), &generate_response_struct(schema, &1))
+
+    framed_client = Generator.Client.Framed.generate(dest_module, service)
 
     service_module = quote do
       defmodule unquote(dest_module) do
         unquote_splicing(arg_structs)
         unquote_splicing(response_structs)
+
+        unquote(framed_client)
       end
     end
 
@@ -50,7 +59,7 @@ defmodule Thrift.Generator.Service do
     StructGenerator.generate(:struct, schema, response_struct.name, response_struct)
   end
 
-  defp service_module_name(%Function{} = function, suffix) do
+  def service_module_name(%Function{} = function, suffix) do
     struct_name = "#{function.name}_#{suffix}"
     |> Macro.camelize
     |> String.to_atom

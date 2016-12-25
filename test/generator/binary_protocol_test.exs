@@ -223,6 +223,7 @@ defmodule Thrift.Generator.BinaryProtocolTest do
 
   @thrift_file name: "exception.thrift", contents: """
   exception Ex {
+     1: string message,
     99: byte num;
   }
   struct Exception {

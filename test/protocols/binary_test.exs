@@ -2,6 +2,8 @@ defmodule BinaryProtocolTest do
   use ThriftTestCase, gen_erl: true
   use ExUnit.Case
 
+  alias Thrift.Protocols.Binary
+
   @moduletag :integration
 
   def round_trip_struct(data, serializer_mf, deserializer_mf) do
@@ -338,4 +340,51 @@ defmodule BinaryProtocolTest do
   #   assert nested == {:SharedStruct, 2916, "my value"}
   #   assert user == user(:erlang)
   # end
+
+  test "primitive serializers work as expected" do
+    assert <<1::size(8)>> == Binary.serialize(:bool, true)
+    assert <<0::size(8)>> == Binary.serialize(:bool, false)
+
+    assert <<38::signed-8>> == Binary.serialize(:i8, 38)
+    assert <<-23::signed-8>> == Binary.serialize(:i8, -23)
+
+    assert <<65_535::signed-16>> == Binary.serialize(:i16, 65_535)
+    assert <<-65_535::signed-16>> == Binary.serialize(:i16, -65_535)
+
+    max_32 = round(:math.pow(2, 31)) - 1
+    negative_max_32 = -max_32
+    assert <<^max_32::signed-32>> = Binary.serialize(:i32, max_32)
+    assert <<^negative_max_32::signed-32>> = Binary.serialize(:i32, -max_32)
+
+    max_64 = round(:math.pow(2, 63)) - 1
+    negative_max_64 = -max_64
+    assert <<^max_64::signed-64>> = Binary.serialize(:i64, max_64)
+    assert <<^negative_max_64::signed-64>> = Binary.serialize(:i64, -max_64)
+
+    assert <<332.2178::signed-float>> == Binary.serialize(:double, 332.2178)
+
+    assert [<<5::size(32)>>, "Hello"] == Binary.serialize(:string, "Hello")
+  end
+
+  test "list serializers encode correctly" do
+    list_of_i16s = [382, 0, -320, 28]
+    assert [<<6::size(8), 4::32-signed>>, rest] = Binary.serialize({:list, :i16}, list_of_i16s)
+    assert rest == Enum.map(list_of_i16s, &Binary.serialize(:i16, &1))
+  end
+
+  test "set serializers encode correctly" do
+    set_of_i16s = MapSet.new([382, 0, -320, 28])
+    assert [<<6::size(8), 4::32-signed>>, rest] = Binary.serialize({:set, :i16}, set_of_i16s)
+    assert rest == Enum.map(set_of_i16s, &Binary.serialize(:i16, &1))
+  end
+
+  test "map serializers encode correctly" do
+    map_to_serialize = %{"elixir" => 100, "Java" => 1, "Ruby" => 75, "Python" => 74}
+    serialized = Binary.serialize({:map, {:string, :i16}}, map_to_serialize)
+    assert [<<11::size(8), 6::size(8), 4::32-signed>>, kvps] = serialized
+
+    assert kvps == Enum.map(map_to_serialize,
+      fn {k, v} -> [Binary.serialize(:string, k), Binary.serialize(:i16, v)] end)
+  end
+
 end

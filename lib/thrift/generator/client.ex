@@ -1,4 +1,6 @@
 defmodule Thrift.Generator.Client do
+  @moduledoc false
+
   defmodule Framed do
     alias Thrift.Generator.Service
     alias Thrift.Parser.Models.Function

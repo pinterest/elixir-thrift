@@ -1,4 +1,5 @@
 defmodule Thrift.Generator.Service do
+  @moduledoc false
   alias Thrift.Parser.FileGroup
   alias Thrift.{
     Generator,

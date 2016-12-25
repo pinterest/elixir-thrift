@@ -1,4 +1,15 @@
 defmodule Thrift.Clients.BinaryFramed do
+  @moduledoc """
+  A client implementation of Thrift's Binary Framed protocol.
+
+  This client is meant to be used with a generated Thrift client. This module
+  implements framing on top of the Connection behaviour.
+
+  This module ony adds two functions to the connection behaviour,
+ `oneway` and `request`.
+
+
+  """
   alias Thrift.Protocols.Binary
   alias Thrift.TApplicationException
 
@@ -15,13 +26,13 @@ defmodule Thrift.Clients.BinaryFramed do
 
   @type data :: iolist | binary
   @type tcp_opts :: [
-    timeout: integer,
+    timeout: pos_integer,
     send_timeout: integer,
     backoff_calculator: backoff_fn
   ]
 
   @type genserver_call_options :: [
-    timeout: integer
+    timeout: pos_integer
   ]
 
   @type options :: [
@@ -35,7 +46,7 @@ defmodule Thrift.Clients.BinaryFramed do
                       tcp_opts: BinaryFramed.tcp_opts,
                       timeout: integer,
                       sock: pid,
-                      retries: integer,
+                      retries: non_neg_integer,
                       backoff_calculator: BinaryFramed.backoff_fn}
     defstruct host: nil,
               port: nil,
@@ -65,13 +76,42 @@ defmodule Thrift.Clients.BinaryFramed do
     {:connect, :init, s}
   end
 
+  @doc """
+  Starts and connects the client.
+  When called, the client connects on the appropriate host and port and establishes
+  a TCP connection. The options keyword list takes the following options:
+
+    `tcp_opts`: A keyword list that controls how the underlying connection is handled. All options
+     not handled below are sent to the underlying gen_tcp (with the exception of the
+     following options, which, if overridden, would break the framed client:
+     [`active`, `packet`, `mode`x]
+
+     - `timeout`:  An integer that governs how long the gen_tcp connection waits for operations
+        to complete. This timeout is used when connecting or receiving data.
+
+     - `send_timeout`: An integer that governs how long our connection waits when sending data.
+
+     - `backoff_calculator`: A single argument function that takes the number of retries and returns the
+        amount of time to wait in milliseconds before reconnecting. The default implementation
+        waits 100, 100, 200, 300, 500, 800 and then 1000 ms. All retries after that will wait 1000ms.
+
+
+    `gen_server_opts`: A keyword list of options that control the gen_server behaviour.
+
+     - `timeout`:  The amount of time to wait (in milliseconds) for a reply from a `GenServer` call.
+
+  """
   @spec start_link(String.t, (0..65535), options) :: GenServer.on_start
   def start_link(host, port, opts) do
     Connection.start_link(__MODULE__, {host, port, opts})
   end
 
+  @doc """
+  Closes the client's underlying connection.
+  """
   def close(conn), do: Connection.call(conn, :close)
 
+  @doc false
   def connect(_, %{sock: nil, host: host, port: port, tcp_opts: opts, timeout: timeout, retries: retries, backoff_calculator: backoff_calculator} = s) do
     opts = opts
     |> Keyword.merge(@immutable_tcp_opts)
@@ -96,6 +136,7 @@ defmodule Thrift.Clients.BinaryFramed do
     end
   end
 
+  @doc false
   def disconnect(info, %{sock: sock} = s) do
     :ok = :gen_tcp.close(sock)
     case info do
@@ -113,11 +154,22 @@ defmodule Thrift.Clients.BinaryFramed do
   end
 
   @spec oneway(pid, data) :: :ok
+  @doc """
+  Execute a one way RPC. One way RPC calls do not generate a response,
+  and as such, this implementation uses `GenServer.cast`.
+  The data argument must be a properly formatted Thrift message.
+  """
   def oneway(conn, data) do
     Connection.cast(conn, {:oneway, data})
   end
 
   @spec request(pid, data, options) :: protocol_response
+  @doc """
+  Executes a Thrift RPC. The data argument must be a correctly formatted
+  Thrift message.
+
+  The `options` argument takes the same type of keyword list that `start_link` takes.
+  """
   def request(conn, data, options) do
     tcp_opts = Keyword.get(options, :tcp_opts, [])
     gen_server_opts = Keyword.get(options, :gen_server_opts, [])

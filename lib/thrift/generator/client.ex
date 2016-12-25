@@ -86,7 +86,7 @@ defmodule Thrift.Generator.Client do
             {:error, {:exception, ex}} ->
               raise ex
 
-            {:error, _}=err ->
+            {:error, _} = err ->
               raise err
           end
         end

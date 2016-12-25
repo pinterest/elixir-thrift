@@ -42,7 +42,7 @@ defmodule Thrift.Clients.BinaryFramed do
 
   defmodule State do
     @type t :: %State{host: String.t,
-                      port: (1..65535),
+                      port: (1..65_535),
                       tcp_opts: BinaryFramed.tcp_opts,
                       timeout: integer,
                       sock: pid,
@@ -101,7 +101,7 @@ defmodule Thrift.Clients.BinaryFramed do
      - `timeout`:  The amount of time to wait (in milliseconds) for a reply from a `GenServer` call.
 
   """
-  @spec start_link(String.t, (0..65535), options) :: GenServer.on_start
+  @spec start_link(String.t, (0..65_535), options) :: GenServer.on_start
   def start_link(host, port, opts) do
     Connection.start_link(__MODULE__, {host, port, opts})
   end
@@ -228,7 +228,7 @@ defmodule Thrift.Clients.BinaryFramed do
                       sequence_id, rpc_name, reply_module) do
 
     case reply_module.deserialize(decoded_response) do
-      {%{success: nil}=resp, ""} ->
+      {%{success: nil} = resp, ""} ->
 
         response = resp
         |> Map.delete(:__struct__)

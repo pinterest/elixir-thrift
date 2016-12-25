@@ -348,8 +348,8 @@ defmodule BinaryProtocolTest do
     assert <<38::signed-8>> == Binary.serialize(:i8, 38)
     assert <<-23::signed-8>> == Binary.serialize(:i8, -23)
 
-    assert <<65535::signed-16>> == Binary.serialize(:i16, 65535)
-    assert <<-65535::signed-16>> == Binary.serialize(:i16, -65535)
+    assert <<65_535::signed-16>> == Binary.serialize(:i16, 65_535)
+    assert <<-65_535::signed-16>> == Binary.serialize(:i16, -65_535)
 
     max_32 = round(:math.pow(2, 31)) - 1
     negative_max_32 = -max_32

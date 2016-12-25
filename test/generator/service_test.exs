@@ -46,13 +46,13 @@ defmodule Thrift.Generator.ServiceTest do
       {:reply, :ok, {reply, args}}
     end
 
-    def handle_call(:get_reply, _, {reply, _}=state), do: {:reply, reply, state}
+    def handle_call(:get_reply, _, {reply, _} = state), do: {:reply, reply, state}
 
     def handle_call({:set_args, args}, _from, {reply, _}) do
       {:reply, :ok, {reply, args}}
     end
 
-    def handle_call(:get_args, _, {_, args}=state), do: {:reply, args, state}
+    def handle_call(:get_args, _, {_, args} = state), do: {:reply, args, state}
 
     def handle_function(name, args) do
       reply = ServerSpy.get_reply
@@ -83,7 +83,7 @@ defmodule Thrift.Generator.ServiceTest do
   alias Thrift.Generator.ServiceTest.UsernameTakenException
 
   setup do
-    port = :erlang.unique_integer([:positive, :monotonic]) + 10000
+    port = :erlang.unique_integer([:positive, :monotonic]) + 10_000
 
     {:ok, server} = :thrift_socket_server.start(
       handler: ServerSpy,
@@ -186,11 +186,11 @@ defmodule Thrift.Generator.ServiceTest do
   end
 
   thrift_test "it should be able to return structs", ctx do
-    ServerSpy.set_reply({:User, 28392, 'stinky'})
+    ServerSpy.set_reply({:User, 28_392, 'stinky'})
 
-    {:ok, user} = FramedClient.get_by_id(ctx.client, 12345)
+    {:ok, user} = FramedClient.get_by_id(ctx.client, 12_345)
 
-    assert %User{id: 28392, username: "stinky"} == user
+    assert %User{id: 28_392, username: "stinky"} == user
   end
 
   thrift_test "it should handle expected exceptions", ctx do
@@ -244,11 +244,11 @@ defmodule Thrift.Generator.ServiceTest do
   end
 
   thrift_test "it handles returning a list", ctx do
-    friend_ids = [1, 82, 382, 9914, 40112]
+    friend_ids = [1, 82, 382, 9914, 40_112]
 
     ServerSpy.set_reply(friend_ids)
 
-    assert {:ok, friend_ids} == FramedClient.friend_ids_of(ctx.client, 14821)
+    assert {:ok, friend_ids} == FramedClient.friend_ids_of(ctx.client, 14_821)
   end
 
   thrift_test "it handles returning a map", ctx do
@@ -262,7 +262,7 @@ defmodule Thrift.Generator.ServiceTest do
     ServerSpy.set_reply(:sets.from_list(['sports', 'debate', 'motorcycles']))
 
     expected = MapSet.new(["sports", "debate", "motorcycles"])
-    assert {:ok, expected} == FramedClient.tags(ctx.client, 91281)
+    assert {:ok, expected} == FramedClient.tags(ctx.client, 91_281)
   end
 
   thrift_test "it has a configurable gen_server timeout", ctx do
@@ -276,7 +276,7 @@ defmodule Thrift.Generator.ServiceTest do
   thrift_test "it has a configurable socket timeout", ctx do
     ServerSpy.set_reply({:sleep, 1000, [1, 3, 4]})
 
-    assert {:error, :timeout} = FramedClient.friend_ids_of_with_options(ctx.client, 12914, [tcp_opts: [timeout: 1]])
+    assert {:error, :timeout} = FramedClient.friend_ids_of_with_options(ctx.client, 12_914, [tcp_opts: [timeout: 1]])
   end
 
   thrift_test "oneway functions should not have an options version" do
@@ -334,7 +334,7 @@ defmodule Thrift.Generator.ServiceTest do
     me = self
     spawn fn ->
       Process.send_after(me, :ok, 20)
-      FramedClient.friend_ids_of(ctx.client, 14821)
+      FramedClient.friend_ids_of(ctx.client, 14_821)
     end
 
     receive do

@@ -98,6 +98,23 @@ defmodule Thrift.Protocols.Binary do
   def serialize(:struct, %{__struct__: mod} = struct) do
     mod.serialize(struct, :binary)
   end
+  def serialize(:union, %{__struct__: mod} = struct) do
+    set_fields = struct
+    |> Map.delete(:__struct__)
+    |> Enum.reject(fn {k, v} ->
+      is_nil(v)
+    end)
+
+    case set_fields do
+      [_] -> mod.serialize(struct, :binary)
+      set_fields ->
+        field_names = Enum.map(set_fields, &elem(&1, 0))
+        raise %Thrift.UnionFieldsSetException{
+          message: "Thrift union has more than one field set",
+          set_fields: field_names
+        }
+    end
+  end
   def serialize(:message_begin, {message_type, sequence_id, name}) do
     # Taken from https://erikvanoosten.github.io/thrift-missing-specification/#_message_encoding
 

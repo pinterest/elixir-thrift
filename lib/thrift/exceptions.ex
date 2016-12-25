@@ -14,3 +14,7 @@ defmodule Thrift.TApplicationException do
   def exception_type(10), do: :unsupported_client_type
   def exception_type(_), do: :unknown
 end
+
+defmodule Thrift.UnionFieldsSetException do
+  defexception message: nil, set_fields: nil
+end

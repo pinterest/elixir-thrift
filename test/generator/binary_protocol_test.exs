@@ -221,6 +221,31 @@ defmodule Thrift.Generator.BinaryProtocolTest do
     assert_serializes %Struct{val_list: [%Val{num: 91}]},             <<15, 0, 4, 12, 0, 0, 0, 1, 3, 0, 99, 91, 0, 0>>
   end
 
+  @thrift_file name: "unions.thrift", contents: """
+  struct StructValue {
+    1: string username;
+  }
+  union Union {
+    1: i64 int_field,
+    2: StructValue struct_field,
+    3: string string_field,
+    4: list<i16> list_field;
+  }
+  """
+  thrift_test "union serialization" do
+    assert_serializes %Union{},                                       <<0>>
+    assert_serializes %Union{int_field: 205},                         <<10, 0, 1, 0, 0, 0, 0, 0, 0, 0, 205, 0>>
+    assert_serializes %Union{struct_field: %StructValue{username: "stinky"}},
+    <<12, 0, 2, 11, 0, 1, 0, 0, 0, 6, 115, 116, 105, 110, 107, 121, 0, 0>>
+    assert_serializes %Union{string_field: "hello"},                  <<11, 0, 3, 0, 0, 0, 5, "hello", 0>>
+    assert_serializes %Union{list_field: [5, 9, 7]},                  <<15, 0, 4, 6, 0, 0, 0, 3, 0, 5, 0, 9, 0, 7, 0>>
+
+    assert_raise Thrift.UnionFieldsSetException, fn ->
+      Binary.serialize(:union, %Union{int_field: 205, list_field: [1, 2]})
+    end
+  end
+
+
   @thrift_file name: "exception.thrift", contents: """
   exception Ex {
      1: string message,

@@ -1,4 +1,6 @@
 defmodule Thrift.Protocols.Binary do
+  alias Thrift.Union.TooManyFieldsSetException
+
   # field types, which are the type ids from the thrift spec.
   @bool 2
   @byte 3
@@ -101,18 +103,19 @@ defmodule Thrift.Protocols.Binary do
   def serialize(:union, %{__struct__: mod} = struct) do
     set_fields = struct
     |> Map.delete(:__struct__)
-    |> Enum.reject(fn {k, v} ->
+    |> Enum.reject(fn {_, v} ->
       is_nil(v)
     end)
 
     case set_fields do
-      [_] -> mod.serialize(struct, :binary)
+      [] ->
+        mod.serialize(struct, :binary)
+
+      [_] ->
+        mod.serialize(struct, :binary)
+
       set_fields ->
-        field_names = Enum.map(set_fields, &elem(&1, 0))
-        raise %Thrift.UnionFieldsSetException{
-          message: "Thrift union has more than one field set",
-          set_fields: field_names
-        }
+        raise TooManyFieldsSetException.new(set_fields)
     end
   end
   def serialize(:message_begin, {message_type, sequence_id, name}) do

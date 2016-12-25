@@ -15,6 +15,14 @@ defmodule Thrift.TApplicationException do
   def exception_type(_), do: :unknown
 end
 
-defmodule Thrift.UnionFieldsSetException do
+defmodule Thrift.Union.TooManyFieldsSetException do
   defexception message: nil, set_fields: nil
+
+  def new(set_fields) do
+    field_names = Enum.map(set_fields, &elem(&1, 0))
+    %__MODULE__{
+      message: "Thrift union has more than one field set",
+      set_fields: field_names
+    }
+  end
 end

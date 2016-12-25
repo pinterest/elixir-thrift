@@ -2,6 +2,7 @@ defmodule Thrift.Generator.BinaryProtocolTest do
   use ThriftTestCase
 
   alias Thrift.Protocols.Binary
+  alias Thrift.Union.TooManyFieldsSetException
 
   def assert_serializes(%{__struct__: mod} = struct, binary) do
     assert binary == Binary.serialize(:struct, struct) |> IO.iodata_to_binary
@@ -231,6 +232,10 @@ defmodule Thrift.Generator.BinaryProtocolTest do
     3: string string_field,
     4: list<i16> list_field;
   }
+
+  struct StructWithUnion {
+    1: Union my_union
+  }
   """
   thrift_test "union serialization" do
     assert_serializes %Union{},                                       <<0>>
@@ -240,11 +245,19 @@ defmodule Thrift.Generator.BinaryProtocolTest do
     assert_serializes %Union{string_field: "hello"},                  <<11, 0, 3, 0, 0, 0, 5, "hello", 0>>
     assert_serializes %Union{list_field: [5, 9, 7]},                  <<15, 0, 4, 6, 0, 0, 0, 3, 0, 5, 0, 9, 0, 7, 0>>
 
-    assert_raise Thrift.UnionFieldsSetException, fn ->
+    assert_raise TooManyFieldsSetException, fn ->
       Binary.serialize(:union, %Union{int_field: 205, list_field: [1, 2]})
     end
   end
 
+  thrift_test "structs can have unions" do
+    assert_serializes %StructWithUnion{},                                   <<0>>
+    assert_serializes %StructWithUnion{my_union: %Union{int_field: 2}},     <<12, 0, 1, 10, 0, 1, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0>>
+
+    assert_raise TooManyFieldsSetException, fn ->
+      Binary.serialize(:struct,  %StructWithUnion{my_union: %Union{int_field: 123, string_field: "oops"}})
+    end
+  end
 
   @thrift_file name: "exception.thrift", contents: """
   exception Ex {

@@ -69,29 +69,6 @@ defmodule Thrift.Generator.StructBinaryProtocol do
   """
   def struct_deserializer(%{fields: fields} = model, name, file_group) do
     fields = Enum.reject(fields, &(&1.type == :void))
-
-    struct_check = if model.__struct__ == Thrift.Parser.Models.Union do
-      quote do
-        set_fields = to_serialize
-        |> Map.delete(:__struct__)
-        |> Enum.reject(fn {_, val} -> is_nil(val) end)
-        case set_fields do
-          [] ->
-            :ok
-
-          [_] ->
-            :ok
-
-          set_fields ->
-            raise Thrift.Union.TooManyFieldsSetException.new(set_fields)
-        end
-      end
-    else
-      quote do
-        _ = to_serialize
-      end
-    end
-
     struct_matcher = case fields do
                        [] ->
                          quote do: %unquote(name){} = to_serialize
@@ -110,9 +87,9 @@ defmodule Thrift.Generator.StructBinaryProtocol do
     |> Utils.merge_blocks
 
     quote do
-     def serialize(unquote(struct_matcher)) do
-       unquote(struct_check)
-       unquote([field_serializers, <<0>>] |> Utils.merge_binaries)
+      def serialize(unquote(struct_matcher)) do
+        unquote(Union.validator(model, :to_serialize))
+        unquote([field_serializers, <<0>>] |> Utils.merge_binaries)
       end
 
       def bool_to_int(false), do: 0

@@ -254,6 +254,31 @@ defmodule Thrift.Parser.Models do
 
       %Union{name: name, fields: fields}
     end
+
+    def validator(%Union{}, var_name) do
+      union_var = Macro.var(var_name, nil)
+      quote do
+        set_fields = unquote(union_var)
+        |> Map.delete(:__struct__)
+        |> Enum.reject(fn {_, val} -> is_nil(val) end)
+        case set_fields do
+          [] ->
+            :ok
+
+          [_] ->
+            :ok
+
+          set_fields ->
+            raise Thrift.Union.TooManyFieldsSetException.new(set_fields)
+        end
+      end
+    end
+    def validator(_, var_name) do
+      non_union_var = Macro.var(var_name, nil)
+      quote do
+        _ = unquote(non_union_var)
+      end
+    end
   end
 
   defmodule StructRef do

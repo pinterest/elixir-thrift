@@ -86,7 +86,7 @@ defmodule Thrift.Generator.StructBinaryProtocol do
           case unquote(var) do
             nil ->
               <<>>
-              _ ->
+            _ ->
               unquote([
                 quote do <<unquote(type_id(type, file_group)), unquote(id) :: size(16)>> end,
                 value_serializer(type, var, file_group)

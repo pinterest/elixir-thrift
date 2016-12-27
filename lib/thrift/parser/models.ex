@@ -269,7 +269,12 @@ defmodule Thrift.Parser.Models do
             :ok
 
           set_fields ->
-            raise Thrift.Union.TooManyFieldsSetException.new(set_fields)
+
+            field_names = Enum.map(set_fields, &elem(&1, 0))
+            raise %Thrift.Union.TooManyFieldsSetException{
+              message: "Thrift union has more than one field set",
+              set_fields: field_names
+            }
         end
       end
     end

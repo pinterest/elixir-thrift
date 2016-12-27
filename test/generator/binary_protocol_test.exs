@@ -256,13 +256,12 @@ defmodule Thrift.Generator.BinaryProtocolTest do
   thrift_test "structs can have unions" do
     assert_serializes %UStruct{},                                     <<0>>
     assert_serializes %UStruct{my_union: %Union{int_field: 2}},       <<12, 0, 1, 10, 0, 1, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0>>
-
     assert_serializes %UStruct{u_list: [%Union{int_field: 1291}]},    <<15, 0, 2, 12, 0, 0, 0, 1, 10, 0, 1, 0, 0, 0, 0, 0, 0, 5, 11, 0, 0>>
     assert_serializes %UStruct{u_set: MapSet.new([%Union{int_field: 2239}])},
                                                                       <<14, 0, 3, 12, 0, 0, 0, 1, 10, 0, 1, 0, 0, 0, 0, 0, 0, 8, 191, 0, 0>>
     assert_serializes %UStruct{u_map: %{}},                           <<13, 0, 4, 12, 12, 0, 0, 0, 0, 0>>
-    assert_serializes %UStruct{
-      u_map: %{%Union{int_field: 23} => %Union{int_field: 33}}},      <<13, 0, 4, 12, 12, 0, 0, 0, 1, 10, 0, 1, 0, 0, 0, 0, 0, 0, 0, 23, 0, 10, 0, 1, 0, 0, 0, 0, 0, 0, 0, 33, 0, 0>>
+    assert_serializes %UStruct{u_map: %{%Union{int_field: 23} => %Union{int_field: 33}}},
+                                                                      <<13, 0, 4, 12, 12, 0, 0, 0, 1, 10, 0, 1, 0, 0, 0, 0, 0, 0, 0, 23, 0, 10, 0, 1, 0, 0, 0, 0, 0, 0, 0, 33, 0, 0>>
 
     assert_raise TooManyFieldsSetException, fn ->
       Binary.serialize(:struct,  %UStruct{my_union: %Union{int_field: 123, string_field: "oops"}})

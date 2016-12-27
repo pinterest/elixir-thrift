@@ -1,8 +1,4 @@
 defmodule Thrift.Protocols.Binary do
-  alias Thrift.Parser.Models.Union
-  alias Thrift.Union.TooManyFieldsSetException
-
-
   # field types, which are the type ids from the thrift spec.
   @bool 2
   @byte 3

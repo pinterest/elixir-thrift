@@ -92,10 +92,6 @@ defmodule Thrift.Generator.StructBinaryProtocol do
         unquote([field_serializers, <<0>>] |> Utils.merge_binaries)
       end
 
-      def bool_to_int(false), do: 0
-      def bool_to_int(nil), do: 0
-      def bool_to_int(_), do: 1
-
       def deserialize(binary) do
         deserialize(binary, %unquote(name){})
       end
@@ -807,7 +803,15 @@ defmodule Thrift.Generator.StructBinaryProtocol do
     |> list_deserializer(name, file_group)
   end
 
-  defp value_serializer(:bool,    var, _file_group), do: quote do: <<bool_to_int(unquote(var))>>
+  defp value_serializer(:bool, var, _file_group) do
+    quote do
+      case unquote(var) do
+        nil   -> <<0>>
+        false -> <<0>>
+        _     -> <<1>>
+      end
+    end
+  end
   defp value_serializer(:byte,    var, _file_group), do: quote do: <<unquote(var) :: 8-signed>>
   defp value_serializer(:i8,      var, _file_group), do: quote do: <<unquote(var) :: 8-signed>>
   defp value_serializer(:double,  var, _file_group), do: quote do: <<unquote(var) :: signed-float>>

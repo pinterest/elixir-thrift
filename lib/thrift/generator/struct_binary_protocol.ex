@@ -784,7 +784,7 @@ defmodule Thrift.Generator.StructBinaryProtocol do
         end)
         field_matchers = [{match_name, Macro.var(match_name, nil)} | nil_matchers]
 
-        field_serializers = [field_serializer(match_field, file_group)]
+        field_serializers = [required_field_serializer(match_field, file_group)]
 
         quote do
           def serialize(%unquote(name){unquote_splicing(field_matchers)}) do
@@ -799,10 +799,10 @@ defmodule Thrift.Generator.StructBinaryProtocol do
     end)
 
     quote do
-      unquote_splicing(single_field_serializers)
       def serialize(%unquote(name){unquote_splicing(all_fields_nil)}) do
         <<0>>
       end
+      unquote_splicing(single_field_serializers)
       def serialize(%unquote(name){} = value) do
         set_fields = value
         |> Map.from_struct
@@ -835,19 +835,24 @@ defmodule Thrift.Generator.StructBinaryProtocol do
     end
   end
 
-  defp field_serializer(%Field{name: name, type: type, id: id}, file_group) do
+  defp field_serializer(%Field{name: name} = field, file_group) do
     var = Macro.var(name, nil)
     quote do
       case unquote(var) do
         nil ->
           <<>>
         _ ->
-          unquote([
-            quote do <<unquote(type_id(type, file_group)), unquote(id) :: size(16)>> end,
-            value_serializer(type, var, file_group)
-          ] |> Utils.merge_binaries |> Utils.simplify_iolist)
+          unquote(required_field_serializer(field, file_group))
       end
     end
+  end
+
+  defp required_field_serializer(%Field{name: name, type: type, id: id}, file_group) do
+    var = Macro.var(name, nil)
+    [
+      quote do <<unquote(type_id(type, file_group)), unquote(id) :: size(16)>> end,
+      value_serializer(type, var, file_group)
+    ] |> Utils.merge_binaries |> Utils.simplify_iolist
   end
 
   defp value_serializer(:bool, var, _file_group) do

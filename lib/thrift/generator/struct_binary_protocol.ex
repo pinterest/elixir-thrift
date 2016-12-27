@@ -64,8 +64,6 @@ defmodule Thrift.Generator.StructBinaryProtocol do
 
   @doc """
   Generate a deserializer for a Thrift struct, union or exception.
-
-  At the moment it also generates an experimental serializer that may be faster.
   """
   def struct_deserializer(%{fields: fields}, name, file_group) do
     fields = Enum.reject(fields, &(&1.type == :void))
@@ -771,18 +769,22 @@ defmodule Thrift.Generator.StructBinaryProtocol do
     |> list_deserializer(name, file_group)
   end
 
+  @doc """
+  Generate a serializer for a Thrift struct, union or exception.
+  """
   def struct_serializer(%Union{fields: fields}, name, file_group) do
     fields = Enum.reject(fields, &(&1.type == :void))
 
+    all_fields_nil = Enum.map(fields, fn
+      %Field{name: nil_name} -> {nil_name, nil}
+    end)
+
     single_field_serializers = Enum.map(fields, fn
       %Field{name: match_name} = match_field ->
-        nil_matchers = Enum.flat_map(fields, fn
-          %Field{name: ^match_name} ->
-            []
-          %Field{name: nil_name} ->
-            [{nil_name, nil}]
+        field_matchers = Enum.map(all_fields_nil, fn
+          {^match_name, nil} -> {match_name, Macro.var(match_name, nil)}
+          {other_name, nil}  -> {other_name, nil}
         end)
-        field_matchers = [{match_name, Macro.var(match_name, nil)} | nil_matchers]
 
         field_serializers = [required_field_serializer(match_field, file_group)]
 
@@ -791,11 +793,6 @@ defmodule Thrift.Generator.StructBinaryProtocol do
             unquote([field_serializers, <<0>>] |> Utils.merge_binaries)
           end
         end
-    end)
-
-    all_fields_nil = Enum.map(fields, fn
-      %Field{name: nil_name} ->
-        {nil_name, nil}
     end)
 
     quote do

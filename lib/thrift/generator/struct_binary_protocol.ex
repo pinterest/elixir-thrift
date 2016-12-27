@@ -67,31 +67,14 @@ defmodule Thrift.Generator.StructBinaryProtocol do
 
   At the moment it also generates an experimental serializer that may be faster.
   """
-  def struct_deserializer(%{fields: fields} = model, name, file_group) do
+  def struct_deserializer(%{fields: fields}, name, file_group) do
     fields = Enum.reject(fields, &(&1.type == :void))
-    struct_matcher = case fields do
-                       [] ->
-                         quote do: %unquote(name){} = to_serialize
-                       f when is_list(f) ->
-                         field_matchers = Enum.map(f, fn %Field{name: name} ->
-                           {name, Macro.var(name, nil)}
-                         end)
-                         quote do: %unquote(name){unquote_splicing(field_matchers)} = to_serialize
-                     end
-
-    field_serializers = fields
-    |> Enum.map(&field_serializer(&1, file_group))
 
     field_deserializers = fields
     |> Enum.map(&field_deserializer(&1.type, &1, :deserialize, file_group))
     |> Utils.merge_blocks
 
     quote do
-      def serialize(unquote(struct_matcher)) do
-        unquote(Union.validator(model, :to_serialize))
-        unquote([field_serializers, <<0>>] |> Utils.merge_binaries)
-      end
-
       def deserialize(binary) do
         deserialize(binary, %unquote(name){})
       end
@@ -190,21 +173,6 @@ defmodule Thrift.Generator.StructBinaryProtocol do
       end
       defp skip_struct(_) do
         :error
-      end
-    end
-  end
-
-  defp field_serializer(%Field{name: name, type: type, id: id}, file_group) do
-    var = Macro.var(name, nil)
-    quote do
-      case unquote(var) do
-        nil ->
-          <<>>
-        _ ->
-          unquote([
-            quote do <<unquote(type_id(type, file_group)), unquote(id) :: size(16)>> end,
-            value_serializer(type, var, file_group)
-          ] |> Utils.merge_binaries |> Utils.simplify_iolist)
       end
     end
   end
@@ -801,6 +769,85 @@ defmodule Thrift.Generator.StructBinaryProtocol do
   defp list_deserializer(%StructRef{referenced_type: type}, name, file_group) do
     FileGroup.resolve(file_group, type)
     |> list_deserializer(name, file_group)
+  end
+
+  def struct_serializer(%Union{fields: fields}, name, file_group) do
+    fields = Enum.reject(fields, &(&1.type == :void))
+
+    single_field_serializers = Enum.map(fields, fn
+      %Field{name: match_name} = match_field ->
+        nil_matchers = Enum.flat_map(fields, fn
+          %Field{name: ^match_name} ->
+            []
+          %Field{name: nil_name} ->
+            [{nil_name, nil}]
+        end)
+        field_matchers = [{match_name, Macro.var(match_name, nil)} | nil_matchers]
+
+        field_serializers = [field_serializer(match_field, file_group)]
+
+        quote do
+          def serialize(%unquote(name){unquote_splicing(field_matchers)}) do
+            unquote([field_serializers, <<0>>] |> Utils.merge_binaries)
+          end
+        end
+    end)
+
+    all_fields_nil = Enum.map(fields, fn
+      %Field{name: nil_name} ->
+        {nil_name, nil}
+    end)
+
+    quote do
+      unquote_splicing(single_field_serializers)
+      def serialize(%unquote(name){unquote_splicing(all_fields_nil)}) do
+        <<0>>
+      end
+      def serialize(%unquote(name){} = value) do
+        set_fields = value
+        |> Map.from_struct
+        |> Enum.flat_map(fn
+          {_, nil} -> []
+          {key, _} -> [key]
+        end)
+
+        raise %Thrift.Union.TooManyFieldsSetException{
+          message: "Thrift union has more than one field set",
+          set_fields: set_fields
+        }
+      end
+    end
+  end
+  def struct_serializer(%{fields: fields}, name, file_group) do
+    fields = Enum.reject(fields, &(&1.type == :void))
+
+    field_matchers = Enum.map(fields, fn %Field{name: name} ->
+      {name, Macro.var(name, nil)}
+    end)
+
+    field_serializers = fields
+    |> Enum.map(&field_serializer(&1, file_group))
+
+    quote do
+      def serialize(%unquote(name){unquote_splicing(field_matchers)}) do
+        unquote([field_serializers, <<0>>] |> Utils.merge_binaries)
+      end
+    end
+  end
+
+  defp field_serializer(%Field{name: name, type: type, id: id}, file_group) do
+    var = Macro.var(name, nil)
+    quote do
+      case unquote(var) do
+        nil ->
+          <<>>
+        _ ->
+          unquote([
+            quote do <<unquote(type_id(type, file_group)), unquote(id) :: size(16)>> end,
+            value_serializer(type, var, file_group)
+          ] |> Utils.merge_binaries |> Utils.simplify_iolist)
+      end
+    end
   end
 
   defp value_serializer(:bool, var, _file_group) do

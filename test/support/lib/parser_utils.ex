@@ -1,5 +1,9 @@
 defmodule User do
-  defstruct is_evil: false, user_id: 0, number_of_hairs_on_head: 0, amount_of_red: 0, nineties_era_color: 0, mint_gum: 0.0, username: "", friends: [], my_map: %{}, blocked_user_ids: MapSet.new(), optional_integers: []
+  defstruct is_evil: false, user_id: 0, number_of_hairs_on_head: 0, amount_of_red: 0, nineties_era_color: 0, mint_gum: 0.0, username: "", friends: [], my_map: %{}, blocked_user_ids: MapSet.new(), optional_integers: [], u: nil
+end
+
+defmodule TestUnion do
+  defstruct s: nil, i: nil, m: nil
 end
 
 defmodule Nesting do

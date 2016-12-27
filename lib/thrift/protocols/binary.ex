@@ -98,6 +98,9 @@ defmodule Thrift.Protocols.Binary do
   def serialize(:struct, %{__struct__: mod} = struct) do
     mod.serialize(struct, :binary)
   end
+  def serialize(:union, %{__struct__: mod} = struct) do
+    mod.serialize(struct, :binary)
+  end
   def serialize(:message_begin, {message_type, sequence_id, name}) do
     # Taken from https://erikvanoosten.github.io/thrift-missing-specification/#_message_encoding
 

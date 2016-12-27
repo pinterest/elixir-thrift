@@ -21,6 +21,7 @@ defmodule Thrift.Parser.FileGroup do
     Schema,
     Service,
     Struct,
+    Union
   }
 
   @type t :: %FileGroup{
@@ -114,6 +115,10 @@ defmodule Thrift.Parser.FileGroup do
   end
 
   def dest_module(file_group, %Struct{name: name}) do
+    dest_module(file_group, name)
+  end
+
+  def dest_module(file_group, %Union{name: name}) do
     dest_module(file_group, name)
   end
 

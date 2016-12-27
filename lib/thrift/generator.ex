@@ -38,6 +38,7 @@ defmodule Thrift.Generator do
     List.flatten([
       generate_enum_modules(schema),
       generate_struct_modules(schema),
+      generate_union_modules(schema),
       generate_exception_modules(schema),
       generate_services(schema)
     ])
@@ -73,6 +74,13 @@ defmodule Thrift.Generator do
     for {_, struct} <- schema.structs do
       full_name = FileGroup.dest_module(schema.file_group, struct)
       {full_name, StructGenerator.generate("struct", schema, full_name, struct)}
+    end
+  end
+
+  defp generate_union_modules(schema) do
+    for {_, union} <- schema.unions do
+      full_name = FileGroup.dest_module(schema.file_group, union)
+      {full_name, StructGenerator.generate("union", schema, full_name, union)}
     end
   end
 

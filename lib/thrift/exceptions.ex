@@ -14,3 +14,11 @@ defmodule Thrift.TApplicationException do
   def exception_type(10), do: :unsupported_client_type
   def exception_type(_), do: :unknown
 end
+
+defmodule Thrift.Union.TooManyFieldsSetException do
+  @moduledoc """
+  This exception occurs when a Union is serialized and more than one
+  field is set.
+  """
+  defexception message: nil, set_fields: nil
+end

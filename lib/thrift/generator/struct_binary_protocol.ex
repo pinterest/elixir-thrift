@@ -46,6 +46,7 @@ defmodule Thrift.Generator.StructBinaryProtocol do
     Struct,
     StructRef,
     TEnum,
+    Union,
   }
 
   @bool 2
@@ -56,26 +57,26 @@ defmodule Thrift.Generator.StructBinaryProtocol do
   @i64 10
   @string 11
   @struct 12
+  @union 12
   @map 13
   @set 14
   @list 15
 
   @doc """
-  Generate a deserializer for a Thrift struct or exception.
+  Generate a deserializer for a Thrift struct, union or exception.
 
   At the moment it also generates an experimental serializer that may be faster.
   """
-  def struct_deserializer(%{fields: fields}, name, file_group) do
+  def struct_deserializer(%{fields: fields} = model, name, file_group) do
     fields = Enum.reject(fields, &(&1.type == :void))
-
     struct_matcher = case fields do
                        [] ->
-                         quote do: %unquote(name){}
+                         quote do: %unquote(name){} = to_serialize
                        f when is_list(f) ->
                          field_matchers = Enum.map(f, fn %Field{name: name} ->
                            {name, Macro.var(name, nil)}
                          end)
-                         quote do: %unquote(name){unquote_splicing(field_matchers)}
+                         quote do: %unquote(name){unquote_splicing(field_matchers)} = to_serialize
                      end
 
     field_serializers = fields
@@ -87,6 +88,7 @@ defmodule Thrift.Generator.StructBinaryProtocol do
 
     quote do
       def serialize(unquote(struct_matcher)) do
+        unquote(Union.validator(model, :to_serialize))
         unquote([field_serializers, <<0>>] |> Utils.merge_binaries)
       end
 
@@ -290,6 +292,19 @@ defmodule Thrift.Generator.StructBinaryProtocol do
       end
     end
   end
+  defp field_deserializer(%Union{} = union, field, name, file_group) do
+    dest_module = FileGroup.dest_module(file_group, union)
+    quote do
+      defp unquote(name)(<<unquote(@union), unquote(field.id)::16-signed, rest::binary>>, acc) do
+        case unquote(dest_module).BinaryProtocol.deserialize(rest) do
+          {value, rest} ->
+            unquote(name)(rest, %{acc | unquote(field.name) => value})
+          :error ->
+            :error
+        end
+      end
+    end
+  end
   defp field_deserializer(%Exception{} = struct, field, name, file_group) do
     dest_module = FileGroup.dest_module(file_group, struct)
     quote do
@@ -415,6 +430,19 @@ defmodule Thrift.Generator.StructBinaryProtocol do
   end
   defp map_key_deserializer(%Struct{} = struct, key_name, value_name, file_group) do
     dest_module = FileGroup.dest_module(file_group, struct)
+    quote do
+      defp unquote(key_name)(<<rest::binary>>, stack) do
+        case unquote(dest_module).BinaryProtocol.deserialize(rest) do
+          {key, rest} ->
+            unquote(value_name)(rest, key, stack)
+          :error ->
+            :error
+        end
+      end
+    end
+  end
+  defp map_key_deserializer(%Union{} = union, key_name, value_name, file_group) do
+    dest_module = FileGroup.dest_module(file_group, union)
     quote do
       defp unquote(key_name)(<<rest::binary>>, stack) do
         case unquote(dest_module).BinaryProtocol.deserialize(rest) do
@@ -558,6 +586,19 @@ defmodule Thrift.Generator.StructBinaryProtocol do
       end
     end
   end
+  defp map_value_deserializer(%Union{} = union, key_name, value_name, file_group) do
+    dest_module = FileGroup.dest_module(file_group, union)
+    quote do
+      defp unquote(value_name)(<<rest::binary>>, key, [map, remaining | stack]) do
+        case unquote(dest_module).BinaryProtocol.deserialize(rest) do
+          {value, rest} ->
+            unquote(key_name)(rest, [Map.put(map, key, value), remaining - 1 | stack])
+          :error ->
+            :error
+        end
+      end
+    end
+  end
   defp map_value_deserializer(%Exception{} = struct, key_name, value_name, file_group) do
     dest_module = FileGroup.dest_module(file_group, struct)
     quote do
@@ -689,6 +730,19 @@ defmodule Thrift.Generator.StructBinaryProtocol do
       end
     end
   end
+  defp list_deserializer(%Union{} = union, name, file_group) do
+    dest_module = FileGroup.dest_module(file_group, union)
+    quote do
+      defp unquote(name)(<<rest::binary>>, [list, remaining | stack]) do
+        case unquote(dest_module).BinaryProtocol.deserialize(rest) do
+          {element, rest} ->
+            unquote(name)(rest, [[element | list], remaining - 1 | stack])
+          :error ->
+            :error
+        end
+      end
+    end
+  end
   defp list_deserializer(%Exception{} = struct, name, file_group) do
     dest_module = FileGroup.dest_module(file_group, struct)
     quote do
@@ -804,6 +858,12 @@ defmodule Thrift.Generator.StructBinaryProtocol do
       unquote(dest_module).serialize(unquote(var))
     end
   end
+  defp value_serializer(%Union{} = union, var, file_group) do
+    dest_module = FileGroup.dest_module(file_group, union)
+    quote do
+      unquote(dest_module).serialize(unquote(var))
+    end
+  end
   defp value_serializer(%Exception{} = struct, var, file_group) do
     dest_module = FileGroup.dest_module(file_group, struct)
     quote do
@@ -814,6 +874,7 @@ defmodule Thrift.Generator.StructBinaryProtocol do
     FileGroup.resolve(file_group, type)
     |> value_serializer(var, file_group)
   end
+
 
   defp type_id(:bool, _file_group), do: 2
   defp type_id(:byte, _file_group), do: 3
@@ -827,6 +888,7 @@ defmodule Thrift.Generator.StructBinaryProtocol do
   defp type_id(:binary, _file_group), do: 11
   defp type_id(%Struct{}, _file_group), do: 12
   defp type_id(%Exception{}, _file_group), do: 12
+  defp type_id(%Union{}, _file_group), do: 12
   defp type_id({:map, _}, _file_group), do: 13
   defp type_id({:set, _}, _file_group), do: 14
   defp type_id({:list, _}, _file_group), do: 15

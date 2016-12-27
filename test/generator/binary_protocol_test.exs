@@ -235,16 +235,16 @@ defmodule Thrift.Generator.BinaryProtocolTest do
 
   struct UStruct {
     1: Union my_union,
-    2: list<Union> u_list,
+    2: map<Union, Union> u_map,
     3: set<Union> u_set,
-    4: map<Union, Union> u_map,
+    4: list<Union> u_list,
   }
   """
   thrift_test "union serialization" do
     assert_serializes %Union{},                                       <<0>>
     assert_serializes %Union{int_field: 205},                         <<10, 0, 1, 0, 0, 0, 0, 0, 0, 0, 205, 0>>
     assert_serializes %Union{struct_field: %StructValue{username: "stinky"}},
-    <<12, 0, 2, 11, 0, 1, 0, 0, 0, 6, 115, 116, 105, 110, 107, 121, 0, 0>>
+                                                                      <<12, 0, 2, 11, 0, 1, 0, 0, 0, 6, 115, 116, 105, 110, 107, 121, 0, 0>>
     assert_serializes %Union{string_field: "hello"},                  <<11, 0, 3, 0, 0, 0, 5, "hello", 0>>
     assert_serializes %Union{list_field: [5, 9, 7]},                  <<15, 0, 4, 6, 0, 0, 0, 3, 0, 5, 0, 9, 0, 7, 0>>
 
@@ -256,12 +256,12 @@ defmodule Thrift.Generator.BinaryProtocolTest do
   thrift_test "structs can have unions" do
     assert_serializes %UStruct{},                                     <<0>>
     assert_serializes %UStruct{my_union: %Union{int_field: 2}},       <<12, 0, 1, 10, 0, 1, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0>>
-    assert_serializes %UStruct{u_list: [%Union{int_field: 1291}]},    <<15, 0, 2, 12, 0, 0, 0, 1, 10, 0, 1, 0, 0, 0, 0, 0, 0, 5, 11, 0, 0>>
+    assert_serializes %UStruct{u_map: %{}},                           <<13, 0, 2, 12, 12, 0, 0, 0, 0, 0>>
+    assert_serializes %UStruct{u_map: %{%Union{int_field: 23} => %Union{int_field: 33}}},
+                                                                      <<13, 0, 2, 12, 12, 0, 0, 0, 1, 10, 0, 1, 0, 0, 0, 0, 0, 0, 0, 23, 0, 10, 0, 1, 0, 0, 0, 0, 0, 0, 0, 33, 0, 0>>
     assert_serializes %UStruct{u_set: MapSet.new([%Union{int_field: 2239}])},
                                                                       <<14, 0, 3, 12, 0, 0, 0, 1, 10, 0, 1, 0, 0, 0, 0, 0, 0, 8, 191, 0, 0>>
-    assert_serializes %UStruct{u_map: %{}},                           <<13, 0, 4, 12, 12, 0, 0, 0, 0, 0>>
-    assert_serializes %UStruct{u_map: %{%Union{int_field: 23} => %Union{int_field: 33}}},
-                                                                      <<13, 0, 4, 12, 12, 0, 0, 0, 1, 10, 0, 1, 0, 0, 0, 0, 0, 0, 0, 23, 0, 10, 0, 1, 0, 0, 0, 0, 0, 0, 0, 33, 0, 0>>
+    assert_serializes %UStruct{u_list: [%Union{int_field: 1291}]},    <<15, 0, 4, 12, 0, 0, 0, 1, 10, 0, 1, 0, 0, 0, 0, 0, 0, 5, 11, 0, 0>>
 
     assert_raise TooManyFieldsSetException, fn ->
       Binary.serialize(:struct,  %UStruct{my_union: %Union{int_field: 123, string_field: "oops"}})

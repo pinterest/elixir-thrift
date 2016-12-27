@@ -78,21 +78,8 @@ defmodule Thrift.Generator.StructBinaryProtocol do
                          quote do: %unquote(name){unquote_splicing(field_matchers)}
                      end
 
-    field_serializers = Enum.map(fields,
-      fn %Field{name: name, type: type, id: id} ->
-        var = Macro.var(name, nil)
-        quote do
-          case unquote(var) do
-            nil ->
-              <<>>
-              _ ->
-              unquote([
-                quote do <<unquote(type_id(type, file_group)), unquote(id) :: size(16)>> end,
-                value_serializer(type, var, file_group)
-              ] |> Utils.merge_binaries |> Utils.simplify_iolist)
-          end
-        end
-    end)
+    field_serializers = fields
+    |> Enum.map(&field_serializer(&1, file_group))
 
     field_deserializers = fields
     |> Enum.map(&field_deserializer(&1.type, &1, :deserialize, file_group))
@@ -205,6 +192,21 @@ defmodule Thrift.Generator.StructBinaryProtocol do
       end
       defp skip_struct(_) do
         :error
+      end
+    end
+  end
+
+  defp field_serializer(%Field{name: name, type: type, id: id}, file_group) do
+    var = Macro.var(name, nil)
+    quote do
+      case unquote(var) do
+        nil ->
+          <<>>
+        _ ->
+          unquote([
+            quote do <<unquote(type_id(type, file_group)), unquote(id) :: size(16)>> end,
+            value_serializer(type, var, file_group)
+          ] |> Utils.merge_binaries |> Utils.simplify_iolist)
       end
     end
   end

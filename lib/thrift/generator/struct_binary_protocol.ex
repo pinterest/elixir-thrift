@@ -160,7 +160,8 @@ defmodule Thrift.Generator.StructBinaryProtocol do
         rest
       end
       defp skip_struct(<<type, _id::16-signed, rest::binary>>) do
-        skip_field(rest, type)
+        rest
+        |> skip_field(type)
         |> skip_struct
       end
       defp skip_struct(_) do

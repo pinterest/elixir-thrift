@@ -8,7 +8,6 @@ defmodule BinaryFramedTest do
     void my_call(1: i64 id)
   }
   """
-  alias BinaryFramedTest.VoidReturns
   alias Thrift.TApplicationException, as: TAE
 
   thrift_test "it should be able to deserialize an invalid message" do
@@ -49,13 +48,13 @@ defmodule BinaryFramedTest do
     assert %TAE{type: :sequence_id_and_rpc_name_mismatched} = ex
   end
 
-  thrift_test "It should be able to deserialize a void message" do
+  thrift_test "it should be able to deserialize a void message" do
     msg = <<128, 1, 0, 2, 0, 0, 0, 7, "my_call", 0, 0, 10, 197, 0>>
 
     assert {:ok, nil} =  BinaryFramed.deserialize_message_reply(msg, "my_call", 2757, VoidReturns.MyCallResponse)
   end
 
-  thrift_test "It should be able to deserialize a void message with an empty struct" do
+  thrift_test "it should be able to deserialize a void message with an empty struct" do
     msg = <<128, 1, 0, 2, 0, 0, 0, 7, "my_call", 0, 0, 10, 197, 12, 0, 0, 0, 0>>
 
     assert {:ok, nil} =  BinaryFramed.deserialize_message_reply(msg, "my_call", 2757, VoidReturns.MyCallResponse)

@@ -60,30 +60,47 @@ defmodule Thrift.Generator.Utils do
   end
 
   @doc """
-  Merge the binaries in an iolist.
+  Optimize an expression that returns an iolist.
 
-    ["a", "b", ["c", [var]]] => ["abc", var]
+    [<<1>>, <<2>>] => <<1, 2>>
   """
-  def merge_binaries([a | rest]) when is_list(a) do
-    merge_binaries(a ++ rest)
+  def optimize_iolist([a | rest]) when is_list(a) do
+    optimize_iolist(a ++ rest)
   end
-  def merge_binaries([a, b | rest]) when is_list(b) do
-    merge_binaries([a] ++ b ++ rest)
+  def optimize_iolist([a, b | rest]) when is_list(b) do
+    optimize_iolist([a] ++ b ++ rest)
   end
-  def merge_binaries([{:<<>>, [], a}, {:<<>>, [], b} | rest]) do
-    merge_binaries([{:<<>>, [], a ++ b} | rest])
+  def optimize_iolist([{:<<>>, opts, a}, {:<<>>, _, b} | rest]) do
+    optimize_iolist([{:<<>>, opts, a ++ b} | rest])
   end
-  def merge_binaries([a | rest]) do
-    [a] ++ merge_binaries(rest)
+  def optimize_iolist([a, {:<<>>, opts, b} | rest]) when is_binary(a) do
+    optimize_iolist([{:<<>>, opts, [a | b]} | rest])
   end
-  def merge_binaries(a) do
-    a
+  def optimize_iolist([{:<<>>, opts, a}, b | rest]) when is_binary(b) do
+    optimize_iolist([{:<<>>, opts, a ++ [b]} | rest])
   end
-
-  def simplify_iolist([{:<<>>, _, _} = binary]) do
+  def optimize_iolist([{:<<>>, opts, a}, <<0>> | rest]) do
+    optimize_iolist([{:<<>>, opts, a ++ [0]} | rest])
+  end
+  def optimize_iolist([{:|, _, [a, b]} | rest]) do
+    optimize_iolist([a, b | rest])
+  end
+  def optimize_iolist([a, b]) do
+    [{:|, [], [a, b]}]
+  end
+  def optimize_iolist([binary]) do
     binary
   end
-  def simplify_iolist(other) do
+  def optimize_iolist([a | rest]) do
+    [optimize_iolist(a) | optimize_iolist(rest)]
+  end
+  def optimize_iolist({:<<>>, _, _} = binary) do
+    binary
+  end
+  def optimize_iolist(binary) when is_binary(binary) do
+    binary
+  end
+  def optimize_iolist(other) do
     other
   end
 end

@@ -845,6 +845,19 @@ defmodule Thrift.Generator.StructBinaryProtocol do
     end
   end
 
+  defp field_serializer(%Field{name: name, type: :bool, id: id}, _file_group) do
+    var = Macro.var(name, nil)
+    quote do
+      case unquote(var) do
+        nil ->
+          <<>>
+        false ->
+          <<unquote(@bool), unquote(id) :: size(16), 0>>
+        _ ->
+          <<unquote(@bool), unquote(id) :: size(16), 1>>
+      end
+    end
+  end
   defp field_serializer(%Field{name: name} = field, file_group) do
     var = Macro.var(name, nil)
     quote do

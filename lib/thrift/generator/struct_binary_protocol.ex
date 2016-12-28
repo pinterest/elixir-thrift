@@ -304,7 +304,11 @@ defmodule Thrift.Generator.StructBinaryProtocol do
   defp field_deserializer({:set, element_type}, field, name, file_group) do
     sub_name = :"#{name}__#{field.name}"
     quote do
-      defp unquote(name)(<<unquote(@set), unquote(field.id)::size(16), unquote(type_id(element_type, file_group)), remaining::size(32), rest::binary>>, struct) do
+      defp unquote(name)(<<unquote(@set),
+                           unquote(field.id)::size(16),
+                           unquote(type_id(element_type, file_group)),
+                           remaining::size(32),
+                           rest::binary>>, struct) do
         unquote(sub_name)(rest, [[], remaining, struct])
       end
       defp unquote(sub_name)(<<rest::binary>>, [list, 0, struct]) do
@@ -317,7 +321,11 @@ defmodule Thrift.Generator.StructBinaryProtocol do
   defp field_deserializer({:list, element_type}, field, name, file_group) do
     sub_name = :"#{name}__#{field.name}"
     quote do
-      defp unquote(name)(<<unquote(@list), unquote(field.id)::size(16), unquote(type_id(element_type, file_group)), remaining::size(32), rest::binary>>, struct) do
+      defp unquote(name)(<<unquote(@list),
+                           unquote(field.id)::size(16),
+                           unquote(type_id(element_type, file_group)),
+                           remaining::size(32),
+                           rest::binary>>, struct) do
         unquote(sub_name)(rest, [[], remaining, struct])
       end
       defp unquote(sub_name)(<<rest::binary>>, [list, 0, struct]) do
@@ -433,7 +441,10 @@ defmodule Thrift.Generator.StructBinaryProtocol do
     child_key_name = :"#{key_name}__key"
     child_value_name = :"#{key_name}__value"
     quote do
-      defp unquote(key_name)(<<unquote(type_id(key_type, file_group)), unquote(type_id(value_type, file_group)), remaining::size(32), rest::binary>>, stack) do
+      defp unquote(key_name)(<<unquote(type_id(key_type, file_group)),
+                               unquote(type_id(value_type, file_group)),
+                               remaining::size(32),
+                               rest::binary>>, stack) do
         unquote(child_key_name)(rest, [%{}, remaining | stack])
       end
       defp unquote(child_key_name)(<<rest::binary>>, [key, 0 | stack]) do
@@ -578,7 +589,10 @@ defmodule Thrift.Generator.StructBinaryProtocol do
     child_key_name = :"#{value_name}__key"
     child_value_name = :"#{value_name}__value"
     quote do
-      defp unquote(value_name)(<<unquote(type_id(key_type, file_group)), unquote(type_id(value_type, file_group)), remaining::size(32), rest::binary>>, key, stack) do
+      defp unquote(value_name)(<<unquote(type_id(key_type, file_group)),
+                                 unquote(type_id(value_type, file_group)),
+                                 remaining::size(32),
+                                 rest::binary>>, key, stack) do
         unquote(child_key_name)(rest, [%{}, remaining, key | stack])
       end
       defp unquote(child_key_name)(<<rest::binary>>, [value, 0, key, map, remaining | stack]) do
@@ -741,7 +755,9 @@ defmodule Thrift.Generator.StructBinaryProtocol do
   defp list_deserializer({:set, element_type}, name, file_group) do
     sub_name = :"#{name}__element"
     quote do
-      defp unquote(name)(<<unquote(type_id(element_type, file_group)), inner_remaining::size(32), rest::binary>>, [list, remaining | stack]) do
+      defp unquote(name)(<<unquote(type_id(element_type, file_group)),
+                           inner_remaining::size(32),
+                           rest::binary>>, [list, remaining | stack]) do
         unquote(sub_name)(rest, [[], inner_remaining, list, remaining | stack])
       end
       defp unquote(sub_name)(<<rest::binary>>, [inner_list, 0, list, remaining | stack]) do
@@ -754,7 +770,9 @@ defmodule Thrift.Generator.StructBinaryProtocol do
   defp list_deserializer({:list, element_type}, name, file_group) do
     sub_name = :"#{name}__element"
     quote do
-      defp unquote(name)(<<unquote(type_id(element_type, file_group)), inner_remaining::size(32), rest::binary>>, [list, remaining | stack]) do
+      defp unquote(name)(<<unquote(type_id(element_type, file_group)),
+                           inner_remaining::size(32),
+                           rest::binary>>, [list, remaining | stack]) do
         unquote(sub_name)(rest, [[], inner_remaining, list, remaining | stack])
       end
       defp unquote(sub_name)(<<rest::binary>>, [inner_list, 0, list, remaining | stack]) do

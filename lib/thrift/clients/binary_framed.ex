@@ -258,7 +258,7 @@ defmodule Thrift.Clients.BinaryFramed do
     {:error, {:exception, exc}}
   end
 
-  defp handle_message({:ok, {_, decoded_sequence_id, _, decoded_rpc_name, _}},
+  defp handle_message({:ok, {_, decoded_sequence_id, decoded_rpc_name, _}},
                       sequence_id, rpc_name, _) do
     ex = case {decoded_sequence_id, decoded_rpc_name} do
            {^sequence_id, mismatched_rpc_name} ->

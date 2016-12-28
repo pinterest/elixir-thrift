@@ -156,18 +156,12 @@ defmodule Thrift.Generator.StructBinaryProtocol do
         :error
       end
 
+      defp skip_struct(<<0, rest::binary>>) do
+        rest
+      end
       defp skip_struct(<<type, _id::16-signed, rest::binary>>) do
-        case skip_field(rest, type) do
-          <<0::size(8), rest::binary>> ->
-            # we have a struct stop
-            rest
-
-          <<remaining::binary>> ->
-            skip_struct(remaining)
-
-          :error ->
-            :error
-        end
+        skip_field(rest, type)
+        |> skip_struct
       end
       defp skip_struct(_) do
         :error

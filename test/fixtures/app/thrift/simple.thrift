@@ -1,5 +1,11 @@
 include "shared.thrift"
 
+union TestUnion {
+  1: string s,
+  2: i64 i,
+  3: map<string, string> m
+}
+
 struct User {
   1: bool is_evil,
   2: i64 user_id,
@@ -12,6 +18,7 @@ struct User {
   9: map<byte, string> my_map,
   10: set<i32> blocked_user_ids,
   11: optional list<i32> optional_integers,
+  12: TestUnion u
 }
 
 struct Nesting {

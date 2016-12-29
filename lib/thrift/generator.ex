@@ -40,7 +40,8 @@ defmodule Thrift.Generator do
       generate_struct_modules(schema),
       generate_union_modules(schema),
       generate_exception_modules(schema),
-      generate_services(schema)
+      generate_services(schema),
+      generate_behaviours(schema)
     ])
   end
 
@@ -96,4 +97,11 @@ defmodule Thrift.Generator do
       Generator.Service.generate(schema, service)
     end
   end
+
+  defp generate_behaviours(schema) do
+    for {_, service} <- schema.services do
+      Generator.Behaviour.generate(schema, service)
+    end
+  end
+
 end

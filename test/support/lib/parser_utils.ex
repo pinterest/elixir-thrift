@@ -59,10 +59,11 @@ defmodule ParserUtils do
       list when is_list(list) -> :sets.from_list(list)
     end
     optional_integers = Keyword.get(opts, :optional_integers, :undefined)
+    u = Keyword.get(opts, :u, :undefined)
 
     {:User, is_evil, user_id, number_of_hairs_on_head,
      amount_of_red, nineties_era_color, mint_gum, username,
-     friends, my_map, blocked_user_ids, optional_integers}
+     friends, my_map, blocked_user_ids, optional_integers, u}
   end
   def user(:elixir, opts) do
     %{__struct__: User,
@@ -79,7 +80,8 @@ defmodule ParserUtils do
         list when is_list(list) -> MapSet.new(list)
       end,
       username: Keyword.get(opts, :username),
-      optional_integers: Keyword.get(opts, :optional_integers)
+      optional_integers: Keyword.get(opts, :optional_integers),
+      u: Keyword.get(opts, :u)
      }
   end
 

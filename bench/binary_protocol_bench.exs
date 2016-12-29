@@ -21,9 +21,10 @@ defmodule BinaryProtocolBenchmark do
       mint_gum: 28.282,
       username: "esteban",
       friends: [],
-      # # my_map: %{1 => "abc", 2 => "def", 3 => "asldfkjlasdkjf"},
+      # my_map: %{1 => "abc", 2 => "def", 3 => "asldfkjlasdkjf"},
       # blocked_user_ids: [2234, 2345, 654365, 4356, 3456, 1234, 234, 2345, 3456, 4567],
       optional_integers: [2234, 2345, 654365, 4356, 3456, 1234, 234, 2345, 3456, 4567],
+      u: %TestUnion{s: "foo"},
     ]
 
     erlang_users = for _ <- 1..1000 do

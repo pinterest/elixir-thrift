@@ -18,16 +18,16 @@ defmodule BehaviourTest do
   }
   """
 
-  thrift_test "that behaviours exist" do
+  thrift_test "that behaviour callbacks exist" do
     behaviour_specs = Behaviour.behaviour_info(:callbacks)
 
     assert {:ping, 1} in behaviour_specs
+    assert {:my_bool, 1} in behaviour_specs
+    assert {:numbers, 5} in behaviour_specs
     assert {:my_set, 1} in behaviour_specs
     assert {:my_list, 1} in behaviour_specs
     assert {:my_map, 1} in behaviour_specs
     assert {:my_map2, 1} in behaviour_specs
-    assert {:numbers, 5} in behaviour_specs
-    assert {:my_bool, 1} in behaviour_specs
     assert {:struct_param, 1} in behaviour_specs
   end
 end

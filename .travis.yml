@@ -6,7 +6,7 @@ matrix:
     - elixir: 1.2.6
       otp_release: 18.2
 sudo: required
-group: edge
+dist: trusty
 services: docker
 env:
   - THRIFT=${TRAVIS_BUILD_DIR}/ci/thrift-docker

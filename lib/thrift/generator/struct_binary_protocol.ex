@@ -307,7 +307,7 @@ defmodule Thrift.Generator.StructBinaryProtocol do
         unquote(sub_name)(rest, [[], remaining, struct])
       end
       defp unquote(sub_name)(<<rest::binary>>, [list, 0, struct]) do
-        unquote(name)(rest, %{struct | unquote(field.name) => MapSet.new(Enum.reverse(list))})
+        unquote(name)(rest, %{struct | unquote(field.name) => MapSet.new(list)})
       end
       unquote(list_deserializer(element_type, sub_name, file_group))
       defp unquote(sub_name)(_, _), do: :error
@@ -458,7 +458,7 @@ defmodule Thrift.Generator.StructBinaryProtocol do
         unquote(sub_name)(rest, [[], remaining | stack])
       end
       defp unquote(sub_name)(<<rest::binary>>, [key, 0 | stack]) do
-        unquote(value_name)(rest, MapSet.new(Enum.reverse(key)), stack)
+        unquote(value_name)(rest, MapSet.new(key), stack)
       end
       unquote(list_deserializer(element_type, sub_name, file_group))
       defp unquote(sub_name)(_, _), do: :error
@@ -606,7 +606,7 @@ defmodule Thrift.Generator.StructBinaryProtocol do
         unquote(sub_name)(rest, [[], remaining, key | stack])
       end
       defp unquote(sub_name)(<<rest::binary>>, [value, 0, key, map, remaining | stack]) do
-        unquote(key_name)(rest, [Map.put(map, key, MapSet.new(Enum.reverse(value))), remaining - 1 | stack])
+        unquote(key_name)(rest, [Map.put(map, key, MapSet.new(value)), remaining - 1 | stack])
       end
       unquote(list_deserializer(element_type, sub_name, file_group))
       defp unquote(sub_name)(_, _), do: :error
@@ -756,7 +756,7 @@ defmodule Thrift.Generator.StructBinaryProtocol do
         unquote(sub_name)(rest, [[], inner_remaining, list, remaining | stack])
       end
       defp unquote(sub_name)(<<rest::binary>>, [inner_list, 0, list, remaining | stack]) do
-        unquote(name)(rest, [[MapSet.new(Enum.reverse(inner_list)) | list], remaining - 1 | stack])
+        unquote(name)(rest, [[MapSet.new(inner_list) | list], remaining - 1 | stack])
       end
       unquote(list_deserializer(element_type, sub_name, file_group))
       defp unquote(sub_name)(_, _), do: :error

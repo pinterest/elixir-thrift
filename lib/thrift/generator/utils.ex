@@ -79,59 +79,59 @@ defmodule Thrift.Generator.Utils do
   # Optimize a quoted expression that returns an iolist. The high level strategy
   # is to flatten lists and combine adjacent binaries.
   #
-  def optimize_iolist(expr=[[a | b] | c]) do
+  def optimize_iolist([[a | b] | c] = expr) do
     debug_optimization(expr, "flatten list")
     optimize_iolist([a, b | c])
   end
-  def optimize_iolist(expr=[a, [b | c] | d]) do
+  def optimize_iolist([a, [b | c] | d] = expr) do
     debug_optimization(expr, "flatten list")
     optimize_iolist([a, b, c | d])
   end
-  def optimize_iolist(expr=[[] | a]) do
+  def optimize_iolist([[] | a] = expr) do
     debug_optimization(expr, "discard empty list")
     optimize_iolist(a)
   end
-  def optimize_iolist(expr=[a, [] | b]) do
+  def optimize_iolist([a, [] | b] = expr) do
     debug_optimization(expr, "discard empty list")
     optimize_iolist([a | b])
   end
-  def optimize_iolist(expr=[a, b, [] | c]) do
+  def optimize_iolist([a, b, [] | c] = expr) do
     debug_optimization(expr, "discard empty list")
     optimize_iolist([a, b | c])
   end
-  def optimize_iolist(expr=[{:|, _, a} | b]) do
+  def optimize_iolist([{:|, _, a} | b] = expr) do
     debug_optimization(expr, "extract final iolist cell")
     optimize_iolist([a | b])
   end
-  def optimize_iolist(expr=[a, {:|, _, b} | c]) do
+  def optimize_iolist([a, {:|, _, b} | c] = expr) do
     debug_optimization(expr, "extract final iolist cell")
     optimize_iolist([a, b | c])
   end
-  def optimize_iolist(expr=[{:<<>>, opts, a}, {:<<>>, _, b} | rest]) do
+  def optimize_iolist([{:<<>>, opts, a}, {:<<>>, _, b} | rest] = expr) do
     debug_optimization(expr, "merge binary expressions")
     optimize_iolist([{:<<>>, opts, a ++ b} | rest])
   end
-  def optimize_iolist(expr=[a, {:<<>>, opts, b} | rest]) when is_binary(a) do
+  def optimize_iolist([a, {:<<>>, opts, b} | rest] = expr) when is_binary(a) do
     debug_optimization(expr, "merge binary and binary expression")
     optimize_iolist([{:<<>>, opts, [a | b]} | rest])
   end
-  def optimize_iolist(expr=[{:<<>>, opts, a}, b | rest]) when is_binary(b) do
+  def optimize_iolist([{:<<>>, opts, a}, b | rest] = expr) when is_binary(b) do
     debug_optimization(expr, "merge binary expression and binary")
     optimize_iolist([{:<<>>, opts, a ++ [b]} | rest])
   end
-  def optimize_iolist(expr=[a, b | rest]) when is_binary(a) and is_binary(b) do
+  def optimize_iolist([a, b | rest] = expr) when is_binary(a) and is_binary(b) do
     debug_optimization(expr, "merge binaries")
     optimize_iolist([a <> b | rest])
   end
-  def optimize_iolist(expr=[a, b]) do
+  def optimize_iolist([a, b] = expr) do
     debug_optimization(expr, "final cons cell")
     [{:|, [], [a, b]}]
   end
-  def optimize_iolist(expr=[a]) do
+  def optimize_iolist([a] = expr) do
     debug_optimization(expr, "unwrap single element")
     a
   end
-  def optimize_iolist(expr=[a | rest]) do
+  def optimize_iolist([a | rest] = expr) do
     debug_optimization(expr, "skip element")
     expr = case optimize_iolist(rest) do
       b when is_list(b) -> [a | b]

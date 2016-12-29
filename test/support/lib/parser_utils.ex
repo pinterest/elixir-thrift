@@ -1,11 +1,6 @@
 defmodule User do
   @moduledoc false
-  defstruct is_evil: false, user_id: 0, number_of_hairs_on_head: 0, amount_of_red: 0, nineties_era_color: 0, mint_gum: 0.0, username: "", friends: [], my_map: %{}, blocked_user_ids: MapSet.new(), optional_integers: [], u: nil
-end
-
-defmodule TestUnion do
-  @moduledoc false
-  defstruct s: nil, i: nil, m: nil
+  defstruct is_evil: false, user_id: 0, number_of_hairs_on_head: 0, amount_of_red: 0, nineties_era_color: 0, mint_gum: 0.0, username: "", friends: [], my_map: %{}, blocked_user_ids: MapSet.new(), optional_integers: []
 end
 
 defmodule Nesting do
@@ -59,11 +54,10 @@ defmodule ParserUtils do
       list when is_list(list) -> :sets.from_list(list)
     end
     optional_integers = Keyword.get(opts, :optional_integers, :undefined)
-    u = Keyword.get(opts, :u, :undefined)
 
     {:User, is_evil, user_id, number_of_hairs_on_head,
      amount_of_red, nineties_era_color, mint_gum, username,
-     friends, my_map, blocked_user_ids, optional_integers, u}
+     friends, my_map, blocked_user_ids, optional_integers}
   end
   def user(:elixir, opts) do
     %{__struct__: User,
@@ -80,8 +74,7 @@ defmodule ParserUtils do
         list when is_list(list) -> MapSet.new(list)
       end,
       username: Keyword.get(opts, :username),
-      optional_integers: Keyword.get(opts, :optional_integers),
-      u: Keyword.get(opts, :u)
+      optional_integers: Keyword.get(opts, :optional_integers)
      }
   end
 

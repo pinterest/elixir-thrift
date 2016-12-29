@@ -803,7 +803,7 @@ defmodule Thrift.Generator.StructBinaryProtocol do
 
         quote do
           def serialize(%unquote(name){unquote_splicing(field_matchers)}) do
-            unquote([field_serializers, <<0>>] |> Utils.merge_binaries)
+            unquote([field_serializers, <<0>>] |> Utils.optimize_iolist)
           end
         end
     end)
@@ -840,7 +840,7 @@ defmodule Thrift.Generator.StructBinaryProtocol do
 
     quote do
       def serialize(%unquote(name){unquote_splicing(field_matchers)}) do
-        unquote([field_serializers, <<0>>] |> Utils.merge_binaries)
+        unquote([field_serializers, <<0>>] |> Utils.optimize_iolist)
       end
     end
   end
@@ -875,7 +875,7 @@ defmodule Thrift.Generator.StructBinaryProtocol do
     [
       quote do <<unquote(type_id(type, file_group)), unquote(id) :: size(16)>> end,
       value_serializer(type, var, file_group)
-    ] |> Utils.merge_binaries |> Utils.simplify_iolist
+    ] |> Utils.optimize_iolist
   end
 
   defp value_serializer(:bool, var, _file_group) do
@@ -906,7 +906,7 @@ defmodule Thrift.Generator.StructBinaryProtocol do
           unquote([
             value_serializer(key_type, Macro.var(:k, nil), file_group),
             value_serializer(val_type, Macro.var(:v, nil), file_group),
-          ] |> Utils.merge_binaries |> Utils.simplify_iolist)
+          ] |> Utils.optimize_iolist)
         end
       ]
     end
@@ -916,7 +916,7 @@ defmodule Thrift.Generator.StructBinaryProtocol do
       [
         <<unquote(type_id(type, file_group)), MapSet.size(unquote(var)) :: size(32)>>,
         for unquote(Macro.var(:e, nil)) <- unquote(var) do
-          unquote(value_serializer(type, Macro.var(:e, nil), file_group) |> Utils.merge_binaries |> Utils.simplify_iolist)
+          unquote(value_serializer(type, Macro.var(:e, nil), file_group) |> Utils.optimize_iolist)
         end,
       ]
     end
@@ -926,7 +926,7 @@ defmodule Thrift.Generator.StructBinaryProtocol do
       [
         <<unquote(type_id(type, file_group)), length(unquote(var)) :: size(32)>>,
         for unquote(Macro.var(:e, nil)) <- unquote(var) do
-          unquote(value_serializer(type, Macro.var(:e, nil), file_group) |> Utils.merge_binaries |> Utils.simplify_iolist)
+          unquote(value_serializer(type, Macro.var(:e, nil), file_group) |> Utils.optimize_iolist)
         end,
       ]
     end

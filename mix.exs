@@ -69,7 +69,7 @@ defmodule Thrift.Mixfile do
       {:excoveralls, "~> 0.5.7", only: [:dev, :test]},
       {:credo, "~> 0.5", only: [:dev, :test]},
       {:dialyxir, "~> 0.4.0", only: [:dev, :test]},
-      {:benchfella, "~> 0.3.0", only: [:dev, :test]},
+      {:benchfella, "~> 0.3", only: :dev},
       {:connection, "~> 1.0"},
      ]
   end

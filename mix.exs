@@ -68,7 +68,7 @@ defmodule Thrift.Mixfile do
      [{:ex_doc, "~> 0.14", only: :dev},
       {:excoveralls, "~> 0.5.7", only: [:dev, :test]},
       {:credo, "~> 0.5", only: [:dev, :test]},
-      {:dialyxir, "~> 0.4.0", only: [:dev, :test]},
+      {:dialyxir, "~> 0.4", only: :dev, runtime: false},
       {:benchfella, "~> 0.3", only: :dev},
       {:connection, "~> 1.0"},
      ]

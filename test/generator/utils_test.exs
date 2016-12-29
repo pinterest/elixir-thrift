@@ -1,11 +1,11 @@
 defmodule Thrift.Generator.UtilsTest do
-  use ThriftTestCase
+  use ExUnit.Case
   import Thrift.Generator.Utils
 
-  defmacro check(input, output) do
+  defmacro check(input, expected_output) do
     input_source = optimize_iolist(input) |> Macro.to_string
-    output_source = output |> Macro.to_string
-    assert input_source == output_source
+    expected_output_source = expected_output |> Macro.to_string
+    assert input_source == expected_output_source
   end
 
   test "optimize_iolist" do

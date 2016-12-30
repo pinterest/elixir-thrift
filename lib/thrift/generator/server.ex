@@ -2,6 +2,8 @@ defmodule Thrift.Generator.Server do
   @moduledoc false
 
   defmodule Framed do
+    @moduledoc false
+
     alias Thrift.Generator.{
       Service,
       Utils
@@ -17,6 +19,8 @@ defmodule Thrift.Generator.Server do
 
       quote do
         defmodule Server.Framed do
+          @moduledoc false
+
           alias Thrift.Servers.BinaryFramed
 
           def start_link(handler_module, port, opts, gen_server_opts \\ []) do

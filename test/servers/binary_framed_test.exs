@@ -34,8 +34,6 @@ defmodule Servers.BinaryFramedIntegrationTest do
   """
 
   def define_handler do
-
-
     defmodule ServerTestHandler do
       alias Servers.BinaryFramedIntegrationTest.ServerTest.Handler
       alias Servers.BinaryFramedIntegrationTest.{TestException, UserNotFound, OtherException}
@@ -101,7 +99,7 @@ defmodule Servers.BinaryFramedIntegrationTest do
   end
 
   thrift_test "it can throw checked exceptions", ctx do
-    expected_exception = %TestException{message: "Oh noes!", code: 400 }
+    expected_exception = %TestException{message: "Oh noes!", code: 400}
     assert {:error, {:exception, expected_exception}} == Client.Framed.checked_exception(ctx.client)
   end
 

@@ -12,6 +12,7 @@ defmodule Thrift.Servers.BinaryFramed do
   alias Thrift.Servers.BinaryFramed.AcceptorSupervisor
 
   defmodule State do
+    @moduledoc false
     defstruct port: nil, socket: nil, supervisor: nil
   end
 

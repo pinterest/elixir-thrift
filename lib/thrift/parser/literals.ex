@@ -1,33 +1,23 @@
 defmodule Thrift.Parser.Literals do
-  @moduledoc """
-  A module containing types for defining Thrift literals
-  Thrift literals are used when setting default values and constants.
-  """
+  @moduledoc false
+
   defmodule Primitive do
-    @moduledoc """
-    A Thrift primitive type
-    """
+    @moduledoc false
     @type t :: integer | boolean | String.t | float
   end
 
   defmodule List do
-    @moduledoc """
-    A Thrift list
-    """
+    @moduledoc false
     @type t :: [Thrift.Parser.Literals.t]
   end
 
   defmodule Map do
-    @moduledoc """
-    A Thrift map
-    """
+    @moduledoc false
     @type t :: %{Thrift.Parser.Literals.t => Thrift.Parser.Literals.t}
   end
 
   defmodule Container do
-    @moduledoc """
-    A Thrift container type
-    """
+    @moduledoc false
     @type t :: Map.t | List.t
   end
 

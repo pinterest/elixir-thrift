@@ -1,11 +1,6 @@
 defmodule Thrift.Parser.Conversions do
-  @moduledoc """
-  Conversion utilities useful for parsing Thrift.
-  """
+  @moduledoc false
 
-  @doc """
-  Ensures that the argument is an atom.
-  """
   def atomify(nil), do: nil
   def atomify(l) when is_list(l) do
     List.to_atom(l)

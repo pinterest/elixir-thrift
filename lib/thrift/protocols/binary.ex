@@ -23,7 +23,7 @@ defmodule Thrift.Protocols.Binary do
   @set 14
   @list 15
 
-  @spec type_id(atom | {atom, atom}) :: type_id
+  @spec type_id(atom | {atom, any}) :: type_id
   defp type_id(:bool),      do: @bool
   defp type_id(:byte),      do: @byte
   defp type_id(:i16),       do: @i16
@@ -32,9 +32,6 @@ defmodule Thrift.Protocols.Binary do
   defp type_id(:double),    do: @double
   defp type_id(:string),    do: @string
   defp type_id(:struct),    do: @struct
-  defp type_id(:map),       do: @map
-  defp type_id(:set),       do: @set
-  defp type_id(:list),      do: @list
   defp type_id({:map, _}),  do: @map
   defp type_id({:set, _}),  do: @set
   defp type_id({:list, _}), do: @list

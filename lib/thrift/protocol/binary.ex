@@ -23,7 +23,7 @@ defmodule Thrift.Protocol.Binary do
   @set 14
   @list 15
 
-  @spec type_id(atom | {atom, any}) :: type_id
+  @spec type_id(Thrift.data_type | {Thrift.data_type, any}) :: type_id
   defp type_id(:bool),      do: @bool
   defp type_id(:byte),      do: @byte
   defp type_id(:i16),       do: @i16
@@ -36,16 +36,28 @@ defmodule Thrift.Protocol.Binary do
   defp type_id({:set, _}),  do: @set
   defp type_id({:list, _}), do: @list
 
-  defp to_message_type(:call), do: 1
-  defp to_message_type(:reply), do: 2
-  defp to_message_type(:exception), do: 3
-  defp to_message_type(:oneway), do: 4
+  @typedoc "Binary protocol message type identifier"
+  @type message_type_id :: (1..4)
 
-  defp from_message_type(1), do: :call
-  defp from_message_type(2), do: :reply
-  defp from_message_type(3), do: :exception
-  defp from_message_type(4), do: :oneway
+  @spec from_message_type(Thrift.message_type) :: message_type_id
+  defp from_message_type(:call),      do: 1
+  defp from_message_type(:reply),     do: 2
+  defp from_message_type(:exception), do: 3
+  defp from_message_type(:oneway),    do: 4
 
+  @spec to_message_type(message_type_id) :: Thrift.message_type
+  defp to_message_type(1), do: :call
+  defp to_message_type(2), do: :reply
+  defp to_message_type(3), do: :exception
+  defp to_message_type(4), do: :oneway
+
+  @typedoc "Binary protocol message sequence identifier"
+  @type message_seq_id :: non_neg_integer
+
+  @doc """
+  Serializes a value as an IO list using Thrift's type-specific encoding rules.
+  """
+  @spec serialize(Thrift.data_type, any) :: iolist
   def serialize(:bool, false),   do: <<0::8-signed>>
   def serialize(:bool, true),    do: <<1::8-signed>>
   def serialize(:i8, value),     do: <<value::8-signed>>
@@ -82,21 +94,27 @@ defmodule Thrift.Protocol.Binary do
 
     <<1::size(1), 1::size(15), 0::size(8),
     # ^^ Strange, I know. We could integrate the 8-bit zero here with the 5 bit zero below.
-    0::size(5), to_message_type(message_type)::size(3),
+    0::size(5), from_message_type(message_type)::size(3),
     byte_size(name)::32-signed, name::binary, sequence_id::32-signed>>
   end
 
-  def deserialize(:message_begin,<<1::size(1), 1::size(15), _::size(8),
+  @doc """
+  Deserializes a Thrift-encoded binary.
+  """
+  @spec deserialize(:message_begin, binary) ::
+    {:ok, {Thrift.message_type, message_seq_id, name :: String.t, binary}} |
+    {:error, {atom, binary}}
+  def deserialize(:message_begin, <<1::size(1), 1::size(15), _::size(8),
                   0::size(5), message_type::size(3),
                   name_size::32-signed, name::binary-size(name_size), sequence_id::32-signed, rest::binary>>) do
-    {:ok, {from_message_type(message_type), sequence_id, name, rest}}
+    {:ok, {to_message_type(message_type), sequence_id, name, rest}}
   end
 
   # the old format, see here:
   # https://erikvanoosten.github.io/thrift-missing-specification/#_message_encoding
   def deserialize(:message_begin, <<name_size::32-signed, name::binary-size(name_size),
                   0::size(5), message_type::size(3), sequence_id::32-signed, rest::binary>>) do
-    {:ok, {from_message_type(message_type), sequence_id, name, rest}}
+    {:ok, {to_message_type(message_type), sequence_id, name, rest}}
   end
 
   def deserialize(:message_begin, rest) do

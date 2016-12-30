@@ -1,8 +1,9 @@
 defmodule Thrift.Parser do
   @moduledoc """
-  This module provides functions for parsing `.thrift` files.
+  This module provides functions for parsing Thrift IDL files (`.thrift`).
   """
 
+  @typedoc "A schema path element"
   @type path_element :: String.t | atom
 
   alias Thrift.Parser.{FileGroup, FileRef, Models, ParsedFile}
@@ -11,7 +12,7 @@ defmodule Thrift.Parser do
   @doc """
   Parses a Thrift document and returns the schema that it represents.
   """
-  @spec parse(String.t) :: %Schema{}
+  @spec parse(String.t) :: Schema.t
   def parse(doc) do
     doc = String.to_char_list(doc)
 
@@ -24,9 +25,9 @@ defmodule Thrift.Parser do
   @doc """
   Parses a Thrift document and returns a component to the caller.
 
-  The part of the Thrift document that's returned is determined by
-  the `path` parameter. It works a lot like the `find_in` function,
-  which takes a map and can pull out nested pieces.
+  The part of the Thrift document that's returned is determined by the `path`
+  parameter. It works a lot like the `Kernel.get_in/2` function, which takes a
+  map and can pull out nested pieces.
 
   For example, this makes it easy to get to a service definition:
 
@@ -34,7 +35,7 @@ defmodule Thrift.Parser do
 
   Will return the "MyService" service.
   """
-  @spec parse(String.t, [path_element]) :: Models.all
+  @spec parse(String.t, [path_element, ...]) :: Models.all
   def parse(doc, path) do
     schema = parse(doc)
 
@@ -47,10 +48,12 @@ defmodule Thrift.Parser do
   end
 
   @doc """
-  Takes a path to a file and parses it, adding any includes to the
-  parsed results.
+  Parses a Thrift IDL file.
+
+  In addition to the given file, all included files are also parsed and
+  returned as part of the resulting `Thrift.Parser.FileGroup`.
   """
-  @spec parse_file(Path.t) :: %FileGroup{}
+  @spec parse_file(Path.t) :: FileGroup.t
   def parse_file(file_path) do
     parsed_file = file_path
     |> FileRef.new

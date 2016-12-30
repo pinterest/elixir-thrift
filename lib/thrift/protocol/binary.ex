@@ -1,4 +1,4 @@
-defmodule Thrift.Protocols.Binary do
+defmodule Thrift.Protocol.Binary do
   @moduledoc """
   Provides a set of high-level functions for working with the Thrift binary
   protocol.
@@ -58,12 +58,10 @@ defmodule Thrift.Protocols.Binary do
 
   def serialize({:list, elem_type}, elems) when is_list(elems) do
     rest = Enum.map(elems, &serialize(elem_type, &1))
-
     [<<type_id(elem_type)::size(8), Enum.count(elems)::32-signed>>, rest]
   end
   def serialize({:set, elem_type}, %MapSet{} = elems) do
     rest = Enum.map(elems, &serialize(elem_type, &1))
-
     [<<type_id(elem_type)::size(8), Enum.count(elems)::32-signed>>, rest]
   end
   def serialize({:map, {key_type, val_type}}, map) when is_map(map) do

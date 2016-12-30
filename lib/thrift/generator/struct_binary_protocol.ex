@@ -86,7 +86,7 @@ defmodule Thrift.Generator.StructBinaryProtocol do
       # data from a newer schema than our own.
       defp deserialize(<<field_type, _id::16-signed, rest::binary>>, acc) do
         rest
-        |> Thrift.Protocols.Binary.skip_field(field_type)
+        |> Thrift.Protocol.Binary.skip_field(field_type)
         |> deserialize(acc)
       end
 

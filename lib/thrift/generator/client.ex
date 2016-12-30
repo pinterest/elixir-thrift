@@ -14,7 +14,7 @@ defmodule Thrift.Generator.Client do
       quote do
         defmodule Client.Framed do
           alias Thrift.Clients.BinaryFramed
-          alias Thrift.Protocols.Binary
+          alias Thrift.Protocol.Binary
 
           defdelegate close(conn), to: BinaryFramed
           defdelegate connect(conn, opts), to: BinaryFramed

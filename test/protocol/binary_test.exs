@@ -2,7 +2,7 @@ defmodule BinaryProtocolTest do
   use ThriftTestCase, gen_erl: true
   use ExUnit.Case
 
-  alias Thrift.Protocols.Binary
+  alias Thrift.Protocol.Binary
 
   @moduletag :integration
 

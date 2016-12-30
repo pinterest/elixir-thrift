@@ -19,6 +19,7 @@ defmodule Thrift.Mixfile do
      # Testing
      test_coverage: [tool: ExCoveralls],
      preferred_cli_env: [
+       "bench": :test,
        "coveralls": :test,
        "coveralls.detail": :test,
        "coveralls.html": :test,
@@ -51,28 +52,18 @@ defmodule Thrift.Mixfile do
     ]
   end
 
-  defp erlc_paths(:prod) do
-    ["src", "ext/thrift/lib/erl/src"]
-  end
+  defp erlc_paths(:test), do: ["src", "ext/thrift/lib/erl/src", "test/support/src"]
+  defp erlc_paths(_),     do: ["src", "ext/thrift/lib/erl/src"]
 
-  defp erlc_paths(_) do
-    erlc_paths(:prod) ++ ["test/support/src"]
-  end
-
-  defp elixirc_paths(:prod) do
-    ["lib"]
-  end
-
-  defp elixirc_paths(_) do
-    elixirc_paths(:prod) ++ ["test/support/lib"]
-  end
+  defp elixirc_paths(:test), do: ["lib", "test/support/lib"]
+  defp elixirc_paths(_),     do: ["lib"]
 
   defp deps do
      [{:ex_doc, "~> 0.14", only: :dev},
       {:excoveralls, "~> 0.5.7", only: [:dev, :test]},
       {:credo, "~> 0.5", only: [:dev, :test]},
       {:dialyxir, "~> 0.4", only: :dev, runtime: false},
-      {:benchfella, "~> 0.3", only: :dev},
+      {:benchfella, "~> 0.3", only: [:dev, :test]},
       {:connection, "~> 1.0"},
      ]
   end

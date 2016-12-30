@@ -57,9 +57,6 @@ defmodule Thrift.Protocols.Binary do
   defp from_message_type(3), do: :exception
   defp from_message_type(4), do: :oneway
 
-  def serialize(_, nil) do
-    []
-  end
   def serialize(:bool, false), do: <<0::8-signed>>
   def serialize(:bool, true),  do: <<1::8-signed>>
   def serialize(:i8, value) do

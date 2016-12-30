@@ -8,8 +8,6 @@ defmodule Thrift.Protocol.Binary do
   actual value of the field.
   """
 
-  alias Thrift.Protocol
-
   @typedoc "Binary protocol field type identifier"
   @type type_id :: (2..15)
 
@@ -25,7 +23,7 @@ defmodule Thrift.Protocol.Binary do
   @set 14
   @list 15
 
-  @spec type_id(Protocol.data_type | {Protocol.data_type, any}) :: type_id
+  @spec type_id(Thrift.data_type | {Thrift.data_type, any}) :: type_id
   defp type_id(:bool),      do: @bool
   defp type_id(:byte),      do: @byte
   defp type_id(:i16),       do: @i16
@@ -38,25 +36,28 @@ defmodule Thrift.Protocol.Binary do
   defp type_id({:set, _}),  do: @set
   defp type_id({:list, _}), do: @list
 
-  @spec from_message_type(Protocol.message_type) :: 1..4
+  @typedoc "Binary protocol message type identifier"
+  @type message_type_id :: (1..4)
+
+  @spec from_message_type(Thrift.message_type) :: message_type_id
   defp from_message_type(:call),      do: 1
   defp from_message_type(:reply),     do: 2
   defp from_message_type(:exception), do: 3
   defp from_message_type(:oneway),    do: 4
 
-  @spec to_message_type(1..4) :: Protocol.message_type
+  @spec to_message_type(message_type_id) :: Thrift.message_type
   defp to_message_type(1), do: :call
   defp to_message_type(2), do: :reply
   defp to_message_type(3), do: :exception
   defp to_message_type(4), do: :oneway
 
   @typedoc "Binary protocol message sequence identifier"
-  @type sequence_id :: non_neg_integer
+  @type message_seq_id :: non_neg_integer
 
   @doc """
   Serializes a value as an IO list using Thrift's type-specific encoding rules.
   """
-  @spec serialize(Protocol.data_type, any) :: iolist
+  @spec serialize(Thrift.data_type, any) :: iolist
   def serialize(:bool, false),   do: <<0::8-signed>>
   def serialize(:bool, true),    do: <<1::8-signed>>
   def serialize(:i8, value),     do: <<value::8-signed>>
@@ -101,7 +102,7 @@ defmodule Thrift.Protocol.Binary do
   Deserializes a Thrift-encoded binary.
   """
   @spec deserialize(:message_begin, binary) ::
-    {:ok, {Protocol.message_type, sequence_id, String.t, binary}} |
+    {:ok, {Thrift.message_type, message_seq_id, name :: String.t, binary}} |
     {:error, {atom, binary}}
   def deserialize(:message_begin, <<1::size(1), 1::size(15), _::size(8),
                   0::size(5), message_type::size(3),

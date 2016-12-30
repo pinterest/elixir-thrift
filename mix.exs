@@ -83,7 +83,7 @@ defmodule Thrift.Mixfile do
   end
 
   defp package do
-     [maintainers: ["Jon Parise", "Steve Cohen"],
+     [maintainers: ["Jon Parise", "Steve Cohen", "Preston Guillory"],
       licenses: ["Apache 2.0"],
       links: %{"GitHub" => @project_url},
       files: ~w(README.md LICENSE mix.exs lib) ++

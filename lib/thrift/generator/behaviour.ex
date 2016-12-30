@@ -7,6 +7,7 @@ defmodule Thrift.Generator.Behaviour do
   equivalent to their thrift counterparts.
   """
   alias Thrift.Parser.FileGroup
+  alias Thrift.Generator.Utils
   alias Thrift.Parser.Models.{
     Field,
     Struct,
@@ -33,13 +34,15 @@ defmodule Thrift.Generator.Behaviour do
   end
 
   defp create_callback(file_group, function) do
+    callback_name = Utils.underscore(function.name)
+
     return_type = typespec(function.return_type, file_group)
     params = function.params
     |> Enum.map(&FileGroup.resolve(file_group, &1))
     |> Enum.map(&to_arg_spec(&1, file_group))
 
     quote do
-      @callback unquote(function.name)(unquote_splicing(params)) :: unquote(return_type)
+      @callback unquote(callback_name)(unquote_splicing(params)) :: unquote(return_type)
     end
   end
 

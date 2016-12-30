@@ -21,6 +21,7 @@ defmodule Thrift.Generator.Service do
     response_structs = Enum.filter_map(functions, &(!&1.oneway), &generate_response_struct(schema, &1))
 
     framed_client = Generator.Client.Framed.generate(dest_module, service)
+    framed_server = Generator.Server.Framed.generate(dest_module, service, file_group)
 
     service_module = quote do
       defmodule unquote(dest_module) do
@@ -28,6 +29,8 @@ defmodule Thrift.Generator.Service do
         unquote_splicing(response_structs)
 
         unquote(framed_client)
+
+        unquote(framed_server)
       end
     end
 

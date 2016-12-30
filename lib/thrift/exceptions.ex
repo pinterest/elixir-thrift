@@ -1,18 +1,29 @@
 defmodule Thrift.TApplicationException do
   defexception message: nil, type: nil
 
+  @exception_mappings %{
+    unknown_method: 1,
+    invalid_message_type: 2,
+    wrong_method_name: 3,
+    bad_sequence_id: 4,
+    missing_result: 5,
+    internal_error: 6,
+    protocol_error: 7,
+    invalid_transform: 8,
+    invalid_protocol: 9,
+    unsupported_client_type: 10
+  }
 
-  def exception_type(1), do: :unknown_method
-  def exception_type(2), do: :invalid_message_type
-  def exception_type(3), do: :wrong_method_name
-  def exception_type(4), do: :bad_sequence_id
-  def exception_type(5), do: :missing_result
-  def exception_type(6), do: :internal_error
-  def exception_type(7), do: :protocol_error
-  def exception_type(8), do: :invalid_transform
-  def exception_type(9), do: :invalid_protocol
-  def exception_type(10), do: :unsupported_client_type
+  for {atom_name, type_id} <- @exception_mappings do
+    def exception_type(unquote(type_id)), do: unquote(atom_name)
+  end
   def exception_type(_), do: :unknown
+
+  for {atom_name, type_id} <- @exception_mappings do
+    def exception_type_to_int(unquote(atom_name)), do: unquote(type_id)
+  end
+
+  def exception_type_to_int(_), do: 0
 end
 
 defmodule Thrift.Union.TooManyFieldsSetException do

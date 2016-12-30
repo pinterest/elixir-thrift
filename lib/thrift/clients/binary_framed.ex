@@ -254,7 +254,7 @@ defmodule Thrift.Clients.BinaryFramed do
   end
 
   defp handle_message({:ok, {:exception, sequence_id, rpc_name, response}}, sequence_id, rpc_name, _) do
-    exc = read_t_application_exception(response, %TApplicationException{})
+    exc = Binary.deserialize(:application_exception, response)
     {:error, {:exception, exc}}
   end
 
@@ -281,34 +281,6 @@ defmodule Thrift.Clients.BinaryFramed do
 
   defp handle_message({:error, _} = err, _, _, _) do
     err
-  end
-
-  defp read_t_application_exception(
-        <<11::size(8),
-        1::16-unsigned,
-        message_size::32-signed,
-        message::binary-size(message_size),
-        rest::binary>>, accum) do
-    # read the message string
-    read_t_application_exception(rest, Map.put(accum, :message, message))
-  end
-  defp read_t_application_exception(
-        <<8::size(8),
-        2::16-unsigned,
-        type::32-signed,
-        rest::binary>>, accum) do
-    # read the type
-    exception_type = TApplicationException.exception_type(type)
-    read_t_application_exception(rest, Map.put(accum, :type, exception_type))
-  end
-  defp read_t_application_exception(<<0>>, accum) do
-    # read the field stop and return
-    accum
-  end
-  defp read_t_application_exception(error, _) do
-    message = "Could not decode TApplicationException, remaining was #{inspect error}"
-    %TApplicationException{message: message,
-                           type: TApplicationException.exception_type(7)}
   end
 
   defp to_host(host) when is_bitstring(host) do

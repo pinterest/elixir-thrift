@@ -36,10 +36,6 @@ defmodule Thrift.Protocols.Binary do
   def int_type({:set, _}), do: 14
   def int_type({:list, _}), do: 15
 
-  defp bool_to_int(false), do: 0
-  defp bool_to_int(nil), do: 0
-  defp bool_to_int(_), do: 1
-
   defp to_message_type(:call), do: 1
   defp to_message_type(:reply), do: 2
   defp to_message_type(:exception), do: 3
@@ -54,8 +50,11 @@ defmodule Thrift.Protocols.Binary do
     []
   end
   def serialize(:bool, value) do
-    value = bool_to_int(value)
-    <<value::8-signed>>
+    case value do
+      nil   -> <<0::8-signed>>
+      false -> <<0::8-signed>>
+      _     -> <<1::8-signed>>
+    end
   end
   def serialize(:i8, value) do
     <<value::8-signed>>

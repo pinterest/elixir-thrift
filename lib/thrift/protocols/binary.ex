@@ -57,29 +57,16 @@ defmodule Thrift.Protocols.Binary do
   defp from_message_type(3), do: :exception
   defp from_message_type(4), do: :oneway
 
-  def serialize(:bool, false), do: <<0::8-signed>>
-  def serialize(:bool, true),  do: <<1::8-signed>>
-  def serialize(:i8, value) do
-    <<value::8-signed>>
-  end
-  def serialize(:i16, value) do
-    <<value::16-signed>>
-  end
-  def serialize(:i32, value) do
-    <<value::32-signed>>
-  end
-  def serialize(:i64, value) do
-    <<value::64-signed>>
-  end
-  def serialize(:double, value) do
-    <<value::signed-float>>
-  end
-  def serialize(:string, value) do
-    [<<byte_size(value)::size(32)>>, value]
-  end
-  def serialize(:binary, value) do
-    [<<byte_size(value)::size(32)>>, value]
-  end
+  def serialize(:bool, false),   do: <<0::8-signed>>
+  def serialize(:bool, true),    do: <<1::8-signed>>
+  def serialize(:i8, value),     do: <<value::8-signed>>
+  def serialize(:i16, value),    do: <<value::16-signed>>
+  def serialize(:i32, value),    do: <<value::32-signed>>
+  def serialize(:i64, value),    do: <<value::64-signed>>
+  def serialize(:double, value), do: <<value::signed-float>>
+  def serialize(:string, value), do: [<<byte_size(value)::size(32)>>, value]
+  def serialize(:binary, value), do: [<<byte_size(value)::size(32)>>, value]
+
   def serialize({:list, elem_type}, elems) when is_list(elems) do
     rest = Enum.map(elems, &serialize(elem_type, &1))
 

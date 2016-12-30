@@ -49,9 +49,8 @@ defmodule Thrift.Protocols.Binary do
   def serialize(_, nil) do
     []
   end
-  def serialize(:bool, nil),   do: <<0::8-signed>>
   def serialize(:bool, false), do: <<0::8-signed>>
-  def serialize(:bool, _),     do: <<1::8-signed>>
+  def serialize(:bool, true),  do: <<1::8-signed>>
   def serialize(:i8, value) do
     <<value::8-signed>>
   end

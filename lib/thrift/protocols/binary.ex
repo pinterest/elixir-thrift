@@ -23,29 +23,21 @@ defmodule Thrift.Protocols.Binary do
   @set 14
   @list 15
 
-  @types %{bool: @bool,
-           byte: @byte,
-           double: @double,
-           i8: @byte,
-           i16: @i16,
-           i32: @i32,
-           i64: @i64,
-           string: @string,
-           binary: @string,
-           struct: @struct,
-           map: @map,
-           set: @set,
-           list: @list
-          }
-
-  for {atom_type, int_type} <- @types do
-    def int_type(unquote(atom_type)) do
-      unquote(int_type)
-    end
-  end
-  def int_type({:map, _}), do: 13
-  def int_type({:set, _}), do: 14
-  def int_type({:list, _}), do: 15
+  @spec type_id(atom | {atom, atom}) :: type_id
+  defp type_id(:bool),      do: @bool
+  defp type_id(:byte),      do: @byte
+  defp type_id(:i16),       do: @i16
+  defp type_id(:i32),       do: @i32
+  defp type_id(:i64),       do: @i64
+  defp type_id(:double),    do: @double
+  defp type_id(:string),    do: @string
+  defp type_id(:struct),    do: @struct
+  defp type_id(:map),       do: @map
+  defp type_id(:set),       do: @set
+  defp type_id(:list),      do: @list
+  defp type_id({:map, _}),  do: @map
+  defp type_id({:set, _}),  do: @set
+  defp type_id({:list, _}), do: @list
 
   defp to_message_type(:call), do: 1
   defp to_message_type(:reply), do: 2
@@ -86,19 +78,19 @@ defmodule Thrift.Protocols.Binary do
   def serialize({:list, elem_type}, elems) when is_list(elems) do
     rest = Enum.map(elems, &serialize(elem_type, &1))
 
-    [<<int_type(elem_type)::size(8), Enum.count(elems)::32-signed>>, rest]
+    [<<type_id(elem_type)::size(8), Enum.count(elems)::32-signed>>, rest]
   end
   def serialize({:set, elem_type}, %MapSet{} = elems) do
     rest = Enum.map(elems, &serialize(elem_type, &1))
 
-    [<<int_type(elem_type)::size(8), Enum.count(elems)::32-signed>>, rest]
+    [<<type_id(elem_type)::size(8), Enum.count(elems)::32-signed>>, rest]
   end
   def serialize({:map, {key_type, val_type}}, map) when is_map(map) do
     elem_count = map_size(map)
     rest = Enum.map(map, fn {key, value} ->
       [serialize(key_type, key), serialize(val_type, value)]
     end)
-    [<<int_type(key_type)::size(8), int_type(val_type)::size(8), elem_count::32-signed>>, rest]
+    [<<type_id(key_type)::size(8), type_id(val_type)::size(8), elem_count::32-signed>>, rest]
   end
   def serialize(:struct, %{__struct__: mod} = struct) do
     mod.serialize(struct, :binary)

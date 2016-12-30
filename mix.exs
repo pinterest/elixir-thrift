@@ -1,7 +1,14 @@
 defmodule Thrift.Mixfile do
   use Mix.Project
 
-  @version "1.3.1"
+  @description """
+  Elixir implementation of the Thrift service framework
+
+  This package includes support for parsing Thrift IDL files, working with the
+  Thrift binary protocol, and building high-performance clients and servers.
+  """
+
+  @version "2.0.0-dev"
   @project_url "https://github.com/pinterest/elixir-thrift"
 
   def project do
@@ -30,7 +37,7 @@ defmodule Thrift.Mixfile do
      homepage_url: @project_url,
 
      # Hex
-     description: description(),
+     description: @description,
      package: package(),
 
      # Dialyzer
@@ -42,7 +49,7 @@ defmodule Thrift.Mixfile do
        main: "readme",
        extras: ["README.md": [group: "Documents", title: "README"]],
        extra_section: "Overview",
-       source_ref: @version,
+       source_ref: "thrift_tng",
        source_url: @project_url]]
   end
 
@@ -66,14 +73,6 @@ defmodule Thrift.Mixfile do
       {:benchfella, "~> 0.3", only: [:dev, :test]},
       {:connection, "~> 1.0"},
      ]
-  end
-
-  defp description do
-     """
-     A collection of utilities for working with Thrift in Elixir.
-
-     Provides a copy of the Apache Thrift Erlang runtime.
-     """
   end
 
   defp package do

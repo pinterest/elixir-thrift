@@ -36,16 +36,20 @@ defmodule Thrift.Protocol.Binary do
   defp type_id({:set, _}),  do: @set
   defp type_id({:list, _}), do: @list
 
-  defp to_message_type(:call), do: 1
-  defp to_message_type(:reply), do: 2
+  defp to_message_type(:call),      do: 1
+  defp to_message_type(:reply),     do: 2
   defp to_message_type(:exception), do: 3
-  defp to_message_type(:oneway), do: 4
+  defp to_message_type(:oneway),    do: 4
 
   defp from_message_type(1), do: :call
   defp from_message_type(2), do: :reply
   defp from_message_type(3), do: :exception
   defp from_message_type(4), do: :oneway
 
+  @doc """
+  Serializes a value as an IO list using Thrift's type-specific encoding rules.
+  """
+  @spec serialize(atom, any) :: iolist
   def serialize(:bool, false),   do: <<0::8-signed>>
   def serialize(:bool, true),    do: <<1::8-signed>>
   def serialize(:i8, value),     do: <<value::8-signed>>
@@ -86,7 +90,13 @@ defmodule Thrift.Protocol.Binary do
     byte_size(name)::32-signed, name::binary, sequence_id::32-signed>>
   end
 
-  def deserialize(:message_begin,<<1::size(1), 1::size(15), _::size(8),
+  @doc """
+  Deserializes a Thrift-encoded binary.
+  """
+  @spec deserialize(atom, binary) ::
+    {:ok, {atom, integer, binary, binary}} |
+    {:error, {atom, binary}}
+  def deserialize(:message_begin, <<1::size(1), 1::size(15), _::size(8),
                   0::size(5), message_type::size(3),
                   name_size::32-signed, name::binary-size(name_size), sequence_id::32-signed, rest::binary>>) do
     {:ok, {from_message_type(message_type), sequence_id, name, rest}}

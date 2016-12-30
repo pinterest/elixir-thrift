@@ -82,91 +82,15 @@ defmodule Thrift.Generator.StructBinaryProtocol do
 
       unquote_splicing(field_deserializers)
 
+      # Skip over unknown fields. This can happen when we encounter serialized
+      # data from a newer schema than our own.
       defp deserialize(<<field_type, _id::16-signed, rest::binary>>, acc) do
-        # this is for unknown fields. This can happen if you have an
-        # outdated schema
         rest
-        |> skip_field(field_type)
+        |> Thrift.Protocols.Binary.skip_field(field_type)
         |> deserialize(acc)
       end
 
-      unquote(field_skippers)
-
       defp deserialize(_, _), do: :error
-    end
-  end
-
-  defp field_skippers do
-    quote do
-      defp skip_field(<<_value, rest::binary>>, unquote(@bool)), do: rest
-      defp skip_field(<<_value, rest::binary>>, unquote(@byte)), do: rest
-      defp skip_field(<<_::signed-float, rest::binary>>, unquote(@double)), do: rest
-      defp skip_field(<<_::size(16), rest::binary>>, unquote(@i16)), do: rest
-      defp skip_field(<<_::size(32), rest::binary>>, unquote(@i32)), do: rest
-      defp skip_field(<<_::size(64), rest::binary>>, unquote(@i64)), do: rest
-      defp skip_field(<<string_size::32-signed, _::binary-size(string_size), rest::binary>>, unquote(@string)) do
-        rest
-      end
-
-      defp skip_field(<<rest::binary>>, unquote(@struct)) do
-        skip_struct(rest)
-      end
-
-      # maps
-      defp skip_field(<<key_type, val_type, length::size(32), rest::binary>>, unquote(@map)) do
-        skip_map_entry(rest, key_type, val_type, length)
-      end
-
-      # sets
-      defp skip_field(<<elem_type, length::size(32), rest::binary>>, unquote(@set)) do
-        skip_list_element(rest, elem_type, length)
-      end
-
-      # lists
-      defp skip_field(<<elem_type, length::size(32), rest::binary>>, unquote(@list)) do
-        skip_list_element(rest, elem_type, length)
-      end
-
-      defp skip_field(_, _) do
-        :error
-      end
-
-      defp skip_list_element(<<rest::binary>>, _, 0) do
-        rest
-      end
-      defp skip_list_element(<<rest::binary>>, elem_type, remaining) do
-        rest
-        |> skip_field(elem_type)
-        |> skip_list_element(elem_type, remaining - 1)
-      end
-      defp skip_list_element(:error, _, _) do
-        :error
-      end
-
-      defp skip_map_entry(<<rest::binary>>, _, _, 0) do
-        rest
-      end
-      defp skip_map_entry(<<rest::binary>>, key_type, val_type, remaining) do
-        rest
-        |> skip_field(key_type)
-        |> skip_field(val_type)
-        |> skip_map_entry(key_type, val_type, remaining - 1)
-      end
-      defp skip_map_entry(:error, _, _, _) do
-        :error
-      end
-
-      defp skip_struct(<<0, rest::binary>>) do
-        rest
-      end
-      defp skip_struct(<<type, _id::16-signed, rest::binary>>) do
-        rest
-        |> skip_field(type)
-        |> skip_struct
-      end
-      defp skip_struct(_) do
-        :error
-      end
     end
   end
 

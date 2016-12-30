@@ -32,6 +32,9 @@ defmodule Thrift.Mixfile do
      description: description(),
      package: package(),
 
+     # Dialyzer
+     dialyzer: [plt_add_deps: :transitive, plt_add_apps: [:ex_unit, :mix]],
+
      # Docs
      name: "Thrift",
      docs: [
@@ -44,7 +47,7 @@ defmodule Thrift.Mixfile do
 
   def application do
     [
-      applications: [:logger],
+      applications: [:logger, :connection],
     ]
   end
 

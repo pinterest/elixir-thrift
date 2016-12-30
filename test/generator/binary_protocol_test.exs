@@ -1,7 +1,7 @@
 defmodule Thrift.Generator.BinaryProtocolTest do
   use ThriftTestCase
 
-  alias Thrift.Protocols.Binary
+  alias Thrift.Protocol.Binary
   alias Thrift.Union.TooManyFieldsSetException
 
   def assert_serializes(%{__struct__: mod} = struct, binary) do

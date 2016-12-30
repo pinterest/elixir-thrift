@@ -16,7 +16,7 @@ defmodule BinaryFramedTest do
   end
 
   thrift_test "it should be able to read a malformed tapplicationexception" do
-    begin = Thrift.Protocols.Binary.serialize(:message_begin, {:exception, 941, "bad"})
+    begin = Thrift.Protocol.Binary.serialize(:message_begin, {:exception, 941, "bad"})
     msg = begin <> <<1, 1, 1, 1>>
 
     expected_message = "Could not decode TApplicationException, remaining was <<1, 1, 1, 1>>"

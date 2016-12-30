@@ -10,7 +10,7 @@ defmodule Thrift.Clients.BinaryFramed do
 
 
   """
-  alias Thrift.Protocols.Binary
+  alias Thrift.Protocol.Binary
   alias Thrift.TApplicationException
 
   @immutable_tcp_opts [active: false, packet: 4, mode: :binary]

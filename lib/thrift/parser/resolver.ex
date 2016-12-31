@@ -36,9 +36,7 @@ defmodule Thrift.Parser.Resolver do
     new_mappings = local_mappings
     |> Map.new(fn {name, val} ->
       case val do
-        val when is_tuple(val) ->
-          {:"#{include_name}.#{name}", val}
-        val when is_atom(val) ->
+        val when is_atom(val) or is_tuple(val) ->
           {:"#{include_name}.#{name}", val}
         val when is_map(val) ->
           {:"#{include_name}.#{name}", Map.put(val, :name, :"#{include_name}.#{name}")}

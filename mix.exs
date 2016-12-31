@@ -19,7 +19,6 @@ defmodule Thrift.Mixfile do
 
      # Build Environment
      erlc_paths: erlc_paths(Mix.env),
-     erlc_include_path: "ext/thrift/lib/erl/include",
      elixirc_paths: elixirc_paths(Mix.env),
      compilers: [:leex, :yecc, :erlang, :elixir, :app],
 
@@ -59,8 +58,8 @@ defmodule Thrift.Mixfile do
     ]
   end
 
-  defp erlc_paths(:test), do: ["src", "ext/thrift/lib/erl/src", "test/support/src"]
-  defp erlc_paths(_),     do: ["src", "ext/thrift/lib/erl/src"]
+  defp erlc_paths(:test), do: ["src", "test/support/src"]
+  defp erlc_paths(_),     do: ["src"]
 
   defp elixirc_paths(:test), do: ["lib", "test/support/lib"]
   defp elixirc_paths(_),     do: ["lib"]
@@ -80,8 +79,6 @@ defmodule Thrift.Mixfile do
       licenses: ["Apache 2.0"],
       links: %{"GitHub" => @project_url},
       files: ~w(README.md LICENSE mix.exs lib) ++
-             ~w(ext/thrift/CHANGES ext/thrift/LICENSE ext/thrift/NOTICE) ++
-             ~w(ext/thrift/README.md ext/thrift/doc ext/thrift/lib/erl) ++
              ~w(src/thrift_lexer.xrl src/thrift_parser.yrl)
      ]
   end

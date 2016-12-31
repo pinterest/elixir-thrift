@@ -7,8 +7,6 @@
 This package contains a handful of useful utilities for working with
 [Thrift](https://thrift.apache.org/) in Elixir.
 
-In particular, it includes a copy of the Erlang Thrift runtime library.
-
 ## Setup
 
 Start by adding this package to your project as a dependency:
@@ -20,7 +18,7 @@ Start by adding this package to your project as a dependency:
 Or to track the GitHub master branch:
 
 ```elixir
-{:thrift, github: "pinterest/elixir-thrift", submodules: true}
+{:thrift, github: "pinterest/elixir-thrift"}
 ```
 
 ## Mix

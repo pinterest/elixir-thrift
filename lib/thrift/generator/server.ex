@@ -39,8 +39,8 @@ defmodule Thrift.Generator.Server do
       |> Module.concat(Service.service_module_name(function, :response))
 
       handler = quote do
-          rsp = handler_module.unquote(handler_fn_name)()
-          unquote(build_responder(function.return_type, response_module))
+        rsp = handler_module.unquote(handler_fn_name)()
+        unquote(build_responder(function.return_type, response_module))
       end
       |> wrap_with_try_catch(function, file_group, response_module)
 

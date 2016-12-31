@@ -1,9 +1,5 @@
 defmodule Thrift.Servers.BinaryFramed do
-  @moduledoc """
-  A server that uses the framed binary protocol.
-
-  Users should not use this module directly, and instead use one of the generated server modules.
-  """
+  @moduledoc false
 
   @type server_opts :: [
     worker_count: pos_integer

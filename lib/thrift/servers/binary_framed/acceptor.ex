@@ -7,36 +7,36 @@ defmodule Thrift.Servers.BinaryFramed.Acceptor do
     Protocol,
     TApplicationException
   }
-  use GenServer
   require Logger
 
   @spec start_link(pid, module, module) :: GenServer.on_start
   def start_link(socket, server_module, handler_module) do
-    GenServer.start_link(__MODULE__, [socket, server_module, handler_module])
+    pid = spawn_link(__MODULE__, :init, [socket, server_module, handler_module])
+    {:ok, pid}
   end
 
-  def init([socket, server_module, handler_module]) do
-    Process.send_after(self, :accept, 1)
-    {:ok, {socket, server_module, handler_module}}
-  end
-
-  def handle_info(:accept, {socket, server_module, handler_module}) do
+  def init(socket, server_module, handler_module) do
     {:ok, r_sock} = :gen_tcp.accept(socket)
 
     do_thrift_call({r_sock, server_module, handler_module})
   end
 
   defp do_thrift_call({socket, server_module, handler_module} = args) do
-    err = with {:ok, message}   <- :gen_tcp.recv(socket, 0),
-    parsed_response             <- Protocol.Binary.deserialize(:message_begin, message),
-    {:ok, thrift_data}          <- handle_thrift_message(parsed_response, server_module, handler_module) do
+    thrift_response  = with({:ok, message}      <- :gen_tcp.recv(socket, 0),
+                            parsed_response     <- Protocol.Binary.deserialize(:message_begin, message)) do
 
-      :gen_tcp.send(socket, thrift_data)
-      do_thrift_call(args)
+      handle_thrift_message(parsed_response, server_module, handler_module)
     end
 
-    :gen_tcp.close(socket)
-    {:stop, err, nil}
+    case thrift_response do
+      {:ok, thrift_data} ->
+        :gen_tcp.send(socket, thrift_data)
+        do_thrift_call(args)
+
+      {:error, _} = err ->
+        Logger.info("Thrift call failed: #{inspect err}")
+        :gen_tcp.close(socket)
+    end
   end
 
   def handle_thrift_message({:ok, {:call, sequence_id, name, args_binary}}, server_module, handler_module) do

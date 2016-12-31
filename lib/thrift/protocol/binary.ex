@@ -103,8 +103,8 @@ defmodule Thrift.Protocol.Binary do
     serialize(:application_exception, %TApplicationException{exc | type: TApplicationException.exception_type_to_int(t)})
   end
   def serialize(:application_exception, %TApplicationException{message: message, type: type}) do
-    <<11::size(8), 1::16-signed, byte_size(message)::size(32), message::binary,
-       8::size(8), 2::16-signed, type::32-signed, 0::size(8)>>
+    <<@string::size(8), 1::16-signed, byte_size(message)::size(32), message::binary,
+      @i32::size(8), 2::16-signed, type::32-signed, 0::size(8)>>
   end
 
 
@@ -136,7 +136,7 @@ defmodule Thrift.Protocol.Binary do
   end
 
   defp do_read_application_exception(
-        <<11::size(8),
+        <<@string::size(8),
         1::16-unsigned,
         message_size::32-signed,
         message::binary-size(message_size),
@@ -145,7 +145,7 @@ defmodule Thrift.Protocol.Binary do
     do_read_application_exception(rest, Map.put(accum, :message, message))
   end
   defp do_read_application_exception(
-        <<8::size(8),
+        <<@i32::size(8),
         2::16-unsigned,
         type::32-signed,
         rest::binary>>, accum) do

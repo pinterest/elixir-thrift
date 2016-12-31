@@ -58,14 +58,10 @@ defmodule Servers.BinaryFramedIntegrationTest do
 
       def returns_nothing, do: nil
 
-      def multiple_exceptions(exception_type) do
-        case exception_type do
-          1 -> raise %TestException{message: "BOOM", code: 124}
-          2 -> raise %UserNotFound{message: "Not here!"}
-          3 -> raise %OtherException{message: "This is the other"}
-          _ -> true
-        end
-      end
+      def multiple_exceptions(1), do: raise %TestException{message: "BOOM", code: 124}
+      def multiple_exceptions(2), do: raise %UserNotFound{message: "Not here!"}
+      def multiple_exceptions(3), do: raise %OtherException{message: "This is the other"}
+      def multiple_exceptions(_), do: true
 
       def my_camel_cased_function(user_name) do
         Agent.update(:server_args, fn(_) -> user_name end)

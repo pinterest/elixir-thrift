@@ -24,6 +24,13 @@ defmodule Thrift.TApplicationException do
   end
 
   def exception_type_to_int(_), do: 0
+
+  def serialize(exception, :binary) do
+    Protocol.Binary.serialize(:application_exception, exception)
+  end
+  def deserialize(binary) do
+    Protocol.Binary.deserialize(:application_exception, binary)
+  end
 end
 
 defmodule Thrift.Union.TooManyFieldsSetException do

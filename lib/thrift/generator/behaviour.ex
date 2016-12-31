@@ -6,8 +6,8 @@ defmodule Thrift.Generator.Behaviour do
   to implement. Thrift types are converted into Elixir typespecs that are
   equivalent to their thrift counterparts.
   """
-  alias Thrift.Parser.FileGroup
   alias Thrift.Generator.Utils
+  alias Thrift.Parser.FileGroup
   alias Thrift.Parser.Models.{
     Field,
     Struct,

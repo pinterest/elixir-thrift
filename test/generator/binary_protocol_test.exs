@@ -345,12 +345,12 @@ defmodule Thrift.Generator.BinaryProtocolTest do
     3: numList numbers
   }
   """
-  thrift_test "it shold be able to serialize complex typedefs" do
-    assert_serializes %Typedefs{},                                            <<0>>
-    assert_serializes %Typedefs{ints: MapSet.new([1, 2])},                    <<14, 0, 1, 8, 0, 0, 0, 2, 0, 0, 0, 1, 0, 0, 0, 2, 0>>
+  thrift_test "it should be able to serialize complex typedefs" do
+    assert_serializes %Typedefs{},                          <<0>>
+    assert_serializes %Typedefs{ints: MapSet.new([1, 2])},  <<14, 0, 1, 8, 0, 0, 0, 2, 0, 0, 0, 1, 0, 0, 0, 2, 0>>
     assert_serializes %Typedefs{mappings: %{"foo" => "bar", "baz" => "quux"}},
-                                                                              <<13, 0, 2, 11, 11, 0, 0, 0, 2, 0, 0, 0, 3, 98, 97, 122, 0, 0, 0, 4, 113, 117, 117, 120, 0, 0, 0, 3, 102, 111, 111, 0, 0, 0, 3, 98, 97, 114, 0>>
+                                                            <<13, 0, 2, 11, 11, 0, 0, 0, 2, 0, 0, 0, 3, "baz", 0, 0, 0, 4, "quux", 0, 0, 0, 3, "foo", 0, 0, 0, 3, "bar", 0>>
 
-    assert_serializes %Typedefs{numbers: [9, 32, 104]},                       <<15, 0, 3, 10, 0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 9, 0, 0, 0, 0, 0, 0, 0, 32, 0, 0, 0, 0, 0, 0, 0, 104, 0>>
+    assert_serializes %Typedefs{numbers: [9, 32, 104]},     <<15, 0, 3, 10, 0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 9, 0, 0, 0, 0, 0, 0, 0, 32, 0, 0, 0, 0, 0, 0, 0, 104, 0>>
   end
 end

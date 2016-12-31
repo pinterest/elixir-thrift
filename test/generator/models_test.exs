@@ -149,4 +149,16 @@ defmodule Thrift.Generator.ModelsTest do
     struct = %StructWithIncludedNum{}
     assert struct.num == 5
   end
+
+  @thrift_file name: "complex_typedefs.thrift", contents: """
+  typedef set<i32> IntSet
+  struct Thangs {
+    1: optional IntSet numbers
+  }
+  """
+
+  thrift_test "it should be able to have typedefs" do
+    thang = %Thangs{numbers: MapSet.new([1, 2, 3])}
+    assert thang.numbers == MapSet.new([1, 2, 3])
+  end
 end

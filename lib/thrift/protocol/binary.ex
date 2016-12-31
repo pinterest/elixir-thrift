@@ -23,7 +23,7 @@ defmodule Thrift.Protocol.Binary do
   @set 14
   @list 15
 
-  @spec type_id(Thrift.data_type | {Thrift.data_type, any}) :: type_id
+  @spec type_id(Thrift.data_type) :: type_id
   defp type_id(:bool),      do: @bool
   defp type_id(:byte),      do: @byte
   defp type_id(:i16),       do: @i16
@@ -57,7 +57,7 @@ defmodule Thrift.Protocol.Binary do
   @doc """
   Serializes a value as an IO list using Thrift's type-specific encoding rules.
   """
-  @spec serialize(Thrift.data_type, any) :: iolist
+  @spec serialize(Thrift.data_type | :message_begin, any) :: iolist
   def serialize(:bool, false),   do: <<0::8-signed>>
   def serialize(:bool, true),    do: <<1::8-signed>>
   def serialize(:i8, value),     do: <<value::8-signed>>

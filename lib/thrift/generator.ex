@@ -1,10 +1,38 @@
 defmodule Thrift.Generator do
+  @moduledoc """
+  This module provides functions for generating Elixir source code from Thrift
+  IDL files (`.thrift`).
+  """
+
   alias Thrift.Parser.FileGroup
   alias Thrift.{
     Generator,
     Generator.EnumGenerator,
     Generator.StructGenerator
   }
+
+  @doc """
+  Returns the list of target paths that would be generated from a Thrift file.
+  """
+  @spec targets(FileGroup.t) :: [Path.t]
+  def targets(%FileGroup{} = file_group) do
+    Enum.flat_map(file_group.schemas, fn {_, schema} ->
+      schema
+      |> Map.put(:file_group, file_group)
+      |> generate_schema
+      |> Enum.map(fn {name, _} -> target_path(name) end)
+    end)
+  end
+
+  @spec target_path(String.t) :: Path.t
+  defp target_path(module_name) do
+    module_name
+    |> inspect
+    |> String.split(".")
+    |> Enum.map(&Macro.underscore/1)
+    |> Path.join
+    |> Kernel.<>(".ex")
+  end
 
   def generate!(thrift_filename, output_dir) when is_bitstring(thrift_filename) do
     thrift_filename
@@ -48,12 +76,7 @@ defmodule Thrift.Generator do
   defp write_schema_to_file(generated_modules, output_dir) do
     generated_modules
     |> Enum.map(fn {name, quoted} ->
-      filename = name
-      |> inspect
-      |> String.split(".")
-      |> Enum.map(&Macro.underscore/1)
-      |> Path.join
-      |> Kernel.<>(".ex")
+      filename = target_path(name)
       source = Macro.to_string(quoted)
 
       path = Path.join(output_dir, filename)

@@ -1,11 +1,12 @@
 /_build
 /bench/snapshots
+/cover
 /deps
 /doc
 /lib/generated
 /src/thrift_lexer.erl
 /src/thrift_parser.erl
-/test/fixtures/app/src
+/test/fixtures/app/lib
 erl_crash.dump
 *.ez
 log.*

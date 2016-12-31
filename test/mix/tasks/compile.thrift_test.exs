@@ -5,15 +5,10 @@ defmodule Mix.Tasks.Compile.ThriftTest do
   import ExUnit.CaptureIO
 
   @project_root Path.expand("../../../", __DIR__)
-  @fixture_project_relative "test/fixtures/app"
-  @fixture_project Path.join(@project_root, @fixture_project_relative)
+  @fixture_project Path.join(@project_root, "test/fixtures/app")
 
   setup do
-    # so that the docker-based tests will work
-    System.put_env("DOCKER_THRIFT_OUT_ROOT", @fixture_project_relative)
-    on_exit fn -> System.delete_env("DOCKER_THRIFT_OUT_ROOT") end
-
-    in_fixture(fn -> File.rm_rf!("src") end)
+    in_fixture(fn -> File.rm_rf!("lib") end)
     :ok
   end
 
@@ -25,8 +20,8 @@ defmodule Mix.Tasks.Compile.ThriftTest do
           Compiled thrift/simple.thrift
           Compiled thrift/tutorial.thrift
           """
-        assert File.exists?("src/shared_types.hrl")
-        assert File.exists?("src/tutorial_types.hrl")
+        assert File.exists?("lib/shared/shared_struct.ex")
+        assert File.exists?("lib/tutorial/calculator.ex")
       end
     end
   end
@@ -44,7 +39,7 @@ defmodule Mix.Tasks.Compile.ThriftTest do
     in_fixture fn ->
       with_project_config [], fn ->
         assert capture_io(fn -> run([]) end) =~ "Compiled thrift/tutorial.thrift"
-        File.rm_rf!("src")
+        File.rm_rf!("lib")
         assert capture_io(fn -> run([]) end) =~ "Compiled thrift/tutorial.thrift"
       end
     end
@@ -55,14 +50,6 @@ defmodule Mix.Tasks.Compile.ThriftTest do
       with_project_config [], fn ->
         assert capture_io(fn -> run([]) end) =~ "Compiled thrift/tutorial.thrift"
         assert capture_io(fn -> run(["--force"]) end) =~ "Compiled thrift/tutorial.thrift"
-      end
-    end
-  end
-
-  test "specifying a custom --gen compiler option" do
-    in_fixture fn ->
-      with_project_config [thrift_options: ~w[--gen erl:maps]], fn ->
-        assert capture_io(fn -> run([]) end) =~ "Compiled thrift/tutorial.thrift"
       end
     end
   end
@@ -79,37 +66,17 @@ defmodule Mix.Tasks.Compile.ThriftTest do
     in_fixture fn ->
       with_project_config [thrift_files: ~w("missing.thrift")], fn ->
         capture_io fn ->
-          assert capture_io(:stderr, fn -> run([]) end) =~ "Failed to compile"
+          assert capture_io(:stderr, fn -> run([]) end) =~ "Failed to parse"
         end
       end
     end
   end
 
-  test "attempting to use a non-existent Thrift executable" do
+  test "specifying an invalid Thrift file" do
     in_fixture fn ->
-      with_project_config [thrift_executable: "nonexistentthrift"], fn ->
-        assert_raise Mix.Error, "`nonexistentthrift` not found in the current path", fn ->
-          run([])
-        end
-      end
-    end
-  end
-
-  test "attempting to use a broken Thrift executable" do
-    in_fixture fn ->
-      with_project_config [thrift_executable: "mix", thrift_version: "0.0.0"], fn ->
-        assert_raise Mix.Error, ~r/Failed to execute/, fn ->
-          run([])
-        end
-      end
-    end
-  end
-
-  test "attempting to use an unsupported Thrift version" do
-    in_fixture fn ->
-      with_project_config [thrift_version: "< 0.0.0"], fn ->
-        assert_raise Mix.Error, ~r/^Unsupported Thrift version/, fn ->
-          run([])
+      with_project_config [thrift_files: [__ENV__.file]], fn ->
+        capture_io fn ->
+          assert capture_io(:stderr, fn -> run([]) end) =~ "Failed to parse"
         end
       end
     end

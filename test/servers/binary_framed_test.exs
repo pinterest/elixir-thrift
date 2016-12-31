@@ -74,7 +74,14 @@ defmodule Servers.BinaryFramedIntegrationTest do
   alias Servers.BinaryFramedIntegrationTest.ServerTest.Server
   alias Thrift.TApplicationException, as: TAE
 
-  setup do
+  setup_all do
+    {:module, mod_name, _, _} = define_handler()
+    {:ok, handler_name: mod_name}
+  end
+
+  setup(ctx) do
+    :rand.seed(:exs64)
+
     server_port = :rand.uniform(10000) + 12000
 
     {:ok, agent} = Agent.start_link(fn -> nil end, name: :server_args)
@@ -91,13 +98,11 @@ defmodule Servers.BinaryFramedIntegrationTest do
       end
     end
 
-    :rand.seed(:exs64, :erlang.now)
 
 
-    {:module, mod_name, _, _} = define_handler()
     {:ok, client} = Client.Framed.start_link("localhost", server_port, [])
 
-    {:ok, _} = Server.Framed.start_link(mod_name, server_port, [worker_count: 20])
+    {:ok, _} = Server.Framed.start_link(ctx.handler_name, server_port, [worker_count: 20])
 
     {:ok, client: client, port: server_port}
   end

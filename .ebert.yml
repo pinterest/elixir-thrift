@@ -7,4 +7,3 @@ engines:
 exclude_paths:
 - ci
 - doc
-- ext

@@ -45,9 +45,8 @@ defmodule Thrift.Mixfile do
      # Docs
      name: "Thrift",
      docs: [
-       main: "readme",
+       main: "README",
        extras: ["README.md": [group: "Documents", title: "README"]],
-       extra_section: "Overview",
        source_ref: "thrift_tng",
        source_url: @project_url]]
   end

@@ -10,8 +10,8 @@ defmodule Thrift do
 
   @typedoc "Thrift data types"
   @type data_type ::
-    :bool | :byte | :i16 | :i32 | :i64 | :double |
-    :string | :struct | :union | :map | :set | :list
+    :bool | :byte | :i16 | :i32 | :i64 | :double | :string | :struct | :union |
+    {:map, data_type, data_type} | {:set, data_type} | {:list, data_type}
 
   @type i8   :: (-128..127)
   @type i16 :: (-32_768..32_767)

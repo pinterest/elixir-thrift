@@ -23,7 +23,7 @@ defmodule Thrift.Protocol.Binary do
   @set 14
   @list 15
 
-  @spec type_id(Thrift.data_type | {Thrift.data_type, any}) :: type_id
+  @spec type_id(Thrift.data_type) :: type_id
   defp type_id(:bool),      do: @bool
   defp type_id(:byte),      do: @byte
   defp type_id(:i16),       do: @i16

@@ -30,8 +30,8 @@ For example:
 compilers: [:thrift | Mix.compilers]
 ```
 
-It's important to add `:thrift` *before* the `:erlang` entry. The Thrift
-compiler will generate Erlang source files, and we currently rely on this
+It's important to add `:thrift` *before* the `:elixir` entry. The Thrift
+compiler will generate Elixir source files, and we currently rely on this
 ordering to ensure those generated source files get compiled.
 
 Next, define the list of `:thrift_files` that should be compiled. In this
@@ -41,36 +41,8 @@ example, we gather all of the `.thrift` files under the `thrift` directory:
 thrift_files: Mix.Utils.extract_files(["thrift"], [:thrift])
 ```
 
-By default, the generated source files will be written to the `src` directory,
+By default, the generated source files will be written to the `lib` directory,
 but you can change that using the `thrift_output` option.
-
-You can also pass additional options to the Thrift compiler by listing them in
-the `thrift_options` option:
-
-```elixir
-thrift_options: ~w[-I my/include/dir]
-```
-
-If you require a specific version of the Thrift compiler, you can specify a
-version requirement using the `thrift_version` option. Version requirements
-use the [SemVer 2.0 schema][semver]. For example:
-
-```elixir
-thrift_version: ">= 0.9.3"  # Erlang maps support
-```
-
-You can also override the name of the Thrift compiler executable itself:
-
-```elixir
-thrift_executable: "thrift-0.9.3"
-```
-
-If you get something like `type set() undefined` when compiling the generated files
-you can try:
-
-```elixir
-thrift_options: ~w[--gen erl:maps]
-```
 
 
 ## Thrift IDL Parsing
@@ -105,5 +77,4 @@ Thrift.Parser.parse("enum Colors { RED, GREEN, BLUE}")
  typedefs: %{}, unions: %{}}
 ```
 
-[semver]: http://semver.org/
 [idl]: https://thrift.apache.org/docs/idl

@@ -1,5 +1,6 @@
 defmodule Mix.Tasks.Compile.Thrift do
   use Mix.Task
+  alias Thrift.Parser.FileGroup
 
   @moduledoc """
   Generate Elixir source files from Thrift schema files (`.thrift`).
@@ -9,27 +10,42 @@ defmodule Mix.Tasks.Compile.Thrift do
   files are older than the .thrift file that generated them, this task will
   skip regenerating them.
 
+  A list of files can be given after the task name in order to select the
+  specific Thrift schema files to compile:
+
+      mix compile.thrift file1.thrift file2.thrift
+
+  Otherwise, the file list from the `:thrift_files` configuration value
+  will be used.
+
   ## Command line options
 
     * `--force` - forces compilation regardless of modification times
+    * `--output` - set the output directory, overriding the `:thrift_output`
+      configuration value
 
   ## Configuration
 
-    * `:thrift_files` - list of .thrift schema files to compile
+    * `:thrift_files` - list of `.thrift` schema files to compile
 
     * `:thrift_output` - output directory into which the generated Elixir
       source file will be generated. Defaults to `"lib"`.
   """
 
-  alias Thrift.Parser.FileGroup
+  @switches [force: :boolean, output: :keep]
 
   @spec run(OptionParser.argv) :: :ok
   def run(args) do
-    {opts, _, _} = OptionParser.parse(args, switches: [force: :boolean])
+    {opts, files} = OptionParser.parse!(args, switches: @switches)
 
-    config       = Mix.Project.config
-    thrift_files = Keyword.get(config, :thrift_files, [])
-    output_dir   = Keyword.get(config, :thrift_output, "lib")
+    config     = Mix.Project.config
+    output_dir = opts[:output] || Keyword.get(config, :thrift_output, "lib")
+
+    thrift_files = if Enum.empty?(files) do
+      Keyword.get(config, :thrift_files, [])
+    else
+      files
+    end
 
     file_groups = thrift_files
     |> Enum.map(&parse/1)

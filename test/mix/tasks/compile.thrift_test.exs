@@ -82,6 +82,18 @@ defmodule Mix.Tasks.Compile.ThriftTest do
     end
   end
 
+  test "specifying source files on the command line" do
+    in_fixture fn ->
+      with_project_config [], fn ->
+        capture_io fn ->
+          output = capture_io(fn -> run(["thrift/simple.thrift"]) end)
+          assert output =~ "Compiled thrift/simple.thrift"
+          refute output =~ "Compiled thrift/tutorial.thrift"
+        end
+      end
+    end
+  end
+
   defp in_fixture(fun) do
     File.cd!(@fixture_project, fun)
   end

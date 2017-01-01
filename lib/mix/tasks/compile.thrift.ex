@@ -36,7 +36,7 @@ defmodule Mix.Tasks.Compile.Thrift do
 
   @spec run(OptionParser.argv) :: :ok
   def run(args) do
-    {opts, files} = OptionParser.parse!(args, switches: @switches)
+    {opts, files, _} = OptionParser.parse(args, switches: @switches)
 
     config     = Mix.Project.config
     output_dir = opts[:output] || Keyword.get(config, :thrift_output, "lib")

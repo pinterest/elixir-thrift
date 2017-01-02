@@ -12,6 +12,7 @@ defmodule Thrift.Protocol.Binary do
 
   @typedoc "Binary protocol field type identifier"
   @type type_id :: (2..15)
+  @type deserializable :: :message_begin | :application_exception
 
   @bool 2
   @byte 3
@@ -111,7 +112,7 @@ defmodule Thrift.Protocol.Binary do
   @doc """
   Deserializes a Thrift-encoded binary.
   """
-  @spec deserialize(:message_begin, binary) ::
+  @spec deserialize(deserializable, binary) ::
     {:ok, {Thrift.message_type, message_seq_id, name :: String.t, binary}} |
     {:error, {atom, binary}}
   def deserialize(:message_begin, <<1::size(1), 1::size(15), _::size(8),

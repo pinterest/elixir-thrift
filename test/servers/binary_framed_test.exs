@@ -58,8 +58,8 @@ defmodule Servers.BinaryFramedIntegrationTest do
 
       def returns_nothing, do: nil
 
-      def multiple_exceptions(1), do: raise TestException, [message: "BOOM", code: 124]
-      def multiple_exceptions(2), do: raise UserNotFound, [message: "Not here!"]
+      def multiple_exceptions(1), do: raise TestException,  [message: "BOOM", code: 124]
+      def multiple_exceptions(2), do: raise UserNotFound,   [message: "Not here!"]
       def multiple_exceptions(3), do: raise OtherException, [message: "This is the other"]
       def multiple_exceptions(_), do: true
 

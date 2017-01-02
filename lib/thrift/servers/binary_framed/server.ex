@@ -2,19 +2,11 @@ defmodule Thrift.Servers.BinaryFramed do
   @moduledoc false
 
   @type server_opts :: [
-    worker_count: pos_integer
+    worker_count: pos_integer,
+    name: atom
   ]
 
-  defmodule State do
-    @moduledoc false
-    defstruct port: nil, socket: nil, supervisor: nil
-  end
-
-  @type opts :: [
-    port: (1..65535),
-  ]
-
-  alias Thrift.Servers.BinaryFramed.RanchProtocol
+  alias Thrift.Servers.BinaryFramed
 
   @spec start_link(module, (1..65535), module, server_opts) :: GenServer.on_start
   def start_link(server_module, port, handler_module, opts) do
@@ -24,7 +16,7 @@ defmodule Thrift.Servers.BinaryFramed do
                           worker_count,
                           :ranch_tcp,
                           [port: port],
-                          RanchProtocol,
+                          BinaryFramed.ProtocolHandler,
                           {server_module, handler_module})
   end
 

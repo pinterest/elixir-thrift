@@ -1,4 +1,4 @@
-defmodule Thrift.Servers.BinaryFramed.RanchProtocol do
+defmodule Thrift.Servers.BinaryFramed.ProtocolHandler do
   @moduledoc """
   A GenServer that accepts connections on a server and processes the thrift messages.
   """

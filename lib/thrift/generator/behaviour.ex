@@ -12,6 +12,8 @@ defmodule Thrift.Generator.Behaviour do
     Field,
     Struct,
     StructRef,
+    TEnum,
+    Union,
   }
 
   def generate(schema, service) do
@@ -64,6 +66,17 @@ defmodule Thrift.Generator.Behaviour do
     file_group
     |> FileGroup.resolve(ref)
     |> typespec(file_group)
+  end
+  defp typespec(%TEnum{} = enum, _) do
+    quote do
+      pos_integer
+    end
+  end
+  defp typespec(%Union{name: name}, file_group) do
+    dest_module = FileGroup.dest_module(file_group, name)
+    quote do
+      %unquote(dest_module){}
+    end
   end
   defp typespec(%Struct{name: name}, file_group) do
     dest_module = FileGroup.dest_module(file_group, name)

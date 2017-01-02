@@ -1,7 +1,9 @@
 defmodule ParserTest do
+  @project_root Path.expand("../", __DIR__)
+
   use ExUnit.Case, async: true
 
-  import Thrift.Parser, only: [parse: 1, parse: 2]
+  import Thrift.Parser, only: [parse: 1, parse: 2, parse_file: 1]
 
   alias Thrift.Parser.Models.Constant
   alias Thrift.Parser.Models.Exception
@@ -20,7 +22,7 @@ defmodule ParserTest do
   import ExUnit.CaptureIO
 
   test "parsing comments" do
-    schema = """
+    {:ok, schema} = """
     // a simple C-style comment
     """
     |> parse
@@ -29,7 +31,7 @@ defmodule ParserTest do
   end
 
   test "parsing long-comments " do
-    schema = """
+    {:ok, schema} = """
     /* This is a long comment
     *  that spans many lines
     *  which means the docs are good
@@ -697,4 +699,43 @@ defmodule ParserTest do
     |> parse
   end
 
+  test "parsing a file with syntax errors" do
+    contents = """
+    stract Typo {
+        1: optional i32 id
+    }
+    """
+
+    assert {:error, _} = parse(contents)
+
+    dir = Path.join([@project_root, "tmp", "syntax_error_test"])
+    File.mkdir_p!(dir)
+    path = Path.join(dir, "syntax_error.thrift")
+    File.write!(path, contents)
+
+    assert_raise(
+      Thrift.FileParseException,
+      ~r/#{path} on line 1:/,
+      fn -> parse_file(path) end
+    )
+
+    other_path = Path.join(dir, "includes_syntax_error.thrift")
+    File.write!(other_path, """
+    include "syntax_error.thrift"
+
+    struct NoError {
+      1: optional i32 id
+    }
+    """)
+
+    # should raise an error on the included file,
+    # since that is where the syntax error is
+    assert_raise(
+      Thrift.FileParseException,
+      ~r/#{path} on line 1:/,
+      fn -> parse_file(other_path) end
+    )
+
+    File.rm_rf!(dir)
+  end
 end

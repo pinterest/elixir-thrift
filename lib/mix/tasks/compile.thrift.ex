@@ -21,7 +21,7 @@ defmodule Mix.Tasks.Compile.Thrift do
   ## Command line options
 
     * `--force` - forces compilation regardless of modification times
-    * `--output` - set the output directory, overriding the `:thrift_output`
+    * `--out` - set the output directory, overriding the `:thrift_output`
       configuration value
 
   ## Configuration
@@ -32,14 +32,14 @@ defmodule Mix.Tasks.Compile.Thrift do
       source file will be generated. Defaults to `"lib"`.
   """
 
-  @switches [force: :boolean, output: :keep]
-
   @spec run(OptionParser.argv) :: :ok
   def run(args) do
-    {opts, files, _} = OptionParser.parse(args, switches: @switches)
+    {opts, files} = OptionParser.parse!(args,
+      aliases: [f: :force, o: :out, v: :verbose],
+      switches: [force: :boolean, output: :keep, verbose: :boolean])
 
     config     = Mix.Project.config
-    output_dir = opts[:output] || Keyword.get(config, :thrift_output, "lib")
+    output_dir = opts[:out] || Keyword.get(config, :thrift_output, "lib")
 
     thrift_files = if Enum.empty?(files) do
       Keyword.get(config, :thrift_files, [])
@@ -57,7 +57,8 @@ defmodule Mix.Tasks.Compile.Thrift do
 
     unless Enum.empty?(stale_groups) do
       File.mkdir_p!(output_dir)
-      Enum.each stale_groups, &generate(&1, output_dir)
+      Mix.Utils.compiling_n(length(stale_groups), :thrift)
+      Enum.each(stale_groups, &generate(&1, output_dir, opts))
     end
   end
 
@@ -78,8 +79,8 @@ defmodule Mix.Tasks.Compile.Thrift do
     Enum.empty?(targets) || Mix.Utils.stale?([thrift_file], targets)
   end
 
-  defp generate(%FileGroup{initial_file: thrift_file} = group, output_dir) do
+  defp generate(%FileGroup{} = group, output_dir, opts) do
     Thrift.Generator.generate!(group, output_dir)
-    Mix.shell.info "Compiled #{thrift_file}"
+    if opts[:verbose], do: Mix.shell.info "Compiled #{group.initial_file}"
   end
 end

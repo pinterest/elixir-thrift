@@ -89,32 +89,29 @@ defmodule Thrift.Generator.Server.BinaryFramed do
   end
 
   defp wrap_with_try_catch(quoted_handler, function, file_group, response_module) do
-    rescue_blocks = function.exceptions
-    |> Enum.map(fn exc ->
-      resolved = FileGroup.resolve(file_group, exc)
+    rescue_blocks = function.exceptions ++ [Thrift.TApplicationException]
+    |> Enum.flat_map(fn
+      Thrift.TApplicationException ->
+        quote do
+          unhandled ->
+            {:server_error, Thrift.TApplicationException.exception(
+              message: "Server error: #{unhandled.message}",
+              type: :internal_error)}
+        end
 
-      dest_module = FileGroup.dest_module(file_group, resolved.type)
+      exc ->
+        resolved = FileGroup.resolve(file_group, exc)
+        dest_module = FileGroup.dest_module(file_group, resolved.type)
+        error_var = Macro.var(exc.name, nil)
+        field_setter = quote do: {unquote(exc.name), unquote(error_var)}
 
-      error_var = Macro.var(exc.name, nil)
-      field_setter = quote do: {unquote(exc.name), unquote(error_var)}
-
-      quote do
-        unquote(error_var) in unquote(dest_module) ->
-          serialized_exception = %unquote(response_module){unquote(field_setter)}
-          |> unquote(response_module).BinaryProtocol.serialize()
-          {:reply, serialized_exception}
-      end
+        quote do
+          unquote(error_var) in unquote(dest_module) ->
+            serialized_exception = %unquote(response_module){unquote(field_setter)}
+            |> unquote(response_module).BinaryProtocol.serialize()
+            {:reply, serialized_exception}
+        end
     end)
-
-    catchall = quote do
-      unhandled ->
-        {:server_error, Thrift.TApplicationException.exception(
-            message: "Server error: #{unhandled.message}",
-            type: :internal_error)}
-
-    end
-
-    rescue_blocks = List.flatten(rescue_blocks ++ [catchall])
 
     quote do
       try do

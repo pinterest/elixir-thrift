@@ -45,7 +45,7 @@ defmodule Thrift.Generator.Service do
   def generate_response_struct(schema, function) do
     success = %Field{id: 0,
                      name: :success,
-                     required: true,
+                     required: false,
                      type: function.return_type}
 
     exceptions = function.exceptions

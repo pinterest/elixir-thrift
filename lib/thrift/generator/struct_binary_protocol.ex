@@ -769,25 +769,50 @@ defmodule Thrift.Generator.StructBinaryProtocol do
     end
   end
 
-  defp field_serializer(%Field{name: name, type: :bool, id: id}, _file_group) do
-    var = Macro.var(name, nil)
+  defp field_serializer(%Field{name: name, type: :bool, id: id, required: false}, _file_group) do
     quote do
-      case unquote(var) do
+      case unquote(Macro.var(name, nil)) do
         nil ->
           <<>>
         false ->
           <<unquote(@bool), unquote(id) :: size(16), 0>>
-        _ ->
+        true ->
           <<unquote(@bool), unquote(id) :: size(16), 1>>
+        _ ->
+          raise Thrift.MissingFieldException,
+                unquote("Optional boolean field #{inspect name} must be true, false, or nil")
+      end
+    end
+  end
+  defp field_serializer(%Field{name: name, type: :bool, id: id}, _file_group) do
+    quote do
+      case unquote(Macro.var(name, nil)) do
+        false ->
+          <<unquote(@bool), unquote(id) :: size(16), 0>>
+        true ->
+          <<unquote(@bool), unquote(id) :: size(16), 1>>
+        _ ->
+          raise Thrift.MissingFieldException,
+                unquote("Required boolean field #{inspect name} must be true or false")
+      end
+    end
+  end
+  defp field_serializer(%Field{name: name, required: false} = field, file_group) do
+    quote do
+      case unquote(Macro.var(name, nil)) do
+        nil ->
+          <<>>
+        _ ->
+          unquote(required_field_serializer(field, file_group))
       end
     end
   end
   defp field_serializer(%Field{name: name} = field, file_group) do
-    var = Macro.var(name, nil)
     quote do
-      case unquote(var) do
+      case unquote(Macro.var(name, nil)) do
         nil ->
-          <<>>
+          raise Thrift.MissingFieldException,
+                unquote("Required field #{inspect name} must not be nil")
         _ ->
           unquote(required_field_serializer(field, file_group))
       end

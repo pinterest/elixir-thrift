@@ -66,9 +66,10 @@ defmodule Thrift.Generator.Server.BinaryFramed do
             unquote(build_handler_call(file_group, function, response_module))
 
           {_, extra} ->
-            raise %Thrift.TApplicationException{
+            raise Thrift.TApplicationException, [
               message: "Could not decode #{inspect extra}",
-              type: Thrift.TApplicationException.exception_type(7)}
+              type: :protocol_error
+            ]
         end
       end
     end
@@ -106,9 +107,10 @@ defmodule Thrift.Generator.Server.BinaryFramed do
 
     catchall = quote do
       unhandled ->
-        {:server_error, %Thrift.TApplicationException{
+        {:server_error, Thrift.TApplicationException.exception(
             message: "Server error: #{unhandled.message}",
-            type: Thrift.TApplicationException.exception_type(6)}}
+            type: :internal_error)}
+
     end
 
     rescue_blocks = List.flatten(rescue_blocks ++ [catchall])

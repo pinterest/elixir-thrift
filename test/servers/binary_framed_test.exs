@@ -47,7 +47,7 @@ defmodule Servers.BinaryFramedIntegrationTest do
       def ping, do: true
 
       def checked_exception do
-        raise %T.TestException{message: "Oh noes!", code: 400}
+        raise T.TestException, [message: "Oh noes!", code: 400]
       end
 
       def server_exception do
@@ -58,9 +58,9 @@ defmodule Servers.BinaryFramedIntegrationTest do
 
       def returns_nothing, do: nil
 
-      def multiple_exceptions(1), do: raise %TestException{message: "BOOM", code: 124}
-      def multiple_exceptions(2), do: raise %UserNotFound{message: "Not here!"}
-      def multiple_exceptions(3), do: raise %OtherException{message: "This is the other"}
+      def multiple_exceptions(1), do: raise TestException, [message: "BOOM", code: 124]
+      def multiple_exceptions(2), do: raise UserNotFound, [message: "Not here!"]
+      def multiple_exceptions(3), do: raise OtherException, [message: "This is the other"]
       def multiple_exceptions(_), do: true
 
       def my_camel_cased_function(user_name) do
@@ -98,8 +98,6 @@ defmodule Servers.BinaryFramedIntegrationTest do
       end
     end
 
-
-
     {:ok, client} = Client.Framed.start_link("localhost", server_port, [])
 
     {:ok, _} = Server.Framed.start_link(ctx.handler_name, server_port, [worker_count: 20])
@@ -112,14 +110,14 @@ defmodule Servers.BinaryFramedIntegrationTest do
   end
 
   thrift_test "it can throw checked exceptions", ctx do
-    expected_exception = %TestException{message: "Oh noes!", code: 400}
+    expected_exception = TestException.exception [message: "Oh noes!", code: 400]
     assert {:error, {:exception, expected_exception}} == Client.Framed.checked_exception(ctx.client)
   end
 
   thrift_test "it can throw many checked exceptions", ctx do
-    e1 = %TestException{message: "BOOM", code: 124}
-    e2 = %UserNotFound{message: "Not here!"}
-    e3 = %OtherException{message: "This is the other"}
+    e1 = TestException.exception [message: "BOOM", code: 124]
+    e2 = UserNotFound.exception [message: "Not here!"]
+    e3 = OtherException.exception [message: "This is the other"]
 
     assert {:ok, true} == Client.Framed.multiple_exceptions(ctx.client, 0)
     assert {:error, {:exception, e1}} == Client.Framed.multiple_exceptions(ctx.client, 1)

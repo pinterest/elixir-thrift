@@ -29,41 +29,44 @@ defmodule Thrift.Servers.BinaryFramed.Acceptor do
     end
 
     case thrift_response do
-      {:ok, thrift_data} ->
-        :gen_tcp.send(socket, thrift_data)
+      {:ok, :reply, thrift_data} ->
+        :ok = :gen_tcp.send(socket, thrift_data)
         do_thrift_call(args)
+
+      {:error, {:server_error, thrift_data}} ->
+        :ok = :gen_tcp.send(socket, thrift_data)
+        :ok = :gen_tcp.close(socket)
 
       {:error, _} = err ->
         Logger.info("Thrift call failed: #{inspect err}")
-        :gen_tcp.close(socket)
+        :ok = :gen_tcp.close(socket)
     end
   end
 
   def handle_thrift_message({:ok, {:call, sequence_id, name, args_binary}}, server_module, handler_module) do
-    reply = case server_module.handle_thrift(name, args_binary, handler_module) do
-              {:reply, serialized_reply} ->
-                message = Protocol.Binary.serialize(:message_begin, {:reply, sequence_id, name})
+    case server_module.handle_thrift(name, args_binary, handler_module) do
+      {:reply, serialized_reply} ->
+        message = Protocol.Binary.serialize(:message_begin, {:reply, sequence_id, name})
 
-                [message | serialized_reply]
+        {:ok, :reply, [message | serialized_reply]}
 
-              {:server_error, %TApplicationException{} = exc} ->
-                message = Protocol.Binary.serialize(:message_begin, {:exception, sequence_id, name})
-                serialized_exception = Protocol.Binary.serialize(:application_exception, exc)
+      {:server_error, %TApplicationException{} = exc} ->
+        message = Protocol.Binary.serialize(:message_begin, {:exception, sequence_id, name})
+        serialized_exception = Protocol.Binary.serialize(:application_exception, exc)
 
-                [message |  serialized_exception]
+        {:error, {:server_error, [message |  serialized_exception]}}
 
-              :noreply ->
-                message = Protocol.Binary.serialize(:message_begin, {:reply, sequence_id, name})
+      :noreply ->
+        message = Protocol.Binary.serialize(:message_begin, {:reply, sequence_id, name})
 
-                [message | <<0>>]
-            end
+        {:ok, :reply, [message | <<0>>]}
+    end
 
-    {:ok, reply}
   end
 
   def handle_thrift_message({:ok, {:oneway, _seq_id, name, args_binary}}, server_module, handler_module) do
     spawn(server_module, :handle_thrift, [name, args_binary, handler_module])
-    {:ok, <<0>>}
+    {:ok, :reply, <<0>>}
   end
 
   def handle_thrift_message({:error, msg} = err, _, _) do

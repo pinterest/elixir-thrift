@@ -18,7 +18,8 @@ defmodule Thrift.Parser do
 
     case :thrift_lexer.string(doc) do
       {:ok, tokens, _} -> :thrift_parser.parse(tokens)
-      {:error, error} -> {:error, error}
+      {:error, lexer_error1, lexer_error2} ->
+        {:error, {lexer_error1, lexer_error2}}
     end
   end
 

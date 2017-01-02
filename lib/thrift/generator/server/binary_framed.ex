@@ -18,9 +18,10 @@ defmodule Thrift.Generator.Server.BinaryFramed do
         @moduledoc false
 
         alias Thrift.Servers.BinaryFramed
+        defdelegate stop(name), to: BinaryFramed
 
-        def start_link(handler_module, port, opts, gen_server_opts \\ []) do
-          BinaryFramed.start_link(__MODULE__, port, handler_module, opts, gen_server_opts)
+        def start_link(handler_module, port, opts) do
+          BinaryFramed.start_link(__MODULE__, port, handler_module, opts)
         end
 
         unquote_splicing(functions)

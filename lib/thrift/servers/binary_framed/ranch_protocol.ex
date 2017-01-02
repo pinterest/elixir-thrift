@@ -1,4 +1,4 @@
-defmodule Thrift.Servers.BinaryFramed.Acceptor do
+defmodule Thrift.Servers.BinaryFramed.RanchProtocol do
   @moduledoc """
   A GenServer that accepts connections on a server and processes the thrift messages.
   """
@@ -9,20 +9,21 @@ defmodule Thrift.Servers.BinaryFramed.Acceptor do
   }
   require Logger
 
-  @spec start_link(pid, module, module) :: GenServer.on_start
-  def start_link(socket, server_module, handler_module) do
-    pid = spawn_link(__MODULE__, :init, [socket, server_module, handler_module])
+  @spec start_link(reference, pid, module, {module, module}) :: GenServer.on_start
+  def start_link(ref, socket, transport, {server_module, handler_module}) do
+    pid = spawn_link(__MODULE__, :init, [ref, socket, transport, server_module, handler_module])
     {:ok, pid}
   end
 
-  def init(socket, server_module, handler_module) do
-    {:ok, r_sock} = :gen_tcp.accept(socket)
+  def init(ref, socket, transport, server_module, handler_module) do
+    :ok = :ranch.accept_ack(ref)
+    transport.setopts(socket, packet: 4)
 
-    do_thrift_call({r_sock, server_module, handler_module})
+    do_thrift_call({transport, socket, server_module, handler_module})
   end
 
-  defp do_thrift_call({socket, server_module, handler_module} = args) do
-    thrift_response  = with({:ok, message}      <- :gen_tcp.recv(socket, 0),
+  defp do_thrift_call({transport, socket, server_module, handler_module} = args) do
+    thrift_response  = with({:ok, message}      <- transport.recv(socket, 0, 20_000),
                             parsed_response     <- Protocol.Binary.deserialize(:message_begin, message)) do
 
       handle_thrift_message(parsed_response, server_module, handler_module)
@@ -30,16 +31,16 @@ defmodule Thrift.Servers.BinaryFramed.Acceptor do
 
     case thrift_response do
       {:ok, :reply, thrift_data} ->
-        :ok = :gen_tcp.send(socket, thrift_data)
+        :ok = transport.send(socket, thrift_data)
         do_thrift_call(args)
 
       {:error, {:server_error, thrift_data}} ->
-        :ok = :gen_tcp.send(socket, thrift_data)
-        :ok = :gen_tcp.close(socket)
+        :ok = transport.send(socket, thrift_data)
+        :ok = transport.close(socket)
 
       {:error, _} = err ->
         Logger.info("Thrift call failed: #{inspect err}")
-        :ok = :gen_tcp.close(socket)
+        :ok = transport.close(socket)
     end
   end
 

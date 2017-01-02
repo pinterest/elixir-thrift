@@ -74,16 +74,35 @@ defmodule Servers.BinaryFramedIntegrationTest do
   alias Servers.BinaryFramedIntegrationTest.ServerTest.Server
   alias Thrift.TApplicationException, as: TAE
 
+  def stop_server(server_pid) do
+    ref = Process.monitor(server_pid)
+    Server.Framed.stop(server_pid)
+    receive do
+      {:DOWN, ^ref, _, _, _} ->
+        :ok
+    end
+  end
+
   setup_all do
+    :rand.seed(:exs64)
     {:module, mod_name, _, _} = define_handler()
-    {:ok, handler_name: mod_name}
+    server_port = :rand.uniform(10000) + 12000
+
+    case Server.Framed.start_link(mod_name, server_port, []) do
+      {:ok, pid} ->
+        pid
+      {:error, {:already_started, pid}} ->
+        pid
+    end
+
+    on_exit fn ->
+      stop_server(mod_name)
+    end
+
+    {:ok, handler_name: mod_name, port: server_port}
   end
 
   setup(ctx) do
-    :rand.seed(:exs64)
-
-    server_port = :rand.uniform(10000) + 12000
-
     {:ok, agent} = Agent.start_link(fn -> nil end, name: :server_args)
 
     on_exit fn ->
@@ -91,18 +110,16 @@ defmodule Servers.BinaryFramedIntegrationTest do
         ref = Process.monitor(agent)
         Agent.stop(agent)
 
-          receive do
-            {:DOWN, ^ref, _, _, _} ->
-              :ok
-          end
+        receive do
+          {:DOWN, ^ref, _, _, _} ->
+            :ok
+        end
       end
     end
 
-    {:ok, client} = Client.Framed.start_link("localhost", server_port, [])
+    {:ok, client} = Client.Framed.start_link("localhost", ctx.port, [])
 
-    {:ok, _} = Server.Framed.start_link(ctx.handler_name, server_port, [worker_count: 20])
-
-    {:ok, client: client, port: server_port}
+    {:ok, client: client}
   end
 
   thrift_test "it can return a simple boolean value", ctx do

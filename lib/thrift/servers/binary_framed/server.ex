@@ -5,8 +5,6 @@ defmodule Thrift.Servers.BinaryFramed do
     worker_count: pos_integer
   ]
 
-  alias Thrift.Servers.BinaryFramed.AcceptorSupervisor
-
   defmodule State do
     @moduledoc false
     defstruct port: nil, socket: nil, supervisor: nil
@@ -16,16 +14,21 @@ defmodule Thrift.Servers.BinaryFramed do
     port: (1..65535),
   ]
 
-  @spec start_link(module, (1..65535), module, server_opts, GenServer.option) :: GenServer.on_start
-  def start_link(server_module, port, handler_module, opts, gen_server_opts) do
-    GenServer.start_link(__MODULE__, [server_module, port, handler_module, opts], gen_server_opts)
+  alias Thrift.Servers.BinaryFramed.RanchProtocol
+
+  @spec start_link(module, (1..65535), module, server_opts) :: GenServer.on_start
+  def start_link(server_module, port, handler_module, opts) do
+    name = Keyword.get(opts, :name, handler_module)
+    worker_count = Keyword.get(opts, :worker_count, 1)
+    :ranch.start_listener(name,
+                          worker_count,
+                          :ranch_tcp,
+                          [port: port],
+                          RanchProtocol,
+                          {server_module, handler_module})
   end
 
-  def init([server_module, port, handler_module, opts]) do
-    worker_count = Keyword.get(opts, :worker_count, 1)
-
-    {:ok, socket} = :gen_tcp.listen(port, [:binary, packet: 4, active: false])
-    {:ok, supervisor} = AcceptorSupervisor.start_link(socket, server_module, handler_module, worker_count)
-    {:ok, %State{port: port, socket: socket, supervisor: supervisor}}
+  def stop(name) do
+    :ok = :ranch.stop_listener(name)
   end
 end

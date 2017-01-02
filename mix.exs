@@ -14,7 +14,7 @@ defmodule Thrift.Mixfile do
   def project do
     [app: :thrift,
      version: @version,
-     elixir: "~> 1.2",
+     elixir: "~> 1.3",
      deps: deps(),
 
      # Build Environment

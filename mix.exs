@@ -53,7 +53,7 @@ defmodule Thrift.Mixfile do
 
   def application do
     [
-      applications: [:logger, :connection],
+      applications: [:logger, :connection, :ranch],
     ]
   end
 
@@ -70,6 +70,7 @@ defmodule Thrift.Mixfile do
       {:dialyxir, "~> 0.4", only: :dev, runtime: false},
       {:benchfella, "~> 0.3", only: [:dev, :test]},
       {:connection, "~> 1.0"},
+      {:ranch, "~> 1.2"},
      ]
   end
 

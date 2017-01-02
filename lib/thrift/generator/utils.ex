@@ -59,6 +59,11 @@ defmodule Thrift.Generator.Utils do
     end)
   end
 
+  def underscore(a) when is_atom(a) do
+    a |> Atom.to_string |> underscore |> String.to_atom
+  end
+  def underscore(s) when is_bitstring(s), do: Macro.underscore(s)
+
   # Change this to true to see iolist optimizations as they are applied.
   @debug_optimization false
   defmacrop debug_optimization(expr, label) do

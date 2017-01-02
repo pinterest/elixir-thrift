@@ -15,6 +15,7 @@ defmodule BehaviourTest do
     void my_map(1: map<string, string> my_map)
     map<string, bool> my_map2(1: map<string, map<string, string>> my_map)
     void struct_param(1: S my_struct)
+    void myCamelCasedFunction(1: string camelParam);
   }
   """
 
@@ -29,5 +30,6 @@ defmodule BehaviourTest do
     assert {:my_map, 1} in behaviour_specs
     assert {:my_map2, 1} in behaviour_specs
     assert {:struct_param, 1} in behaviour_specs
+    assert {:my_camel_cased_function, 1} in behaviour_specs
   end
 end

@@ -161,4 +161,34 @@ defmodule Thrift.Generator.ModelsTest do
     thang = %Thangs{numbers: MapSet.new([1, 2, 3])}
     assert thang.numbers == MapSet.new([1, 2, 3])
   end
+
+  @thrift_file name: "empty_container.thrift", contents: """
+  struct Goth {
+    1: optional list<i32> empty_like_my_soul = []
+    2: optional set<i32> the_abyss = []
+    3: optional map<i32, string> going_nowhere = {}
+  }
+  """
+
+  thrift_test "containers can have empty defaults" do
+    goth = %Goth{}
+    assert goth.empty_like_my_soul == []
+    assert goth.the_abyss == MapSet.new
+    assert goth.going_nowhere == %{}
+  end
+
+  @thrift_file name: "nonempty_container.thrift", contents: """
+  struct Cargo {
+    1: optional list<i32> fib = [1, 1, 2, 3, 5]
+    2: optional set<i32> answers = [42]
+    3: optional map<i32, string> bad_approximations = {3: "pi"}
+  }
+  """
+
+  thrift_test "containers can have non-empty defaults" do
+    cargo = %Cargo{}
+    assert cargo.fib == [1, 1, 2, 3, 5]
+    assert cargo.answers == MapSet.new([42])
+    assert cargo.bad_approximations == %{3 => "pi"}
+  end
 end

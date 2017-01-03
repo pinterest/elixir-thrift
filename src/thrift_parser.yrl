@@ -119,7 +119,6 @@ constant_def ->
 ns_name -> '*': "*".
 ns_name -> ident: unwrap('$1').
 
-
 %% JS Style mapping "foo": 32
 mapping -> literal ':' literal: {'$1', '$3'}.
 mappings -> '$empty': [].
@@ -138,6 +137,7 @@ literal -> double: unwrap('$1').
 literal -> string: unwrap('$1').
 literal -> '{' literal_list '}': '$2'.
 literal -> '{' mappings '}': '$2'.
+literal -> '[' ']' : [].
 literal -> '[' literal_list ']': '$2'.
 
 field_sep -> '$empty': nil.

@@ -75,11 +75,10 @@ defmodule Servers.BinaryFramedIntegrationTest do
   alias Thrift.TApplicationException, as: TAE
 
   def stop_server(server_pid) do
-    ref = Process.monitor(server_pid)
-    Server.Framed.stop(server_pid)
-    receive do
-      {:DOWN, ^ref, _, _, _} ->
-        :ok
+    try do
+      Server.Framed.stop(server_pid)
+    catch :exit, :noproc ->
+      :ok
     end
   end
 
@@ -88,15 +87,10 @@ defmodule Servers.BinaryFramedIntegrationTest do
     {:module, mod_name, _, _} = define_handler()
     server_port = :rand.uniform(10000) + 12000
 
-    case Server.Framed.start_link(mod_name, server_port, []) do
-      {:ok, pid} ->
-        pid
-      {:error, {:already_started, pid}} ->
-        pid
-    end
+    {:ok, server_pid} = Server.Framed.start_link(mod_name, server_port, [])
 
     on_exit fn ->
-      stop_server(mod_name)
+      stop_server(server_pid)
     end
 
     {:ok, handler_name: mod_name, port: server_port}
@@ -143,9 +137,8 @@ defmodule Servers.BinaryFramedIntegrationTest do
   end
 
   thrift_test "it can handle unexpected exceptions", ctx do
-    expected_exception = %TAE{message: "Server error: This wasn't supposed to happen",
-                              type: :internal_error}
-    assert {:error, {:exception, expected_exception}} == Client.Framed.server_exception(ctx.client)
+    assert {:error, {:exception, %TAE{message: msg, type: :internal_error}}} = Client.Framed.server_exception(ctx.client)
+    assert String.contains?(msg, "Server error: ** (RuntimeError) This wasn't supposed to happen")
   end
 
   thrift_test "it can return nothing", ctx do

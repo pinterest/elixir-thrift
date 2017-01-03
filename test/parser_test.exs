@@ -380,6 +380,8 @@ defmodule ParserTest do
     struct MyStruct {
       1: optional bool negative;
       2: optional bool positive = true;
+      3: optional bool c_positive = 1;
+      4: optional bool c_negative = 0;
     }
     """
     |> parse([:structs, :MyStruct])
@@ -388,7 +390,9 @@ defmodule ParserTest do
       name: :MyStruct,
       fields: [
         %Field{id: 1, name: :negative, type: :bool, required: false, default: nil},
-        %Field{id: 2, name: :positive, type: :bool, required: false, default: true}
+        %Field{id: 2, name: :positive, type: :bool, required: false, default: true},
+        %Field{id: 3, name: :c_positive, type: :bool, required: false, default: true},
+        %Field{id: 4, name: :c_negative, type: :bool, required: false, default: false},
       ]}
   end
 

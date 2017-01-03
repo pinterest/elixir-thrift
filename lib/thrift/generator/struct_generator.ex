@@ -7,8 +7,9 @@ defmodule Thrift.Generator.StructGenerator do
     struct_parts = Enum.map(struct.fields, fn
       %{name: name, default: nil, type: type} ->
         {name, zero(schema, type)}
-      %{name: name, default: %MapSet{}} ->
-        {name, quote do: MapSet.new()}
+      %{name: name, default: %MapSet{map: m}} ->
+        values = Map.keys(m)
+        {name, quote do: MapSet.new(unquote(values))}
       %{name: name, default: default} when not is_nil(default) ->
         {name, default}
     end)

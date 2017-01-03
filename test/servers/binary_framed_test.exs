@@ -75,11 +75,13 @@ defmodule Servers.BinaryFramedIntegrationTest do
   alias Thrift.TApplicationException, as: TAE
 
   def stop_server(server_pid) do
-    ref = Process.monitor(server_pid)
-    Server.Framed.stop(server_pid)
-    receive do
-      {:DOWN, ^ref, _, _, _} ->
-        :ok
+    if Process.alive?(server_pid) do
+      ref = Process.monitor(server_pid)
+      Server.Framed.stop(server_pid)
+      receive do
+        {:DOWN, ^ref, _, _, _} ->
+          :ok
+      end
     end
   end
 
@@ -88,15 +90,10 @@ defmodule Servers.BinaryFramedIntegrationTest do
     {:module, mod_name, _, _} = define_handler()
     server_port = :rand.uniform(10000) + 12000
 
-    case Server.Framed.start_link(mod_name, server_port, []) do
-      {:ok, pid} ->
-        pid
-      {:error, {:already_started, pid}} ->
-        pid
-    end
+    {:ok, server_pid} = Server.Framed.start_link(mod_name, server_port, [])
 
     on_exit fn ->
-      stop_server(mod_name)
+      stop_server(server_pid)
     end
 
     {:ok, handler_name: mod_name, port: server_port}

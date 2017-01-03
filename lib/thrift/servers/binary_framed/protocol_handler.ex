@@ -36,7 +36,7 @@ defmodule Thrift.Servers.BinaryFramed.ProtocolHandler do
 
       {:error, {:server_error, thrift_data}} ->
         :ok = transport.send(socket, thrift_data)
-        :ok = transport.close(socket)
+        exit({:shutdown, :server_error})
 
       {:error, _} = err ->
         Logger.info("Thrift call failed: #{inspect err}")

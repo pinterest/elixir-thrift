@@ -16,6 +16,7 @@ defmodule Thrift.Generator.Server.BinaryFramed do
     quote do
       defmodule Server.Framed do
         @moduledoc false
+        require Logger
 
         alias Thrift.Servers.BinaryFramed
         defdelegate stop(name), to: BinaryFramed
@@ -94,6 +95,7 @@ defmodule Thrift.Generator.Server.BinaryFramed do
       Thrift.TApplicationException ->
         quote do
           unhandled ->
+            Logger.error("Unhandled exception: #{Exception.message(unhandled)}")
             {:server_error, Thrift.TApplicationException.exception(
               message: "Server error: #{Exception.message(unhandled)}",
               type: :internal_error)}

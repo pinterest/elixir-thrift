@@ -14,7 +14,7 @@ defmodule Thrift.Servers.BinaryFramed do
   def start_link(server_module, port, handler_module, opts) do
     name = Keyword.get(opts, :name, handler_module)
     max_restarts = Keyword.get(opts, :max_restarts, 10)
-    max_seconds = Keyword.get(opts, max_seconds: 5)
+    max_seconds = Keyword.get(opts, :max_seconds, 5)
     worker_count = Keyword.get(opts, :worker_count, 1)
 
     listener = :ranch.child_spec(name,

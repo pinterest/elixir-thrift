@@ -9,6 +9,7 @@ defmodule Thrift.Generator.Behaviour do
   alias Thrift.Generator.Utils
   alias Thrift.Parser.FileGroup
   alias Thrift.Parser.Models.{
+    Exception,
     Field,
     Struct,
     StructRef,
@@ -67,12 +68,18 @@ defmodule Thrift.Generator.Behaviour do
     |> FileGroup.resolve(ref)
     |> typespec(file_group)
   end
-  defp typespec(%TEnum{} = enum, _) do
+  defp typespec(%TEnum{}, _) do
     quote do
-      pos_integer
+      non_neg_integer
     end
   end
   defp typespec(%Union{name: name}, file_group) do
+    dest_module = FileGroup.dest_module(file_group, name)
+    quote do
+      %unquote(dest_module){}
+    end
+  end
+  defp typespec(%Exception{name: name}, file_group) do
     dest_module = FileGroup.dest_module(file_group, name)
     quote do
       %unquote(dest_module){}

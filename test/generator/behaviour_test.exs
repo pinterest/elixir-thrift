@@ -21,6 +21,10 @@ defmodule BehaviourTest do
     BLOCKED
   }
 
+  exception MyEx {
+    1: string message
+  }
+
   service BehaviourService {
     void ping(1: i64 my_int),
     void my_bool(1: bool my_bool),
@@ -32,7 +36,8 @@ defmodule BehaviourTest do
     void struct_param(1: S my_struct)
     void myCamelCasedFunction(1: string camelParam);
     WaitStates get_state();
-    SorT getSorT();
+    SorT get_s_or_t();
+    MyEx dont_do_this();
   }
   """
 
@@ -49,6 +54,7 @@ defmodule BehaviourTest do
     assert {:struct_param, 1} in behaviour_specs
     assert {:my_camel_cased_function, 1} in behaviour_specs
     assert {:get_state, 0} in behaviour_specs
-    assert {:get_sor_t, 0} in behaviour_specs
+    assert {:get_s_or_t, 0} in behaviour_specs
+    assert {:dont_do_this, 0} in behaviour_specs
   end
 end

@@ -7,6 +7,8 @@ defmodule Thrift.Generator.StructGenerator do
     struct_parts = Enum.map(struct.fields, fn
       %{name: name, default: nil, type: type} ->
         {name, zero(schema, type)}
+      %{name: name, default: %MapSet{}} ->
+        {name, quote do: MapSet.new()}
       %{name: name, default: default} when not is_nil(default) ->
         {name, default}
     end)
@@ -65,7 +67,7 @@ defmodule Thrift.Generator.StructGenerator do
   defp zero(_schema, :binary), do: nil
   defp zero(_schema, {:map, _}), do: nil
   defp zero(_schema, {:list, _}), do: nil
-  defp zero(_schema, {:set, _}), do: quote do: nil
+  defp zero(_schema, {:set, _}), do: nil
   defp zero(_schema, %{values: [{_, value} | _]}), do: value
   defp zero(_schema, %Thrift.Parser.Models.Struct{}), do: nil
   defp zero(_schema, %Thrift.Parser.Models.Exception{}), do: nil

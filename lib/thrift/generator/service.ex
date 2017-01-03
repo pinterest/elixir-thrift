@@ -39,7 +39,7 @@ defmodule Thrift.Generator.Service do
 
     struct = Struct.new(Atom.to_char_list(arg_module_name), function.params)
 
-    StructGenerator.generate("struct", schema, struct.name, struct)
+    StructGenerator.generate(:struct, schema, struct.name, struct)
   end
 
   def generate_response_struct(schema, function) do
@@ -56,7 +56,7 @@ defmodule Thrift.Generator.Service do
     response_module_name = service_module_name(function, :response)
     response_struct = Struct.new(Atom.to_char_list(response_module_name), fields)
 
-    StructGenerator.generate("struct", schema, response_struct.name, response_struct)
+    StructGenerator.generate(:struct, schema, response_struct.name, response_struct)
   end
 
   def service_module_name(%Function{} = function, suffix) do

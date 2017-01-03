@@ -12,14 +12,15 @@ defmodule Thrift.Parser do
   @doc """
   Parses a Thrift document and returns the schema that it represents.
   """
-  @spec parse(String.t) :: Schema.t
+  @spec parse(String.t) :: {:ok, Schema.t} | {:error, term}
   def parse(doc) do
     doc = String.to_char_list(doc)
 
-    {:ok, tokens, _} = :thrift_lexer.string(doc)
-    {:ok, schema} = :thrift_parser.parse(tokens)
-
-    schema
+    case :thrift_lexer.string(doc) do
+      {:ok, tokens, _} -> :thrift_parser.parse(tokens)
+      {:error, lexer_error1, lexer_error2} ->
+        {:error, {lexer_error1, lexer_error2}}
+    end
   end
 
   @doc """
@@ -37,7 +38,7 @@ defmodule Thrift.Parser do
   """
   @spec parse(String.t, [path_element, ...]) :: Models.all
   def parse(doc, path) do
-    schema = parse(doc)
+    {:ok, schema} = parse(doc)
 
     Enum.reduce(path, schema, fn
       (_part, nil) ->

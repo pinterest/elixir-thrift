@@ -1,4 +1,5 @@
 defmodule ParserTest do
+
   use ExUnit.Case, async: true
 
   import Thrift.Parser, only: [parse: 1, parse: 2]
@@ -20,7 +21,7 @@ defmodule ParserTest do
   import ExUnit.CaptureIO
 
   test "parsing comments" do
-    schema = """
+    {:ok, schema} = """
     // a simple C-style comment
     """
     |> parse
@@ -29,7 +30,7 @@ defmodule ParserTest do
   end
 
   test "parsing long-comments " do
-    schema = """
+    {:ok, schema} = """
     /* This is a long comment
     *  that spans many lines
     *  which means the docs are good
@@ -696,5 +697,4 @@ defmodule ParserTest do
     File.read!("./test/fixtures/app/thrift/shared.thrift")
     |> parse
   end
-
 end

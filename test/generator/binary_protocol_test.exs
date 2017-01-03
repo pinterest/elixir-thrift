@@ -31,10 +31,10 @@ defmodule Thrift.Generator.BinaryProtocolTest do
 
   @thrift_file name: "bool.thrift", contents: """
   struct Bool {
-    1: bool val;
-    2: map<bool, bool> val_map;
-    3: set<bool> val_set;
-    4: list<bool> val_list;
+    1: optional bool val;
+    2: optional map<bool, bool> val_map;
+    3: optional set<bool> val_set;
+    4: optional list<bool> val_list;
   }
   """
 
@@ -53,10 +53,10 @@ defmodule Thrift.Generator.BinaryProtocolTest do
 
   @thrift_file name: "byte.thrift", contents: """
   struct Byte {
-    1: byte val;
-    2: map<byte, byte> val_map;
-    3: set<byte> val_set;
-    4: list<byte> val_list;
+    1: optional byte val;
+    2: optional map<byte, byte> val_map;
+    3: optional set<byte> val_set;
+    4: optional list<byte> val_list;
   }
   """
 
@@ -78,10 +78,10 @@ defmodule Thrift.Generator.BinaryProtocolTest do
 
   @thrift_file name: "double.thrift", contents: """
   struct Double {
-    1: double val;
-    2: map<double, double> val_map;
-    3: set<double> val_set;
-    4: list<double> val_list;
+    1: optional double val;
+    2: optional map<double, double> val_map;
+    3: optional set<double> val_set;
+    4: optional list<double> val_list;
   }
   """
 
@@ -100,10 +100,10 @@ defmodule Thrift.Generator.BinaryProtocolTest do
 
   @thrift_file name: "i16.thrift", contents: """
   struct I16 {
-    1: i16 val;
-    2: map<i16, i16> val_map;
-    3: set<i16> val_set;
-    4: list<i16> val_list;
+    1: optional i16 val;
+    2: optional map<i16, i16> val_map;
+    3: optional set<i16> val_set;
+    4: optional list<i16> val_list;
   }
   """
 
@@ -127,10 +127,10 @@ defmodule Thrift.Generator.BinaryProtocolTest do
 
   @thrift_file name: "i32.thrift", contents: """
   struct I32 {
-    1: i32 val;
-    2: map<i32, i32> val_map;
-    3: set<i32> val_set;
-    4: list<i32> val_list;
+    1: optional i32 val;
+    2: optional map<i32, i32> val_map;
+    3: optional set<i32> val_set;
+    4: optional list<i32> val_list;
   }
   """
 
@@ -152,10 +152,10 @@ defmodule Thrift.Generator.BinaryProtocolTest do
 
   @thrift_file name: "i64.thrift", contents: """
   struct I64 {
-    1: i64 val;
-    2: map<i64, i64> val_map;
-    3: set<i64> val_set;
-    4: list<i64> val_list;
+    1: optional i64 val;
+    2: optional map<i64, i64> val_map;
+    3: optional set<i64> val_set;
+    4: optional list<i64> val_list;
   }
   """
 
@@ -177,10 +177,10 @@ defmodule Thrift.Generator.BinaryProtocolTest do
 
   @thrift_file name: "string.thrift", contents: """
   struct String {
-    1: string val;
-    2: map<string, string> val_map;
-    3: set<string> val_set;
-    4: list<string> val_list;
+    1: optional string val;
+    2: optional map<string, string> val_map;
+    3: optional set<string> val_set;
+    4: optional list<string> val_list;
   }
   """
 
@@ -199,13 +199,13 @@ defmodule Thrift.Generator.BinaryProtocolTest do
 
   @thrift_file name: "struct.thrift", contents: """
   struct Val {
-    99: byte num;
+    99: optional byte num;
   }
   struct Struct {
-    1: Val val;
-    2: map<Val, Val> val_map;
-    3: set<Val> val_set;
-    4: list<Val> val_list;
+    1: optional Val val;
+    2: optional map<Val, Val> val_map;
+    3: optional set<Val> val_set;
+    4: optional list<Val> val_list;
   }
   """
 
@@ -224,7 +224,7 @@ defmodule Thrift.Generator.BinaryProtocolTest do
 
   @thrift_file name: "unions.thrift", contents: """
   struct StructValue {
-    1: string username;
+    1: optional string username;
   }
   union Union {
     1: i64 int_field,
@@ -234,10 +234,10 @@ defmodule Thrift.Generator.BinaryProtocolTest do
   }
 
   struct UStruct {
-    1: Union my_union,
-    2: map<Union, Union> u_map,
-    3: set<Union> u_set,
-    4: list<Union> u_list,
+    1: optional Union my_union,
+    2: optional map<Union, Union> u_map,
+    3: optional set<Union> u_set,
+    4: optional list<Union> u_list,
   }
   """
   thrift_test "union serialization" do
@@ -270,14 +270,14 @@ defmodule Thrift.Generator.BinaryProtocolTest do
 
   @thrift_file name: "exception.thrift", contents: """
   exception Ex {
-     1: string message,
-    99: byte num;
+     1: optional string message,
+    99: optional byte num;
   }
   struct Exception {
-    1: Ex val;
-    2: map<Ex, Ex> val_map;
-    3: set<Ex> val_set;
-    4: list<Ex> val_list;
+    1: optional Ex val;
+    2: optional map<Ex, Ex> val_map;
+    3: optional set<Ex> val_set;
+    4: optional list<Ex> val_list;
   }
   """
 
@@ -296,15 +296,15 @@ defmodule Thrift.Generator.BinaryProtocolTest do
 
   @thrift_file name: "composite.thrift", contents: """
   struct Composite {
-    1: map<map<byte, byte>, map<byte, byte>> map_of_maps;
-    2: map<set<byte>, set<byte>> map_of_sets;
-    3: map<list<byte>, list<byte>> map_of_lists;
-    4: set<map<byte, byte>> set_of_maps;
-    5: set<set<byte>> set_of_sets;
-    6: set<list<byte>> set_of_lists;
-    7: list<map<byte, byte>> list_of_maps;
-    8: list<set<byte>> list_of_sets;
-    9: list<list<byte>> list_of_lists;
+    1: optional map<map<byte, byte>, map<byte, byte>> map_of_maps;
+    2: optional map<set<byte>, set<byte>> map_of_sets;
+    3: optional map<list<byte>, list<byte>> map_of_lists;
+    4: optional set<map<byte, byte>> set_of_maps;
+    5: optional set<set<byte>> set_of_sets;
+    6: optional set<list<byte>> set_of_lists;
+    7: optional list<map<byte, byte>> list_of_maps;
+    8: optional list<set<byte>> list_of_sets;
+    9: optional list<list<byte>> list_of_lists;
   }
   """
 
@@ -340,11 +340,12 @@ defmodule Thrift.Generator.BinaryProtocolTest do
   typedef list<i64> numList
 
   struct Typedefs {
-    1: intSet ints,
-    2: mapping mappings,
-    3: numList numbers
+    1: optional intSet ints,
+    2: optional mapping mappings,
+    3: optional numList numbers
   }
   """
+
   thrift_test "it should be able to serialize complex typedefs" do
     assert_serializes %Typedefs{},                          <<0>>
     assert_serializes %Typedefs{ints: MapSet.new([1, 2])},  <<14, 0, 1, 8, 0, 0, 0, 2, 0, 0, 0, 1, 0, 0, 0, 2, 0>>
@@ -352,5 +353,50 @@ defmodule Thrift.Generator.BinaryProtocolTest do
                                                             <<13, 0, 2, 11, 11, 0, 0, 0, 2, 0, 0, 0, 3, "baz", 0, 0, 0, 4, "quux", 0, 0, 0, 3, "foo", 0, 0, 0, 3, "bar", 0>>
 
     assert_serializes %Typedefs{numbers: [9, 32, 104]},     <<15, 0, 3, 10, 0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 9, 0, 0, 0, 0, 0, 0, 0, 32, 0, 0, 0, 0, 0, 0, 0, 104, 0>>
+  end
+
+  @thrift_file name: "requiredness.thrift", contents: """
+  struct RequiredBool         { 1: required bool val }
+  struct DefaultRequiredBool  { 1: bool val }
+  struct OptionalBool         { 1: optional bool val }
+  struct RequiredField        { 1: required string val }
+  struct DefaultRequiredField { 1: string val }
+  struct OptionalField        { 1: optional string val }
+  """
+
+  thrift_test "required boolean fields must not be nil during serialization" do
+    message = "Required boolean field :val on Thrift.Generator.BinaryProtocolTest.RequiredBool must be true or false"
+    assert_raise Thrift.InvalidValueException, message, fn ->
+      RequiredBool.serialize(%RequiredBool{})
+    end
+  end
+
+  thrift_test "default required boolean fields must not be nil during serialization" do
+    message = "Required boolean field :val on Thrift.Generator.BinaryProtocolTest.DefaultRequiredBool must be true or false"
+    assert_raise Thrift.InvalidValueException, message, fn ->
+      DefaultRequiredBool.serialize(%DefaultRequiredBool{})
+    end
+  end
+
+  thrift_test "optional boolean fields must not be nil during serialization" do
+    assert OptionalBool.serialize(%OptionalBool{})
+  end
+
+  thrift_test "required fields must not be nil during serialization" do
+    message = "Required field :val on Thrift.Generator.BinaryProtocolTest.RequiredField must not be nil"
+    assert_raise Thrift.InvalidValueException, message, fn ->
+      RequiredField.serialize(%RequiredField{})
+    end
+  end
+
+  thrift_test "default required fields must not be nil during serialization" do
+    message = "Required field :val on Thrift.Generator.BinaryProtocolTest.DefaultRequiredField must not be nil"
+    assert_raise Thrift.InvalidValueException, message, fn ->
+      DefaultRequiredField.serialize(%DefaultRequiredField{})
+    end
+  end
+
+  thrift_test "optional fields must not be nil during serialization" do
+    OptionalField.serialize(%OptionalField{})
   end
 end

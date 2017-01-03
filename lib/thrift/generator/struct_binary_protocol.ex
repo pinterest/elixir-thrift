@@ -760,7 +760,7 @@ defmodule Thrift.Generator.StructBinaryProtocol do
     end)
 
     field_serializers = fields
-    |> Enum.map(&field_serializer(&1, file_group))
+    |> Enum.map(&field_serializer(&1, name, file_group))
 
     quote do
       def serialize(%unquote(name){unquote_splicing(field_matchers)}) do
@@ -769,25 +769,50 @@ defmodule Thrift.Generator.StructBinaryProtocol do
     end
   end
 
-  defp field_serializer(%Field{name: name, type: :bool, id: id}, _file_group) do
-    var = Macro.var(name, nil)
+  defp field_serializer(%Field{name: name, type: :bool, id: id, required: false}, struct_name, _file_group) do
     quote do
-      case unquote(var) do
+      case unquote(Macro.var(name, nil)) do
         nil ->
           <<>>
         false ->
           <<unquote(@bool), unquote(id) :: size(16), 0>>
-        _ ->
+        true ->
           <<unquote(@bool), unquote(id) :: size(16), 1>>
+        _ ->
+          raise Thrift.InvalidValueException,
+                unquote("Optional boolean field #{inspect name} on #{inspect struct_name} must be true, false, or nil")
       end
     end
   end
-  defp field_serializer(%Field{name: name} = field, file_group) do
-    var = Macro.var(name, nil)
+  defp field_serializer(%Field{name: name, type: :bool, id: id}, struct_name, _file_group) do
     quote do
-      case unquote(var) do
+      case unquote(Macro.var(name, nil)) do
+        false ->
+          <<unquote(@bool), unquote(id) :: size(16), 0>>
+        true ->
+          <<unquote(@bool), unquote(id) :: size(16), 1>>
+        _ ->
+          raise Thrift.InvalidValueException,
+                unquote("Required boolean field #{inspect name} on #{inspect struct_name} must be true or false")
+      end
+    end
+  end
+  defp field_serializer(%Field{name: name, required: false} = field, _struct_name, file_group) do
+    quote do
+      case unquote(Macro.var(name, nil)) do
         nil ->
           <<>>
+        _ ->
+          unquote(required_field_serializer(field, file_group))
+      end
+    end
+  end
+  defp field_serializer(%Field{name: name} = field, struct_name, file_group) do
+    quote do
+      case unquote(Macro.var(name, nil)) do
+        nil ->
+          raise Thrift.InvalidValueException,
+                unquote("Required field #{inspect name} on #{inspect struct_name} must not be nil")
         _ ->
           unquote(required_field_serializer(field, file_group))
       end

@@ -1,7 +1,5 @@
 defmodule Mix.Tasks.Compile.ThriftTest do
   use ExUnit.Case
-
-  import Mix.Tasks.Compile.Thrift, only: [run: 1]
   import ExUnit.CaptureIO
 
   @project_root Path.expand("../../../", __DIR__)
@@ -15,7 +13,8 @@ defmodule Mix.Tasks.Compile.ThriftTest do
   test "compiling default :thrift_files" do
     in_fixture fn ->
       with_project_config [], fn ->
-        assert capture_io(fn -> run([]) end) =~ """
+        assert run([]) =~ """
+          Compiling 3 files (.thrift)
           Compiled thrift/shared.thrift
           Compiled thrift/simple.thrift
           Compiled thrift/tutorial.thrift
@@ -29,8 +28,8 @@ defmodule Mix.Tasks.Compile.ThriftTest do
   test "recompiling unchanged targets" do
     in_fixture fn ->
       with_project_config [], fn ->
-        assert capture_io(fn -> run([]) end) =~ "Compiled thrift/tutorial.thrift"
-        assert capture_io(fn -> run([]) end) == ""
+        assert run([]) =~ "Compiled thrift/tutorial.thrift"
+        assert run([]) == ""
       end
     end
   end
@@ -38,9 +37,9 @@ defmodule Mix.Tasks.Compile.ThriftTest do
   test "recompiling stale targets" do
     in_fixture fn ->
       with_project_config [], fn ->
-        assert capture_io(fn -> run([]) end) =~ "Compiled thrift/tutorial.thrift"
+        assert run([]) =~ "Compiled thrift/tutorial.thrift"
         File.rm_rf!("lib")
-        assert capture_io(fn -> run([]) end) =~ "Compiled thrift/tutorial.thrift"
+        assert run([]) =~ "Compiled thrift/tutorial.thrift"
       end
     end
   end
@@ -48,8 +47,8 @@ defmodule Mix.Tasks.Compile.ThriftTest do
   test "forcing compilation" do
     in_fixture fn ->
       with_project_config [], fn ->
-        assert capture_io(fn -> run([]) end) =~ "Compiled thrift/tutorial.thrift"
-        assert capture_io(fn -> run(["--force"]) end) =~ "Compiled thrift/tutorial.thrift"
+        assert run([]) =~ "Compiled thrift/tutorial.thrift"
+        assert run(["--force"]) =~ "Compiled thrift/tutorial.thrift"
       end
     end
   end
@@ -57,7 +56,7 @@ defmodule Mix.Tasks.Compile.ThriftTest do
   test "specifying an empty :thrift_files list" do
     in_fixture fn ->
       with_project_config [thrift_files: []], fn ->
-        assert capture_io(fn -> run([]) end) == ""
+        assert run([]) == ""
       end
     end
   end
@@ -66,7 +65,7 @@ defmodule Mix.Tasks.Compile.ThriftTest do
     in_fixture fn ->
       with_project_config [thrift_files: ~w("missing.thrift")], fn ->
         capture_io fn ->
-          assert capture_io(:stderr, fn -> run([]) end) =~ "Failed to parse"
+          assert run(:stderr, []) =~ "Failed to parse"
         end
       end
     end
@@ -76,7 +75,7 @@ defmodule Mix.Tasks.Compile.ThriftTest do
     in_fixture fn ->
       with_project_config [thrift_files: [__ENV__.file]], fn ->
         capture_io fn ->
-          assert capture_io(:stderr, fn -> run([]) end) =~ "Failed to parse"
+          assert run(:stderr, []) =~ "Failed to parse"
         end
       end
     end
@@ -85,13 +84,17 @@ defmodule Mix.Tasks.Compile.ThriftTest do
   test "specifying source files on the command line" do
     in_fixture fn ->
       with_project_config [], fn ->
-        capture_io fn ->
-          output = capture_io(fn -> run(["thrift/simple.thrift"]) end)
-          assert output =~ "Compiled thrift/simple.thrift"
-          refute output =~ "Compiled thrift/tutorial.thrift"
-        end
+        output = run(["thrift/simple.thrift"])
+        assert output =~ "Compiled thrift/simple.thrift"
+        refute output =~ "Compiled thrift/tutorial.thrift"
       end
     end
+  end
+
+  defp run(args) when is_list(args), do: run(:stdio, args)
+  defp run(device, args) when device in [:stdio, :stderr] and is_list(args) do
+    args = ["--verbose" | args]
+    capture_io(device, fn -> Mix.Tasks.Compile.Thrift.run(args) end)
   end
 
   defp in_fixture(fun) do

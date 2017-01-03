@@ -8,8 +8,11 @@ defmodule Thrift.Protocol.Binary do
   actual value of the field.
   """
 
+  alias Thrift.TApplicationException
+
   @typedoc "Binary protocol field type identifier"
   @type type_id :: (2..15)
+  @type deserializable :: :message_begin | :application_exception
 
   @bool 2
   @byte 3
@@ -97,11 +100,19 @@ defmodule Thrift.Protocol.Binary do
     0::size(5), from_message_type(message_type)::size(3),
     byte_size(name)::32-signed, name::binary, sequence_id::32-signed>>
   end
+  def serialize(:application_exception, %TApplicationException{type: t} = exc) when is_atom(t) do
+    serialize(:application_exception, %TApplicationException{exc | type: TApplicationException.exception_type_to_int(t)})
+  end
+  def serialize(:application_exception, %TApplicationException{message: message, type: type}) do
+    <<@string::size(8), 1::16-signed, byte_size(message)::size(32), message::binary,
+      @i32::size(8), 2::16-signed, type::32-signed, 0::size(8)>>
+  end
+
 
   @doc """
   Deserializes a Thrift-encoded binary.
   """
-  @spec deserialize(:message_begin, binary) ::
+  @spec deserialize(deserializable, binary) ::
     {:ok, {Thrift.message_type, message_seq_id, name :: String.t, binary}} |
     {:error, {atom, binary}}
   def deserialize(:message_begin, <<1::size(1), 1::size(15), _::size(8),
@@ -119,6 +130,38 @@ defmodule Thrift.Protocol.Binary do
 
   def deserialize(:message_begin, rest) do
     {:error, {:cant_decode_message, rest}}
+  end
+
+  def deserialize(:application_exception, binary) when is_binary(binary) do
+    do_read_application_exception(binary, %TApplicationException{})
+  end
+
+  defp do_read_application_exception(
+        <<@string::size(8),
+        1::16-unsigned,
+        message_size::32-signed,
+        message::binary-size(message_size),
+        rest::binary>>, accum) do
+    # read the message string
+    do_read_application_exception(rest, Map.put(accum, :message, message))
+  end
+  defp do_read_application_exception(
+        <<@i32::size(8),
+        2::16-unsigned,
+        type::32-signed,
+        rest::binary>>, accum) do
+    # read the type
+    exception_type = TApplicationException.exception_type(type)
+    do_read_application_exception(rest, Map.put(accum, :type, exception_type))
+  end
+  defp do_read_application_exception(<<0>>, accum) do
+    # read the field stop and return
+    accum
+  end
+  defp do_read_application_exception(error, _) do
+    message = "Could not decode TApplicationException, remaining was #{inspect error}"
+    %TApplicationException{message: message,
+                           type: TApplicationException.exception_type(7)}
   end
 
   @doc """

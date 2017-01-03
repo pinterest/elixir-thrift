@@ -25,7 +25,7 @@ defmodule BinaryProtocolTest do
   }
 
   struct StructWithEnum {
-    1: Status status
+    1: optional Status status
   }
   """
   thrift_test "encoding enums" do
@@ -46,14 +46,14 @@ defmodule BinaryProtocolTest do
   }
 
   struct Scalars {
-    1: bool is_true,
-    2: byte byte_value,
-    3: i16 sixteen_bits,
-    4: i32 thirty_two_bits,
-    5: i64 sixty_four_bits,
-    6: double double_value,
-    7: string string_value,
-    8: binary raw_binary
+    1: optional bool is_true,
+    2: optional byte byte_value,
+    3: optional i16 sixteen_bits,
+    4: optional i32 thirty_two_bits,
+    5: optional i64 sixty_four_bits,
+    6: optional double double_value,
+    7: optional string string_value,
+    8: optional binary raw_binary
   }
   """
 
@@ -94,14 +94,14 @@ defmodule BinaryProtocolTest do
   }
 
   struct Friend {
-    1: i64 id,
-    2: string username,
+    1: optional i64 id,
+    2: optional string username,
   }
 
   struct Containers {
-   1: list<i64> users,
-   2: list<Weather> weekly_forecast,
-   3: set<string> taken_usernames,
+   1: optional list<i64> users,
+   2: optional list<Weather> weekly_forecast,
+   3: optional set<string> taken_usernames,
    // Lists of structs are broken
    //  4: list<Friend> friends,
    // Deserializers for maps break the build
@@ -151,8 +151,8 @@ defmodule BinaryProtocolTest do
     include "containers.thrift"
 
     struct User {
-      1: i64 id,
-      2: containers.Friend best_friend;
+      1: optional i64 id,
+      2: optional containers.Friend best_friend;
     }
   """
 
@@ -171,17 +171,17 @@ defmodule BinaryProtocolTest do
 
   @thrift_file name: "old.thrift", contents: """
     struct OldChangeyStruct {
-      1: i64 id,
-      2: string username
+      1: optional i64 id,
+      2: optional string username
     }
   """
   @thrift_file name: "new.thrift", contents: """
     struct SubSubStruct {
-      1: bool is_this_excessive;
+      1: optional bool is_this_excessive;
     }
 
     struct SubStruct {
-      1: string password,
+      1: optional string password,
       2: optional SubSubStruct sub_sub;
     }
 
@@ -192,8 +192,8 @@ defmodule BinaryProtocolTest do
     }
 
     struct ChangeyStruct {
-      1: i64 id,
-      2: string username,
+      1: optional i64 id,
+      2: optional string username,
       3: optional bool new_bool
       4: optional byte new_byte,
       5: optional double new_double,

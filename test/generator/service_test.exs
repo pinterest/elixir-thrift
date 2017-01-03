@@ -4,8 +4,8 @@ defmodule Thrift.Generator.ServiceTest do
   @thrift_file name: "simple_service.thrift", contents: """
   namespace elixir Services.Simple
   struct User {
-    1: i64 id,
-    2: string username
+    1: optional i64 id,
+    2: optional string username
   }
 
   exception UsernameTakenException {

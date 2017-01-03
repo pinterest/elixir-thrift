@@ -3,7 +3,7 @@ defmodule Thrift.Generator.StructGenerator do
   alias Thrift.Generator.Utils
   alias Thrift.Parser.FileGroup
 
-  def generate(label, schema, name, struct) do
+  def generate(label, schema, name, struct) when label in [:struct, :union, :exception] do
     struct_parts = Enum.map(struct.fields, fn
       %{name: name, default: nil, type: type} ->
         {name, zero(schema, type)}
@@ -18,10 +18,13 @@ defmodule Thrift.Generator.StructGenerator do
     |> Utils.merge_blocks
     |> Utils.sort_defs
 
-    define_block = if label in ["exception", :exception] do
-      quote do: defexception unquote(struct_parts)
-    else
-      quote do: defstruct unquote(struct_parts)
+    define_block = case label do
+      :struct ->
+        quote do: defstruct unquote(struct_parts)
+      :union ->
+        quote do: defstruct unquote(struct_parts)
+      :exception ->
+        quote do: defexception unquote(struct_parts)
     end
 
     quote do

@@ -95,7 +95,7 @@ defmodule Thrift.Generator.Server.BinaryFramed do
         quote do
           unhandled ->
             {:server_error, Thrift.TApplicationException.exception(
-              message: "Server error: #{unhandled.message}",
+              message: "Server error: #{Exception.message(unhandled)}",
               type: :internal_error)}
         end
 

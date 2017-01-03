@@ -371,14 +371,11 @@ defmodule Thrift.Generator.BinaryProtocolTest do
     end
   end
 
-  thrift_test "default required boolean fields must not be nil during serialization" do
-    message = "Required boolean field :val on Thrift.Generator.BinaryProtocolTest.DefaultRequiredBool must be true or false"
-    assert_raise Thrift.InvalidValueException, message, fn ->
-      DefaultRequiredBool.serialize(%DefaultRequiredBool{})
-    end
+  thrift_test "default required boolean fields may be nil during serialization" do
+    DefaultRequiredBool.serialize(%DefaultRequiredBool{})
   end
 
-  thrift_test "optional boolean fields must not be nil during serialization" do
+  thrift_test "optional boolean fields may be nil during serialization" do
     assert OptionalBool.serialize(%OptionalBool{})
   end
 
@@ -389,14 +386,11 @@ defmodule Thrift.Generator.BinaryProtocolTest do
     end
   end
 
-  thrift_test "default required fields must not be nil during serialization" do
-    message = "Required field :val on Thrift.Generator.BinaryProtocolTest.DefaultRequiredField must not be nil"
-    assert_raise Thrift.InvalidValueException, message, fn ->
-      DefaultRequiredField.serialize(%DefaultRequiredField{})
-    end
+  thrift_test "default required fields may be nil during serialization" do
+    DefaultRequiredField.serialize(%DefaultRequiredField{})
   end
 
-  thrift_test "optional fields must not be nil during serialization" do
+  thrift_test "optional fields may be nil during serialization" do
     OptionalField.serialize(%OptionalField{})
   end
 end

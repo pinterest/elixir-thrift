@@ -11,20 +11,21 @@ defmodule Thrift.Protocol.Binary do
   alias Thrift.TApplicationException
 
   @typedoc "Binary protocol field type identifier"
-  @type type_id :: (2..15)
+  @type type_id :: 2 | 3 | 4 | 6 | 8 | 10 | 11 | 12 | 13 | 14 | 15
   @type deserializable :: :message_begin | :application_exception
 
-  @bool 2
-  @byte 3
+  @stop   0
+  @bool   2
+  @byte   3   # also: i8
   @double 4
-  @i16 6
-  @i32 8
-  @i64 10
+  @i16    6
+  @i32    8
+  @i64    10
   @string 11
   @struct 12
-  @map 13
-  @set 14
-  @list 15
+  @map    13
+  @set    14
+  @list   15
 
   @spec type_id(Thrift.data_type) :: type_id
   defp type_id(:bool),      do: @bool
@@ -105,7 +106,7 @@ defmodule Thrift.Protocol.Binary do
   end
   def serialize(:application_exception, %TApplicationException{message: message, type: type}) do
     <<@string::size(8), 1::16-signed, byte_size(message)::size(32), message::binary,
-      @i32::size(8), 2::16-signed, type::32-signed, 0::size(8)>>
+      @i32::size(8), 2::16-signed, type::32-signed, @stop>>
   end
 
 
@@ -154,7 +155,7 @@ defmodule Thrift.Protocol.Binary do
     exception_type = TApplicationException.exception_type(type)
     do_read_application_exception(rest, Map.put(accum, :type, exception_type))
   end
-  defp do_read_application_exception(<<0>>, accum) do
+  defp do_read_application_exception(<<@stop>>, accum) do
     # read the field stop and return
     accum
   end

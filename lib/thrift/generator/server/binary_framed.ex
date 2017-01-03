@@ -95,7 +95,7 @@ defmodule Thrift.Generator.Server.BinaryFramed do
       Thrift.TApplicationException ->
         quote do
           unhandled ->
-            Logger.error("Unhandled exception: #{Exception.message(unhandled)}")
+            Logger.error("Exception not defined in thrift spec was thrown: #{Exception.message(unhandled)}")
             {:server_error, Thrift.TApplicationException.exception(
               message: "Server error: #{Exception.message(unhandled)}",
               type: :internal_error)}

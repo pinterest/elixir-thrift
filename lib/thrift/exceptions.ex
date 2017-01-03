@@ -57,13 +57,13 @@ defmodule Thrift.FileParseException do
 
   # display the line number if we get it
   defp format_error({line_no, :thrift_parser, errors}) do
-    "on line #{line_no}: #{inspect errors}"
+    "on line #{line_no}: #{errors}"
   end
   defp format_error({{line_no, :thrift_lexer, errors}, _}) do
     "on line #{line_no}: #{inspect errors}"
   end
   defp format_error(error) do
-    ":#{inspect error}"
+    ": #{inspect error}"
   end
 end
 

@@ -28,9 +28,9 @@ defmodule Thrift.Generator.Client.BinaryFramed do
 
   defp generate_handler_function(service_module, function) do
     args_module = service_module
-    |> Module.concat(Service.service_module_name(function, :args))
+    |> Module.concat(Service.module_name(function, :args))
 
-    response_module = Service.service_module_name(function, :response)
+    response_module = Service.module_name(function, :response)
 
     underscored_name = function.name
     |> Atom.to_string

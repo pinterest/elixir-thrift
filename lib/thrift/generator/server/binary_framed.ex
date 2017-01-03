@@ -33,7 +33,7 @@ defmodule Thrift.Generator.Server.BinaryFramed do
     fn_name = Atom.to_string(function.name)
     handler_fn_name = Utils.underscore(function.name)
     response_module = service_module
-    |> Module.concat(Service.service_module_name(function, :response))
+    |> Module.concat(Service.module_name(function, :response))
 
     handler = quote do
       rsp = handler_module.unquote(handler_fn_name)()
@@ -50,10 +50,10 @@ defmodule Thrift.Generator.Server.BinaryFramed do
   def generate_handler_function(file_group, service_module, function) do
     fn_name = Atom.to_string(function.name)
     args_module = service_module
-    |> Module.concat(Service.service_module_name(function, :args))
+    |> Module.concat(Service.module_name(function, :args))
 
     response_module = service_module
-    |> Module.concat(Service.service_module_name(function, :response))
+    |> Module.concat(Service.module_name(function, :response))
 
     struct_matches = function.params
     |> Enum.map(fn param ->

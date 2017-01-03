@@ -38,7 +38,7 @@ defmodule Thrift.Generator.Service do
   end
 
   def generate_args_struct(schema, function) do
-    arg_module_name = service_module_name(function, :args)
+    arg_module_name = module_name(function, :args)
 
     struct = Struct.new(Atom.to_char_list(arg_module_name), function.params)
 
@@ -56,13 +56,13 @@ defmodule Thrift.Generator.Service do
 
     fields = [success | exceptions]
 
-    response_module_name = service_module_name(function, :response)
+    response_module_name = module_name(function, :response)
     response_struct = Struct.new(Atom.to_char_list(response_module_name), fields)
 
     StructGenerator.generate(:struct, schema, response_struct.name, response_struct)
   end
 
-  def service_module_name(%Function{} = function, suffix) do
+  def module_name(%Function{} = function, suffix) do
     struct_name = "#{function.name}_#{suffix}"
     |> Macro.camelize
     |> String.to_atom

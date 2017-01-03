@@ -90,17 +90,8 @@ defmodule Thrift.Generator.Server.BinaryFramed do
   end
 
   defp wrap_with_try_catch(quoted_handler, function, file_group, response_module) do
-    rescue_blocks = function.exceptions ++ [Thrift.TApplicationException]
+    rescue_blocks = function.exceptions
     |> Enum.flat_map(fn
-      Thrift.TApplicationException ->
-        quote do
-          unhandled ->
-            Logger.error("Exception not defined in thrift spec was thrown: #{Exception.message(unhandled)}")
-            {:server_error, Thrift.TApplicationException.exception(
-              message: "Server error: #{Exception.message(unhandled)}",
-              type: :internal_error)}
-        end
-
       exc ->
         resolved = FileGroup.resolve(file_group, exc)
         dest_module = FileGroup.dest_module(file_group, resolved.type)
@@ -119,7 +110,13 @@ defmodule Thrift.Generator.Server.BinaryFramed do
       try do
         unquote(quoted_handler)
       rescue
-      unquote(rescue_blocks)
+        unquote(rescue_blocks)
+      catch kind, reason ->
+        formatted_exception = Exception.format(kind, reason, System.stacktrace)
+        Logger.error("Exception not defined in thrift spec was thrown: #{formatted_exception}")
+        {:server_error, Thrift.TApplicationException.exception(
+          message: "Server error: #{formatted_exception}",
+          type: :internal_error)}
       end
     end
   end

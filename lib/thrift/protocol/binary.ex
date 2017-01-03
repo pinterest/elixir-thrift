@@ -11,7 +11,7 @@ defmodule Thrift.Protocol.Binary do
   alias Thrift.TApplicationException
 
   @typedoc "Binary protocol field type identifier"
-  @type type_id :: 0 | 2 | 3 | 4 | 6 | 8 | 10 | 11 | 12 | 13 | 14 | 15
+  @type type_id :: 2 | 3 | 4 | 6 | 8 | 10 | 11 | 12 | 13 | 14 | 15
   @type deserializable :: :message_begin | :application_exception
 
   @stop   0
@@ -106,7 +106,7 @@ defmodule Thrift.Protocol.Binary do
   end
   def serialize(:application_exception, %TApplicationException{message: message, type: type}) do
     <<@string::size(8), 1::16-signed, byte_size(message)::size(32), message::binary,
-      @i32::size(8), 2::16-signed, type::32-signed, @stop::8-signed>>
+      @i32::size(8), 2::16-signed, type::32-signed, @stop>>
   end
 
 

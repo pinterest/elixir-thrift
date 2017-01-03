@@ -23,6 +23,6 @@ defmodule Thrift.Union.TooManyFieldsSetException do
   defexception message: nil, set_fields: nil
 end
 
-defmodule Thrift.MissingFieldException do
+defmodule Thrift.InvalidValueException do
   defexception message: nil
 end

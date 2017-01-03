@@ -760,7 +760,7 @@ defmodule Thrift.Generator.StructBinaryProtocol do
     end)
 
     field_serializers = fields
-    |> Enum.map(&field_serializer(&1, file_group))
+    |> Enum.map(&field_serializer(&1, name, file_group))
 
     quote do
       def serialize(%unquote(name){unquote_splicing(field_matchers)}) do
@@ -769,7 +769,7 @@ defmodule Thrift.Generator.StructBinaryProtocol do
     end
   end
 
-  defp field_serializer(%Field{name: name, type: :bool, id: id, required: false}, _file_group) do
+  defp field_serializer(%Field{name: name, type: :bool, id: id, required: false}, struct_name, _file_group) do
     quote do
       case unquote(Macro.var(name, nil)) do
         nil ->
@@ -779,12 +779,12 @@ defmodule Thrift.Generator.StructBinaryProtocol do
         true ->
           <<unquote(@bool), unquote(id) :: size(16), 1>>
         _ ->
-          raise Thrift.MissingFieldException,
-                unquote("Optional boolean field #{inspect name} must be true, false, or nil")
+          raise Thrift.InvalidValueException,
+                unquote("Optional boolean field #{inspect name} on #{inspect struct_name} must be true, false, or nil")
       end
     end
   end
-  defp field_serializer(%Field{name: name, type: :bool, id: id}, _file_group) do
+  defp field_serializer(%Field{name: name, type: :bool, id: id}, struct_name, _file_group) do
     quote do
       case unquote(Macro.var(name, nil)) do
         false ->
@@ -792,12 +792,12 @@ defmodule Thrift.Generator.StructBinaryProtocol do
         true ->
           <<unquote(@bool), unquote(id) :: size(16), 1>>
         _ ->
-          raise Thrift.MissingFieldException,
-                unquote("Required boolean field #{inspect name} must be true or false")
+          raise Thrift.InvalidValueException,
+                unquote("Required boolean field #{inspect name} on #{inspect struct_name} must be true or false")
       end
     end
   end
-  defp field_serializer(%Field{name: name, required: false} = field, file_group) do
+  defp field_serializer(%Field{name: name, required: false} = field, _struct_name, file_group) do
     quote do
       case unquote(Macro.var(name, nil)) do
         nil ->
@@ -807,12 +807,12 @@ defmodule Thrift.Generator.StructBinaryProtocol do
       end
     end
   end
-  defp field_serializer(%Field{name: name} = field, file_group) do
+  defp field_serializer(%Field{name: name} = field, struct_name, file_group) do
     quote do
       case unquote(Macro.var(name, nil)) do
         nil ->
-          raise Thrift.MissingFieldException,
-                unquote("Required field #{inspect name} must not be nil")
+          raise Thrift.InvalidValueException,
+                unquote("Required field #{inspect name} on #{inspect struct_name} must not be nil")
         _ ->
           unquote(required_field_serializer(field, file_group))
       end

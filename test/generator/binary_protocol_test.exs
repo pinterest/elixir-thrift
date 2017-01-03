@@ -365,13 +365,15 @@ defmodule Thrift.Generator.BinaryProtocolTest do
   """
 
   thrift_test "required boolean fields must not be nil during serialization" do
-    assert_raise Thrift.MissingFieldException, "Required boolean field :val must be true or false", fn ->
+    message = "Required boolean field :val on Thrift.Generator.BinaryProtocolTest.RequiredBool must be true or false"
+    assert_raise Thrift.InvalidValueException, message, fn ->
       RequiredBool.serialize(%RequiredBool{})
     end
   end
 
   thrift_test "default required boolean fields must not be nil during serialization" do
-    assert_raise Thrift.MissingFieldException, "Required boolean field :val must be true or false", fn ->
+    message = "Required boolean field :val on Thrift.Generator.BinaryProtocolTest.DefaultRequiredBool must be true or false"
+    assert_raise Thrift.InvalidValueException, message, fn ->
       DefaultRequiredBool.serialize(%DefaultRequiredBool{})
     end
   end
@@ -381,13 +383,15 @@ defmodule Thrift.Generator.BinaryProtocolTest do
   end
 
   thrift_test "required fields must not be nil during serialization" do
-    assert_raise Thrift.MissingFieldException, "Required field :val must not be nil", fn ->
+    message = "Required field :val on Thrift.Generator.BinaryProtocolTest.RequiredField must not be nil"
+    assert_raise Thrift.InvalidValueException, message, fn ->
       RequiredField.serialize(%RequiredField{})
     end
   end
 
   thrift_test "default required fields must not be nil during serialization" do
-    assert_raise Thrift.MissingFieldException, "Required field :val must not be nil", fn ->
+    message = "Required field :val on Thrift.Generator.BinaryProtocolTest.DefaultRequiredField must not be nil"
+    assert_raise Thrift.InvalidValueException, message, fn ->
       DefaultRequiredField.serialize(%DefaultRequiredField{})
     end
   end

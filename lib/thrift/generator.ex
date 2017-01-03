@@ -97,21 +97,21 @@ defmodule Thrift.Generator do
   defp generate_struct_modules(schema) do
     for {_, struct} <- schema.structs do
       full_name = FileGroup.dest_module(schema.file_group, struct)
-      {full_name, StructGenerator.generate("struct", schema, full_name, struct)}
+      {full_name, StructGenerator.generate(:struct, schema, full_name, struct)}
     end
   end
 
   defp generate_union_modules(schema) do
     for {_, union} <- schema.unions do
       full_name = FileGroup.dest_module(schema.file_group, union)
-      {full_name, StructGenerator.generate("union", schema, full_name, union)}
+      {full_name, StructGenerator.generate(:union, schema, full_name, union)}
     end
   end
 
   defp generate_exception_modules(schema) do
     for {_, exception} <- schema.exceptions do
       full_name = FileGroup.dest_module(schema.file_group, exception)
-      {full_name, StructGenerator.generate("exception", schema, full_name, exception)}
+      {full_name, StructGenerator.generate(:exception, schema, full_name, exception)}
     end
   end
 

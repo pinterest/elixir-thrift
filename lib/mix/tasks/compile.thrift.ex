@@ -20,9 +20,10 @@ defmodule Mix.Tasks.Compile.Thrift do
 
   ## Command line options
 
-    * `--force` - forces compilation regardless of modification times
-    * `--out` - set the output directory, overriding the `:thrift_output`
+    * `-f` `--force` - forces compilation regardless of modification times
+    * `-o` `--out` - set the output directory, overriding the `:thrift_output`
       configuration value
+    * `-v` `--verbose` - enable verbose compile task logging
 
   ## Configuration
 
@@ -81,6 +82,8 @@ defmodule Mix.Tasks.Compile.Thrift do
 
   defp generate(%FileGroup{} = group, output_dir, opts) do
     Thrift.Generator.generate!(group, output_dir)
-    if opts[:verbose], do: Mix.shell.info "Compiled #{group.initial_file}"
+    if opts[:verbose] do
+      Mix.shell.info "Compiled #{group.initial_file}"
+    end
   end
 end

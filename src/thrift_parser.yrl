@@ -129,7 +129,7 @@ mappings -> mapping ',' mappings: ['$1'] ++ '$3'.
 literal_list -> literal: ['$1'].
 literal_list -> literal ',' literal_list: ['$1'] ++ '$3'.
 
-literal -> ident: 'Elixir.Thrift.Parser.Models.TEnumValue':new(unwrap('$1')).
+literal -> ident: 'Elixir.Thrift.Parser.Models.StructRef':new(unwrap('$1')).
 literal -> true: unwrap('$1').
 literal -> false: unwrap('$1').
 literal -> int: unwrap('$1').

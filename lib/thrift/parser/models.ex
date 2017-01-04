@@ -88,29 +88,6 @@ defmodule Thrift.Parser.Models do
     end
   end
 
-  defmodule TEnumValue do
-    @moduledoc """
-    A reference to an enum value
-    For example, in a constant or default value.
-
-       const string DEFAULT_WEATHER = Weather.SUNNY;
-   """
-    @type t :: %TEnumValue{enum_name: atom, enum_value: atom, type: atom}
-    defstruct enum_name: nil, enum_value: nil, type: nil
-
-    import Thrift.Parser.Conversions
-
-    @spec new(char_list) :: %TEnumValue{}
-    def new(enum_value) do
-      [enum_name, enum_value] = enum_value
-      |> List.to_string
-      |> String.split(".")
-      |> Enum.map(&String.to_atom/1)
-
-      %TEnumValue{enum_name: enum_name, enum_value: enum_value}
-    end
-  end
-
   defmodule Field do
     @moduledoc """
     A Thrift field.

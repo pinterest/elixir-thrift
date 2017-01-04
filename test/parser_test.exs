@@ -15,7 +15,6 @@ defmodule ParserTest do
   alias Thrift.Parser.Models.Struct
   alias Thrift.Parser.Models.StructRef
   alias Thrift.Parser.Models.TEnum
-  alias Thrift.Parser.Models.TEnumValue
   alias Thrift.Parser.Models.Union
 
   import ExUnit.CaptureIO
@@ -180,7 +179,7 @@ defmodule ParserTest do
 
     assert constant == %Constant{
       name: :SUNNY,
-      value: %TEnumValue{enum_name: :Weather, enum_value: :SUNNY, type: :string},
+      value: %StructRef{referenced_type: :"Weather.SUNNY"},
       type: :string}
   end
 
@@ -199,10 +198,10 @@ defmodule ParserTest do
       name: :WEATHER_TYPES,
       type: {:list, :string},
       value: [
-        %TEnumValue{enum_name: :Weather, enum_value: :SUNNY, type: :string},
-        %TEnumValue{enum_name: :Weather, enum_value: :CLOUDY, type: :string},
-        %TEnumValue{enum_name: :Weather, enum_value: :RAINY, type: :string},
-        %TEnumValue{enum_name: :Weather, enum_value: :SNOWY, type: :string},
+        %StructRef{referenced_type: :"Weather.SUNNY"},
+        %StructRef{referenced_type: :"Weather.CLOUDY"},
+        %StructRef{referenced_type: :"Weather.RAINY"},
+        %StructRef{referenced_type: :"Weather.SNOWY"},
       ]}
   end
 
@@ -221,10 +220,10 @@ defmodule ParserTest do
       name: :WEATHER_TYPES,
       type: {:set, :string},
       value: MapSet.new([
-        %TEnumValue{enum_name: :Weather, enum_value: :SUNNY, type: :string},
-        %TEnumValue{enum_name: :Weather, enum_value: :CLOUDY, type: :string},
-        %TEnumValue{enum_name: :Weather, enum_value: :RAINY, type: :string},
-        %TEnumValue{enum_name: :Weather, enum_value: :SNOWY, type: :string},
+        %StructRef{referenced_type: :"Weather.SUNNY"},
+        %StructRef{referenced_type: :"Weather.CLOUDY"},
+        %StructRef{referenced_type: :"Weather.RAINY"},
+        %StructRef{referenced_type: :"Weather.SNOWY"},
       ])}
   end
 
@@ -243,25 +242,10 @@ defmodule ParserTest do
       name: :weather_messages,
       type: {:map, {%StructRef{referenced_type: :Weather}, :string}},
       value: %{
-        %TEnumValue{
-          enum_name: :Weather,
-          enum_value: :CLOUDY,
-          type: %StructRef{referenced_type: :Weather}} => "Welcome to Cleveland!",
-
-        %TEnumValue{
-          enum_name: :Weather,
-          enum_value: :RAINY,
-          type: %StructRef{referenced_type: :Weather}} => "Welcome to Seattle!",
-
-        %TEnumValue{
-          enum_name: :Weather,
-          enum_value: :SNOWY,
-          type: %StructRef{referenced_type: :Weather}} => "Welcome to Canada!",
-
-        %TEnumValue{
-          enum_name: :Weather,
-          enum_value: :SUNNY,
-          type: %StructRef{referenced_type: :Weather}} => "Yay, it's sunny!"}}
+        %StructRef{referenced_type: :"Weather.CLOUDY"} => "Welcome to Cleveland!",
+        %StructRef{referenced_type: :"Weather.RAINY"} => "Welcome to Seattle!",
+        %StructRef{referenced_type: :"Weather.SNOWY"} => "Welcome to Canada!",
+        %StructRef{referenced_type: :"Weather.SUNNY"} => "Yay, it's sunny!"}}
   end
 
   test "parsing a map constant with enum values as values" do
@@ -279,25 +263,10 @@ defmodule ParserTest do
       name: :clothes_to_wear,
       type: {:map, {:string, %StructRef{referenced_type: :Weather}}},
       value: %{
-        "gloves" => %TEnumValue{
-          enum_name: :Weather,
-          enum_value: :SNOWY,
-          type: %StructRef{referenced_type: :Weather}},
-
-        "sunglasses" => %TEnumValue{
-          enum_name: :Weather,
-          enum_value: :SUNNY,
-          type: %StructRef{referenced_type: :Weather}},
-
-        "sweater" => %TEnumValue{
-          enum_name: :Weather,
-          enum_value: :CLOUDY,
-          type: %StructRef{referenced_type: :Weather}},
-
-        "umbrella" => %TEnumValue{
-          enum_name: :Weather,
-          enum_value: :RAINY,
-          type: %StructRef{referenced_type: :Weather}}}}
+        "gloves" => %StructRef{referenced_type: :"Weather.SNOWY"},
+        "umbrella" => %StructRef{referenced_type: :"Weather.RAINY"},
+        "sweater" => %StructRef{referenced_type: :"Weather.CLOUDY"},
+        "sunglasses" => %StructRef{referenced_type: :"Weather.SUNNY"}}}
   end
 
   test "parsing an enum" do

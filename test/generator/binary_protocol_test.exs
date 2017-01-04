@@ -397,4 +397,51 @@ defmodule Thrift.Generator.BinaryProtocolTest do
     assert_serializes %OptionalField{},                 <<0>>
     assert_serializes %OptionalField{val: 123},         <<3, 0, 1, 123, 0>>
   end
+
+  @thrift_file name: "const.thrift", contents: """
+  struct ConstStructVal {
+    1: byte num
+  }
+
+  const bool ConstBool = true
+  const byte ConstByte = 5
+  const double ConstDouble = 5.0
+  const i16 ConstI16 = 5
+  const i32 ConstI32 = 5
+  const i64 ConstI64 = 5
+  const string ConstString = "abc123"
+  const ConstStructVal ConstStruct = {"num": 5}
+  const map<string, byte> ConstMap = {"a": 1, "b": 2}
+  const set<string> ConstSet = ["a", "b"]
+  const list<string> ConstList = ["a", "b"]
+
+  struct ConstStruct {
+    1: bool bool_val = ConstBool,
+    2: byte byte_val = ConstByte,
+    3: double double_val = ConstDouble,
+    4: i16 i16_val = ConstI16,
+    5: i32 i32_val = ConstI32,
+    6: i64 i64_val = ConstI64,
+    7: string string_val = ConstString,
+    # 8: ConstStructVal struct_val = ConstStruct,
+    13: map<string, byte> map_val = ConstMap,
+    14: set<string> set_val = ConstSet,
+    15: list<string> list_val = ConstList,
+  }
+  """
+
+  thrift_test "test..." do
+    struct = %ConstStruct{}
+    assert struct.bool_val == true
+    assert struct.byte_val == 5
+    assert struct.double_val == 5.0
+    assert struct.i16_val == 5
+    assert struct.i32_val == 5
+    assert struct.i64_val == 5
+    assert struct.string_val == "abc123"
+    assert struct.map_val == %{"a" => 1, "b" => 2}
+    assert struct.set_val == MapSet.new(["a", "b"])
+    assert struct.list_val == ["a", "b"]
+    :ok
+  end
 end

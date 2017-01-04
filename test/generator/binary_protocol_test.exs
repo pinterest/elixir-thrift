@@ -430,7 +430,7 @@ defmodule Thrift.Generator.BinaryProtocolTest do
   }
   """
 
-  thrift_test "test..." do
+  thrift_test "default values can be constants" do
     struct = %ConstStruct{}
     assert struct.bool_val == true
     assert struct.byte_val == 5

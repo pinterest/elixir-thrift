@@ -79,7 +79,7 @@ defmodule Thrift.Generator.StructGenerator do
   end
   defp default_value(value, :bool, _schema) when is_boolean(value), do: value
   defp default_value(value, :byte, _schema) when is_integer(value), do: value
-  defp default_value(value, :double, _schema) when is_float(value), do: value
+  defp default_value(value, :double, _schema) when is_number(value), do: value
   defp default_value(value, :i8, _schema) when is_integer(value), do: value
   defp default_value(value, :i16, _schema) when is_integer(value), do: value
   defp default_value(value, :i32, _schema) when is_integer(value), do: value

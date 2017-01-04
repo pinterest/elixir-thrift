@@ -444,4 +444,45 @@ defmodule Thrift.Generator.BinaryProtocolTest do
     assert struct.list_val == ["a", "b"]
     :ok
   end
+
+  @thrift_file name: "defaults.thrift", contents: """
+  struct Defaults {
+    1: bool bool_from_true = true
+    2: bool bool_from_false = false
+    3: bool bool_from_one = 1
+    4: bool bool_from_zero = 0
+    5: byte byte_val = 5
+    6: double double_from_float = 0.0
+    7: double double_from_int = 0
+    8: i16 i16_val = 5
+    9: i32 i32_val = 5
+    10: i64 i64_val = 5
+    11: string string_val = "abc123"
+    13: map<string, byte> map_val = {"a": 1, "b": 2}
+    14: set<string> set_val = ["a", "b"]
+    15: list<string> list_val = ["a", "b"]
+  }
+  """
+
+  thrift_test "default values" do
+    struct = %Defaults{}
+    assert struct.bool_from_true == true
+    assert struct.bool_from_false == false
+    assert struct.bool_from_one == true
+    assert struct.bool_from_zero == false
+    assert struct.byte_val == 5
+    assert struct.double_from_float == 0
+    assert is_float(struct.double_from_float)
+    assert struct.double_from_int == 0
+    assert is_integer(struct.double_from_int)
+    assert struct.i16_val == 5
+    assert struct.i32_val == 5
+    assert struct.i64_val == 5
+    assert struct.string_val == "abc123"
+    # TODO: struct.struct_val
+    assert struct.map_val == %{"a" => 1, "b" => 2}
+    assert struct.set_val == MapSet.new(["a", "b"])
+    assert struct.list_val == ["a", "b"]
+    :ok
+  end
 end

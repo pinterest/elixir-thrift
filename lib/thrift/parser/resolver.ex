@@ -19,6 +19,7 @@ defmodule Thrift.Parser.Resolver do
   def add(pid, %ParsedFile{} = f) do
     Agent.update(pid, fn(state) ->
       state
+      |> update(f.name, f.schema.constants)
       |> update(f.name, f.schema.services)
       |> update(f.name, f.schema.structs)
       |> update(f.name, f.schema.exceptions)

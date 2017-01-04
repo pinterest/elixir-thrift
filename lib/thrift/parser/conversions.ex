@@ -10,9 +10,9 @@ defmodule Thrift.Parser.Conversions do
     nil
   end
 
-  def cast(type, %{} = val) do
-    # this is for TEnumValues
-    %{val | type: type}
+  # We can't match a StructRef because it would create a circular dependency.
+  def cast(_, %{referenced_type: _} = ref) do
+    ref
   end
 
   def cast(:double, val) do
@@ -22,7 +22,7 @@ defmodule Thrift.Parser.Conversions do
   def cast(:bool, 0), do: false
   def cast(:bool, 1), do: true
 
-  def cast(:string, val) do
+  def cast(:string, val) when is_list(val) do
     List.to_string(val)
   end
 

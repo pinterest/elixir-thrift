@@ -1,9 +1,8 @@
-defmodule Thrift.Generator.Client.BinaryFramed do
+defmodule Thrift.Generator.Binary.Framed.Client do
   @moduledoc false
 
   alias Thrift.Generator.Service
   alias Thrift.Parser.Models.Function
-  alias Thrift.Clients.BinaryFramed
 
   def generate(service_module, service) do
     functions = service.functions
@@ -11,15 +10,17 @@ defmodule Thrift.Generator.Client.BinaryFramed do
     |> Enum.map(&generate_handler_function(service_module, &1))
 
     quote do
-      defmodule Client.Framed do
-        alias Thrift.Clients.BinaryFramed
+      defmodule Binary.Framed.Client do
+        @moduledoc false
+
+        alias Thrift.Binary.Framed.Client, as: ClientImpl
         alias Thrift.Protocol.Binary
 
-        defdelegate close(conn), to: BinaryFramed
-        defdelegate connect(conn, opts), to: BinaryFramed
+        defdelegate close(conn), to: ClientImpl
+        defdelegate connect(conn, opts), to: ClientImpl
 
         def start_link(host, port, opts) do
-          BinaryFramed.start_link(host, port, opts)
+          ClientImpl.start_link(host, port, opts)
         end
         unquote_splicing(functions)
       end
@@ -102,7 +103,7 @@ defmodule Thrift.Generator.Client.BinaryFramed do
   defp build_response_handler(%Function{oneway: true}, _, _) do
     quote do
       _ = opts
-      BinaryFramed.oneway(client, [message | serialized_args])
+      ClientImpl.oneway(client, [message | serialized_args])
 
       {:ok, nil}
     end
@@ -110,10 +111,10 @@ defmodule Thrift.Generator.Client.BinaryFramed do
   defp build_response_handler(%Function{oneway: false}, rpc_name, response_module) do
     quote do
 
-      case BinaryFramed.request(client, [message | serialized_args], opts) do
+      case ClientImpl.request(client, [message | serialized_args], opts) do
         {:ok, message} ->
           message
-          |> BinaryFramed.deserialize_message_reply(unquote(rpc_name), sequence_id, unquote(response_module))
+          |> ClientImpl.deserialize_message_reply(unquote(rpc_name), sequence_id, unquote(response_module))
 
         {:error, _} = err ->
           err

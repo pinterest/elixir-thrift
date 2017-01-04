@@ -1,4 +1,4 @@
-defmodule Thrift.Clients.BinaryFramed do
+defmodule Thrift.Binary.Framed.Client do
   @moduledoc """
   A client implementation of Thrift's Binary Framed protocol.
 
@@ -41,13 +41,15 @@ defmodule Thrift.Clients.BinaryFramed do
   ]
 
   defmodule State do
+    @moduledoc false
+
     @type t :: %State{host: String.t,
                       port: (1..65_535),
-                      tcp_opts: BinaryFramed.tcp_opts,
+                      tcp_opts: Client.tcp_opts,
                       timeout: integer,
                       sock: pid,
                       retries: non_neg_integer,
-                      backoff_calculator: BinaryFramed.backoff_fn}
+                      backoff_calculator: Client.backoff_fn}
     defstruct host: nil,
               port: nil,
               tcp_opts: nil,

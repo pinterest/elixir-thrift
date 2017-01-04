@@ -21,7 +21,6 @@ defmodule Thrift.Generator.Behaviour do
     file_group = schema.file_group
     dest_module = FileGroup.dest_module(file_group, service)
     |> Module.concat(Handler)
-    |> Module.concat(Behaviour)
 
     callbacks = service.functions
     |> Map.values

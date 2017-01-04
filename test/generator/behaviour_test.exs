@@ -42,7 +42,7 @@ defmodule BehaviourTest do
   """
 
   thrift_test "that behaviour callbacks exist" do
-    behaviour_specs = Behaviour.behaviour_info(:callbacks)
+    behaviour_specs = Handler.behaviour_info(:callbacks)
 
     assert {:ping, 1} in behaviour_specs
     assert {:my_bool, 1} in behaviour_specs

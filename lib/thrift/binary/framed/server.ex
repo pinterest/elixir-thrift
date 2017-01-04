@@ -1,4 +1,5 @@
-defmodule Thrift.Servers.BinaryFramed do
+defmodule Thrift.Binary.Framed.Server
+  do
   @moduledoc false
 
   @type server_opts :: [
@@ -7,8 +8,6 @@ defmodule Thrift.Servers.BinaryFramed do
     max_restarts: non_neg_integer,
     max_seconds: non_neg_integer
   ]
-
-  alias Thrift.Servers.BinaryFramed
 
   @spec start_link(module, (1..65535), module, server_opts) :: GenServer.on_start
   def start_link(server_module, port, handler_module, opts) do
@@ -21,7 +20,7 @@ defmodule Thrift.Servers.BinaryFramed do
                                  worker_count,
                                  :ranch_tcp,
                                  [port: port],
-                                 BinaryFramed.ProtocolHandler,
+                                 Thrift.Binary.Framed.ProtocolHandler,
                                  {server_module, handler_module})
     Supervisor.start_link([listener], strategy: :one_for_one,
                           max_restarts: max_restarts, max_seconds: max_seconds)

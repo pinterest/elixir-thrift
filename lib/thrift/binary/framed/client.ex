@@ -41,6 +41,8 @@ defmodule Thrift.Binary.Framed.Client do
   ]
 
   defmodule State do
+    @moduledoc false
+
     @type t :: %State{host: String.t,
                       port: (1..65_535),
                       tcp_opts: Client.tcp_opts,

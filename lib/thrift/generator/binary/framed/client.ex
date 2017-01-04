@@ -11,6 +11,8 @@ defmodule Thrift.Generator.Binary.Framed.Client do
 
     quote do
       defmodule Binary.Framed.Client do
+        @moduledoc false
+
         alias Thrift.Binary.Framed.Client, as: ClientImpl
         alias Thrift.Protocol.Binary
 

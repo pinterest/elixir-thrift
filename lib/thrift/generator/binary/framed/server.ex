@@ -1,4 +1,4 @@
-defmodule Thrift.Generator.Server.BinaryFramed do
+defmodule Thrift.Generator.Binary.Framed.Server do
   @moduledoc false
   alias Thrift.Generator.{
     Service,
@@ -6,7 +6,6 @@ defmodule Thrift.Generator.Server.BinaryFramed do
   }
   alias Thrift.Parser.FileGroup
   alias Thrift.Parser.Models.Function
-  alias Thrift.Servers.BinaryFramed
 
   def generate(service_module, service, file_group) do
     functions = service.functions
@@ -14,15 +13,15 @@ defmodule Thrift.Generator.Server.BinaryFramed do
     |> Enum.map(&generate_handler_function(file_group, service_module, &1))
 
     quote do
-      defmodule Server.Framed do
+      defmodule Binary.Framed.Server do
         @moduledoc false
         require Logger
 
-        alias Thrift.Servers.BinaryFramed
-        defdelegate stop(name), to: BinaryFramed
+        alias Thrift.Binary.Framed.Server, as: ServerImpl
+        defdelegate stop(name), to: ServerImpl
 
         def start_link(handler_module, port, opts) do
-          BinaryFramed.start_link(__MODULE__, port, handler_module, opts)
+          ServerImpl.start_link(__MODULE__, port, handler_module, opts)
         end
 
         unquote_splicing(functions)

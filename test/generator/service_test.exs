@@ -79,7 +79,7 @@ defmodule Thrift.Generator.ServiceTest do
 
   alias Thrift.TApplicationException
   alias Thrift.Generator.ServiceTest.User
-  alias Thrift.Generator.ServiceTest.SimpleService.Client.Framed, as: FramedClient
+  alias Thrift.Generator.ServiceTest.SimpleService.Binary.Framed.Client
   alias Thrift.Generator.ServiceTest.UsernameTakenException
 
   setup do
@@ -91,7 +91,7 @@ defmodule Thrift.Generator.ServiceTest do
       framed: true,
       service: :simple_service_thrift)
 
-    {:ok, client} = FramedClient.start_link('127.0.0.1', port,
+    {:ok, client} = Client.start_link('127.0.0.1', port,
                                             [tcp_opts: [timeout: 5000]])
     {:ok, handler_pid} = ServerSpy.start_link
 
@@ -161,7 +161,7 @@ defmodule Thrift.Generator.ServiceTest do
   thrift_test "it should be able to execute a simple ping", ctx do
     ServerSpy.set_reply(true)
 
-    {:ok, true} = FramedClient.ping(ctx.client)
+    {:ok, true} = Client.ping(ctx.client)
 
     assert {:ping, {}} == ServerSpy.get_args
   end
@@ -169,7 +169,7 @@ defmodule Thrift.Generator.ServiceTest do
   thrift_test "it should be able to update the username", ctx do
     ServerSpy.set_reply(true)
 
-    assert {:ok, true} = FramedClient.update_username(ctx.client, 1234, "stinkypants")
+    assert {:ok, true} = Client.update_username(ctx.client, 1234, "stinkypants")
     assert {:update_username, {1234, "stinkypants"}} == ServerSpy.get_args
 
   end
@@ -177,7 +177,7 @@ defmodule Thrift.Generator.ServiceTest do
   thrift_test "it should be able to handle structs as function arguments", ctx do
     ServerSpy.set_reply(true)
 
-    assert {:ok, true} = FramedClient.are_friends(ctx.client,
+    assert {:ok, true} = Client.are_friends(ctx.client,
                                                   %User{id: 1, username: "stinky"},
                                                   %User{id: 28, username: "less_stinky"})
 
@@ -188,7 +188,7 @@ defmodule Thrift.Generator.ServiceTest do
   thrift_test "it should be able to return structs", ctx do
     ServerSpy.set_reply({:User, 28_392, 'stinky'})
 
-    {:ok, user} = FramedClient.get_by_id(ctx.client, 12_345)
+    {:ok, user} = Client.get_by_id(ctx.client, 12_345)
 
     assert %User{id: 28_392, username: "stinky"} == user
   end
@@ -196,7 +196,7 @@ defmodule Thrift.Generator.ServiceTest do
   thrift_test "it should handle expected exceptions", ctx do
     ServerSpy.set_reply({:exception, {:UsernameTakenException, 'oh noes'}})
 
-    {:error, {:exception, exc}} = FramedClient.update_username(ctx.client, 8382, "dude")
+    {:error, {:exception, exc}} = Client.update_username(ctx.client, 8382, "dude")
 
     assert %UsernameTakenException{message: "oh noes"} == exc
   end
@@ -204,21 +204,21 @@ defmodule Thrift.Generator.ServiceTest do
   thrift_test "it handles a TApplicationException when the server blows up", ctx do
     ServerSpy.set_reply(:this_isnt_a_valid_reply)
 
-    {:error, {:exception, ex}} = FramedClient.update_username(ctx.client, 1234, "user")
+    {:error, {:exception, ex}} = Client.update_username(ctx.client, 1234, "user")
     assert %TApplicationException{message: "An unknown handler error occurred.", type: :unknown} == ex
   end
 
   thrift_test "bang functions return only the value", ctx do
     ServerSpy.set_reply({:User, 2, 'stinky'})
 
-    assert %User{id: 2, username: "stinky"} == FramedClient.get_by_id!(ctx.client, 1234)
+    assert %User{id: 2, username: "stinky"} == Client.get_by_id!(ctx.client, 1234)
   end
 
   thrift_test "it raises a server exception with the bang function", ctx do
     ServerSpy.set_reply("oh noes")
 
     assert_raise TApplicationException, fn ->
-      FramedClient.update_username!(ctx.client, 88, "blow up")
+      Client.update_username!(ctx.client, 88, "blow up")
     end
   end
 
@@ -226,20 +226,20 @@ defmodule Thrift.Generator.ServiceTest do
     ServerSpy.set_reply({:exception, {:UsernameTakenException, 'blowie up'}})
 
     assert_raise UsernameTakenException, fn ->
-      FramedClient.update_username!(ctx.client, 821, "foo")
+      Client.update_username!(ctx.client, 821, "foo")
     end
   end
 
   thrift_test "it handles void functions", ctx do
     ServerSpy.set_reply(:noreply)
 
-    assert {:ok, nil} == FramedClient.mark_inactive(ctx.client, 5529)
+    assert {:ok, nil} == Client.mark_inactive(ctx.client, 5529)
   end
 
   thrift_test "it handles void oneway functions", ctx do
     ServerSpy.set_reply(:noreply)
 
-    assert {:ok, nil} == FramedClient.do_some_work(ctx.client, "12345")
+    assert {:ok, nil} == Client.do_some_work(ctx.client, "12345")
     :timer.sleep(10)
   end
 
@@ -248,43 +248,43 @@ defmodule Thrift.Generator.ServiceTest do
 
     ServerSpy.set_reply(friend_ids)
 
-    assert {:ok, friend_ids} == FramedClient.friend_ids_of(ctx.client, 14_821)
+    assert {:ok, friend_ids} == Client.friend_ids_of(ctx.client, 14_821)
   end
 
   thrift_test "it handles returning a map", ctx do
     ServerSpy.set_reply(:dict.from_list([{'bernie', 281}, {'brownie', 9924}]))
 
     expected = %{"bernie" => 281, "brownie" => 9924}
-    assert {:ok, expected} == FramedClient.friend_nicknames(ctx.client, 4810)
+    assert {:ok, expected} == Client.friend_nicknames(ctx.client, 4810)
   end
 
   thrift_test "it handles returning a set", ctx do
     ServerSpy.set_reply(:sets.from_list(['sports', 'debate', 'motorcycles']))
 
     expected = MapSet.new(["sports", "debate", "motorcycles"])
-    assert {:ok, expected} == FramedClient.tags(ctx.client, 91_281)
+    assert {:ok, expected} == Client.tags(ctx.client, 91_281)
   end
 
   thrift_test "it has a configurable gen_server timeout", ctx do
     ServerSpy.set_reply({:sleep, 1000, [1, 3, 4]})
 
     assert catch_exit(
-      FramedClient.friend_ids_of_with_options(ctx.client, 1234, [gen_server_opts: [timeout: 200]])
+      Client.friend_ids_of_with_options(ctx.client, 1234, [gen_server_opts: [timeout: 200]])
     )
   end
 
   thrift_test "it has a configurable socket timeout", ctx do
     ServerSpy.set_reply({:sleep, 1000, [1, 3, 4]})
 
-    assert {:error, :timeout} = FramedClient.friend_ids_of_with_options(ctx.client, 12_914, [tcp_opts: [timeout: 1]])
+    assert {:error, :timeout} = Client.friend_ids_of_with_options(ctx.client, 12_914, [tcp_opts: [timeout: 1]])
   end
 
   thrift_test "oneway functions should not have an options version" do
-    refute {:do_some_work_with_options, 3} in FramedClient.__info__(:functions)
+    refute {:do_some_work_with_options, 3} in Client.__info__(:functions)
   end
 
   thrift_test "functions that return values have an options version" do
-    defined_functions = FramedClient.__info__(:functions)
+    defined_functions = Client.__info__(:functions)
 
     assert {:ping_with_options, 2}              in defined_functions
     assert {:update_username_with_options, 4}   in defined_functions
@@ -300,7 +300,7 @@ defmodule Thrift.Generator.ServiceTest do
   # connection tests
 
   thrift_test "clients can be closed", ctx do
-    :ok = FramedClient.close(ctx.client)
+    :ok = Client.close(ctx.client)
   end
 
   thrift_test "clients retry on a closed server", ctx do
@@ -309,18 +309,18 @@ defmodule Thrift.Generator.ServiceTest do
 
     assert_receive {:DOWN, ^ref, _, _, _}
 
-    {:ok, client} = FramedClient.start_link("127.0.0.1", ctx.port, [tcp_opts: [timeout: 1]])
+    {:ok, client} = Client.start_link("127.0.0.1", ctx.port, [tcp_opts: [timeout: 1]])
 
     assert :sys.get_state(client).mod_state.retries > 0
   end
 
   thrift_test "clients are warned if they tray to use a closed client", ctx do
-    FramedClient.close(ctx.client)
+    Client.close(ctx.client)
     ref = Process.monitor(ctx.server)
     Process.exit(ctx.server, :normal)
     assert_receive {:DOWN, ^ref, _, _, _}
 
-    {:error, _} = FramedClient.friend_ids_of(ctx.client, 1234)
+    {:error, _} = Client.friend_ids_of(ctx.client, 1234)
   end
 
   thrift_test "clients retry if the server dies handling a message", ctx do
@@ -334,7 +334,7 @@ defmodule Thrift.Generator.ServiceTest do
     me = self
     spawn fn ->
       Process.send_after(me, :ok, 20)
-      FramedClient.friend_ids_of(ctx.client, 14_821)
+      Client.friend_ids_of(ctx.client, 14_821)
     end
 
     receive do
@@ -356,7 +356,7 @@ defmodule Thrift.Generator.ServiceTest do
     Process.exit(ctx.server, :normal)
     assert_receive {:DOWN, ^ref, _, _, _}
 
-    assert {:ok, nil} == FramedClient.do_some_work(ctx.client, "12345")
+    assert {:ok, nil} == Client.do_some_work(ctx.client, "12345")
     :timer.sleep(10)
   end
 

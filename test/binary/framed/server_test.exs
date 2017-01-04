@@ -1,4 +1,4 @@
-defmodule Servers.BinaryFramedIntegrationTest do
+defmodule Servers.Binary.Framed.IntegrationTest do
   use ThriftTestCase
 
   @thrift_file name: "server_test.thrift", contents: """
@@ -35,10 +35,10 @@ defmodule Servers.BinaryFramedIntegrationTest do
 
   def define_handler do
     defmodule ServerTestHandler do
-      alias Servers.BinaryFramedIntegrationTest.ServerTest.Handler
-      alias Servers.BinaryFramedIntegrationTest.{TestException, UserNotFound, OtherException}
-      alias Servers.BinaryFramedIntegrationTest, as: T
-      @behaviour Handler.Behaviour
+      alias Servers.Binary.Framed.IntegrationTest.ServerTest.Handler
+      alias Servers.Binary.Framed.IntegrationTest.{TestException, UserNotFound, OtherException}
+      alias Servers.Binary.Framed.IntegrationTest, as: T
+      @behaviour Handler
 
       def do_async(message) do
         Agent.update(:server_args, fn(_) -> message end)
@@ -70,14 +70,14 @@ defmodule Servers.BinaryFramedIntegrationTest do
     end
   end
 
-  alias Servers.BinaryFramedIntegrationTest.ServerTest.Client
-  alias Servers.BinaryFramedIntegrationTest.ServerTest.Server
+  alias Servers.Binary.Framed.IntegrationTest.ServerTest.Binary.Framed.Client
+  alias Servers.Binary.Framed.IntegrationTest.ServerTest.Binary.Framed.Server
   alias Thrift.TApplicationException, as: TAE
 
   def stop_server(server_pid) do
     try do
-      Server.Framed.stop(server_pid)
-    catch :exit, :noproc ->
+      Server.stop(server_pid)
+    catch :exit, _ ->
       :ok
     end
   end
@@ -87,7 +87,7 @@ defmodule Servers.BinaryFramedIntegrationTest do
     {:module, mod_name, _, _} = define_handler()
     server_port = :rand.uniform(10000) + 12000
 
-    {:ok, server_pid} = Server.Framed.start_link(mod_name, server_port, [])
+    {:ok, server_pid} = Server.start_link(mod_name, server_port, [])
 
     on_exit fn ->
       stop_server(server_pid)
@@ -111,18 +111,18 @@ defmodule Servers.BinaryFramedIntegrationTest do
       end
     end
 
-    {:ok, client} = Client.Framed.start_link("localhost", ctx.port, [])
+    {:ok, client} = Client.start_link("localhost", ctx.port, [])
 
     {:ok, client: client}
   end
 
   thrift_test "it can return a simple boolean value", ctx do
-    assert {:ok, true} == Client.Framed.ping(ctx.client)
+    assert {:ok, true} == Client.ping(ctx.client)
   end
 
   thrift_test "it can throw checked exceptions", ctx do
     expected_exception = TestException.exception [message: "Oh noes!", code: 400]
-    assert {:error, {:exception, expected_exception}} == Client.Framed.checked_exception(ctx.client)
+    assert {:error, {:exception, expected_exception}} == Client.checked_exception(ctx.client)
   end
 
   thrift_test "it can throw many checked exceptions", ctx do
@@ -130,24 +130,24 @@ defmodule Servers.BinaryFramedIntegrationTest do
     e2 = UserNotFound.exception [message: "Not here!"]
     e3 = OtherException.exception [message: "This is the other"]
 
-    assert {:ok, true} == Client.Framed.multiple_exceptions(ctx.client, 0)
-    assert {:error, {:exception, e1}} == Client.Framed.multiple_exceptions(ctx.client, 1)
-    assert {:error, {:exception, e2}} == Client.Framed.multiple_exceptions(ctx.client, 2)
-    assert {:error, {:exception, e3}} == Client.Framed.multiple_exceptions(ctx.client, 3)
+    assert {:ok, true} == Client.multiple_exceptions(ctx.client, 0)
+    assert {:error, {:exception, e1}} == Client.multiple_exceptions(ctx.client, 1)
+    assert {:error, {:exception, e2}} == Client.multiple_exceptions(ctx.client, 2)
+    assert {:error, {:exception, e3}} == Client.multiple_exceptions(ctx.client, 3)
   end
 
   thrift_test "it can handle unexpected exceptions", ctx do
-    assert {:error, {:exception, %TAE{message: msg, type: :internal_error}}} = Client.Framed.server_exception(ctx.client)
+    assert {:error, {:exception, %TAE{message: msg, type: :internal_error}}} = Client.server_exception(ctx.client)
     assert String.contains?(msg, "Server error: ** (RuntimeError) This wasn't supposed to happen")
   end
 
   thrift_test "it can return nothing", ctx do
-    {:ok, nil} = Client.Framed.returns_nothing(ctx.client)
+    {:ok, nil} = Client.returns_nothing(ctx.client)
   end
 
   thrift_test "it can return structs", ctx do
     id_and_name = %IdAndName{id: 1234, name: "stinky"}
-    assert {:ok, ^id_and_name} = Client.Framed.echo_struct(ctx.client, id_and_name)
+    assert {:ok, ^id_and_name} = Client.echo_struct(ctx.client, id_and_name)
   end
 
   thrift_test "it can handle bogus data", ctx do
@@ -155,11 +155,11 @@ defmodule Servers.BinaryFramedIntegrationTest do
     :ok = :gen_tcp.send(socket, <<1, 2, 3, 4, 5>>)
 
     assert {:error, :closed}  == :gen_tcp.recv(socket, 0)
-    assert {:ok, true} = Client.Framed.ping(ctx.client)
+    assert {:ok, true} = Client.ping(ctx.client)
   end
 
   thrift_test "it can handle oneway messages", ctx do
-    assert {:ok, nil} = Client.Framed.do_async(ctx.client, "my message")
+    assert {:ok, nil} = Client.do_async(ctx.client, "my message")
 
     :timer.sleep 100
 
@@ -167,7 +167,7 @@ defmodule Servers.BinaryFramedIntegrationTest do
   end
 
   thrift_test "camel cased functions are converted to underscore", ctx do
-    assert {:ok, 2421} == Client.Framed.my_camel_cased_function(ctx.client, "username")
+    assert {:ok, 2421} == Client.my_camel_cased_function(ctx.client, "username")
 
     :timer.sleep 100
     assert "username" == Agent.get(:server_args, &(&1))

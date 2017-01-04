@@ -93,17 +93,17 @@ service UserService {
 Generated Code | Path            |Output Module
 ---------------|-----------------|--------------
 User Struct    | lib/thrift/test/user.ex |`Thrift.Test.User`
-UserNotFound Exception| lib/test/user_not_found.ex | `Thrift.Test.UserNotFound`
-User Binary Protocol | lib/test/user.ex | `Thrift.Test.User.BinaryProtocol`
-UserNotFound Binary Protocol | lib/test/user_not_found.ex | `Thrift.Test.UserNotFound.BinaryProtocol`
-UserService Framed Binary Client | lib/test/user_service.ex |`Thrift.Test.UserService.Clients.Binary.Framed`
-UserService Framed Binary Server | lib/test/user_service.ex | `Thrift.Test.UserService.Servers.Binary.Framed`
-UserService Handler Behviour (Used for writing servers) | lib/test_user_service/handler/behaviour.ex  | `Thrift.Test.UserService.Handler.Behaviour`
+UserNotFound Exception| lib/thrift/test/user_not_found.ex | `Thrift.Test.UserNotFound`
+User Binary Protocol | lib/thrift/test/user.ex | `Thrift.Test.User.BinaryProtocol`
+UserNotFound Binary Protocol | lib/thrift/test/user_not_found.ex | `Thrift.Test.UserNotFound.BinaryProtocol`
+UserService Framed Binary Client | lib/thrift/test/user_service.ex |`Thrift.Test.UserService.Clients.Binary.Framed`
+UserService Framed Binary Server | lib/thrift/test/user_service.ex | `Thrift.Test.UserService.Servers.Binary.Framed`
+UserService Handler Behviour (Used for writing servers) | lib/thrift/test_user_service/handler/behaviour.ex  | `Thrift.Test.UserService.Handler.Behaviour`
 
 
 ## Using the Client
 The client includes a static module that does most of the work, and a generated
-interface module thatperforms some conversions and makes calling remote
+interface module that performs some conversions and makes calling remote
 functions easier. You will not directly interface with the static module,
 but it is the one that's started when `start_link` is called.
 
@@ -120,7 +120,7 @@ Function name  | Description
 `get_user_by_id_with_options/3` | Allows you to pass `gen_tcp` and `GenServer` options to your client. This is useful for setting the `GenServer` timeout if you expect your RPC to take longer than the default of 5 seconds. Like `get_user_by_id/2`, this function returns `{:ok, response}` or `{:error, reason}` tuples.
 `get_user_by_id_with_options!/3` | Allows you to pass `gen_tcp` and `GenServer` options and raises an exception if an error occurs.
 
-**Note:** in the above example, the function `deleteUser` will be converted to `delete_user` to comply with Elixr's [naming conventions](http://elixir-lang.org/docs/stable/elixir/naming-conventions.html).
+**Note:** in the above example, the function `deleteUser` will be converted to `delete_user` to comply with Elixir's [naming conventions](http://elixir-lang.org/docs/stable/elixir/naming-conventions.html).
 
 To use the client, simply call `start_link`, supplying the host and port.
 
@@ -215,7 +215,7 @@ Name           |  Type | Description
 `worker_count`   | positive integer | The number of acceptor workers available to take requests
 `name`  | atom | (Optional) The name of the server. The server's pid becomes registered to this name. If not specified, the handler module's name is used.
 `max_restarts` | non negative integer | The number of times to restart (see the next option)
-`max_seconds`  | non negative integer | The number of seconds. This is used by the suprvisor to determine when to crash. If a server restarts `max_restarts` times in `max_seconds` then the supervisor crashes.
+`max_seconds`  | non negative integer | The number of seconds. This is used by the supervisor to determine when to crash. If a server restarts `max_restarts` times in `max_seconds` then the supervisor crashes.
 
 The server defines a Supervisor, which can be added to your application's supervision tree. When adding the server to your applications supervision tree, use the `supervisor` function rather than the `worker` function.
 
@@ -227,13 +227,14 @@ it. This module lets you serialize and deserialize its own type easily.
 For example:
 
 ```elixir
-iex(1)> {serialized, ""} = %User{username: "stinky" id: 1234, first_name: "Stinky", last_name" "Stinkman"}
+iex(1)> {serialized, ""} = %User{username: "stinky" id: 1234, first_name: "Stinky", last_name: "Stinkman"}
 |> User.BinaryProtocol.serialize
+|> IO.iodata_to_binary
 iex(2)> User.BinaryProtocol.deserialize(serialized)
-{:ok, %User{username: "stinky" id: 1234, first_name: "Stinky", last_name" "Stinkman"}}
+{:ok, %User{username: "stinky" id: 1234, first_name: "Stinky", last_name: "Stinkman"}}
 ```
-The return value of the `serialize` function is an IO List. If you need a
-binary, you can pipe that to `IO.iodata_to_binary`.
+
+The return value of the `serialize` function is an [iodata]. You can pass it through `IO.iodata_to_binary` to convert it to a binary. You also can write the iodata directly to a file or socket without converting it.
 
 ## Other Features
 ### Thrift IDL Parsing
@@ -241,8 +242,8 @@ binary, you can pipe that to `IO.iodata_to_binary`.
 This package also contains support for parsing [Thrift IDL][idl]
 files. It is built on a low-level Erlang lexer and parser:
 
-```erlang
-{:ok, tokens, _} = :thrift_lexer.string('enum Colors { RED, GREEN, BLUE}')
+```elixir
+{:ok, tokens, _} = :thrift_lexer.string('enum Colors { RED, GREEN, BLUE }')
 {:ok,
  [{:enum, 1}, {:ident, 1, 'Colors'}, {:symbol, 1, '{'}, {:ident, 1, 'RED'},
   {:symbol, 1, ','}, {:ident, 1, 'GREEN'}, {:symbol, 1, ','},
@@ -260,7 +261,7 @@ files. It is built on a low-level Erlang lexer and parser:
 But also provides a high-level Elixir parsing interface:
 
 ```elixir
-Thrift.Parser.parse("enum Colors { RED, GREEN, BLUE}")
+Thrift.Parser.parse("enum Colors { RED, GREEN, BLUE }")
 %Thrift.Parser.Models.Schema{constants: %{},
  enums: %{Colors: %Thrift.Parser.Models.TEnum{name: :Colors,
     values: [RED: 1, GREEN: 2, BLUE: 3]}}, exceptions: %{}, includes: [],
@@ -268,7 +269,7 @@ Thrift.Parser.parse("enum Colors { RED, GREEN, BLUE}")
  typedefs: %{}, unions: %{}}
 ```
 
-You can use these features to build in additional language suppor or to
-add support for additional protocols and servers.
+You can use these features to support additional languages, protocols, and servers.
 
 [idl]: https://thrift.apache.org/docs/idl
+[iodata]: http://elixir-lang.org/getting-started/io-and-the-file-system.html#iodata-and-chardata

@@ -18,3 +18,9 @@ struct Nesting {
   1: User user,
   2: shared.SharedStruct nested
 }
+
+
+service SimpleService {
+  User echo_user(1: User user);
+  bool ping();
+}

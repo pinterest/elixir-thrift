@@ -68,6 +68,10 @@ defmodule Thrift.Generator.StructGenerator do
     type = FileGroup.resolve(schema.file_group, ref)
     default_value(value, type, schema)
   end
+  defp default_value(%Constant{type: %StructRef{} = ref} = constant, type, schema) do
+    constant = %Constant{constant | type: FileGroup.resolve(schema.file_group, ref)}
+    default_value(constant, type, schema)
+  end
   defp default_value(%Constant{type: type, value: value}, type, schema) do
     default_value(value, type, schema)
   end
@@ -87,6 +91,23 @@ defmodule Thrift.Generator.StructGenerator do
   defp default_value(value, :string, _schema) when is_binary(value), do: value
   defp default_value(value, :string, _schema) when is_list(value) do
     List.to_string(value)
+  end
+  defp default_value(values, %Struct{fields: fields} = struct, schema) when is_list(values) do
+    struct_module = FileGroup.dest_module(schema.file_group, struct)
+    types = Map.new(fields, fn %Field{name: name, type: type} ->
+      {name, type}
+    end)
+    defaults = Enum.map(fields, fn %Field{name: name, type: type, default: default} ->
+      {name, default_value(default, type, schema)}
+    end)
+    values = Enum.map(values, fn {name_charlist, value} ->
+      name = List.to_string(name_charlist) |> String.to_existing_atom
+      type = Map.fetch!(types, name)
+      {name, default_value(value, type, schema)}
+    end)
+    quote do
+      %{unquote_splicing([{:__struct__, struct_module} | Keyword.new(defaults ++ values)])}
+    end
   end
   defp default_value(%{} = value, {:map, {key_type, value_type}}, schema) do
     Map.new(value, fn {key, value} ->

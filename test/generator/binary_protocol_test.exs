@@ -467,6 +467,10 @@ defmodule Thrift.Generator.BinaryProtocolTest do
     13: map<string, byte> map_val = {"a": 1, "b": 2}
     14: set<string> set_val = ["a", "b"]
     15: list<string> list_val = ["a", "b"]
+    120: DefaultStructVal empty_struct = {}
+    130: map<string, byte> empty_map = {}
+    140: set<string> empty_set = []
+    150: list<string> empty_list = []
   }
   """
 
@@ -489,6 +493,10 @@ defmodule Thrift.Generator.BinaryProtocolTest do
     assert struct.map_val == %{"a" => 1, "b" => 2}
     assert struct.set_val == MapSet.new(["a", "b"])
     assert struct.list_val == ["a", "b"]
+    assert struct.empty_struct == %DefaultStructVal{}
+    assert struct.empty_map == %{}
+    assert struct.empty_set == MapSet.new
+    assert struct.empty_list == []
     :ok
   end
 end

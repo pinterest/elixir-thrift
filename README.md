@@ -22,9 +22,23 @@ erlang serialization left as IOList         |      100   | 10544.31 µs/op
 erlang serialization (converted to binary)  |      100   | 11714.74 µs/op
 erlang deserialization                      |      100   | 21671.39 µs/op
 
-*Benchmark was run on a 2.8Ghz MacbookPro with 16G of ram running macOS Sierra*
 
 *Note: all serialization in this framework leaves its results in iolists for speed and efficiency.*
+
+#### Framed Server Benchmark
+(run `mix bench bench/framed_server_benchmark.exs`)
+
+Benchmark name                 | Iterations   | Average time
+-------------------------------|--------------|--------------
+Returning a boolean in Elixir  |     50000    | 51.20 µs/op
+Returning a boolean in Erlang  |     20000    | 74.46 µs/op
+Echoing a struct in Elixir     |     10000    | 275.89 µs/op
+Echoing a struct in Erlang     |      1000    | 1200.35 µs/op
+
+*Note: The Erlang parts of the above benchmark utilized the generated Erlang client
+and server from the Apache Thrift project* 
+
+*Benchmarks were run on a 2.8Ghz MacbookPro with 16G of ram running macOS Sierra, using Elixir 1.3.4 and Erlang 19.1*
 
 ## Setup
 

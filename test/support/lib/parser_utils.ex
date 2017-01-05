@@ -48,7 +48,7 @@ defmodule ParserUtils do
     mint_gum = Keyword.get(opts, :mint_gum, :undefined)
     username = Keyword.get(opts, :username, :undefined)
     friends = Keyword.get(opts, :friends, :undefined)
-    my_map = Keyword.get(opts, :my_map, :undefined)
+    my_map = to_erlang_dict(Keyword.get(opts, :my_map, :undefined))
     blocked_user_ids = case Keyword.get(opts, :blocked_user_ids) do
       nil -> :undefined
       list when is_list(list) -> :sets.from_list(list)
@@ -169,5 +169,12 @@ defmodule ParserUtils do
     rescue _ ->
         {:error, :cant_decode}
     end
+  end
+
+  defp to_erlang_dict(:undefined), do: :undefined
+  defp to_erlang_dict(map) when is_map(map) do
+    map
+    |> Enum.to_list
+    |> :dict.from_list
   end
 end

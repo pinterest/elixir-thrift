@@ -4,13 +4,21 @@ defmodule FramedServerBenchmark do
   @thrift_file_path "./test/fixtures/app/thrift/simple.thrift"
   import ParserUtils
 
-  def define_handler do
-    defmodule Simple.Handler do
-      def echo_user(user) do
-        user
-      end
+  defmodule Simple.Handler do
+    def echo_user(user) do
+      user
+    end
 
-      def ping, do: true
+    def ping, do: true
+  end
+
+  defmodule ErlangHandlers do
+    def handle_function(:echo_user, {user}) do
+      {:reply, user}
+    end
+
+    def handle_function(:ping, _) do
+      {:reply, true}
     end
   end
 
@@ -21,11 +29,21 @@ defmodule FramedServerBenchmark do
 
     Application.start(:ranch)
 
-    {:module, mod_name, _, _} = define_handler
+    {:ok, server_pid} = SimpleService.Binary.Framed.Server.start_link(Simple.Handler, 12345, [])
+    {:ok, erlang_server_pid} = :thrift_socket_server.start(handler: ErlangHandlers,
+                                                           port: 56789,
+                                                           service: :simple_service_thrift,
+                                                           framed: true,
+                                                           socket_opts: [
+                                                             recv_timeout: 15_000,
+                                                             keepalive: true])
 
-    {:ok, server_pid} = SimpleService.Binary.Framed.Server.start_link(mod_name, 12345, [])
+    map_value = 1..100
+    |> Enum.map(fn num -> {num, "foo#{num}"} end)
+    |> Map.new
 
-    user = %User {
+    blocked_user_ids = Enum.to_list(50_000..50_150)
+    user_options = [
       is_evil: false,
       user_id: 2841204,
       number_of_hairs_on_head: 1029448,
@@ -33,23 +51,39 @@ defmodule FramedServerBenchmark do
       nineties_era_color: 381221,
       mint_gum: 24421.024,
       username: "Stinkypants",
-      my_map: %{1 => "foo", 2 => "bar", 3 => "baz"},
-      optional_integers: Enum.to_list(1..100)
-    }
+      my_map: map_value,
+      optional_integers: Enum.to_list(1..100),
+      blocked_user_ids: blocked_user_ids
+    ]
+
+    erlang_user = user(:erlang, user_options)
+    elixir_user = user(:elixir, user_options)
 
     {:ok, client} = SimpleService.Binary.Framed.Client.start_link("localhost", 12345, [])
+    {:ok, erlang_client} = :thrift_client_util.new('localhost', 56789, :simple_service_thrift, framed: true)
 
-    {:ok, user: user, client: client}
+    {:ok, elixir_user: elixir_user, erlang_user: erlang_user, client: client, erlang_client: erlang_client}
   end
 
-  bench "echoing a struct" do
-    user = bench_context[:user]
+  bench "Echoing a struct in Elixir" do
+    user = bench_context[:elixir_user]
     client = bench_context[:client]
-    SimpleService.Binary.Framed.Client.echo_user(client, user)
+    {:ok, user} = SimpleService.Binary.Framed.Client.echo_user(client, user)
   end
 
-  bench "return boolean" do
+  bench "Returning a boolean in Elixir" do
     client = bench_context[:client]
-    SimpleService.Binary.Framed.Client.ping(client)
+    {:ok, user} = SimpleService.Binary.Framed.Client.ping(client)
   end
+
+  bench "Echoing a struct in Erlang" do
+    {_client, {:ok, _u}} = bench_context[:erlang_client]
+    |> :thrift_client.call(:echo_user, [bench_context[:erlang_user]])
+  end
+
+  bench "Returning a boolean in Erlang" do
+    {_client, {:ok, true}} = bench_context[:erlang_client]
+    |> :thrift_client.call(:ping, [])
+  end
+
 end

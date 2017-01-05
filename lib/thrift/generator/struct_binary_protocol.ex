@@ -310,6 +310,9 @@ defmodule Thrift.Generator.StructBinaryProtocol do
       end
     end
   end
+  defp map_key_deserializer(:binary, key_name, value_name, file_group) do
+    map_key_deserializer(:string, key_name, value_name, file_group)
+  end
   defp map_key_deserializer(:string, key_name, value_name, _file_group) do
     quote do
       defp unquote(key_name)(<<string_size::32-signed, key::binary-size(string_size), rest::binary>>, stack) do
@@ -455,6 +458,9 @@ defmodule Thrift.Generator.StructBinaryProtocol do
         unquote(key_name)(rest, [Map.put(map, key, value), remaining - 1 | stack])
       end
     end
+  end
+  defp map_value_deserializer(:binary, key_name, value_name, file_group) do
+    map_value_deserializer(:string, key_name, value_name, file_group)
   end
   defp map_value_deserializer(:string, key_name, value_name, _file_group) do
     quote do
@@ -604,6 +610,9 @@ defmodule Thrift.Generator.StructBinaryProtocol do
         unquote(name)(rest, [[element | list], remaining - 1 | stack])
       end
     end
+  end
+  defp list_deserializer(:binary, name, file_group) do
+    list_deserializer(:string, name, file_group)
   end
   defp list_deserializer(:string, name, _file_group) do
     quote do

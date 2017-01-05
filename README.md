@@ -96,9 +96,9 @@ User Struct    | lib/thrift/test/user.ex |`Thrift.Test.User`
 UserNotFound Exception| lib/thrift/test/user_not_found.ex | `Thrift.Test.UserNotFound`
 User Binary Protocol | lib/thrift/test/user.ex | `Thrift.Test.User.BinaryProtocol`
 UserNotFound Binary Protocol | lib/thrift/test/user_not_found.ex | `Thrift.Test.UserNotFound.BinaryProtocol`
-UserService Framed Binary Client | lib/thrift/test/user_service.ex |`Thrift.Test.UserService.Clients.Binary.Framed`
-UserService Framed Binary Server | lib/thrift/test/user_service.ex | `Thrift.Test.UserService.Servers.Binary.Framed`
-UserService Handler Behviour (Used for writing servers) | lib/thrift/test_user_service/handler/behaviour.ex  | `Thrift.Test.UserService.Handler.Behaviour`
+UserService Framed Binary Client | lib/thrift/test/user_service.ex |`Thrift.Test.UserService.Binary.Framed.Client`
+UserService Framed Binary Server | lib/thrift/test/user_service.ex | `Thrift.Test.UserService.Binary.Framed.Server`
+UserService Handler Behviour (Used for writing servers) | lib/thrift/test_user_service/handler.ex  | `Thrift.Test.UserService.Handler`
 
 
 ## Using the Client

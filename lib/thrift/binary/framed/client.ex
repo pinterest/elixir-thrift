@@ -49,14 +49,16 @@ defmodule Thrift.Binary.Framed.Client do
                       timeout: integer,
                       sock: pid,
                       retries: non_neg_integer,
-                      backoff_calculator: Client.backoff_fn}
+                      backoff_calculator: Client.backoff_fn,
+                      seq_id: integer}
     defstruct host: nil,
               port: nil,
               tcp_opts: nil,
               timeout: 5000,
               sock: nil,
               retries: 0,
-              backoff_calculator: nil
+              backoff_calculator: nil,
+              seq_id: 0
   end
 
   require Logger
@@ -162,13 +164,11 @@ defmodule Thrift.Binary.Framed.Client do
   The data argument must be a properly formatted Thrift message.
   """
   def oneway(conn, rpc_name, serialized_args, _opts) do
-    seq_id = :erlang.unique_integer([:positive])
-    message = Binary.serialize(:message_begin, {:oneway, seq_id, rpc_name})
-    :ok = Connection.cast(conn, {:oneway, [message | serialized_args]})
+    :ok = Connection.cast(conn, {:oneway, rpc_name, serialized_args})
     :ok
   end
 
-  @spec call(pid, String.t, data, options) :: {:ok, data}
+  @spec call(pid, String.t, data, options) :: protocol_response
   @doc """
   Executes a Thrift RPC. The data argument must be a correctly formatted
   Thrift message.
@@ -176,39 +176,32 @@ defmodule Thrift.Binary.Framed.Client do
   The `options` argument takes the same type of keyword list that `start_link` takes.
   """
   def call(conn, rpc_name, serialized_args, opts) do
-    seq_id = :erlang.unique_integer([:positive])
-    message = Binary.serialize(:message_begin, {:call, seq_id, rpc_name})
-    case request(conn, [message | serialized_args], opts) do
-      {:error, _} = err ->
-        err
-
-      {:ok, message} ->
-        deserialize_message_reply(message, rpc_name, seq_id)
-    end
-  end
-
-  defp request(conn, data, options) do
-    tcp_opts = Keyword.get(options, :tcp_opts, [])
-    gen_server_opts = Keyword.get(options, :gen_server_opts, [])
+    tcp_opts = Keyword.get(opts, :tcp_opts, [])
+    gen_server_opts = Keyword.get(opts, :gen_server_opts, [])
     gen_server_timeout = Keyword.get(gen_server_opts, :timeout, 5000)
 
-    Connection.call(conn, {:request, data, tcp_opts}, gen_server_timeout)
+    Connection.call(conn, {:call, rpc_name, serialized_args, tcp_opts}, gen_server_timeout)
   end
 
   def handle_call(_, _, %{sock: nil} = s) do
     {:reply, {:error, :closed}, s}
   end
 
-  def handle_call({:request, data, options}, _, %{sock: sock, timeout: default_timeout} = s) do
-    timeout = Keyword.get(options, :timeout, default_timeout)
+  def handle_call({:call, rpc_name, serialized_args, tcp_opts}, _,
+                  %{sock: sock, seq_id: seq_id, timeout: default_timeout} = s) do
 
-    rsp = with :ok <- :gen_tcp.send(sock, data) do
+    s = %{s | seq_id: seq_id + 1}
+    message = Binary.serialize(:message_begin, {:call, seq_id, rpc_name})
+    timeout = Keyword.get(tcp_opts, :timeout, default_timeout)
+
+    rsp = with :ok <- :gen_tcp.send(sock, [message | serialized_args]) do
       :gen_tcp.recv(sock, 0, timeout)
     end
 
     case rsp do
-      {:ok, _} = ok ->
-        {:reply, ok, s}
+      {:ok, message} ->
+        reply =  deserialize_message_reply(message, rpc_name, seq_id)
+        {:reply, reply, s}
 
       {:error, :timeout} = timeout ->
         {:reply, timeout, s}
@@ -226,8 +219,13 @@ defmodule Thrift.Binary.Framed.Client do
     {:noreply, s}
   end
 
-  def handle_cast({:oneway, data}, %{sock: sock} = s) do
-    case :gen_tcp.send(sock, data) do
+  def handle_cast({:oneway, rpc_name, serialized_args},
+                  %{sock: sock, seq_id: seq_id} = s) do
+
+    s = %{s | seq_id: seq_id + 1}
+    message = Binary.serialize(:message_begin, {:oneway, seq_id, rpc_name})
+
+    case :gen_tcp.send(sock, [message | serialized_args]) do
       :ok ->
         {:noreply, s}
 

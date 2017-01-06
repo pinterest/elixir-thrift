@@ -437,7 +437,7 @@ defmodule Thrift.Generator.BinaryProtocolTest do
   const set<string> ConstSet = ["a", "b"]
   const list<string> ConstList = ["a", "b"]
 
-  struct ConstStruct {
+  struct ConstFieldsStruct {
     1: bool bool_val = ConstBool,
     2: byte byte_val = ConstByte,
     3: double double_val = ConstDouble,
@@ -445,7 +445,7 @@ defmodule Thrift.Generator.BinaryProtocolTest do
     5: i32 i32_val = ConstI32,
     6: i64 i64_val = ConstI64,
     7: string string_val = ConstString,
-    # 8: ConstStructVal struct_val = ConstStruct,
+    8: ConstStructVal struct_val = ConstStruct,
     13: map<string, byte> map_val = ConstMap,
     14: set<string> set_val = ConstSet,
     15: list<string> list_val = ConstList,
@@ -453,7 +453,7 @@ defmodule Thrift.Generator.BinaryProtocolTest do
   """
 
   thrift_test "default values can be constants" do
-    struct = %ConstStruct{}
+    struct = %ConstFieldsStruct{}
     assert struct.bool_val == true
     assert struct.byte_val == 5
     assert struct.double_val == 5.0
@@ -461,6 +461,7 @@ defmodule Thrift.Generator.BinaryProtocolTest do
     assert struct.i32_val == 5
     assert struct.i64_val == 5
     assert struct.string_val == "abc123"
+    assert struct.struct_val == %ConstStructVal{num: 5}
     assert struct.map_val == %{"a" => 1, "b" => 2}
     assert struct.set_val == MapSet.new(["a", "b"])
     assert struct.list_val == ["a", "b"]
@@ -468,6 +469,10 @@ defmodule Thrift.Generator.BinaryProtocolTest do
   end
 
   @thrift_file name: "defaults.thrift", contents: """
+  struct DefaultStructVal {
+    1: byte num
+  }
+
   struct Defaults {
     1: bool bool_from_true = true
     2: bool bool_from_false = false
@@ -480,9 +485,14 @@ defmodule Thrift.Generator.BinaryProtocolTest do
     9: i32 i32_val = 5
     10: i64 i64_val = 5
     11: string string_val = "abc123"
+    12: DefaultStructVal struct_val = {"num": 5}
     13: map<string, byte> map_val = {"a": 1, "b": 2}
     14: set<string> set_val = ["a", "b"]
     15: list<string> list_val = ["a", "b"]
+    120: DefaultStructVal empty_struct = {}
+    130: map<string, byte> empty_map = {}
+    140: set<string> empty_set = []
+    150: list<string> empty_list = []
   }
   """
 
@@ -501,10 +511,14 @@ defmodule Thrift.Generator.BinaryProtocolTest do
     assert struct.i32_val == 5
     assert struct.i64_val == 5
     assert struct.string_val == "abc123"
-    # TODO: struct.struct_val
+    assert struct.struct_val == %DefaultStructVal{num: 5}
     assert struct.map_val == %{"a" => 1, "b" => 2}
     assert struct.set_val == MapSet.new(["a", "b"])
     assert struct.list_val == ["a", "b"]
+    assert struct.empty_struct == %DefaultStructVal{}
+    assert struct.empty_map == %{}
+    assert struct.empty_set == MapSet.new
+    assert struct.empty_list == []
     :ok
   end
 end

@@ -293,28 +293,17 @@ You can use these features to support additional languages, protocols, and serve
 ### Why is it faster than the Apache implementation?
 The Apache Thrift implementation uses C++ to write Erlang modules that describe Thrift data
 structures, then uses that description to turn your Thrift data into bytes. It consults this
-description every time Thrift data is serialized. This on-the-fly conversion costs CPU time.
+description every time Thrift data is serialized/deserialized. This on-the-fly conversion
+costs CPU time.
 
 Additionally, the separation of concerns in Thrift prevent the Erlang VM from doing the best
 job that it can do during serialization.
 
-On the other hand, this implementation uses Elixir to write Elixir that's specific
+On the other hand, this implementation uses Elixir to write Elixir code that's specific
  to _your_ thrift data. This serialization logic is then compiled, and that compiled code
-is what converts your data into bytes. We've spent a lot of time making sure
+is what converts your data to/from bytes. We've spent a lot of time making sure
 that the generated serialization code takes advantage of several of the optimizations
 that the Erlang VM provides.
-
-### Can the Apache implementation achieve similar performance?
-
-It could, but they'd have to write similar Elixir code to what we're writing,
-and do it in C++. They would also have to re-implement `quote` and `unquote`
-in C++. This would be ...challenging, but it's not impossible. It's worth noting
-that while this is theoretically possible, the code would be much less maintainable,
-and the Apache implementation  isn't by any means slow. In the above benchmark,
-you can see that it serializes 1000 user objects in roughly 12ms, and deserializes
-1000 users in 21ms. If you're happy with this level of performance, then the
-Apache code should be fine.
-
 
 ### What tradeoffs have you made to get this performance?
 
@@ -329,12 +318,10 @@ does the mixing and matching for you and generates a combination of (Protocol + 
 Processor). This means that if you need to create a new Protocol or Transport, you need to
 integrate it into this project.
 
-In practice, we've only used a combination of the Binary Protocol and Framed server but are
-more than willing to take PRs to add more. We intend to also add TMux and Finagle servers
+Presently, we implement:
+
+* Binary Protocol, Framed Client
+* Binary Protocol, Framed Server
+
+We are more than willing to take PRs to add more. We intend to also add TMux and Finagle servers
 in the future.
-
-### What server do you use?
-
-Presently, we're using [ranch](https://github.com/ninenines/ranch) as a building block for
-our server. Ranch is easy to use, is battle tested, and gives excellent performance
-for real workloads.

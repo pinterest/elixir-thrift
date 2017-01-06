@@ -69,7 +69,7 @@ defmodule Thrift.Generator.StructGenerator do
     type = FileGroup.resolve(schema.file_group, ref)
     default_value(value, type, schema)
   end
-  defp default_value(%Constant{type: %StructRef{} = ref} = constant, type, schema) do
+  defp default_value(%Constant{type: %TypeRef{} = ref} = constant, type, schema) do
     constant = %Constant{constant | type: FileGroup.resolve(schema.file_group, ref)}
     default_value(constant, type, schema)
   end

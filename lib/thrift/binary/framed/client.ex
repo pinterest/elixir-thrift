@@ -248,8 +248,11 @@ defmodule Thrift.Binary.Framed.Client do
     exception = Binary.deserialize(:application_exception, serialized_response)
     {:error, {:exception, exception}}
   end
-  defp handle_message({:ok, {_type, seq_id, rpc_name, _}}, seq_id, rpc_name) do
-    raise "message type"
+  defp handle_message({:ok, {message_type, seq_id, rpc_name, _}}, seq_id, rpc_name) do
+    exception = %TApplicationException{
+      message: "The server replied with invalid message type #{message_type}",
+      type: :invalid_message_type}
+    {:error, {:exception, exception}}
   end
   defp handle_message({:ok, {_, seq_id, mismatched_rpc_name, _}}, seq_id, rpc_name) do
     exception = %TApplicationException{

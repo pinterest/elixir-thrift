@@ -155,24 +155,39 @@ defmodule Thrift.Binary.Framed.Client do
     {:connect, :reconnect, %{s | sock: nil}}
   end
 
-  @spec oneway(pid, data) :: :ok
+  @spec oneway(pid, String.t, data, options) :: :ok
   @doc """
   Execute a one way RPC. One way RPC calls do not generate a response,
   and as such, this implementation uses `GenServer.cast`.
   The data argument must be a properly formatted Thrift message.
   """
-  def oneway(conn, data) do
-    Connection.cast(conn, {:oneway, data})
+  def oneway(conn, rpc_name, serialized_args, _opts) do
+    seq_id = :erlang.unique_integer([:positive])
+    message = Binary.serialize(:message_begin, {:oneway, seq_id, rpc_name})
+    :ok = Connection.cast(conn, {:oneway, [message | serialized_args]})
+    :ok
   end
 
-  @spec request(pid, data, options) :: protocol_response
+  @spec call(pid, String.t, data, options) :: {:ok, data}
   @doc """
   Executes a Thrift RPC. The data argument must be a correctly formatted
   Thrift message.
 
   The `options` argument takes the same type of keyword list that `start_link` takes.
   """
-  def request(conn, data, options) do
+  def call(conn, rpc_name, serialized_args, opts) do
+    seq_id = :erlang.unique_integer([:positive])
+    message = Binary.serialize(:message_begin, {:call, seq_id, rpc_name})
+    case request(conn, [message | serialized_args], opts) do
+      {:error, _} = err ->
+        err
+
+      {:ok, message} ->
+        deserialize_message_reply(message, rpc_name, seq_id)
+    end
+  end
+
+  defp request(conn, data, options) do
     tcp_opts = Keyword.get(options, :tcp_opts, [])
     gen_server_opts = Keyword.get(options, :gen_server_opts, [])
     gen_server_timeout = Keyword.get(gen_server_opts, :timeout, 5000)
@@ -221,67 +236,34 @@ defmodule Thrift.Binary.Framed.Client do
     end
   end
 
-  def deserialize_message_reply(message, rpc_name, sequence_id, reply_module) do
+  def deserialize_message_reply(message, rpc_name, seq_id) do
     Binary.deserialize(:message_begin, message)
-    |> handle_message(sequence_id, rpc_name, reply_module)
+    |> handle_message(seq_id, rpc_name)
+   end
+
+  defp handle_message({:ok, {:reply, seq_id, rpc_name, serialized_response}}, seq_id, rpc_name) do
+    {:ok, serialized_response}
   end
-
-  defp handle_message({:ok, {:reply, sequence_id, rpc_name, decoded_response}},
-                      sequence_id, rpc_name, reply_module) do
-
-    case reply_module.deserialize(decoded_response) do
-      {%{success: nil} = resp, ""} ->
-
-        response = resp
-        |> Map.delete(:__struct__)
-        |> Map.values
-        |> Enum.reject(&is_nil(&1))
-
-        case response do
-          [exception] ->
-            {:error, {:exception, exception}}
-
-          [] ->
-            # This case is when we have a void return on the
-            # remote RPC
-            {:ok, nil}
-        end
-
-      {%{success: success}, ""} when not is_nil(success) ->
-        {:ok, success}
-
-      {resp, extra} ->
-        {:error, {:extraneous_data, resp, extra}}
-    end
+  defp handle_message({:ok, {:exception, seq_id, rpc_name, serialized_response}}, seq_id, rpc_name) do
+    exception = Binary.deserialize(:application_exception, serialized_response)
+    {:error, {:exception, exception}}
   end
-
-  defp handle_message({:ok, {:exception, sequence_id, rpc_name, response}}, sequence_id, rpc_name, _) do
-    exc = Binary.deserialize(:application_exception, response)
-    {:error, {:exception, exc}}
+  defp handle_message({:ok, {_type, seq_id, rpc_name, _}}, seq_id, rpc_name) do
+    raise "message type"
   end
-
-  defp handle_message({:ok, {_, decoded_sequence_id, decoded_rpc_name, _}},
-                      sequence_id, rpc_name, _) do
-    ex = case {decoded_sequence_id, decoded_rpc_name} do
-           {^sequence_id, mismatched_rpc_name} ->
-             message = "The server replied to #{mismatched_rpc_name}, but we sent #{rpc_name}"
-             %TApplicationException{message: message,
-                                    type: TApplicationException.exception_type(3)}
-
-           {mismatched_sequence_id, ^rpc_name} ->
-             message = "Invalid sequence id. The client sent #{sequence_id}, but the server replied with #{mismatched_sequence_id}"
-             %TApplicationException{message: message,
-                                    type: TApplicationException.exception_type(4)}
-
-           {_mismatched_sequence_id, _mismatched_rpc_name} ->
-             message = "Both sequence id and rpc name are wrong. The server is extremely uncompliant."
-             %TApplicationException{message: message,
-                                    type: :sequence_id_and_rpc_name_mismatched}
-         end
-    {:error, {:exception, ex}}
+  defp handle_message({:ok, {_, seq_id, mismatched_rpc_name, _}}, seq_id, rpc_name) do
+    exception = %TApplicationException{
+      message: "The server replied to #{mismatched_rpc_name}, but we sent #{rpc_name}",
+      type: :wrong_method_name}
+    {:error, {:exception, exception}}
   end
-
-  defp handle_message({:error, _} = err, _, _, _) do
+  defp handle_message({:ok, {_, mismatched_seq_id, _, _}}, seq_id, _) do
+    exception = %TApplicationException{
+      message: "Invalid sequence id. The client sent #{seq_id}, but the server replied with #{mismatched_seq_id}",
+      type: :bad_sequence_id}
+    {:error, {:exception, exception}}
+  end
+  defp handle_message({:error, _} = err, _, _) do
     err
   end
 

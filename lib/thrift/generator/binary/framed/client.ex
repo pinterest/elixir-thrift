@@ -2,6 +2,7 @@ defmodule Thrift.Generator.Binary.Framed.Client do
   @moduledoc false
 
   alias Thrift.Generator.Service
+  alias Thrift.Generator.Utils
   alias Thrift.Parser.Models.Function
 
   def generate(service_module, service) do
@@ -14,7 +15,6 @@ defmodule Thrift.Generator.Binary.Framed.Client do
         @moduledoc false
 
         alias Thrift.Binary.Framed.Client, as: ClientImpl
-        alias Thrift.Protocol.Binary
 
         defdelegate close(conn), to: ClientImpl
         defdelegate connect(conn, opts), to: ClientImpl
@@ -22,7 +22,7 @@ defmodule Thrift.Generator.Binary.Framed.Client do
         def start_link(host, port, opts) do
           ClientImpl.start_link(host, port, opts)
         end
-        unquote_splicing(functions)
+        unquote_splicing(functions |> Utils.merge_blocks)
       end
     end
   end
@@ -66,11 +66,6 @@ defmodule Thrift.Generator.Binary.Framed.Client do
         serialized_args = %unquote(args_module){unquote_splicing(assignments)}
         |> unquote(args_module).BinaryProtocol.serialize
 
-        sequence_id = :erlang.unique_integer([:positive])
-        message = Binary.serialize(
-          :message_begin,
-          {unquote(message_type(function)), sequence_id, unquote(rpc_name)})
-
         unquote(build_response_handler(function, rpc_name, response_module))
       end
 
@@ -97,24 +92,36 @@ defmodule Thrift.Generator.Binary.Framed.Client do
     end
   end
 
-  defp message_type(%Function{oneway: true}), do: :oneway
-  defp message_type(%Function{oneway: false}), do: :call
-
-  defp build_response_handler(%Function{oneway: true}, _, _) do
+  defp build_response_handler(%Function{oneway: true}, rpc_name, _) do
     quote do
-      _ = opts
-      ClientImpl.oneway(client, [message | serialized_args])
-
+      :ok = ClientImpl.oneway(client, unquote(rpc_name), serialized_args, opts)
       {:ok, nil}
     end
   end
   defp build_response_handler(%Function{oneway: false}, rpc_name, response_module) do
     quote do
+      case ClientImpl.call(client, unquote(rpc_name), serialized_args, opts) do
+        {:ok, serialized_response} ->
+          case unquote(Module.concat(response_module, :BinaryProtocol)).deserialize(serialized_response) do
+            {%{success: nil} = resp, ""} ->
+              responses = resp
+              |> Map.from_struct
+              |> Map.values
+              |> Enum.reject(&is_nil(&1))
 
-      case ClientImpl.request(client, [message | serialized_args], opts) do
-        {:ok, message} ->
-          message
-          |> ClientImpl.deserialize_message_reply(unquote(rpc_name), sequence_id, unquote(response_module))
+              case responses do
+                [exception] ->
+                  {:error, {:exception, exception}}
+
+                [] ->
+                  # This case is when we have a void return on the
+                  # remote RPC
+                  {:ok, nil}
+              end
+
+            {%{success: success}, ""} ->
+              {:ok, success}
+          end
 
         {:error, _} = err ->
           err

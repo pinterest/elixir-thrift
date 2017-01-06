@@ -306,8 +306,8 @@ that the Erlang VM provides.
 
 ### Can the Apache implementation achieve similar performance?
 
-You could, but you'd have to write similar Elixir code to what we're writing,
-and do it in C++. You would also have to re-implement `quote` and `unquote`
+It could, but they'd have to write similar Elixir code to what we're writing,
+and do it in C++. They would also have to re-implement `quote` and `unquote`
 in C++. This would be ...challenging, but it's not impossible. It's worth noting
 that while this is theoretically possible, the code would be much less maintainable,
 and the Apache implementation  isn't by any means slow. In the above benchmark,

@@ -263,22 +263,38 @@ defmodule Thrift.Parser.Models do
     end
   end
 
-  defmodule StructRef do
+  defmodule TypeRef do
     @moduledoc """
-    A reference to another struct.
+    A reference to another type.
 
     While not a Thrift type, this represents when a Thrift type refers to
     another.
     """
 
-    @type t :: %StructRef{referenced_type: String.t}
+    @type t :: %TypeRef{referenced_type: atom}
     defstruct referenced_type: nil
 
     import Thrift.Parser.Conversions
 
-    @spec new(char_list) :: %StructRef{}
+    @spec new(char_list) :: %TypeRef{}
     def new(referenced_type) do
-      %StructRef{referenced_type: atomify(referenced_type)}
+      %TypeRef{referenced_type: atomify(referenced_type)}
+    end
+  end
+
+  defmodule ValueRef do
+    @moduledoc """
+    A reference to another value, such as an enum or const.
+    """
+
+    @type t :: %ValueRef{referenced_value: atom}
+    defstruct referenced_value: nil
+
+    import Thrift.Parser.Conversions
+
+    @spec new(char_list) :: %ValueRef{}
+    def new(referenced_value) do
+      %ValueRef{referenced_value: atomify(referenced_value)}
     end
   end
 

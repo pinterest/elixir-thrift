@@ -12,7 +12,7 @@ defmodule Thrift.Generator.Behaviour do
     Exception,
     Field,
     Struct,
-    StructRef,
+    TypeRef,
     TEnum,
     Union,
   }
@@ -62,7 +62,7 @@ defmodule Thrift.Generator.Behaviour do
   defp typespec(:i32, _), do: quote do: Thrift.i32
   defp typespec(:i64, _), do: quote do: Thrift.i64
   defp typespec(:double, _), do: quote do: Thrift.double
-  defp typespec(%StructRef{} = ref, file_group) do
+  defp typespec(%TypeRef{} = ref, file_group) do
     file_group
     |> FileGroup.resolve(ref)
     |> typespec(file_group)

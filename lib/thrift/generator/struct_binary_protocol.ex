@@ -44,7 +44,7 @@ defmodule Thrift.Generator.StructBinaryProtocol do
     Exception,
     Field,
     Struct,
-    StructRef,
+    TypeRef,
     TEnum,
     Union,
   }
@@ -254,7 +254,7 @@ defmodule Thrift.Generator.StructBinaryProtocol do
       defp unquote(sub_name)(_, _), do: :error
     end
   end
-  defp field_deserializer(%StructRef{referenced_type: type}, field, name, file_group) do
+  defp field_deserializer(%TypeRef{referenced_type: type}, field, name, file_group) do
     FileGroup.resolve(file_group, type)
     |> field_deserializer(field, name, file_group)
   end
@@ -404,7 +404,7 @@ defmodule Thrift.Generator.StructBinaryProtocol do
       defp unquote(sub_name)(_, _), do: :error
     end
   end
-  defp map_key_deserializer(%StructRef{referenced_type: type}, key_name, value_name, file_group) do
+  defp map_key_deserializer(%TypeRef{referenced_type: type}, key_name, value_name, file_group) do
     FileGroup.resolve(file_group, type)
     |> map_key_deserializer(key_name, value_name, file_group)
   end
@@ -555,7 +555,7 @@ defmodule Thrift.Generator.StructBinaryProtocol do
       defp unquote(sub_name)(_, _), do: :error
     end
   end
-  defp map_value_deserializer(%StructRef{referenced_type: type}, key_name, value_name, file_group) do
+  defp map_value_deserializer(%TypeRef{referenced_type: type}, key_name, value_name, file_group) do
     FileGroup.resolve(file_group, type)
     |> map_value_deserializer(key_name, value_name, file_group)
   end
@@ -710,7 +710,7 @@ defmodule Thrift.Generator.StructBinaryProtocol do
       defp unquote(sub_name)(_, _), do: :error
     end
   end
-  defp list_deserializer(%StructRef{referenced_type: type}, name, file_group) do
+  defp list_deserializer(%TypeRef{referenced_type: type}, name, file_group) do
     FileGroup.resolve(file_group, type)
     |> list_deserializer(name, file_group)
   end
@@ -907,7 +907,7 @@ defmodule Thrift.Generator.StructBinaryProtocol do
       unquote(dest_module).serialize(unquote(var))
     end
   end
-  defp value_serializer(%StructRef{referenced_type: type}, var, file_group) do
+  defp value_serializer(%TypeRef{referenced_type: type}, var, file_group) do
     FileGroup.resolve(file_group, type)
     |> value_serializer(var, file_group)
   end
@@ -929,7 +929,7 @@ defmodule Thrift.Generator.StructBinaryProtocol do
   defp type_id({:map, _}, _file_group), do: 13
   defp type_id({:set, _}, _file_group), do: 14
   defp type_id({:list, _}, _file_group), do: 15
-  defp type_id(%StructRef{referenced_type: type}, file_group) do
+  defp type_id(%TypeRef{referenced_type: type}, file_group) do
     FileGroup.resolve(file_group, type)
     |> type_id(file_group)
   end

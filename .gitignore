@@ -7,6 +7,7 @@
 /src/thrift_lexer.erl
 /src/thrift_parser.erl
 /test/fixtures/app/lib
+/tmp
 erl_crash.dump
 *.ez
 log.*

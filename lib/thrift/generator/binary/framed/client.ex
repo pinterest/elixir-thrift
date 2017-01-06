@@ -20,7 +20,7 @@ defmodule Thrift.Generator.Binary.Framed.Client do
         defdelegate close(conn), to: ClientImpl
         defdelegate connect(conn, opts), to: ClientImpl
 
-        def start_link(host, port, opts) do
+        def start_link(host, port, opts \\ []) do
           ClientImpl.start_link(host, port, opts)
         end
         unquote_splicing(functions)

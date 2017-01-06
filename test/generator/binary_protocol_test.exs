@@ -197,6 +197,28 @@ defmodule Thrift.Generator.BinaryProtocolTest do
     assert_serializes %String{val_list: ["abc", "def"]},      <<15, 0, 4, 11, 0, 0, 0, 2, 0, 0, 0, 3, "abc", 0, 0, 0, 3, "def", 0>>
   end
 
+  @thrift_file name: "binary.thrift", contents: """
+  struct BinaryStruct {
+    1: optional binary val;
+    2: optional map<binary, binary> val_map;
+    3: optional set<binary> val_set;
+    4: optional list<binary> val_list;
+  }
+  """
+
+  thrift_test "binary serialization" do
+    assert_serializes %BinaryStruct{},                              <<0>>
+    assert_serializes %BinaryStruct{val: ""},                       <<11, 0, 1, 0, 0, 0, 0, 0>>
+    assert_serializes %BinaryStruct{val: "abc"},                    <<11, 0, 1, 0, 0, 0, 3, "abc", 0>>
+    assert_serializes %BinaryStruct{val_map: %{}},                  <<13, 0, 2, 11, 11, 0, 0, 0, 0, 0>>
+    assert_serializes %BinaryStruct{val_map: %{"abc" => "def"}},    <<13, 0, 2, 11, 11, 0, 0, 0, 1, 0, 0, 0, 3, "abc", 0, 0, 0, 3, "def", 0>>
+    assert_serializes %BinaryStruct{val_set: MapSet.new},           <<14, 0, 3, 11, 0, 0, 0, 0, 0>>
+    assert_serializes %BinaryStruct{val_set: MapSet.new(["abc"])},  <<14, 0, 3, 11, 0, 0, 0, 1, 0, 0, 0, 3, "abc", 0>>
+    assert_serializes %BinaryStruct{val_list: []},                  <<15, 0, 4, 11, 0, 0, 0, 0, 0>>
+    assert_serializes %BinaryStruct{val_list: ["abc"]},             <<15, 0, 4, 11, 0, 0, 0, 1, 0, 0, 0, 3, "abc", 0>>
+    assert_serializes %BinaryStruct{val_list: ["abc", "def"]},      <<15, 0, 4, 11, 0, 0, 0, 2, 0, 0, 0, 3, "abc", 0, 0, 0, 3, "def", 0>>
+  end
+
   @thrift_file name: "struct.thrift", contents: """
   struct Val {
     99: optional byte num;

@@ -54,7 +54,7 @@ defmodule BinaryFramedClientTest do
     assert {:ok,  <<0>>} =  Client.deserialize_message_reply(msg, "my_call", 2757)
   end
 
-  thrift_test "it should be able to deserialize a void message with an empty struct" do
+  thrift_test "it should be able to deserialize a message with an empty struct" do
     msg = <<128, 1, 0, 2, 0, 0, 0, 7, "my_call", 0, 0, 10, 197, 12, 0, 0, 0, 0>>
 
     assert {:ok, <<12, 0, 0, 0, 0>>} =  Client.deserialize_message_reply(msg, "my_call", 2757)

@@ -9,6 +9,7 @@ defmodule Thrift.Generator.Binary.Framed.Client do
     functions = service.functions
     |> Map.values
     |> Enum.map(&generate_handler_function(service_module, &1))
+    |> Utils.merge_blocks
 
     quote do
       defmodule Binary.Framed.Client do
@@ -22,7 +23,7 @@ defmodule Thrift.Generator.Binary.Framed.Client do
         def start_link(host, port, opts) do
           ClientImpl.start_link(host, port, opts)
         end
-        unquote_splicing(functions |> Utils.merge_blocks)
+        unquote_splicing(functions)
       end
     end
   end

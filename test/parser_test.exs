@@ -13,9 +13,10 @@ defmodule ParserTest do
   alias Thrift.Parser.Models.Schema
   alias Thrift.Parser.Models.Service
   alias Thrift.Parser.Models.Struct
-  alias Thrift.Parser.Models.StructRef
+  alias Thrift.Parser.Models.TypeRef
   alias Thrift.Parser.Models.TEnum
   alias Thrift.Parser.Models.Union
+  alias Thrift.Parser.Models.ValueRef
 
   import ExUnit.CaptureIO
 
@@ -179,7 +180,7 @@ defmodule ParserTest do
 
     assert constant == %Constant{
       name: :SUNNY,
-      value: %StructRef{referenced_type: :"Weather.SUNNY"},
+      value: %ValueRef{referenced_value: :"Weather.SUNNY"},
       type: :string}
   end
 
@@ -198,10 +199,10 @@ defmodule ParserTest do
       name: :WEATHER_TYPES,
       type: {:list, :string},
       value: [
-        %StructRef{referenced_type: :"Weather.SUNNY"},
-        %StructRef{referenced_type: :"Weather.CLOUDY"},
-        %StructRef{referenced_type: :"Weather.RAINY"},
-        %StructRef{referenced_type: :"Weather.SNOWY"},
+        %ValueRef{referenced_value: :"Weather.SUNNY"},
+        %ValueRef{referenced_value: :"Weather.CLOUDY"},
+        %ValueRef{referenced_value: :"Weather.RAINY"},
+        %ValueRef{referenced_value: :"Weather.SNOWY"},
       ]}
   end
 
@@ -220,10 +221,10 @@ defmodule ParserTest do
       name: :WEATHER_TYPES,
       type: {:set, :string},
       value: MapSet.new([
-        %StructRef{referenced_type: :"Weather.SUNNY"},
-        %StructRef{referenced_type: :"Weather.CLOUDY"},
-        %StructRef{referenced_type: :"Weather.RAINY"},
-        %StructRef{referenced_type: :"Weather.SNOWY"},
+        %ValueRef{referenced_value: :"Weather.SUNNY"},
+        %ValueRef{referenced_value: :"Weather.CLOUDY"},
+        %ValueRef{referenced_value: :"Weather.RAINY"},
+        %ValueRef{referenced_value: :"Weather.SNOWY"},
       ])}
   end
 
@@ -240,12 +241,12 @@ defmodule ParserTest do
 
     assert constant == %Constant{
       name: :weather_messages,
-      type: {:map, {%StructRef{referenced_type: :Weather}, :string}},
+      type: {:map, {%TypeRef{referenced_type: :Weather}, :string}},
       value: %{
-        %StructRef{referenced_type: :"Weather.CLOUDY"} => "Welcome to Cleveland!",
-        %StructRef{referenced_type: :"Weather.RAINY"} => "Welcome to Seattle!",
-        %StructRef{referenced_type: :"Weather.SNOWY"} => "Welcome to Canada!",
-        %StructRef{referenced_type: :"Weather.SUNNY"} => "Yay, it's sunny!"}}
+        %ValueRef{referenced_value: :"Weather.CLOUDY"} => "Welcome to Cleveland!",
+        %ValueRef{referenced_value: :"Weather.RAINY"} => "Welcome to Seattle!",
+        %ValueRef{referenced_value: :"Weather.SNOWY"} => "Welcome to Canada!",
+        %ValueRef{referenced_value: :"Weather.SUNNY"} => "Yay, it's sunny!"}}
   end
 
   test "parsing a map constant with enum values as values" do
@@ -261,12 +262,12 @@ defmodule ParserTest do
 
     assert constant == %Constant{
       name: :clothes_to_wear,
-      type: {:map, {:string, %StructRef{referenced_type: :Weather}}},
+      type: {:map, {:string, %TypeRef{referenced_type: :Weather}}},
       value: %{
-        "gloves" => %StructRef{referenced_type: :"Weather.SNOWY"},
-        "umbrella" => %StructRef{referenced_type: :"Weather.RAINY"},
-        "sweater" => %StructRef{referenced_type: :"Weather.CLOUDY"},
-        "sunglasses" => %StructRef{referenced_type: :"Weather.SUNNY"}}}
+        "gloves" => %ValueRef{referenced_value: :"Weather.SNOWY"},
+        "umbrella" => %ValueRef{referenced_value: :"Weather.RAINY"},
+        "sweater" => %ValueRef{referenced_value: :"Weather.CLOUDY"},
+        "sunglasses" => %ValueRef{referenced_value: :"Weather.SUNNY"}}}
   end
 
   test "parsing an enum" do
@@ -391,7 +392,7 @@ defmodule ParserTest do
     """ |> parse([:structs, :User])
 
     assert s.fields == [
-      %Field{id: 1, name: :user_id, required: true, type: %StructRef{referenced_type: :id}},
+      %Field{id: 1, name: :user_id, required: true, type: %TypeRef{referenced_type: :id}},
       %Field{id: 2, name: :username, required: true, type: :string}
     ]
   end
@@ -478,7 +479,7 @@ defmodule ParserTest do
       name: :User,
       fields: [
         %Field{id: 1, type: :i64, name: :id},
-        %Field{id: 2, type: %StructRef{referenced_type: :Name}, name: :name}
+        %Field{id: 2, type: %TypeRef{referenced_type: :Name}, name: :name}
       ]
     }
   end
@@ -545,7 +546,7 @@ defmodule ParserTest do
       name: :MyService,
       functions: %{usernames_to_ids:
         %Function{name: :usernames_to_ids, oneway: false, return_type: {:map, {:string, :i64}},
-                  params: [%Field{id: 1, name: :user, type: %StructRef{referenced_type: :User}}]
+                  params: [%Field{id: 1, name: :user, type: %TypeRef{referenced_type: :User}}]
                  }
       }
     }
@@ -587,7 +588,7 @@ defmodule ParserTest do
 
     %{blowup: function} = service.functions
     assert function.exceptions == [
-      %Field{id: 1, name: :svc, type: %StructRef{referenced_type: :ServiceException}}
+      %Field{id: 1, name: :svc, type: %TypeRef{referenced_type: :ServiceException}}
     ]
   end
 
@@ -627,12 +628,12 @@ defmodule ParserTest do
       assert get_users == %Function{
         name: :get_users,
         exceptions: [
-          %Field{id: 1, name: :svc, type: %StructRef{referenced_type: :ServiceException}}
+          %Field{id: 1, name: :svc, type: %TypeRef{referenced_type: :ServiceException}}
         ],
         params: [
           %Field{id: 1, name: :user_ids, type: {:set, :i64}},
         ],
-        return_type: {:map, {:i64, %StructRef{referenced_type: :User}}}
+        return_type: {:map, {:i64, %TypeRef{referenced_type: :User}}}
       }
     end
   end

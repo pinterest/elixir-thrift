@@ -7,9 +7,10 @@ defmodule Thrift.Generator.StructGenerator do
     Exception,
     Field,
     Struct,
-    StructRef,
+    TypeRef,
     TEnum,
-    Union
+    Union,
+    ValueRef,
   }
 
   def generate(label, schema, name, struct) when label in [:struct, :union, :exception] do
@@ -60,11 +61,11 @@ defmodule Thrift.Generator.StructGenerator do
     end
   end
 
-  defp default_value(%StructRef{} = ref, type, schema) do
+  defp default_value(%ValueRef{} = ref, type, schema) do
     value = FileGroup.resolve(schema.file_group, ref)
     default_value(value, type, schema)
   end
-  defp default_value(value, %StructRef{} = ref, schema) do
+  defp default_value(value, %TypeRef{} = ref, schema) do
     type = FileGroup.resolve(schema.file_group, ref)
     default_value(value, type, schema)
   end
@@ -151,7 +152,7 @@ defmodule Thrift.Generator.StructGenerator do
   def to_thrift(%Union{name: name}, _file_group) do
     "#{name}"
   end
-  def to_thrift(%StructRef{referenced_type: type}, file_group) do
+  def to_thrift(%TypeRef{referenced_type: type}, file_group) do
     FileGroup.resolve(file_group, type) |> to_thrift(file_group)
   end
 end

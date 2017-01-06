@@ -20,11 +20,12 @@ defmodule Thrift.Parser.FileGroup do
     Exception,
     Field,
     Namespace,
-    StructRef,
+    TypeRef,
     Schema,
     Service,
     Struct,
-    Union
+    Union,
+    ValueRef,
   }
 
   @type t :: %FileGroup{
@@ -93,7 +94,7 @@ defmodule Thrift.Parser.FileGroup do
   for type <- [:bool, :byte, :i8, :i16, :i32, :i64, :double, :string, :binary] do
     def resolve(_, unquote(type)), do: unquote(type)
   end
-  def resolve(%FileGroup{} = group, %Field{type: %StructRef{} = ref} = field) do
+  def resolve(%FileGroup{} = group, %Field{type: %TypeRef{} = ref} = field) do
     %Field{field | type: resolve(group, ref)}
   end
   def resolve(%FileGroup{} = group, %Field{type: {:list, elem_type}} = field) do
@@ -105,8 +106,11 @@ defmodule Thrift.Parser.FileGroup do
   def resolve(%FileGroup{} = group, %Field{type: {:map, {key_type, val_type}}} = field) do
     %Field{field | type: {:map, {resolve(group, key_type), resolve(group, val_type)}}}
   end
-  def resolve(%FileGroup{resolutions: resolutions}, %StructRef{referenced_type: type_name}) do
+  def resolve(%FileGroup{resolutions: resolutions}, %TypeRef{referenced_type: type_name}) do
     resolutions[type_name]
+  end
+  def resolve(%FileGroup{resolutions: resolutions}, %ValueRef{referenced_value: value_name}) do
+    resolutions[value_name]
   end
   def resolve(%FileGroup{resolutions: resolutions}, path) when is_atom(path) do
     # this can resolve local mappings like :Weather or

@@ -10,8 +10,12 @@ defmodule Thrift.Parser.Conversions do
     nil
   end
 
-  # We can't match a StructRef because it would create a circular dependency.
+  # We can't match a TypeRef because it would create a circular dependency.
   def cast(_, %{referenced_type: _} = ref) do
+    ref
+  end
+
+  def cast(_, %{referenced_value: _} = ref) do
     ref
   end
 

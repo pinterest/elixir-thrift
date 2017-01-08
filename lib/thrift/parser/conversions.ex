@@ -6,6 +6,9 @@ defmodule Thrift.Parser.Conversions do
     List.to_atom(l)
   end
 
+  # convert a charlist to a snake_case atom
+  #   e.g., 'FooBar', 'foo_bar', 'fooBar', and 'FOO_BAR'
+  #   should all produce :foo_bar
   def atomic_snake(nil), do: nil
   def atomic_snake(l) when is_list(l) do
     l

@@ -2,7 +2,6 @@ ExUnit.configure(exclude: [pending: true])
 ExUnit.start()
 
 defmodule ThriftTestHelpers do
-  @root_dir "test/fixtures/thrift/"
 
   defmacro __using__(_) do
     quote do

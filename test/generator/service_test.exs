@@ -331,7 +331,7 @@ defmodule Thrift.Generator.ServiceTest do
     # the server will sleep, so spawn a process to make a request,
     # then kill the server out from under that process. It will
     # trigger the generic error handler in the server
-    me = self
+    me = self()
     spawn fn ->
       Process.send_after(me, :ok, 20)
       Client.friend_ids_of(ctx.client, 14_821)

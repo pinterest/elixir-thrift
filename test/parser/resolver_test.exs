@@ -1,6 +1,5 @@
 defmodule ResolverTest do
   use ExUnit.Case
-  @thrift_dir "test/fixtures/app/thrift"
 
   alias Thrift.Parser.FileGroup
   alias Thrift.Parser.Models.{

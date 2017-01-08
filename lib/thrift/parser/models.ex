@@ -112,7 +112,7 @@ defmodule Thrift.Parser.Models do
     def new(id, required, type, name, default) do
       %Field{id: id,
              type: type,
-             name: atomify(name),
+             name: atomic_snake(name),
              required: required,
              default: cast(type, default)}
     end

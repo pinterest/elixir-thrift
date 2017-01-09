@@ -17,6 +17,8 @@ defmodule Thrift.Generator.Behaviour do
     Union,
   }
 
+  require Logger
+
   def generate(schema, service) do
     file_group = schema.file_group
     dest_module = FileGroup.dest_module(file_group, service)
@@ -57,6 +59,7 @@ defmodule Thrift.Generator.Behaviour do
   defp typespec(:void, _), do: quote do: no_return()
   defp typespec(:bool, _), do: quote do: boolean()
   defp typespec(:string, _), do: quote do: String.t
+  defp typespec(:binary, _), do: quote do: binary
   defp typespec(:i8, _), do: quote do: Thrift.i8
   defp typespec(:i16, _), do: quote do: Thrift.i16
   defp typespec(:i32, _), do: quote do: Thrift.i32
@@ -105,6 +108,12 @@ defmodule Thrift.Generator.Behaviour do
     val_type = typespec(v, file_group)
     quote do
       %{unquote(key_type) => unquote(val_type)}
+    end
+  end
+  defp typespec(unknown_typespec, _) do
+    Logger.error("Unknown type: #{inspect unknown_typespec}. Falling back to any()")
+    quote do
+      any
     end
   end
 end

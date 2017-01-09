@@ -38,23 +38,25 @@ defmodule BehaviourTest do
     WaitStates get_state();
     SorT get_s_or_t();
     MyEx dont_do_this();
+    void upload_file(1: string filename, 2: binary data);
   }
   """
 
   thrift_test "that behaviour callbacks exist" do
     behaviour_specs = Handler.behaviour_info(:callbacks)
 
-    assert {:ping, 1} in behaviour_specs
-    assert {:my_bool, 1} in behaviour_specs
-    assert {:numbers, 5} in behaviour_specs
-    assert {:my_set, 1} in behaviour_specs
-    assert {:my_list, 1} in behaviour_specs
-    assert {:my_map, 1} in behaviour_specs
-    assert {:my_map2, 1} in behaviour_specs
-    assert {:struct_param, 1} in behaviour_specs
-    assert {:my_camel_cased_function, 1} in behaviour_specs
-    assert {:get_state, 0} in behaviour_specs
-    assert {:get_s_or_t, 0} in behaviour_specs
-    assert {:dont_do_this, 0} in behaviour_specs
+    assert {:ping, 1}                      in behaviour_specs
+    assert {:my_bool, 1}                   in behaviour_specs
+    assert {:numbers, 5}                   in behaviour_specs
+    assert {:my_set, 1}                    in behaviour_specs
+    assert {:my_list, 1}                   in behaviour_specs
+    assert {:my_map, 1}                    in behaviour_specs
+    assert {:my_map2, 1}                   in behaviour_specs
+    assert {:struct_param, 1}              in behaviour_specs
+    assert {:my_camel_cased_function, 1}   in behaviour_specs
+    assert {:get_state, 0}                 in behaviour_specs
+    assert {:get_s_or_t, 0}                in behaviour_specs
+    assert {:dont_do_this, 0}              in behaviour_specs
+    assert {:upload_file, 2}               in behaviour_specs
   end
 end

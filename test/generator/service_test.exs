@@ -82,15 +82,26 @@ defmodule Thrift.Generator.ServiceTest do
   alias Thrift.Generator.ServiceTest.SimpleService.Binary.Framed.Client
   alias Thrift.Generator.ServiceTest.UsernameTakenException
 
-  setup do
-    port = :erlang.unique_integer([:positive, :monotonic]) + 10_000
-
-    {:ok, server} = :thrift_socket_server.start(
+  def start_server(port) do
+    :thrift_socket_server.start(
       handler: ServerSpy,
       port: port,
       framed: true,
       service: :simple_service_thrift)
+  end
 
+  def stop_server(server_pid) do
+    Process.unlink(server_pid)
+    ref = Process.monitor(server_pid)
+    :thrift_socket_server.stop(server_pid)
+
+    assert_receive {:DOWN, ^ref, _, _, _}
+  end
+
+  setup do
+    port = :erlang.unique_integer([:positive, :monotonic]) + 10_000
+
+    {:ok, server} = start_server(port)
     {:ok, client} = Client.start_link('127.0.0.1', port,
                                             [tcp_opts: [timeout: 5000]])
     {:ok, handler_pid} = ServerSpy.start_link
@@ -296,31 +307,40 @@ defmodule Thrift.Generator.ServiceTest do
     assert {:tags_with_options, 3}              in defined_functions
   end
 
-
   # connection tests
 
   thrift_test "clients can be closed", ctx do
     :ok = Client.close(ctx.client)
   end
 
-  thrift_test "clients retry on a closed server", ctx do
-    ref = Process.monitor(ctx.server)
-    :thrift_socket_server.stop(ctx.server)
+  thrift_test "clients retry when making an RPC on a closed server when retry is true", ctx do
+    stop_server(ctx.server)
 
-    assert_receive {:DOWN, ^ref, _, _, _}
+    {:ok, client} = Client.start_link("127.0.0.1", ctx.port, [tcp_opts: [retry: true]])
+    {:ok, server} = start_server(ctx.port)
 
-    {:ok, client} = Client.start_link("127.0.0.1", ctx.port, [tcp_opts: [timeout: 1]])
+    ServerSpy.set_reply([9, 8, 7, 6])
 
-    assert :sys.get_state(client).mod_state.retries > 0
+    assert {:ok, _} = Client.friend_ids_of(client, 1234)
   end
 
-  thrift_test "clients are warned if they tray to use a closed client", ctx do
+  thrift_test "clients retry when making a oneway call on a closed server when retry is true", ctx do
+    stop_server(ctx.server)
+
+    {:ok, client} = Client.start_link("127.0.0.1", ctx.port, [tcp_opts: [retry: true]])
+    {:ok, server} = start_server(ctx.port)
+
+    assert {:ok, _} = Client.do_some_work(client, "Do the work!")
+  end
+
+  thrift_test "clients exit if they try to use a closed client", ctx do
+    Process.flag(:trap_exit, true)
+
     Client.close(ctx.client)
     ref = Process.monitor(ctx.server)
     Process.exit(ctx.server, :normal)
-    assert_receive {:DOWN, ^ref, _, _, _}
 
-    {:error, _} = Client.friend_ids_of(ctx.client, 1234)
+    assert {{:error, :econnrefused}, _} = catch_exit(Client.friend_ids_of(ctx.client, 1234))
   end
 
   thrift_test "clients retry if the server dies handling a message", ctx do
@@ -328,11 +348,13 @@ defmodule Thrift.Generator.ServiceTest do
 
     ServerSpy.set_reply({:sleep, 5000, 1234})
 
-    # the server will sleep, so spawn a process to make a request,
-    # then kill the server out from under that process. It will
-    # trigger the generic error handler in the server
+    # the server will sleep when the RPC is called, so spawn a
+    # process to make a request, then kill the server out
+    # from under that process. It will trigger the generic
+    # error handler in the server
     me = self()
     spawn fn ->
+      Process.flag(:trap_exit, true)
       Process.send_after(me, :ok, 20)
       Client.friend_ids_of(ctx.client, 14_821)
     end
@@ -341,23 +363,30 @@ defmodule Thrift.Generator.ServiceTest do
       :ok ->
         :ok
     end
-
+    Process.flag(:trap_exit, true)
     Process.unlink(ctx.server)
     Process.exit(ctx.server, :kill)
-    assert_receive {:DOWN, ^ref, _, _, _}
 
-    assert :sys.get_state(ctx.client).mod_state.retries > 0
+    assert_receive {:DOWN, ^ref, _, _, _}
+    assert_receive {:EXIT, _, {:error, :econnrefused}}
   end
 
-  thrift_test "it reconnects on void oneway functions", ctx do
+  thrift_test "it returns :ok on void oneway functions if the server dies", ctx do
+    Process.unlink(ctx.server)
+
+    Process.flag(:trap_exit, true)
     ServerSpy.set_reply(:noreply)
 
     ref = Process.monitor(ctx.server)
     Process.exit(ctx.server, :normal)
+
     assert_receive {:DOWN, ^ref, _, _, _}
+    assert_receive {:EXIT, _, {:error, :econnrefused}}, 100
 
-    assert {:ok, nil} == Client.do_some_work(ctx.client, "12345")
-    :timer.sleep(10)
+    # this assertion is unusual, as it should exit, but the server
+    # doesn't do reads during oneway functions, so it won't get the
+    # error that the other side has been closed.
+    # see: http://erlang.org/pipermail/erlang-questions/2014-April/078545.html
+    {:ok, nil} = Client.do_some_work(ctx.client, "work!")
   end
-
 end

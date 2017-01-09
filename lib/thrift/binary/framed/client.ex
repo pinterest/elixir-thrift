@@ -28,7 +28,7 @@ defmodule Thrift.Binary.Framed.Client do
   @type tcp_opts :: [
     timeout: pos_integer,
     send_timeout: integer,
-    backoff_calculator: backoff_fn
+    max_retries: non_neg_integer | :infinity
   ]
 
   @type genserver_call_options :: [
@@ -48,17 +48,18 @@ defmodule Thrift.Binary.Framed.Client do
                       tcp_opts: Client.tcp_opts,
                       timeout: integer,
                       sock: pid,
-                      retries: non_neg_integer,
-                      backoff_calculator: Client.backoff_fn,
-                      seq_id: integer}
+                      seq_id: integer,
+                      retry: boolean,
+                      last_message: any
+                     }
     defstruct host: nil,
               port: nil,
               tcp_opts: nil,
               timeout: 5000,
               sock: nil,
-              retries: 0,
-              backoff_calculator: nil,
-              seq_id: 0
+              seq_id: 0,
+              retry: false,
+              last_message: nil
   end
 
   require Logger
@@ -67,15 +68,15 @@ defmodule Thrift.Binary.Framed.Client do
   def init({host, port, opts}) do
     tcp_opts = Keyword.get(opts, :tcp_opts, [])
 
-    backoff_calculator = Keyword.get(tcp_opts, :backoff_calculator, &calculate_backoff/1)
     {timeout, tcp_opts} = Keyword.pop(tcp_opts, :timeout, 5000)
+    {should_retry, tcp_opts} = Keyword.pop(tcp_opts, :retry, false)
 
     s = %State{host: to_host(host),
                port: port,
                tcp_opts: tcp_opts,
                timeout: timeout,
-               backoff_calculator: backoff_calculator,
-               sock: nil}
+               sock: nil,
+               retry: should_retry}
 
     {:connect, :init, s}
   end
@@ -95,9 +96,7 @@ defmodule Thrift.Binary.Framed.Client do
 
      - `send_timeout`: An integer that governs how long our connection waits when sending data.
 
-     - `backoff_calculator`: A single argument function that takes the number of retries and returns the
-        amount of time to wait in milliseconds before reconnecting. The default implementation
-        waits 100, 100, 200, 300, 500, 800 and then 1000 ms. All retries after that will wait 1000ms.
+     - `retry`: An boolean that tells the client whether or not it should retry on failures.
 
 
     `gen_server_opts`: A keyword list of options that control the gen_server behaviour.
@@ -116,33 +115,45 @@ defmodule Thrift.Binary.Framed.Client do
   def close(conn), do: Connection.call(conn, :close)
 
   @doc false
-  def connect(_, %{sock: nil, host: host, port: port, tcp_opts: opts, timeout: timeout, retries: retries, backoff_calculator: backoff_calculator} = s) do
+  def connect(info, %{sock: nil, host: host, port: port, tcp_opts: opts, timeout: timeout} = s) do
     opts = opts
     |> Keyword.merge(@immutable_tcp_opts)
     |> Keyword.put_new(:send_timeout, 1000)
 
     case :gen_tcp.connect(host, port, opts, timeout) do
       {:ok, sock} ->
-        {:ok, %{s | sock: sock, retries: 0}}
+        new_state = %{s | sock: sock}
+        retry_failed_message(info, new_state)
 
-      {:error, _} ->
-        new_retries = retries + 1
-        backoff = backoff_calculator.(new_retries)
-
-        msg = "Failed to connect to #{host} (after #{new_retries + 1} attempts), retrying in #{backoff}ms."
-        if retries <= 5 do
-          Logger.info(msg)
-        else
-          Logger.warn(msg)
-        end
-
-        {:backoff, backoff, %{s | retries: new_retries}}
+      {:error, _} = error ->
+        Logger.error("Failed to connect to #{host}:#{port} due to #{inspect error}")
+        {:stop, error, s}
     end
+  end
+
+  defp retry_failed_message(:retry, %{retry: true, last_message: {call_args, caller}} = state) do
+    case handle_call(call_args, caller, state) do
+      {:reply, response, state} ->
+        Connection.reply(caller, response)
+        {:ok, %{state | last_message: nil}}
+
+      other ->
+        {:disconnect, {:error, other}, nil}
+    end
+  end
+
+  defp retry_failed_message(:retry, %{retry: false}) do
+    {:disconnect, {:error, :not_retrying}, nil}
+  end
+
+  defp retry_failed_message(_, state) do
+    {:ok, state}
   end
 
   @doc false
   def disconnect(info, %{sock: sock} = s) do
     :ok = :gen_tcp.close(sock)
+
     case info do
       {:close, from} ->
         Connection.reply(from, :ok)
@@ -153,8 +164,11 @@ defmodule Thrift.Binary.Framed.Client do
       {:error, reason} ->
         reason = :inet.format_error(reason)
         Logger.error("Connection error: #{reason}")
+
+      :retry ->
+        Logger.info("Retrying call")
     end
-    {:connect, :reconnect, %{s | sock: nil}}
+    {:connect, info, %{s | sock: nil}}
   end
 
   @spec oneway(pid, String.t, data, options) :: :ok
@@ -187,7 +201,7 @@ defmodule Thrift.Binary.Framed.Client do
     {:reply, {:error, :closed}, s}
   end
 
-  def handle_call({:call, rpc_name, serialized_args, tcp_opts}, _,
+  def handle_call({:call, rpc_name, serialized_args, tcp_opts} = call_args, caller,
                   %{sock: sock, seq_id: seq_id, timeout: default_timeout} = s) do
 
     s = %{s | seq_id: seq_id + 1}
@@ -205,6 +219,9 @@ defmodule Thrift.Binary.Framed.Client do
 
       {:error, :timeout} = timeout ->
         {:reply, timeout, s}
+
+      {:error, :closed} ->
+        {:disconnect, :retry, %{s |last_message: {call_args, caller}}}
 
       {:error, _} = error ->
         {:disconnect, error, error, s}
@@ -272,12 +289,4 @@ defmodule Thrift.Binary.Framed.Client do
     String.to_char_list(host)
   end
   defp to_host(host) when is_list(host), do: host
-
-  defp calculate_backoff(0), do: 100
-  defp calculate_backoff(1), do: 100
-  defp calculate_backoff(2), do: 200
-  defp calculate_backoff(3), do: 300
-  defp calculate_backoff(4), do: 500
-  defp calculate_backoff(5), do: 800
-  defp calculate_backoff(_), do: 1000
 end

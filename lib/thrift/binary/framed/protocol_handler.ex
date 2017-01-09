@@ -3,6 +3,8 @@ defmodule Thrift.Binary.Framed.ProtocolHandler do
   A GenServer that accepts connections on a server and processes the thrift messages.
   """
 
+  @default_timeout 20_000
+
   alias Thrift.{
     Protocol,
     TApplicationException
@@ -10,20 +12,24 @@ defmodule Thrift.Binary.Framed.ProtocolHandler do
   require Logger
 
   @spec start_link(reference, pid, module, {module, module}) :: GenServer.on_start
-  def start_link(ref, socket, transport, {server_module, handler_module}) do
-    pid = spawn_link(__MODULE__, :init, [ref, socket, transport, server_module, handler_module])
+  def start_link(ref, socket, transport, {server_module, handler_module, tcp_opts}) do
+    pid = spawn_link(__MODULE__, :init, [ref, socket, transport, server_module, handler_module, tcp_opts])
     {:ok, pid}
   end
 
-  def init(ref, socket, transport, server_module, handler_module) do
+  def init(ref, socket, transport, server_module, handler_module, tcp_opts) do
     :ok = :ranch.accept_ack(ref)
-    transport.setopts(socket, packet: 4)
 
-    do_thrift_call({transport, socket, server_module, handler_module})
+    {recv_timeout, tcp_opts} = Keyword.pop(tcp_opts, :recv_timeout, @default_timeout)
+
+    transport_options = Keyword.merge(tcp_opts, [packet: 4])
+    transport.setopts(socket, transport_options)
+
+    do_thrift_call({transport, socket, server_module, handler_module, recv_timeout})
   end
 
-  defp do_thrift_call({transport, socket, server_module, handler_module} = args) do
-    thrift_response  = with({:ok, message}      <- transport.recv(socket, 0, 20_000),
+  defp do_thrift_call({transport, socket, server_module, handler_module, recv_timeout} = args) do
+    thrift_response  = with({:ok, message}      <- transport.recv(socket, 0, recv_timeout),
                             parsed_response     <- Protocol.Binary.deserialize(:message_begin, message)) do
 
       handle_thrift_message(parsed_response, server_module, handler_module)
@@ -39,7 +45,7 @@ defmodule Thrift.Binary.Framed.ProtocolHandler do
         exit({:shutdown, :server_error})
 
       {:error, _} = err ->
-        Logger.info("Thrift call failed: #{inspect err}")
+        Logger.info(inspect err)
         :ok = transport.close(socket)
     end
   end

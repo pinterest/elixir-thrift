@@ -444,7 +444,7 @@ defmodule ParserTest do
       name: :EmptyDefault,
       fields: [
         %Field{default: nil, id: 1, name: :id, required: :default, type: :i64},
-        %Field{default: %{}, id: 2, name: :myMap,
+        %Field{default: %{}, id: 2, name: :my_map,
                required: :default, type: {:map, {:string, :string}}}
       ]}
   end

@@ -95,6 +95,7 @@ defmodule Thrift.Generator.ModelsTest do
     10: optional struct_includes.RemoteStruct remote_struct;
     11: optional list<LocalStruct> local_struct_list;
     12: optional map<LocalStruct, LocalStruct> local_struct_map;
+    13: optional string DEPRECATED_string;
   }
   """
 
@@ -112,6 +113,7 @@ defmodule Thrift.Generator.ModelsTest do
     assert s.remote_struct == nil
     assert s.local_struct_list == nil
     assert s.local_struct_map == nil
+    assert s.deprecated_string == nil
   end
 
   @thrift_file name: "typedefs.thrift", contents: """

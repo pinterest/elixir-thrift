@@ -36,7 +36,7 @@ Echoing a struct in Elixir     |     10000    | 275.89 µs/op
 Echoing a struct in Erlang     |      1000    | 1200.35 µs/op
 
 *Note: The Erlang parts of the above benchmark utilized the generated Erlang client
-and server from the Apache Thrift project* 
+and server from the Apache Thrift project*
 
 *Benchmarks were run on a 2.8Ghz MacbookPro with 16G of ram running macOS Sierra, using Elixir 1.3.4 and Erlang 19.1*
 
@@ -195,7 +195,7 @@ Here is an implementation for the server defined above:
 
 ```elixir
 defmodule UserServiceHandler do
-  @behaviour Thrift.Test.UserService.Handler.Behaviour
+  @behaviour Thrift.Test.UserService.Handler
 
   def ping, do: true
 

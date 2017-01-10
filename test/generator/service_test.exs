@@ -317,12 +317,16 @@ defmodule Thrift.Generator.ServiceTest do
   thrift_test "clients don't retry by default", ctx do
     Process.flag(:trap_exit, true)
     stop_server(ctx.server)
-    start_server(ctx.port, 20)
+    {:ok, new_server} = start_server(ctx.port, 20)
 
     {:ok, client} = Client.start_link("127.0.0.1", ctx.port,[])
 
     :timer.sleep(50) # sleep beyond the server's recv_timeout
     assert catch_exit(Client.friend_ids_of(client, 1234))
+
+    on_exit fn ->
+      stop_server(new_server)
+    end
   end
 
   thrift_test "clients retry when making an RPC on a closed server when retry is true", ctx do
@@ -333,6 +337,10 @@ defmodule Thrift.Generator.ServiceTest do
 
     ServerSpy.set_reply([9, 8, 7, 6])
     assert {:ok, [9, 8, 7, 6]} = Client.friend_ids_of(client, 1234)
+
+    on_exit fn ->
+      stop_server(server)
+    end
   end
 
   thrift_test "clients retry when making a oneway call on a closed server when retry is true", ctx do
@@ -342,6 +350,10 @@ defmodule Thrift.Generator.ServiceTest do
     {:ok, server} = start_server(ctx.port)
 
     assert {:ok, nil} = Client.do_some_work(client, "Do the work!")
+
+    on_exit fn ->
+      stop_server(server)
+    end
   end
 
   thrift_test "clients exit if they try to use a closed client", ctx do

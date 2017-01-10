@@ -82,12 +82,13 @@ defmodule Thrift.Generator.ServiceTest do
   alias Thrift.Generator.ServiceTest.SimpleService.Binary.Framed.Client
   alias Thrift.Generator.ServiceTest.UsernameTakenException
 
-  def start_server(port) do
+  def start_server(port, recv_timeout \\ :infinity) do
     :thrift_socket_server.start(
       handler: ServerSpy,
       port: port,
       framed: true,
-      service: :simple_service_thrift)
+      service: :simple_service_thrift,
+      socket_opts: [recv_timeout: recv_timeout])
   end
 
   def stop_server(server_pid) do
@@ -313,6 +314,17 @@ defmodule Thrift.Generator.ServiceTest do
     :ok = Client.close(ctx.client)
   end
 
+  thrift_test "clients don't retry by default", ctx do
+    Process.flag(:trap_exit, true)
+    stop_server(ctx.server)
+    start_server(ctx.port, 20)
+
+    {:ok, client} = Client.start_link("127.0.0.1", ctx.port,[])
+
+    :timer.sleep(50) # sleep beyond the server's recv_timeout
+    assert catch_exit(Client.friend_ids_of(client, 1234))
+  end
+
   thrift_test "clients retry when making an RPC on a closed server when retry is true", ctx do
     stop_server(ctx.server)
 
@@ -330,7 +342,7 @@ defmodule Thrift.Generator.ServiceTest do
     {:ok, client} = Client.start_link("127.0.0.1", ctx.port, [tcp_opts: [retry: true]])
     {:ok, server} = start_server(ctx.port)
 
-    assert {:ok, _} = Client.do_some_work(client, "Do the work!")
+    assert {:ok, nil} = Client.do_some_work(client, "Do the work!")
   end
 
   thrift_test "clients exit if they try to use a closed client", ctx do
@@ -367,8 +379,9 @@ defmodule Thrift.Generator.ServiceTest do
     Process.unlink(ctx.server)
     Process.exit(ctx.server, :kill)
 
+    client = ctx.client
     assert_receive {:DOWN, ^ref, _, _, _}
-    assert_receive {:EXIT, _, {:error, :econnrefused}}
+    assert_receive {:EXIT, ^client, {:error, :econnrefused}}
   end
 
   thrift_test "it returns :ok on void oneway functions if the server dies", ctx do

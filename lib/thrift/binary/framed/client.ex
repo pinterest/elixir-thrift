@@ -131,19 +131,22 @@ defmodule Thrift.Binary.Framed.Client do
     end
   end
 
-  defp retry_failed_message(:retry, %{retry: true, last_message: {call_args, caller}} = state) do
+  defp retry_failed_message({:retry, _}, %{retry: true, last_message: {call_args, caller}} = state) do
     case handle_call(call_args, caller, state) do
       {:reply, response, state} ->
         Connection.reply(caller, response)
         {:ok, %{state | last_message: nil}}
 
       other ->
-        {:disconnect, {:error, other}, nil}
+        :gen_tcp.close(state.sock)
+        {:close, {:error, other}, nil}
     end
   end
 
-  defp retry_failed_message(:retry, %{retry: false}) do
-    {:disconnect, {:error, :not_retrying}, nil}
+  defp retry_failed_message({:retry, orig_error}, %{retry: false, sock: sock}) do
+    :gen_tcp.close(sock)
+
+    {:stop, orig_error, nil}
   end
 
   defp retry_failed_message(_, state) do
@@ -165,7 +168,7 @@ defmodule Thrift.Binary.Framed.Client do
         reason = :inet.format_error(reason)
         Logger.error("Connection error: #{reason}")
 
-      :retry ->
+      {:retry, _} ->
         Logger.info("Retrying call")
     end
     {:connect, info, %{s | sock: nil}}
@@ -220,8 +223,8 @@ defmodule Thrift.Binary.Framed.Client do
       {:error, :timeout} = timeout ->
         {:reply, timeout, s}
 
-      {:error, :closed} ->
-        {:disconnect, :retry, %{s |last_message: {call_args, caller}}}
+      {:error, :closed} = err->
+        {:disconnect, {:retry, err}, %{s |last_message: {call_args, caller}}}
 
       {:error, _} = error ->
         {:disconnect, error, error, s}

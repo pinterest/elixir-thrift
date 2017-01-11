@@ -241,11 +241,11 @@ it. This module lets you serialize and deserialize its own type easily.
 For example:
 
 ```elixir
-iex(1)> {serialized, ""} = %User{username: "stinky" id: 1234, first_name: "Stinky", last_name: "Stinkman"}
+iex(1)> serialized = %User{username: "stinky" id: 1234, first_name: "Stinky", last_name: "Stinkman"}
 |> User.BinaryProtocol.serialize
 |> IO.iodata_to_binary
 iex(2)> User.BinaryProtocol.deserialize(serialized)
-{:ok, %User{username: "stinky" id: 1234, first_name: "Stinky", last_name: "Stinkman"}}
+{%User{username: "stinky" id: 1234, first_name: "Stinky", last_name: "Stinkman"}, ""}
 ```
 
 The return value of the `serialize` function is an [iodata]. You can pass it through `IO.iodata_to_binary` to convert it to a binary. You also can write the iodata directly to a file or socket without converting it.

@@ -99,8 +99,12 @@ defmodule Thrift.Generator.ServiceTest do
     assert_receive {:DOWN, ^ref, _, _, _}
   end
 
+  def random_port do
+    :erlang.unique_integer([:positive, :monotonic]) + 10_000
+  end
+
   setup do
-    port = :erlang.unique_integer([:positive, :monotonic]) + 10_000
+    port = random_port()
 
     {:ok, server} = start_server(port)
     {:ok, client} = Client.start_link('127.0.0.1', port,
@@ -316,10 +320,11 @@ defmodule Thrift.Generator.ServiceTest do
 
   thrift_test "clients don't retry by default", ctx do
     Process.flag(:trap_exit, true)
-    stop_server(ctx.server)
-    {:ok, new_server} = start_server(ctx.port, 20)
 
-    {:ok, client} = Client.start_link("127.0.0.1", ctx.port,[])
+    new_server_port = random_port()
+    {:ok, new_server} = start_server(new_server_port, 20)
+
+    {:ok, client} = Client.start_link("127.0.0.1", new_server_port,[])
 
     :timer.sleep(50) # sleep beyond the server's recv_timeout
     assert catch_exit(Client.friend_ids_of(client, 1234))
@@ -330,26 +335,24 @@ defmodule Thrift.Generator.ServiceTest do
   end
 
   thrift_test "clients retry when making an RPC on a closed server when retry is true", ctx do
-    stop_server(ctx.server)
-    {:ok, server} = start_server(ctx.port, 20)
+    new_server_port = random_port()
+    {:ok, server} = start_server(new_server_port, 20)
+    {:ok, client} = Client.start_link("127.0.0.1", new_server_port, [tcp_opts: [retry: true]])
 
-    :timer.sleep(1000) # wait for the server to come up.
-
-    {:ok, client} = Client.start_link("127.0.0.1", ctx.port, [tcp_opts: [retry: true]])
     :timer.sleep(50)
 
     ServerSpy.set_reply([9, 8, 7, 6])
-    assert {:ok, [9, 8, 7, 6]} = Client.friend_ids_of(client, 1234)
 
+    assert {:ok, [9, 8, 7, 6]} = Client.friend_ids_of(client, 1234)
     on_exit fn ->
       stop_server(server)
     end
   end
 
   thrift_test "clients retry when making a oneway call on a closed server when retry is true", ctx do
-    stop_server(ctx.server)
-    {:ok, server} = start_server(ctx.port, 20)
-    {:ok, client} = Client.start_link("127.0.0.1", ctx.port, [tcp_opts: [retry: true]])
+    new_server_port = random_port()
+    {:ok, server} = start_server(new_server_port, 20)
+    {:ok, client} = Client.start_link("127.0.0.1", new_server_port, [tcp_opts: [retry: true]])
     :timer.sleep(50)
 
     assert {:ok, nil} = Client.do_some_work(client, "Do the work!")

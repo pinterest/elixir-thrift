@@ -2,11 +2,6 @@ defmodule Thrift.Binary.Framed.Server
   do
   @moduledoc false
 
-  @type tcp_options :: [
-    recv_timeout: timeout,
-    send_timeout: timeout
-  ]
-
   @type server_opts :: [
     worker_count: pos_integer,
     name: atom,

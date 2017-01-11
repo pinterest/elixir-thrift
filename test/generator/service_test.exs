@@ -333,7 +333,7 @@ defmodule Thrift.Generator.ServiceTest do
     stop_server(ctx.server)
     {:ok, server} = start_server(ctx.port, 20)
 
-    :timer.sleep(20) # wait for the server to come up.
+    :timer.sleep(1000) # wait for the server to come up.
 
     {:ok, client} = Client.start_link("127.0.0.1", ctx.port, [tcp_opts: [retry: true]])
     :timer.sleep(50)

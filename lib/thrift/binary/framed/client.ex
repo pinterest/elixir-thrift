@@ -28,7 +28,6 @@ defmodule Thrift.Binary.Framed.Client do
   @type tcp_opts :: [
     timeout: pos_integer,
     send_timeout: integer,
-    max_retries: non_neg_integer | :infinity
   ]
 
   @type genserver_call_options :: [
@@ -95,7 +94,7 @@ defmodule Thrift.Binary.Framed.Client do
 
      - `send_timeout`: An integer that governs how long our connection waits when sending data.
 
-     - `retry`: An boolean that tells the client whether or not it should retry on failures.
+     - `retry`: A boolean that tells the client whether or not it should retry on failures.
 
 
     `gen_server_opts`: A keyword list of options that control the gen_server behaviour.

@@ -99,9 +99,8 @@ defmodule Thrift.Generator.Binary.Framed.Server do
 
         quote do
           unquote(error_var) in unquote(dest_module) ->
-            serialized_exception = %unquote(response_module){unquote(field_setter)}
-            |> unquote(response_module).BinaryProtocol.serialize()
-            {:reply, serialized_exception}
+            response = %unquote(response_module){unquote(field_setter)}
+            {:reply, unquote(response_module).BinaryProtocol.serialize(response)}
         end
     end)
 

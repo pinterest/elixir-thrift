@@ -20,7 +20,7 @@ defmodule Thrift.Generator.Binary.Framed.Server do
         alias Thrift.Binary.Framed.Server, as: ServerImpl
         defdelegate stop(name), to: ServerImpl
 
-        def start_link(handler_module, port, opts) do
+        def start_link(handler_module, port, opts \\ []) do
           ServerImpl.start_link(__MODULE__, port, handler_module, opts)
         end
 

@@ -159,8 +159,7 @@ Name             | Type | Description
 -----------------|------|---------------
 `:timeout`       | positive integer | The default timeout for reading from, writing to, and connecting to sockets.
 `send_timeout`   | positive integer | The amount of time in milliseconds to wait before sending data fails.
-`backoff_calculator` | (int) -> int | A single argument function that takes the number of retries and returns the amount of time to wait in milliseconds before reconnecting. The default implementation waits 100, 100, 200, 300, 500, 800 and then 1000 ms. All retries after that will wait 1000ms.
-
+`retry` | boolean | Whether or not to retry if the server closes the connection (default false). If the client detects that the server has closed the connection, the last message will be retried. This is helpful when using the client in IEx, or in a situation where the client won't be used for a while, but can result in duplicate messages being sent to the server. Due to the subtleties of `gen_tcp`, oneway messages are not retried.
 
 ##### GenServer Opts
 Name             | Type | Description

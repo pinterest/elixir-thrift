@@ -75,7 +75,6 @@ defmodule Thrift.Binary.Framed.Client do
                port: port,
                tcp_opts: tcp_opts,
                timeout: timeout,
-               sock: nil,
                retry: should_retry}
 
     {:connect, :init, s}
@@ -169,7 +168,12 @@ defmodule Thrift.Binary.Framed.Client do
         Logger.error("Connection error: #{reason}")
 
       {:retry, _} ->
-        Logger.info("Retrying call")
+        case s.last_message do
+          {type, rpc_name, _, _} ->
+            Logger.info("Retrying #{type} #{rpc_name}")
+          _ ->
+            Logger.info("Retrying failed call")
+        end
     end
     {:connect, info, %{s | sock: nil}}
   end

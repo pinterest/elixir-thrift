@@ -4,7 +4,6 @@ defmodule Thrift.Binary.Framed.Server
 
   @type tcp_options :: [
     recv_timeout: timeout,
-    timeout: timeout,
     send_timeout: timeout
   ]
 

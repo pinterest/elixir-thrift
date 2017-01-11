@@ -22,7 +22,7 @@ defmodule Thrift.Binary.Framed.ProtocolHandler do
 
     {recv_timeout, tcp_opts} = Keyword.pop(tcp_opts, :recv_timeout, @default_timeout)
 
-    transport_options = Keyword.merge(tcp_opts, [packet: 4])
+    transport_options = Keyword.put(tcp_opts, :packet, 4)
     transport.setopts(socket, transport_options)
 
     do_thrift_call({transport, socket, server_module, handler_module, recv_timeout})

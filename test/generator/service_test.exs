@@ -345,9 +345,9 @@ defmodule Thrift.Generator.ServiceTest do
 
   thrift_test "clients retry when making a oneway call on a closed server when retry is true", ctx do
     stop_server(ctx.server)
-
+    {:ok, server} = start_server(ctx.port, 20)
     {:ok, client} = Client.start_link("127.0.0.1", ctx.port, [tcp_opts: [retry: true]])
-    {:ok, server} = start_server(ctx.port)
+    :timer.sleep(50)
 
     assert {:ok, nil} = Client.do_some_work(client, "Do the work!")
 

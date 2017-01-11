@@ -139,8 +139,8 @@ Function name  | Description
 To use the client, simply call `start_link`, supplying the host and port.
 
 ```elixir
-iex> alias Thrift.Test.UserService.Clients.Binary.Framed, as: Client
-iex> {:ok, client} = UserService.Clients.Binary.Framed.start_link("localhost", 2345, [])
+iex> alias Thrift.Test.UserService.Binary.Framed.Client
+iex> {:ok, client} = Client.start_link("localhost", 2345, [])
 iex> {:ok, user} = Client.get_user_by_id(client, 22451)
 {:ok, %Thrift.Test.User{id: 22451, username: "stinky", first_name: "Stinky", last_name: "Stinkman"}}
 ```
@@ -171,7 +171,7 @@ Name             | Type | Description
 ### Example of using options
 
 ```elixir
-alias Thrift.Test.UserService.Clients.Binary.Framed, as: Client
+alias Thrift.Test.UserService.Binary.Framed.Client
 {:ok, client} = Client.start_link("localhost", 2345,
                 tcp_opts: [backoff_calculator: fn(retry_count) -> retry_count * 1000 end], gen_server_opts: [timeout: 10_000])
 
@@ -217,7 +217,7 @@ end
 To start a server with UserServiceHandler as the callback module:
 
 ```elixir
-{:ok, server_pid} = Thrift.Test.UserService.Servers.Binary.Framed.start_link(UserServiceHandler, 2345, [])
+{:ok, server_pid} = Thrift.Test.UserService.Binary.Framed.Server.start_link(UserServiceHandler, 2345, [])
 ```
 
 ...and your server is up and running. RPC calls to the server are delegated to UserServiceHandler.

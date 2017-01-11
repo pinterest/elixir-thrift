@@ -172,13 +172,11 @@ Name             | Type | Description
 ```elixir
 alias Thrift.Test.UserService.Clients.Binary.Framed, as: Client
 {:ok, client} = Client.start_link("localhost", 2345,
-                tcp_opts: [backoff_calculator: fn(retry_count) -> retry_count * 1000 end], gen_server_opts: [timeout: 10_000])
+                tcp_opts: [retry: true], gen_server_opts: [timeout: 10_000])
 
 ```
-In the above example, the client will use a (very) conservative backoff calculator
-that waits an additional second each time the client retries. In other words, the first
-retry will wait 1 second, the second will wait 2 seconds, and the third will wait 3.
-These options set the GenServer timeout to be ten seconds, which means the remote
+In the above example, the client will retry once if the remote server severs the connection.
+These options also set the GenServer timeout to be ten seconds, which means the remote
 side can take its time to reply.
 
 

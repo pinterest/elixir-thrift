@@ -332,6 +332,9 @@ defmodule Thrift.Generator.ServiceTest do
   thrift_test "clients retry when making an RPC on a closed server when retry is true", ctx do
     stop_server(ctx.server)
     {:ok, server} = start_server(ctx.port, 20)
+
+    :timer.sleep(20) # wait for the server to come up.
+
     {:ok, client} = Client.start_link("127.0.0.1", ctx.port, [tcp_opts: [retry: true]])
     :timer.sleep(50)
 

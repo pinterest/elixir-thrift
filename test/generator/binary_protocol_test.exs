@@ -463,6 +463,7 @@ defmodule Thrift.Generator.BinaryProtocolTest do
     assert struct.i32_val == 5
     assert struct.i64_val == 5
     assert struct.string_val == "abc123"
+    assert struct.binary_val == "abc123"
     assert struct.struct_val == %ConstStructVal{num: 5}
     assert struct.map_val == %{"a" => 1, "b" => 2}
     assert struct.set_val == MapSet.new(["a", "b"])

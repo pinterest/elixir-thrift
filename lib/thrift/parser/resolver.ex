@@ -8,29 +8,15 @@ defmodule Thrift.Parser.Resolver do
 
   alias Thrift.Parser.ParsedFile
 
-  def start_link do
-    Agent.start_link(&Map.new/0)
-  end
-
-  def stop(pid) do
-    Agent.stop(pid)
-  end
-
-  def add(pid, %ParsedFile{} = f) do
-    Agent.update(pid, fn(state) ->
-      state
-      |> update(f.name, f.schema.constants)
-      |> update(f.name, f.schema.services)
-      |> update(f.name, f.schema.structs)
-      |> update(f.name, f.schema.exceptions)
-      |> update(f.name, f.schema.unions)
-      |> update(f.name, f.schema.enums)
-      |> update(f.name, f.schema.typedefs)
-    end)
-  end
-
-  def get(pid) do
-    Agent.get(pid, &(&1))
+  def add(state, %ParsedFile{} = f) do
+    state
+    |> update(f.name, f.schema.constants)
+    |> update(f.name, f.schema.services)
+    |> update(f.name, f.schema.structs)
+    |> update(f.name, f.schema.exceptions)
+    |> update(f.name, f.schema.unions)
+    |> update(f.name, f.schema.enums)
+    |> update(f.name, f.schema.typedefs)
   end
 
   defp update(%{} = state, include_name, %{} = local_mappings) do

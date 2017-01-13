@@ -27,7 +27,6 @@ defmodule Thrift.Protocol.Binary.Type do
   def of(:double),    do: double()
   def of(:binary),    do: string()
   def of(:string),    do: string()
-  def of(:struct),    do: struct()
   def of({:map, _}),  do: map()
   def of({:set, _}),  do: set()
   def of({:list, _}), do: list()

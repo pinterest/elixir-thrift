@@ -435,31 +435,31 @@ defmodule Thrift.Parser.Models do
     end
 
     defp merge(schema, %Constant{} = const) do
-      %Schema{schema | constants: Map.put(schema.constants, const.name, const)}
+      %Schema{schema | constants: put_new_strict(schema.constants, const.name, const)}
     end
 
     defp merge(schema, %TEnum{} = enum) do
-      %Schema{schema | enums: Map.put(schema.enums, enum.name, canonicalize_name(schema, enum))}
+      %Schema{schema | enums: put_new_strict(schema.enums, enum.name, canonicalize_name(schema, enum))}
     end
 
     defp merge(schema, %Exception{} = exc) do
-      %Schema{schema | exceptions: Map.put(schema.exceptions, exc.name, canonicalize_name(schema, exc))}
+      %Schema{schema | exceptions: put_new_strict(schema.exceptions, exc.name, canonicalize_name(schema, exc))}
     end
 
     defp merge(schema, %Struct{} = s) do
-      %Schema{schema | structs: Map.put(schema.structs, s.name, canonicalize_name(schema, s))}
+      %Schema{schema | structs: put_new_strict(schema.structs, s.name, canonicalize_name(schema, s))}
     end
 
     defp merge(schema, %Union{} = union) do
-      %Schema{schema | unions: Map.put(schema.unions, union.name, canonicalize_name(schema, union))}
+      %Schema{schema | unions: put_new_strict(schema.unions, union.name, canonicalize_name(schema, union))}
     end
 
     defp merge(schema, %Service{} = service) do
-      %Schema{schema | services: Map.put(schema.services, service.name, canonicalize_name(schema, service))}
+      %Schema{schema | services: put_new_strict(schema.services, service.name, canonicalize_name(schema, service))}
     end
 
     defp merge(schema, {:typedef, actual_type, type_alias}) do
-      %Schema{schema | typedefs: Map.put(schema.typedefs, atomify(type_alias), actual_type)}
+      %Schema{schema | typedefs: put_new_strict(schema.typedefs, atomify(type_alias), actual_type)}
     end
 
     defp canonicalize_name(%{module: nil}, model) do
@@ -468,6 +468,20 @@ defmodule Thrift.Parser.Models do
 
     defp canonicalize_name(schema, %{name: name} = model) do
       %{model | name: :"#{schema.module}.#{name}"}
+    end
+
+    defp put_new_strict(map, key, value) do
+      case map[key] do
+        nil ->
+          Map.put(map, key, value)
+        existing_value ->
+          raise """
+          Name collision!
+          Name:         #{inspect key}
+          First value:  #{inspect value}
+          Second Value: #{inspect existing_value}
+          """
+      end
     end
   end
 

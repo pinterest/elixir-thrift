@@ -671,4 +671,15 @@ defmodule ParserTest do
     File.read!("./test/fixtures/app/thrift/shared.thrift")
     |> parse
   end
+
+  test "name collisions in the same type and thrift file" do
+    thrift = """
+    struct Foo {}
+    struct Foo {}
+    """
+
+    assert_raise RuntimeError, ~r/Name collision!/, fn ->
+      parse(thrift)
+    end
+  end
 end

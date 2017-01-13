@@ -49,18 +49,7 @@ defmodule Thrift.Generator.StructBinaryProtocol do
     Union,
   }
 
-  @bool 2
-  @byte 3
-  @double 4
-  @i16 6
-  @i32 8
-  @i64 10
-  @string 11
-  @struct 12
-  @union 12
-  @map 13
-  @set 14
-  @list 15
+  require Thrift.Protocol.Binary.Type, as: Type
 
   @doc """
   Generate a deserializer for a Thrift struct, union or exception.
@@ -96,10 +85,10 @@ defmodule Thrift.Generator.StructBinaryProtocol do
 
   defp field_deserializer(:bool, field, name, _file_group) do
     quote do
-      defp unquote(name)(<<unquote(@bool), unquote(field.id)::16-signed, 1, rest::binary>>, acc) do
+      defp unquote(name)(<<unquote(Type.bool), unquote(field.id)::16-signed, 1, rest::binary>>, acc) do
         unquote(name)(rest, %{acc | unquote(field.name) => true})
       end
-      defp unquote(name)(<<unquote(@bool), unquote(field.id)::16-signed, 0, rest::binary>>, acc) do
+      defp unquote(name)(<<unquote(Type.bool), unquote(field.id)::16-signed, 0, rest::binary>>, acc) do
         unquote(name)(rest, %{acc | unquote(field.name) => false})
       end
     end
@@ -109,28 +98,28 @@ defmodule Thrift.Generator.StructBinaryProtocol do
   end
   defp field_deserializer(:i8, field, name, _file_group) do
     quote do
-      defp unquote(name)(<<unquote(@byte), unquote(field.id)::16-signed, value, rest::binary>>, acc) do
+      defp unquote(name)(<<unquote(Type.byte), unquote(field.id)::16-signed, value, rest::binary>>, acc) do
         unquote(name)(rest, %{acc | unquote(field.name) => value})
       end
     end
   end
   defp field_deserializer(:double, field, name, _file_group) do
     quote do
-      defp unquote(name)(<<unquote(@double), unquote(field.id)::16-signed, value::signed-float, rest::binary>>, acc) do
+      defp unquote(name)(<<unquote(Type.double), unquote(field.id)::16-signed, value::signed-float, rest::binary>>, acc) do
         unquote(name)(rest, %{acc | unquote(field.name) => value})
       end
     end
   end
   defp field_deserializer(:i16, field, name, _file_group) do
     quote do
-      defp unquote(name)(<<unquote(@i16), unquote(field.id)::16-signed, value::size(16), rest::binary>>, acc) do
+      defp unquote(name)(<<unquote(Type.i16), unquote(field.id)::16-signed, value::size(16), rest::binary>>, acc) do
         unquote(name)(rest, %{acc | unquote(field.name) => value})
       end
     end
   end
   defp field_deserializer(:i32, field, name, _file_group) do
     quote do
-      defp unquote(name)(<<unquote(@i32), unquote(field.id)::16-signed, value::size(32), rest::binary>>, acc) do
+      defp unquote(name)(<<unquote(Type.i32), unquote(field.id)::16-signed, value::size(32), rest::binary>>, acc) do
         unquote(name)(rest, %{acc | unquote(field.name) => value})
       end
     end
@@ -140,7 +129,7 @@ defmodule Thrift.Generator.StructBinaryProtocol do
   end
   defp field_deserializer(:i64, field, name, _file_group) do
     quote do
-      defp unquote(name)(<<unquote(@i64), unquote(field.id)::16-signed, value::size(64), rest::binary>>, acc) do
+      defp unquote(name)(<<unquote(Type.i64), unquote(field.id)::16-signed, value::size(64), rest::binary>>, acc) do
         unquote(name)(rest, %{acc | unquote(field.name) => value})
       end
     end
@@ -150,7 +139,7 @@ defmodule Thrift.Generator.StructBinaryProtocol do
   end
   defp field_deserializer(:string, field, name, _file_group) do
     quote do
-      defp unquote(name)(<<unquote(@string),
+      defp unquote(name)(<<unquote(Type.string),
                          unquote(field.id)::16-signed,
                          string_size::32-signed,
                          value::binary-size(string_size),
@@ -163,7 +152,7 @@ defmodule Thrift.Generator.StructBinaryProtocol do
   defp field_deserializer(%Struct{} = struct, field, name, file_group) do
     dest_module = FileGroup.dest_module(file_group, struct)
     quote do
-      defp unquote(name)(<<unquote(@struct), unquote(field.id)::16-signed, rest::binary>>, acc) do
+      defp unquote(name)(<<unquote(Type.struct), unquote(field.id)::16-signed, rest::binary>>, acc) do
         case unquote(dest_module).BinaryProtocol.deserialize(rest) do
           {value, rest} ->
             unquote(name)(rest, %{acc | unquote(field.name) => value})
@@ -176,7 +165,7 @@ defmodule Thrift.Generator.StructBinaryProtocol do
   defp field_deserializer(%Union{} = union, field, name, file_group) do
     dest_module = FileGroup.dest_module(file_group, union)
     quote do
-      defp unquote(name)(<<unquote(@union), unquote(field.id)::16-signed, rest::binary>>, acc) do
+      defp unquote(name)(<<unquote(Type.struct), unquote(field.id)::16-signed, rest::binary>>, acc) do
         case unquote(dest_module).BinaryProtocol.deserialize(rest) do
           {value, rest} ->
             unquote(name)(rest, %{acc | unquote(field.name) => value})
@@ -189,7 +178,7 @@ defmodule Thrift.Generator.StructBinaryProtocol do
   defp field_deserializer(%Exception{} = struct, field, name, file_group) do
     dest_module = FileGroup.dest_module(file_group, struct)
     quote do
-      defp unquote(name)(<<unquote(@struct), unquote(field.id)::16-signed, rest::binary>>, acc) do
+      defp unquote(name)(<<unquote(Type.struct), unquote(field.id)::16-signed, rest::binary>>, acc) do
         case unquote(dest_module).BinaryProtocol.deserialize(rest) do
           {value, rest} ->
             unquote(name)(rest, %{acc | unquote(field.name) => value})
@@ -203,7 +192,7 @@ defmodule Thrift.Generator.StructBinaryProtocol do
     key_name = :"#{name}__#{field.name}__key"
     value_name = :"#{name}__#{field.name}__value"
     quote do
-      defp unquote(name)(<<unquote(@map),
+      defp unquote(name)(<<unquote(Type.map),
                            unquote(field.id)::16-signed,
                            unquote(type_id(key_type, file_group)),
                            unquote(type_id(value_type, file_group)),
@@ -223,7 +212,7 @@ defmodule Thrift.Generator.StructBinaryProtocol do
   defp field_deserializer({:set, element_type}, field, name, file_group) do
     sub_name = :"#{name}__#{field.name}"
     quote do
-      defp unquote(name)(<<unquote(@set),
+      defp unquote(name)(<<unquote(Type.set),
                            unquote(field.id)::16-signed,
                            unquote(type_id(element_type, file_group)),
                            remaining::size(32),
@@ -240,7 +229,7 @@ defmodule Thrift.Generator.StructBinaryProtocol do
   defp field_deserializer({:list, element_type}, field, name, file_group) do
     sub_name = :"#{name}__#{field.name}"
     quote do
-      defp unquote(name)(<<unquote(@list),
+      defp unquote(name)(<<unquote(Type.list),
                            unquote(field.id)::16-signed,
                            unquote(type_id(element_type, file_group)),
                            remaining::size(32),
@@ -782,9 +771,9 @@ defmodule Thrift.Generator.StructBinaryProtocol do
     quote do
       case unquote(Macro.var(name, nil)) do
         false ->
-          <<unquote(@bool), unquote(id) :: size(16), 0>>
+          <<unquote(Type.bool), unquote(id) :: size(16), 0>>
         true ->
-          <<unquote(@bool), unquote(id) :: size(16), 1>>
+          <<unquote(Type.bool), unquote(id) :: size(16), 1>>
         _ ->
           raise Thrift.InvalidValueException,
                 unquote("Required boolean field #{inspect name} on #{inspect struct_name} must be true or false")
@@ -797,9 +786,9 @@ defmodule Thrift.Generator.StructBinaryProtocol do
         nil ->
           <<>>
         false ->
-          <<unquote(@bool), unquote(id) :: size(16), 0>>
+          <<unquote(Type.bool), unquote(id) :: size(16), 0>>
         true ->
-          <<unquote(@bool), unquote(id) :: size(16), 1>>
+          <<unquote(Type.bool), unquote(id) :: size(16), 1>>
         _ ->
           raise Thrift.InvalidValueException,
                 unquote("Optional boolean field #{inspect name} on #{inspect struct_name} must be true, false, or nil")
@@ -912,25 +901,13 @@ defmodule Thrift.Generator.StructBinaryProtocol do
     |> value_serializer(var, file_group)
   end
 
-
-  defp type_id(:bool, _file_group), do: 2
-  defp type_id(:byte, _file_group), do: 3
-  defp type_id(:i8, _file_group), do: 3
-  defp type_id(:double, _file_group), do: 4
-  defp type_id(:i16, _file_group), do: 6
-  defp type_id(:i32, _file_group), do: 8
-  defp type_id(%TEnum{}, _file_group), do: 8
-  defp type_id(:i64, _file_group), do: 10
-  defp type_id(:string, _file_group), do: 11
-  defp type_id(:binary, _file_group), do: 11
-  defp type_id(%Struct{}, _file_group), do: 12
-  defp type_id(%Exception{}, _file_group), do: 12
-  defp type_id(%Union{}, _file_group), do: 12
-  defp type_id({:map, _}, _file_group), do: 13
-  defp type_id({:set, _}, _file_group), do: 14
-  defp type_id({:list, _}, _file_group), do: 15
   defp type_id(%TypeRef{referenced_type: type}, file_group) do
     FileGroup.resolve(file_group, type)
     |> type_id(file_group)
   end
+  defp type_id(%TEnum{}, _),      do: Type.i32
+  defp type_id(%Struct{}, _),     do: Type.struct
+  defp type_id(%Exception{}, _),  do: Type.struct
+  defp type_id(%Union{}, _),      do: Type.struct
+  defp type_id(type, _),          do: Type.of(type)
 end

@@ -16,19 +16,6 @@ defmodule Thrift.Protocol.Binary do
 
   @stop 0
 
-  @spec type_id(Thrift.data_type) :: Type.t
-  defp type_id(:bool),      do: Type.bool
-  defp type_id(:byte),      do: Type.byte
-  defp type_id(:i16),       do: Type.i16
-  defp type_id(:i32),       do: Type.i32
-  defp type_id(:i64),       do: Type.i64
-  defp type_id(:double),    do: Type.double
-  defp type_id(:string),    do: Type.string
-  defp type_id(:struct),    do: Type.struct
-  defp type_id({:map, _}),  do: Type.map
-  defp type_id({:set, _}),  do: Type.set
-  defp type_id({:list, _}), do: Type.list
-
   @typedoc "Binary protocol message type identifier"
   @type message_type_id :: (1..4)
 
@@ -63,18 +50,18 @@ defmodule Thrift.Protocol.Binary do
 
   def serialize({:list, elem_type}, elems) when is_list(elems) do
     rest = Enum.map(elems, &serialize(elem_type, &1))
-    [<<type_id(elem_type)::size(8), Enum.count(elems)::32-signed>>, rest]
+    [<<Type.of(elem_type)::size(8), Enum.count(elems)::32-signed>>, rest]
   end
   def serialize({:set, elem_type}, %MapSet{} = elems) do
     rest = Enum.map(elems, &serialize(elem_type, &1))
-    [<<type_id(elem_type)::size(8), Enum.count(elems)::32-signed>>, rest]
+    [<<Type.of(elem_type)::size(8), Enum.count(elems)::32-signed>>, rest]
   end
   def serialize({:map, {key_type, val_type}}, map) when is_map(map) do
     elem_count = map_size(map)
     rest = Enum.map(map, fn {key, value} ->
       [serialize(key_type, key), serialize(val_type, value)]
     end)
-    [<<type_id(key_type)::size(8), type_id(val_type)::size(8), elem_count::32-signed>>, rest]
+    [<<Type.of(key_type)::size(8), Type.of(val_type)::size(8), elem_count::32-signed>>, rest]
   end
   def serialize(:struct, %{__struct__: mod} = struct) do
     mod.serialize(struct, :binary)

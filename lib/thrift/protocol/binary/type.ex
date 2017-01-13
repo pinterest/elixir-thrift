@@ -16,5 +16,18 @@ defmodule Thrift.Protocol.Binary.Type do
   defmacro map,     do: 13
   defmacro set,     do: 14
   defmacro list,    do: 15
+
+  @spec of(Thrift.data_type) :: t
+  def of(:bool),      do: bool()
+  def of(:byte),      do: byte()
+  def of(:i16),       do: i16()
+  def of(:i32),       do: i32()
+  def of(:i64),       do: i64()
+  def of(:double),    do: double()
+  def of(:string),    do: string()
+  def of(:struct),    do: struct()
+  def of({:map, _}),  do: map()
+  def of({:set, _}),  do: set()
+  def of({:list, _}), do: list()
 end
 

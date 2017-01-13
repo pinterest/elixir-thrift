@@ -39,7 +39,22 @@ defmodule Thrift.Parser.Resolver do
     end)
 
     resolutions
-    |> Map.merge(new_type_mappings)
-    |> Map.merge(new_value_mappings)
+    |> merge_new(new_type_mappings)
+    |> merge_new(new_value_mappings)
+  end
+
+  # Similar to Map.merge but raises an error if there are any duplicate keys.
+  defp merge_new(existing_map, new_map) do
+    existing_keys = Map.keys(existing_map) |> MapSet.new
+    new_keys = Map.keys(new_map) |> MapSet.new
+
+    unless MapSet.disjoint?(existing_keys, new_keys) do
+      shared_keys = new_keys
+      |> MapSet.intersection(existing_keys)
+      |> Enum.map_join(", ", &to_string/1)
+      raise "Name collision: #{shared_keys}"
+    end
+
+    Map.merge(existing_map, new_map)
   end
 end

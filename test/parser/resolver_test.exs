@@ -192,4 +192,18 @@ defmodule ResolverTest do
       assert %TEnum{} = FileGroup.resolve(file_group, :"enums.JobStatus")
     end
   end
+
+
+  test "name collisions between types in the same thrift file" do
+    assert_raise RuntimeError, "Name collision: dupes.Foo", fn ->
+      with_thrift_files(
+        "dupes.thrift": """
+        struct Foo {}
+        service Foo {}
+        """, parse: "dupes.thrift") do
+
+        _ = file_group
+      end
+    end
+  end
 end

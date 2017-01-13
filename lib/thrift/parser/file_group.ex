@@ -47,9 +47,14 @@ defmodule Thrift.Parser.FileGroup do
 
   def add(file_group, parsed_file) do
     file_group = add_includes(file_group, parsed_file)
+    resolutions =
+      if Map.has_key?(file_group.parsed_files, parsed_file.name) do
+        file_group.resolutions
+      else
+        Resolver.add(file_group.resolutions, parsed_file)
+      end
     new_parsed_files = Map.put(file_group.parsed_files, parsed_file.name, parsed_file)
     new_schemas = Map.put(file_group.schemas, parsed_file.name, parsed_file.schema)
-    resolutions = Resolver.add(file_group.resolutions, parsed_file)
 
     %__MODULE__{file_group |
                 parsed_files: new_parsed_files,

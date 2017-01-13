@@ -901,24 +901,13 @@ defmodule Thrift.Generator.StructBinaryProtocol do
     |> value_serializer(var, file_group)
   end
 
-  defp type_id(:bool, _file_group),         do: Type.bool
-  defp type_id(:byte, _file_group),         do: Type.byte
-  defp type_id(:i8, _file_group),           do: Type.i8
-  defp type_id(:i16, _file_group),          do: Type.i16
-  defp type_id(:i32, _file_group),          do: Type.i32
-  defp type_id(:i64, _file_group),          do: Type.i64
-  defp type_id(:double, _file_group),       do: Type.double
-  defp type_id(:string, _file_group),       do: Type.string
-  defp type_id(:binary, _file_group),       do: Type.string
-  defp type_id({:map, _}, _file_group),     do: Type.map
-  defp type_id({:set, _}, _file_group),     do: Type.set
-  defp type_id({:list, _}, _file_group),    do: Type.list
-  defp type_id(%TEnum{}, _file_group),      do: Type.i32
-  defp type_id(%Struct{}, _file_group),     do: Type.struct
-  defp type_id(%Exception{}, _file_group),  do: Type.struct
-  defp type_id(%Union{}, _file_group),      do: Type.struct
   defp type_id(%TypeRef{referenced_type: type}, file_group) do
     FileGroup.resolve(file_group, type)
     |> type_id(file_group)
   end
+  defp type_id(%TEnum{}, _),      do: Type.i32
+  defp type_id(%Struct{}, _),     do: Type.struct
+  defp type_id(%Exception{}, _),  do: Type.struct
+  defp type_id(%Union{}, _),      do: Type.struct
+  defp type_id(type, _),          do: Type.of(type)
 end

@@ -20,10 +20,12 @@ defmodule Thrift.Protocol.Binary.Type do
   @spec of(Thrift.data_type) :: t
   def of(:bool),      do: bool()
   def of(:byte),      do: byte()
+  def of(:i8),        do: i8()
   def of(:i16),       do: i16()
   def of(:i32),       do: i32()
   def of(:i64),       do: i64()
   def of(:double),    do: double()
+  def of(:binary),    do: string()
   def of(:string),    do: string()
   def of(:struct),    do: struct()
   def of({:map, _}),  do: map()

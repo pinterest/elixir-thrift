@@ -93,6 +93,9 @@ defmodule Thrift.Generator.StructGenerator do
   defp default_value(value, :string, _schema) when is_list(value) do
     List.to_string(value)
   end
+  defp default_value(value, :binary, schema) do
+    default_value(value, :string, schema)
+  end
   defp default_value(values, %Struct{fields: fields} = struct, schema) when is_list(values) do
     struct_module = FileGroup.dest_module(schema.file_group, struct)
     types = Map.new(fields, fn %Field{name: name, type: type} ->

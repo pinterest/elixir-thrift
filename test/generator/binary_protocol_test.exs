@@ -432,6 +432,7 @@ defmodule Thrift.Generator.BinaryProtocolTest do
   const i32 ConstI32 = 5
   const i64 ConstI64 = 5
   const string ConstString = "abc123"
+  const binary ConstBinary = "abc123"
   const ConstStructVal ConstStruct = {"num": 5}
   const map<string, byte> ConstMap = {"a": 1, "b": 2}
   const set<string> ConstSet = ["a", "b"]
@@ -445,6 +446,7 @@ defmodule Thrift.Generator.BinaryProtocolTest do
     5: i32 i32_val = ConstI32,
     6: i64 i64_val = ConstI64,
     7: string string_val = ConstString,
+    71: binary binary_val = ConstBinary,
     8: ConstStructVal struct_val = ConstStruct,
     13: map<string, byte> map_val = ConstMap,
     14: set<string> set_val = ConstSet,
@@ -461,6 +463,7 @@ defmodule Thrift.Generator.BinaryProtocolTest do
     assert struct.i32_val == 5
     assert struct.i64_val == 5
     assert struct.string_val == "abc123"
+    assert struct.binary_val == "abc123"
     assert struct.struct_val == %ConstStructVal{num: 5}
     assert struct.map_val == %{"a" => 1, "b" => 2}
     assert struct.set_val == MapSet.new(["a", "b"])

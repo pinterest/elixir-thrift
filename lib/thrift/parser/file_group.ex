@@ -29,29 +29,32 @@ defmodule Thrift.Parser.FileGroup do
   }
 
   @type t :: %FileGroup{
-    resolver: pid,
     initial_file: Path.t,
     parsed_files: %{FileRef.thrift_include => %ParsedFile{}},
     schemas: %{FileRef.thrift_include => %Schema{}},
     ns_mappings: %{atom => %Namespace{}}
   }
 
-  defstruct resolver: nil, initial_file: nil, parsed_files: %{}, schemas: %{}, resolutions: %{}, ns_mappings: %{}
+  defstruct initial_file: nil,
+            parsed_files: %{},
+            schemas: %{},
+            resolutions: %{},
+            ns_mappings: %{}
 
   def new(initial_file) do
-    {:ok, resolver} = Resolver.start_link()
-    %FileGroup{initial_file: initial_file, resolver: resolver}
+    %FileGroup{initial_file: initial_file}
   end
 
   def add(file_group, parsed_file) do
     file_group = add_includes(file_group, parsed_file)
     new_parsed_files = Map.put(file_group.parsed_files, parsed_file.name, parsed_file)
     new_schemas = Map.put(file_group.schemas, parsed_file.name, parsed_file.schema)
+    resolutions = Resolver.add(file_group.resolutions, parsed_file)
 
-    Resolver.add(file_group.resolver, parsed_file)
     %__MODULE__{file_group |
                 parsed_files: new_parsed_files,
-                schemas: new_schemas}
+                schemas: new_schemas,
+                resolutions: resolutions}
   end
 
   def add_includes(%__MODULE__{} = group,
@@ -70,8 +73,7 @@ defmodule Thrift.Parser.FileGroup do
   def update_resolutions(file_group) do
     # since in a file, we can refer to things defined in that file in a non-qualified
     # way, we add unqualified names to the resolutions map.
-    resolutions = Resolver.get(file_group.resolver)
-    to_update = resolutions
+    to_update = file_group.resolutions
     |> Enum.map(fn {name, v} = kvp ->
       case String.split(Atom.to_string(name), ".") do
         [_initial_module, rest] ->
@@ -82,9 +84,8 @@ defmodule Thrift.Parser.FileGroup do
     end)
     |> Map.new
 
-    resolutions = Map.merge(resolutions, to_update)
+    resolutions = Map.merge(file_group.resolutions, to_update)
     ns_mappings = build_ns_mappings(file_group.schemas)
-    Resolver.stop(file_group.resolver)
 
     %FileGroup{file_group |
                resolutions: resolutions,

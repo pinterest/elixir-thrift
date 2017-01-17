@@ -27,7 +27,7 @@ defmodule Mix.Tasks.Thrift.Generate do
   def run(args) do
     {opts, files} = OptionParser.parse!(args,
       aliases: [o: :out, v: :verbose],
-      switches: [output: :keep, verbose: :boolean])
+      switches: [out: :string, verbose: :boolean])
 
     config     = Mix.Project.config
     output_dir = opts[:out] || Keyword.get(config, :thrift_output, "lib")
@@ -60,6 +60,7 @@ defmodule Mix.Tasks.Thrift.Generate do
     if opts[:verbose] do
       files =
         generated_files
+        |> Enum.uniq
         |> Enum.sort
         |> Enum.join(" ")
       Mix.shell.info "Wrote #{files}"

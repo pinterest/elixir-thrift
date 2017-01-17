@@ -81,16 +81,6 @@ defmodule Mix.Tasks.Compile.ThriftTest do
     end
   end
 
-  test "specifying source files on the command line" do
-    in_fixture fn ->
-      with_project_config [], fn ->
-        output = run(["thrift/simple.thrift"])
-        assert output =~ "Compiled thrift/simple.thrift"
-        refute output =~ "Compiled thrift/tutorial.thrift"
-      end
-    end
-  end
-
   defp run(args) when is_list(args), do: run(:stdio, args)
   defp run(device, args) when device in [:stdio, :stderr] and is_list(args) do
     args = ["--verbose" | args]

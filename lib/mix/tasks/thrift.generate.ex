@@ -48,9 +48,7 @@ defmodule Mix.Tasks.Thrift.Generate do
   end
 
   defp generate!(thrift_file, output_dir, opts) do
-    if opts[:verbose] do
-      Mix.shell.info "Reading #{thrift_file}"
-    end
+    Mix.shell.info "Parsing #{thrift_file}"
 
     generated_files =
       thrift_file
@@ -58,12 +56,12 @@ defmodule Mix.Tasks.Thrift.Generate do
       |> Thrift.Generator.generate!(output_dir)
 
     if opts[:verbose] do
-      files =
-        generated_files
-        |> Enum.uniq
-        |> Enum.sort
-        |> Enum.join(" ")
-      Mix.shell.info "Wrote #{files}"
+      generated_files
+      |> Enum.uniq
+      |> Enum.sort
+      |> Enum.each(fn file ->
+        Mix.shell.info "Wrote #{file}"
+      end)
     end
   end
 end

@@ -19,8 +19,8 @@ defmodule Mix.Tasks.Thrift.GenerateTest do
   test "specifying multiple Thrift files" do
     in_fixture fn ->
       output = run(["thrift/simple.thrift", "thrift/tutorial.thrift"])
-      assert output =~ "Reading thrift/simple.thrift"
-      assert output =~ "Reading thrift/tutorial.thrift"
+      assert output =~ "Parsing thrift/simple.thrift"
+      assert output =~ "Parsing thrift/tutorial.thrift"
       assert File.exists?("lib/shared/shared_struct.ex")
       assert File.exists?("lib/tutorial/calculator.ex")
     end

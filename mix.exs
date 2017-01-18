@@ -1,7 +1,7 @@
 defmodule Thrift.Mixfile do
   use Mix.Project
 
-  @version "1.3.1"
+  @version "1.3.2"
   @project_url "https://github.com/pinterest/elixir-thrift"
 
   def project do
@@ -34,9 +34,8 @@ defmodule Thrift.Mixfile do
      # Docs
      name: "Thrift",
      docs: [
-       main: "readme",
-       extras: ["README.md": [group: "Documents", title: "README"]],
-       extra_section: "Overview",
+       main: "README",
+       extras: ["README.md": [title: "README"]],
        source_ref: @version,
        source_url: @project_url]]
   end
@@ -47,7 +46,7 @@ defmodule Thrift.Mixfile do
 
   defp deps do
      [{:ex_doc, "~> 0.14", only: :dev},
-      {:excoveralls, "~> 0.5.7", only: [:dev, :test]},
+      {:excoveralls, "~> 0.6", only: [:dev, :test]},
       {:credo, "~> 0.5", only: [:dev, :test]},
       {:dialyxir, "~> 0.4", only: :dev, runtime: false}
      ]

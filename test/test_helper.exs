@@ -1,8 +1,6 @@
 ExUnit.start()
 
 defmodule ThriftTestHelpers do
-  @root_dir "test/fixtures/thrift/"
-
   defmacro __using__(_) do
     quote do
       require ThriftTestHelpers

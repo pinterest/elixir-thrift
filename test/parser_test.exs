@@ -678,7 +678,7 @@ defmodule ParserTest do
     struct Foo {}
     """
 
-    assert_raise RuntimeError, ~r/Name collision!/, fn ->
+    assert_raise RuntimeError, "Name collision: Foo", fn ->
       parse(thrift)
     end
   end

@@ -474,13 +474,8 @@ defmodule Thrift.Parser.Models do
       case map[key] do
         nil ->
           Map.put(map, key, value)
-        existing_value ->
-          raise """
-          Name collision!
-          Name:         #{inspect key}
-          First value:  #{inspect value}
-          Second Value: #{inspect existing_value}
-          """
+        _ ->
+          raise "Name collision: #{key}"
       end
     end
   end

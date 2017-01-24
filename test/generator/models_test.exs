@@ -44,6 +44,7 @@ defmodule Thrift.Generator.ModelsTest do
     assert_raise MatchError, fn -> Status.value_to_name!(38210) end
 
     assert Status.names == [:active, :inactive, :banned, :evil]
+    assert Status.values == [1, 2, 6, 32]
 
     struct = %StructWithEnum{}
     assert struct.status_field == Status.active

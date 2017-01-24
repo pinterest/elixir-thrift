@@ -39,6 +39,7 @@ defmodule Thrift.Generator.EnumGenerator do
         end
 
         def names, do: unquote(names)
+        def values, do: unquote(Keyword.values(enum.values))
 
         unquote_splicing(member_defs)
         def member?(_), do: false

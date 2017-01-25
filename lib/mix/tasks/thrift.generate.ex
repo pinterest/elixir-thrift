@@ -29,8 +29,8 @@ defmodule Mix.Tasks.Thrift.Generate do
       aliases: [o: :out, v: :verbose],
       switches: [out: :string, verbose: :boolean])
 
-    config     = Mix.Project.config
-    output_dir = opts[:out] || Keyword.get(config, :thrift_output, "lib")
+    config     = Keyword.get(Mix.Project.config, :thrift, [])
+    output_dir = opts[:out] || Keyword.get(config, :output, "lib")
 
     unless Enum.empty?(files) do
       File.mkdir_p!(output_dir)

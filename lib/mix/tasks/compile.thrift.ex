@@ -28,12 +28,12 @@ defmodule Mix.Tasks.Compile.Thrift do
     {opts, _} = OptionParser.parse!(args,
       switches: [force: :boolean, verbose: :boolean])
 
-    config       = Mix.Project.config
-    thrift_files = Keyword.get(config, :thrift_files, [])
-    output_dir   = Keyword.get(config, :thrift_output, "lib")
+    config      = Keyword.get(Mix.Project.config, :thrift, [])
+    files       = Keyword.get(config, :files, [])
+    output_dir  = Keyword.get(config, :output, "lib")
 
     file_groups =
-      thrift_files
+      files
       |> Enum.map(&parse/1)
       |> Enum.reject(&is_nil/1)
 

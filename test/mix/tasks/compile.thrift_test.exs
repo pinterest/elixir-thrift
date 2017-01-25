@@ -10,7 +10,7 @@ defmodule Mix.Tasks.Compile.ThriftTest do
     :ok
   end
 
-  test "compiling default :thrift_files" do
+  test "compiling default :files" do
     in_fixture fn ->
       with_project_config [], fn ->
         assert run([]) =~ """
@@ -53,9 +53,9 @@ defmodule Mix.Tasks.Compile.ThriftTest do
     end
   end
 
-  test "specifying an empty :thrift_files list" do
+  test "specifying an empty :files list" do
     in_fixture fn ->
-      with_project_config [thrift_files: []], fn ->
+      with_project_config [thrift: [files: []]], fn ->
         assert run([]) == ""
       end
     end
@@ -63,7 +63,7 @@ defmodule Mix.Tasks.Compile.ThriftTest do
 
   test "specifying a non-existent Thrift file" do
     in_fixture fn ->
-      with_project_config [thrift_files: ~w("missing.thrift")], fn ->
+      with_project_config [thrift: [files: ~w("missing.thrift")]], fn ->
         capture_io fn ->
           assert run(:stderr, []) =~ "Failed to parse"
         end
@@ -73,7 +73,7 @@ defmodule Mix.Tasks.Compile.ThriftTest do
 
   test "specifying an invalid Thrift file" do
     in_fixture fn ->
-      with_project_config [thrift_files: [__ENV__.file]], fn ->
+      with_project_config [thrift: [files: [__ENV__.file]]], fn ->
         capture_io fn ->
           assert run(:stderr, []) =~ "Failed to parse"
         end

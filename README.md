@@ -68,15 +68,22 @@ It's important to add `:thrift` *before* the `:elixir` entry. The Thrift
 compiler will generate Elixir source files, which are in turn compiled by the
 `:elixir` compiler.
 
-Next, define the list of `:thrift_files` that should be compiled. In this
-example, we gather all of the `.thrift` files under the `thrift` directory:
-
-```elixir
-thrift_files: Mix.Utils.extract_files(["thrift"], [:thrift])
-```
+Next, configure the compiler using a new Keyword list under the top-level
+`:thrift` configuration key. The only necessary compiler option is `:files`,
+which defines the list of Thrift files that should be compiled.
 
 By default, the generated source files will be written to the `lib` directory,
-but you can change that using the `thrift_output` option.
+but you can change that using the `output` option.
+
+In this example, we gather all of the `.thrift` files under the `thrift`
+directory and write our output to the `lib/thrift/` directory:
+
+```elixir
+thrift: [
+  files: Mix.Utils.extract_files(["thrift"], [:thrift]),
+  output: "lib/thrift/"
+]
+```
 
 ## Working with Thrift
 

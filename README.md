@@ -80,7 +80,7 @@ directory and write our output to the `lib/thrift/` directory:
 
 ```elixir
 thrift: [
-  files: Mix.Utils.extract_files(["thrift"], [:thrift]),
+  files: Path.wildcard("thrift/**/*.thrift"),
   output_path: "lib/thrift/"
 ]
 ```

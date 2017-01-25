@@ -18,9 +18,9 @@ defmodule Mix.Tasks.Compile.Thrift do
 
   ## Configuration
 
-    * `:thrift_files` - list of `.thrift` schema files to compile
-    * `:thrift_output` - output directory into which the generated Elixir
-      source file will be generated. Defaults to `"lib"`.
+    * `:files` - list of `.thrift` schema files to compile
+    * `:output_path` - output directory into which the generated Elixir
+      source files will be generated. Defaults to `"lib"`.
   """
 
   @spec run(OptionParser.argv) :: :ok
@@ -30,7 +30,7 @@ defmodule Mix.Tasks.Compile.Thrift do
 
     config      = Keyword.get(Mix.Project.config, :thrift, [])
     files       = Keyword.get(config, :files, [])
-    output_dir  = Keyword.get(config, :output, "lib")
+    output_path = Keyword.get(config, :output_path, "lib")
 
     file_groups =
       files
@@ -38,13 +38,13 @@ defmodule Mix.Tasks.Compile.Thrift do
       |> Enum.reject(&is_nil/1)
 
     stale_groups = Enum.filter(file_groups, fn file_group ->
-      opts[:force] || stale?(file_group, output_dir)
+      opts[:force] || stale?(file_group, output_path)
     end)
 
     unless Enum.empty?(stale_groups) do
-      File.mkdir_p!(output_dir)
+      File.mkdir_p!(output_path)
       Mix.Utils.compiling_n(length(stale_groups), :thrift)
-      Enum.each(stale_groups, &generate(&1, output_dir, opts))
+      Enum.each(stale_groups, &generate(&1, output_path, opts))
     end
   end
 
@@ -58,16 +58,16 @@ defmodule Mix.Tasks.Compile.Thrift do
     end
   end
 
-  defp stale?(%FileGroup{initial_file: thrift_file} = group, output_dir) do
+  defp stale?(%FileGroup{initial_file: thrift_file} = group, output_path) do
     targets =
       group
       |> Thrift.Generator.targets
-      |> Enum.map(&Path.join(output_dir, &1))
+      |> Enum.map(&Path.join(output_path, &1))
     Mix.Utils.stale?([thrift_file], targets)
   end
 
-  defp generate(%FileGroup{} = group, output_dir, opts) do
-    Thrift.Generator.generate!(group, output_dir)
+  defp generate(%FileGroup{} = group, output_path, opts) do
+    Thrift.Generator.generate!(group, output_path)
     if opts[:verbose] do
       Mix.shell.info "Compiled #{group.initial_file}"
     end

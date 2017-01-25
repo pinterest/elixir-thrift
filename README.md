@@ -73,7 +73,7 @@ Next, configure the compiler using a new Keyword list under the top-level
 which defines the list of Thrift files that should be compiled.
 
 By default, the generated source files will be written to the `lib` directory,
-but you can change that using the `output` option.
+but you can change that using the `output_path` option.
 
 In this example, we gather all of the `.thrift` files under the `thrift`
 directory and write our output to the `lib/thrift/` directory:
@@ -81,7 +81,7 @@ directory and write our output to the `lib/thrift/` directory:
 ```elixir
 thrift: [
   files: Mix.Utils.extract_files(["thrift"], [:thrift]),
-  output: "lib/thrift/"
+  output_path: "lib/thrift/"
 ]
 ```
 

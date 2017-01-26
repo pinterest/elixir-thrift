@@ -8,7 +8,8 @@ defmodule Thrift.Generator do
   alias Thrift.{
     Generator,
     Generator.EnumGenerator,
-    Generator.StructGenerator
+    Generator.StructGenerator,
+    Generator.ConstantGenerator
   }
 
   @doc """
@@ -65,6 +66,7 @@ defmodule Thrift.Generator do
   def generate_schema(schema) do
     List.flatten([
       generate_enum_modules(schema),
+      generate_const_modules(schema),
       generate_struct_modules(schema),
       generate_union_modules(schema),
       generate_exception_modules(schema),
@@ -91,6 +93,18 @@ defmodule Thrift.Generator do
     for {_, enum} <- schema.enums do
       full_name = FileGroup.dest_module(schema.file_group, enum)
       {full_name, EnumGenerator.generate(full_name, enum)}
+    end
+  end
+
+  defp generate_const_modules(schema) do
+    if schema.constants == %{} do
+      []
+    else
+      constants = for {_, constant} <- schema.constants do
+        constant
+      end
+      full_name = FileGroup.dest_module(schema.file_group, %Thrift.Parser.Models.Constant{})
+      [{full_name, ConstantGenerator.generate(full_name, constants, schema)}]
     end
   end
 

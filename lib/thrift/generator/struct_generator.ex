@@ -61,42 +61,42 @@ defmodule Thrift.Generator.StructGenerator do
     end
   end
 
-  defp default_value(%ValueRef{} = ref, type, schema) do
+  def default_value(%ValueRef{} = ref, type, schema) do
     value = FileGroup.resolve(schema.file_group, ref)
     default_value(value, type, schema)
   end
-  defp default_value(value, %TypeRef{} = ref, schema) do
+  def default_value(value, %TypeRef{} = ref, schema) do
     type = FileGroup.resolve(schema.file_group, ref)
     default_value(value, type, schema)
   end
-  defp default_value(%Constant{type: %TypeRef{} = ref} = constant, type, schema) do
+  def default_value(%Constant{type: %TypeRef{} = ref} = constant, type, schema) do
     constant = %Constant{constant | type: FileGroup.resolve(schema.file_group, ref)}
     default_value(constant, type, schema)
   end
-  defp default_value(%Constant{type: type, value: value}, type, schema) do
+  def default_value(%Constant{type: type, value: value}, type, schema) do
     default_value(value, type, schema)
   end
-  defp default_value(nil, %TEnum{values: [{_, value} | _]}, _schema) do
+  def default_value(nil, %TEnum{values: [{_, value} | _]}, _schema) do
     value
   end
-  defp default_value(nil, _type, _schema) do
+  def default_value(nil, _type, _schema) do
     nil
   end
-  defp default_value(value, :bool, _schema) when is_boolean(value), do: value
-  defp default_value(value, :byte, _schema) when is_integer(value), do: value
-  defp default_value(value, :double, _schema) when is_number(value), do: value
-  defp default_value(value, :i8, _schema) when is_integer(value), do: value
-  defp default_value(value, :i16, _schema) when is_integer(value), do: value
-  defp default_value(value, :i32, _schema) when is_integer(value), do: value
-  defp default_value(value, :i64, _schema) when is_integer(value), do: value
-  defp default_value(value, :string, _schema) when is_binary(value), do: value
-  defp default_value(value, :string, _schema) when is_list(value) do
+  def default_value(value, :bool, _schema) when is_boolean(value), do: value
+  def default_value(value, :byte, _schema) when is_integer(value), do: value
+  def default_value(value, :double, _schema) when is_number(value), do: value
+  def default_value(value, :i8, _schema) when is_integer(value), do: value
+  def default_value(value, :i16, _schema) when is_integer(value), do: value
+  def default_value(value, :i32, _schema) when is_integer(value), do: value
+  def default_value(value, :i64, _schema) when is_integer(value), do: value
+  def default_value(value, :string, _schema) when is_binary(value), do: value
+  def default_value(value, :string, _schema) when is_list(value) do
     List.to_string(value)
   end
-  defp default_value(value, :binary, schema) do
+  def default_value(value, :binary, schema) do
     default_value(value, :string, schema)
   end
-  defp default_value(values, %Struct{fields: fields} = struct, schema) when is_list(values) do
+  def default_value(values, %Struct{fields: fields} = struct, schema) when is_list(values) do
     struct_module = FileGroup.dest_module(schema.file_group, struct)
     types = Map.new(fields, fn %Field{name: name, type: type} ->
       {name, type}
@@ -113,7 +113,7 @@ defmodule Thrift.Generator.StructGenerator do
       %{unquote_splicing([{:__struct__, struct_module} | Keyword.new(defaults ++ values)])}
     end
   end
-  defp default_value(%{} = value, {:map, {key_type, value_type}}, schema) do
+  def default_value(%{} = value, {:map, {key_type, value_type}}, schema) do
     Map.new(value, fn {key, value} ->
       {
         default_value(key, key_type, schema),
@@ -121,13 +121,13 @@ defmodule Thrift.Generator.StructGenerator do
       }
     end)
   end
-  defp default_value(%MapSet{} = set, {:set, type}, schema) do
+  def default_value(%MapSet{} = set, {:set, type}, schema) do
     values = Enum.map(set, &default_value(&1, type, schema))
     quote do
       MapSet.new(unquote(values))
     end
   end
-  defp default_value(list, {:list, type}, schema) when is_list(list) do
+  def default_value(list, {:list, type}, schema) when is_list(list) do
     Enum.map(list, &default_value(&1, type, schema))
   end
 

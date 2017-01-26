@@ -455,6 +455,19 @@ defmodule Thrift.Generator.BinaryProtocolTest do
   """
 
   thrift_test "default values can be constants" do
+    assert true == ConstConstants.const_bool
+    assert 5 == ConstConstants.const_byte
+    assert 5.0 == ConstConstants.const_double
+    assert 5 == ConstConstants.const_i16
+    assert 5 == ConstConstants.const_i32
+    assert 5 == ConstConstants.const_i64
+    assert "abc123" == ConstConstants.const_string
+    assert "abc123" == ConstConstants.const_binary
+    assert %ConstStructVal{num: 5} == ConstConstants.const_struct
+    assert %{"a" => 1, "b" => 2} == ConstConstants.const_map
+    assert MapSet.new(["a", "b"]) == ConstConstants.const_set
+    assert ["a", "b"] == ConstConstants.const_list
+
     struct = %ConstFieldsStruct{}
     assert struct.bool_val == true
     assert struct.byte_val == 5

@@ -17,6 +17,7 @@ defmodule Thrift.Parser.FileGroup do
 
   alias Thrift.Parser.Models.{
     TEnum,
+    Constant,
     Exception,
     Field,
     Namespace,
@@ -139,6 +140,16 @@ defmodule Thrift.Parser.FileGroup do
   end
 
   def dest_module(file_group, %Service{name: name}) do
+    dest_module(file_group, name)
+  end
+
+  def dest_module(file_group, %Constant{}) do
+    initial_file = file_group.initial_file
+    # TODO this is kind of a hack - if this works we could make a clause for
+    # dest_module that takes in [thrift_module, struct_name] or some such
+    base = Path.basename(initial_file, Path.extname(initial_file))
+
+    name = String.to_atom(base <> "." <> Macro.camelize(base) <> "Constants")
     dest_module(file_group, name)
   end
 

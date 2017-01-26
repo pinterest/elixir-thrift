@@ -13,14 +13,14 @@ defmodule Mix.Tasks.Thrift.Generate do
 
   ## Command line options
 
-    * `-o` `--out` - set the output directory, overriding the `:thrift_output`
+    * `-o` `--out` - set the output directory, overriding the `:output_path`
       configuration value
     * `-v` `--verbose` - enable verbose task logging
 
   ## Configuration
 
-    * `:thrift_output` - output directory into which the generated Elixir
-      source file will be generated. Defaults to `"lib"`.
+    * `:output_path` - output directory into which the generated Elixir
+      source files will be generated. Defaults to `"lib"`.
   """
 
   @spec run(OptionParser.argv) :: :ok
@@ -29,12 +29,12 @@ defmodule Mix.Tasks.Thrift.Generate do
       aliases: [o: :out, v: :verbose],
       switches: [out: :string, verbose: :boolean])
 
-    config     = Mix.Project.config
-    output_dir = opts[:out] || Keyword.get(config, :thrift_output, "lib")
+    config      = Keyword.get(Mix.Project.config, :thrift, [])
+    output_path = opts[:out] || Keyword.get(config, :output_path, "lib")
 
     unless Enum.empty?(files) do
-      File.mkdir_p!(output_dir)
-      Enum.each(files, &generate!(&1, output_dir, opts))
+      File.mkdir_p!(output_path)
+      Enum.each(files, &generate!(&1, output_path, opts))
     end
   end
 
@@ -47,13 +47,13 @@ defmodule Mix.Tasks.Thrift.Generate do
     end
   end
 
-  defp generate!(thrift_file, output_dir, opts) do
+  defp generate!(thrift_file, output_path, opts) do
     Mix.shell.info "Parsing #{thrift_file}"
 
     generated_files =
       thrift_file
       |> parse!
-      |> Thrift.Generator.generate!(output_dir)
+      |> Thrift.Generator.generate!(output_path)
 
     if opts[:verbose] do
       generated_files

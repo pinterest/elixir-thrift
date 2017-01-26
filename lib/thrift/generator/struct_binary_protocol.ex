@@ -848,7 +848,7 @@ defmodule Thrift.Generator.StructBinaryProtocol do
       [
         <<unquote(type_id(key_type, file_group)),
           unquote(type_id(val_type, file_group)),
-          map_size(unquote(var)) :: size(32)>>,
+          Enum.count(unquote(var)) :: size(32)>>,
         for {unquote(Macro.var(:k, nil)), unquote(Macro.var(:v, nil))} <- unquote(var) do
           unquote([
             value_serializer(key_type, Macro.var(:k, nil), file_group),
@@ -861,7 +861,7 @@ defmodule Thrift.Generator.StructBinaryProtocol do
   defp value_serializer({:set, type}, var, file_group) do
     quote do
       [
-        <<unquote(type_id(type, file_group)), MapSet.size(unquote(var)) :: size(32)>>,
+        <<unquote(type_id(type, file_group)), Enum.count(unquote(var)) :: size(32)>>,
         for unquote(Macro.var(:e, nil)) <- unquote(var) do
           unquote(value_serializer(type, Macro.var(:e, nil), file_group) |> Utils.optimize_iolist)
         end,

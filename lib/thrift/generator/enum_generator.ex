@@ -14,6 +14,13 @@ defmodule Thrift.Generator.EnumGenerator do
       end
     end)
 
+    name_member_defs = Enum.map(enum.values, fn {key, _value} ->
+      enum_name = to_name(key)
+      quote do
+        def name?(unquote(enum_name)), do: true
+      end
+    end)
+
     value_to_name_defs = Enum.map(enum.values, fn {key, value} ->
       enum_name = to_name(key)
       quote do
@@ -21,9 +28,24 @@ defmodule Thrift.Generator.EnumGenerator do
       end
     end)
 
+    name_to_value_defs = Enum.map(enum.values, fn {key, value} ->
+      enum_name = to_name(key)
+      quote do
+        def name_to_value(unquote(enum_name)), do: {:ok, unquote(value)}
+      end
+    end)
+
     names = enum.values
     |> Keyword.keys
     |> Enum.map(&to_name/1)
+
+    name_to_value_map = enum.values
+    |> Enum.map(fn({k, v}) -> {to_name(k), v} end)
+    |> Enum.into(%{})
+
+    value_to_name_map = enum.values
+    |> Enum.map(fn({k, v}) -> {v, to_name(k)} end)
+    |> Enum.into(%{})
 
     quote do
       defmodule unquote(name) do
@@ -33,16 +55,29 @@ defmodule Thrift.Generator.EnumGenerator do
         unquote_splicing(value_to_name_defs)
         def value_to_name(v), do: {:error, {:invalid_enum_value, v}}
 
+        unquote_splicing(name_to_value_defs)
+        def name_to_value(k), do: {:error, {:invalid_enum_name, k}}
+
         def value_to_name!(value) do
           {:ok, name} = value_to_name(value)
           name
         end
 
-        def names, do: unquote(names)
-        def values, do: unquote(Keyword.values(enum.values))
+        def name_to_value!(name) do
+          {:ok, value} = name_to_value(name)
+          value
+        end
+
+        def meta(:names), do: unquote(names)
+        def meta(:values), do: unquote(Keyword.values(enum.values))
+        def meta(:name_to_value_map), do: unquote(name_to_value_map)
+        def meta(:value_to_name_map), do: unquote(value_to_name_map)
 
         unquote_splicing(member_defs)
         def member?(_), do: false
+
+        unquote_splicing(name_member_defs)
+        def name?(_), do: false
       end
     end
   end

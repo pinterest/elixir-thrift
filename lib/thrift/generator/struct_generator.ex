@@ -79,6 +79,17 @@ defmodule Thrift.Generator.StructGenerator do
   defp default_value(nil, _type, _schema) do
     nil
   end
+  defp default_value(value, %TEnum{} = enum, _schema) when is_integer(value) do
+    value = Enum.find_value(enum.values, fn
+      {_, ^value} -> value
+      {_, _} -> nil
+    end)
+    if value == nil do
+      raise RuntimeError,
+        message: "Default value #{inspect value} is not a member of enum #{enum.name}"
+    end
+    value
+  end
   defp default_value(value, :bool, _schema) when is_boolean(value), do: value
   defp default_value(value, :byte, _schema) when is_integer(value), do: value
   defp default_value(value, :double, _schema) when is_number(value), do: value

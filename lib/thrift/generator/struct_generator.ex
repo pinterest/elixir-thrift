@@ -76,9 +76,6 @@ defmodule Thrift.Generator.StructGenerator do
   defp default_value(%Constant{type: type, value: value}, type, schema) do
     default_value(value, type, schema)
   end
-  defp default_value(nil, %TEnum{values: [{_, value} | _]}, _schema) do
-    value
-  end
   defp default_value(nil, _type, _schema) do
     nil
   end

@@ -32,7 +32,7 @@ defmodule BinaryProtocolTest do
     encoder = {StructWithEnum, :serialize}
     decoder = {Erlang.Enums, :deserialize_struct_with_enum}
 
-    assert {:StructWithEnum, 1} == round_trip_struct(StructWithEnum.new, encoder, decoder)
+    assert {:StructWithEnum, :undefined} == round_trip_struct(StructWithEnum.new, encoder, decoder)
     assert {:StructWithEnum, 32} == round_trip_struct(%StructWithEnum{status: Status.evil}, encoder, decoder)
     assert {:StructWithEnum, 6} == round_trip_struct(%StructWithEnum{status: Status.banned}, encoder, decoder)
   end

@@ -46,7 +46,7 @@ defmodule Thrift.Generator.ModelsTest do
     assert Status.names == [:active, :inactive, :banned, :evil]
 
     struct = %StructWithEnum{}
-    assert struct.status_field == Status.active
+    assert struct.status_field == nil
     assert struct.status_map == nil
     assert struct.status_set == nil
     assert struct.status_list == nil

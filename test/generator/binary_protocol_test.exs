@@ -537,4 +537,16 @@ defmodule Thrift.Generator.BinaryProtocolTest do
     assert struct.empty_list == []
     :ok
   end
+
+  thrift_test "lists serialize into maps" do
+    binary = <<13, 0, 2, 3, 3, 0, 0, 0, 1, 91, 92, 0>>
+    assert binary == %Byte{val_map: %{91 => 92}} |> Byte.serialize() |> IO.iodata_to_binary
+    assert binary == %Byte{val_map: [{91, 92}] } |> Byte.serialize() |> IO.iodata_to_binary
+  end
+
+  thrift_test "lists serialize into sets" do
+    binary = <<14, 0, 3, 3, 0, 0, 0, 1, 91, 0>>
+    assert binary == %Byte{val_set: MapSet.new([91])} |> Byte.serialize() |> IO.iodata_to_binary
+    assert binary == %Byte{val_set: [91]            } |> Byte.serialize() |> IO.iodata_to_binary
+  end
 end

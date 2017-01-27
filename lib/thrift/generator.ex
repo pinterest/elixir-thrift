@@ -11,9 +11,9 @@ defmodule Thrift.Generator do
   }
   alias Thrift.{
     Generator,
+    Generator.ConstantGenerator,
     Generator.EnumGenerator,
-    Generator.StructGenerator,
-    Generator.ConstantGenerator
+    Generator.StructGenerator
   }
 
   @doc """

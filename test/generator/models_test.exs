@@ -193,4 +193,31 @@ defmodule Thrift.Generator.ModelsTest do
     assert cargo.answers == MapSet.new([42])
     assert cargo.bad_approximations == %{3 => "pi"}
   end
+
+  @thrift_file name: "physical.thrift", contents: """
+  const i64 Pi = 3
+  const double Planck = 6.62607004e-34
+  const double SpeedLimit = 3.0e8
+  const double One = 1.0
+  """
+
+  @thrift_file name: "businessy.thrift", contents: """
+  include "empty_container.thrift"
+  include "nonempty_container.thrift"
+
+  const Cargo ImportantCargo = {"bad_approximations": {1: "zero"}}
+  const Goth TimmyDoesntUnderstandGoth = {"empty_like_my_soul": [1, 2, 3]}
+  """
+
+  thrift_test "constants" do
+    assert Physical.Constants.pi == 3
+    assert Physical.Constants.planck == 6.62607004e-34
+    assert Physical.Constants.speed_limit == 3.0e8
+    assert Physical.Constants.one == 1.0
+
+    assert Businessy.Constants.important_cargo ==
+      %Cargo{bad_approximations: %{1 => "zero"}}
+    assert Businessy.Constants.timmy_doesnt_understand_goth ==
+      %Goth{empty_like_my_soul: [1, 2, 3]}
+  end
 end

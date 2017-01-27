@@ -217,6 +217,9 @@ defmodule Thrift.Generator.Utils do
       %{unquote_splicing([{:__struct__, struct_module} | Keyword.new(defaults ++ values)])}
     end
   end
+  def quote_value(value, {:map, {key_type, value_type}}, schema) when is_list(value) do
+    quote_value(Enum.into(value, %{}), {:map, {key_type, value_type}}, schema)
+  end
   def quote_value(%{} = value, {:map, {key_type, value_type}}, schema) do
     Map.new(value, fn {key, value} ->
       {

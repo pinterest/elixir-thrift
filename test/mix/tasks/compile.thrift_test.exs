@@ -14,13 +14,15 @@ defmodule Mix.Tasks.Compile.ThriftTest do
     in_fixture fn ->
       with_project_config [], fn ->
         assert run([]) =~ """
-          Compiling 3 files (.thrift)
+          Compiling 4 files (.thrift)
+          Compiled thrift/numbers.thrift
           Compiled thrift/shared.thrift
           Compiled thrift/simple.thrift
           Compiled thrift/tutorial.thrift
           """
         assert File.exists?("lib/shared/shared_struct.ex")
         assert File.exists?("lib/tutorial/calculator.ex")
+        assert File.exists?("lib/tutorial/numbers/constants.ex")
       end
     end
   end

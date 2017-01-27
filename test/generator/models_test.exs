@@ -10,6 +10,7 @@ defmodule Thrift.Generator.ModelsTest do
   }
   struct StructWithEnum {
     1: Status status_field,
+    12: Status status_field_with_default = Status.INACTIVE,
     2: map<Status, Status> status_map,
     3: set<Status> status_set,
     4: list<Status> status_list,
@@ -46,7 +47,8 @@ defmodule Thrift.Generator.ModelsTest do
     assert Status.names == [:active, :inactive, :banned, :evil]
 
     struct = %StructWithEnum{}
-    assert struct.status_field == Status.active
+    assert struct.status_field == nil
+    assert struct.status_field_with_default == Status.inactive
     assert struct.status_map == nil
     assert struct.status_set == nil
     assert struct.status_list == nil

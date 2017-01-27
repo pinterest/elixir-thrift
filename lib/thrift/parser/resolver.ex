@@ -7,6 +7,7 @@ defmodule Thrift.Parser.Resolver do
   # resolve references.
 
   alias Thrift.Parser.ParsedFile
+  alias Thrift.Parser.Models.TEnum
 
   def add(state, %ParsedFile{} = f) do
     state
@@ -19,17 +20,26 @@ defmodule Thrift.Parser.Resolver do
     |> update(f.name, f.schema.typedefs)
   end
 
-  defp update(%{} = state, include_name, %{} = local_mappings) do
-    new_mappings = local_mappings
-    |> Map.new(fn {name, val} ->
-      case val do
-        val when is_atom(val) or is_tuple(val) ->
-          {:"#{include_name}.#{name}", val}
-        val when is_map(val) ->
-          {:"#{include_name}.#{name}", Map.put(val, :name, :"#{include_name}.#{name}")}
-      end
+  defp update(%{} = resolutions, include_name, %{} = local_mappings) do
+    new_type_mappings = Map.new(local_mappings, fn
+      {name, val} when is_atom(val) or is_tuple(val) ->
+        {:"#{include_name}.#{name}", val}
+      {name, val} when is_map(val) ->
+        {:"#{include_name}.#{name}", Map.put(val, :name, :"#{include_name}.#{name}")}
     end)
 
-    Map.merge(state, new_mappings)
+    new_value_mappings = Enum.reduce(local_mappings, %{}, fn
+      {_, %TEnum{name: enum_name, values: values}}, acc ->
+        Enum.reduce(values, acc, fn
+          {value_name, value}, acc ->
+            Map.put(acc, :"#{enum_name}.#{value_name}", value)
+        end)
+      _, acc ->
+        acc
+    end)
+
+    resolutions
+    |> Map.merge(new_type_mappings)
+    |> Map.merge(new_value_mappings)
   end
 end

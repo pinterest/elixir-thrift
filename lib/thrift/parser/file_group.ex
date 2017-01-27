@@ -144,31 +144,30 @@ defmodule Thrift.Parser.FileGroup do
   end
 
   def dest_module(file_group, %Constant{}) do
+    # for constants the name of the module is
+    #   <Namespace>.<filename>.Constants
     initial_file = file_group.initial_file
-    # TODO this is kind of a hack - if this works we could make a clause for
-    # dest_module that takes in [thrift_module, struct_name] or some such
     base = Path.basename(initial_file, Path.extname(initial_file))
-
-    name = String.to_atom(base <> "." <> Macro.camelize(base) <> "Constants")
+    name = String.to_atom(base <> "." <> Macro.camelize(base) <> ".Constants")
     dest_module(file_group, name)
   end
 
   def dest_module(file_group, name) do
-    [thrift_module, struct_name] = name
+    [thrift_module | struct_name] = name
     |> Atom.to_string
     |> String.split(".")
     |> Enum.map(&String.to_atom/1)
 
     case file_group.ns_mappings[thrift_module] do
       nil ->
-        Module.concat(Elixir, struct_name)
+        Module.concat(List.flatten([Elixir, struct_name]))
       namespace = %Namespace{} ->
-        namespace.path
+        namespace_module = namespace.path
         |> String.split(".")
         |> Enum.map(&Macro.camelize/1)
         |> Enum.join(".")
         |> String.to_atom
-        |> Module.concat(struct_name)
+        Module.concat(List.flatten([namespace_module, struct_name]))
     end
   end
 

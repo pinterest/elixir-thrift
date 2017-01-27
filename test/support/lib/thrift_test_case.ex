@@ -91,8 +91,18 @@ defmodule ThriftTestCase do
         end
     end)
 
+    # we don't want to alias every ".Constants" module as "Constants"
+    modules_to_alias = Enum.map(modules, fn module ->
+      parts = Module.split(module)
+      case Enum.reverse(parts) do
+        ["Constants" | _] ->
+          Module.concat(Enum.take(parts, length(parts) - 1))
+        _ -> module
+      end
+    end)
+
     quote do
-      unquote_splicing(Enum.map(modules, fn module ->
+      unquote_splicing(Enum.map(modules_to_alias, fn module ->
         quote do: alias unquote(module)
       end))
       unquote_splicing(Enum.map(modules, fn module ->

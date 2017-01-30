@@ -75,12 +75,12 @@ defmodule Thrift.Parser.FileGroup do
     # since in a file, we can refer to things defined in that file in a non-qualified
     # way, we add unqualified names to the resolutions map.
     to_update = file_group.resolutions
-    |> Enum.map(fn {name, v} = kvp ->
+    |> Enum.map(fn {name, v} ->
       case String.split(Atom.to_string(name), ".") do
+        [_module, enum_name, value_name] ->
+          {:"#{enum_name}.#{value_name}", v}
         [_initial_module, rest] ->
           {:"#{rest}", v}
-        _ ->
-          kvp
       end
     end)
     |> Map.new

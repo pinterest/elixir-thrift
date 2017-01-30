@@ -180,7 +180,15 @@ defmodule Thrift.Generator.Utils do
   def quote_value(%Constant{type: type, value: value}, type, schema) do
     quote_value(value, type, schema)
   end
-  def quote_value(nil, %TEnum{values: [{_, value} | _]}, _schema) do
+  def quote_value(value, %TEnum{} = enum, _schema) when is_integer(value) do
+    value_found = Enum.any?(enum.values, fn
+      {_, ^value} -> true
+      {_, _value} -> false
+    end)
+    unless value_found do
+      raise RuntimeError,
+        message: "Default value #{inspect value} is not a member of enum #{enum.name}"
+    end
     value
   end
   def quote_value(nil, _type, _schema) do

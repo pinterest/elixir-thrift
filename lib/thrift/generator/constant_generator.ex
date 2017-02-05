@@ -4,18 +4,16 @@ defmodule Thrift.Generator.ConstantGenerator do
   alias Thrift.Generator.Utils
 
   def generate(full_name, constants, schema) do
-    constant_defs = Enum.map(constants, fn(constant) ->
+    macro_defs = Enum.map(constants, fn(constant) ->
       name = Utils.underscore(constant.name)
       value = Utils.quote_value(constant.value, constant.type, schema)
       quote do
-        def unquote(name)() do
-          unquote(value)
-        end
+        defmacro unquote(Macro.var(name, nil)), do: Macro.escape(unquote(value))
       end
     end)
     quote do
       defmodule unquote(full_name) do
-        unquote_splicing(constant_defs)
+        unquote_splicing(macro_defs)
       end
     end
   end

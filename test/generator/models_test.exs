@@ -64,18 +64,6 @@ defmodule Thrift.Generator.ModelsTest do
 
     assert Status.meta(:names) == [:active, :inactive, :banned, :evil]
     assert Status.meta(:values) == [1, 2, 6, 32]
-    assert Status.meta(:name_to_value_map) == %{
-      active: 1,
-      inactive: 2,
-      banned: 6,
-      evil: 32
-    }
-    assert Status.meta(:value_to_name_map) == %{
-      1 => :active,
-      2 => :inactive,
-      6 => :banned,
-      32 => :evil
-    }
 
     struct = %StructWithEnum{}
     assert struct.status_field == Status.active

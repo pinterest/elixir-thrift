@@ -70,8 +70,6 @@ defmodule Thrift.Generator.EnumGenerator do
 
         def meta(:names), do: unquote(names)
         def meta(:values), do: unquote(Keyword.values(enum.values))
-        def meta(:name_to_value_map), do: unquote(name_to_value_map)
-        def meta(:value_to_name_map), do: unquote(value_to_name_map)
 
         unquote_splicing(member_defs)
         def member?(_), do: false

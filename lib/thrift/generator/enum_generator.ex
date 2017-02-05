@@ -39,14 +39,6 @@ defmodule Thrift.Generator.EnumGenerator do
     |> Keyword.keys
     |> Enum.map(&to_name/1)
 
-    name_to_value_map = enum.values
-    |> Enum.map(fn({k, v}) -> {to_name(k), v} end)
-    |> Enum.into(%{})
-
-    value_to_name_map = enum.values
-    |> Enum.map(fn({k, v}) -> {v, to_name(k)} end)
-    |> Enum.into(%{})
-
     quote do
       defmodule unquote(name) do
         @moduledoc unquote("Auto-generated Thrift enum #{enum.name}")

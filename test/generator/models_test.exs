@@ -212,14 +212,14 @@ defmodule Thrift.Generator.ModelsTest do
   """
 
   thrift_test "constants" do
-    assert Physical.Constants.pi == 3
-    assert Physical.Constants.planck == 6.62607004e-34
-    assert Physical.Constants.speed_limit == 3.0e8
-    assert Physical.Constants.one == 1.0
+    assert Physical.pi == 3
+    assert Physical.planck == 6.62607004e-34
+    assert Physical.speed_limit == 3.0e8
+    assert Physical.one == 1.0
 
-    assert Businessy.Constants.important_cargo ==
+    assert Businessy.important_cargo ==
       %Cargo{bad_approximations: %{1 => "zero"}}
-    assert Businessy.Constants.timmy_doesnt_understand_goth ==
+    assert Businessy.timmy_doesnt_understand_goth ==
       %Goth{empty_like_my_soul: [1, 2, 3]}
   end
 end

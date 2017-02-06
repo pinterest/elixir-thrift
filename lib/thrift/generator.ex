@@ -107,7 +107,7 @@ defmodule Thrift.Generator do
   end
   defp generate_const_modules(schema) do
     # schema.constants is a map %{name: constant} but constant includes the
-    # name, so all we really need is the values
+    # name and all we really need is the values
     constants = Map.values(schema.constants)
     # name of the generated module
     full_name = FileGroup.dest_module(schema.file_group, %Constant{})

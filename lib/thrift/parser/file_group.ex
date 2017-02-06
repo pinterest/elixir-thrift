@@ -145,10 +145,10 @@ defmodule Thrift.Parser.FileGroup do
 
   def dest_module(file_group, %Constant{}) do
     # for constants the name of the module is
-    #   <Namespace>.<filename>.Constants
+    #   <Namespace>.<filename>
     initial_file = file_group.initial_file
     base = Path.basename(initial_file, Path.extname(initial_file))
-    name = String.to_atom(base <> "." <> Macro.camelize(base) <> ".Constants")
+    name = String.to_atom(base <> "." <> Macro.camelize(base))
     dest_module(file_group, name)
   end
 

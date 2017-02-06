@@ -22,7 +22,7 @@ defmodule Mix.Tasks.Compile.ThriftTest do
           """
         assert File.exists?("lib/shared/shared_struct.ex")
         assert File.exists?("lib/tutorial/calculator.ex")
-        assert File.exists?("lib/tutorial/numbers/constants.ex")
+        assert File.exists?("lib/tutorial/numbers.ex")
       end
     end
   end

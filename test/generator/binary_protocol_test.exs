@@ -455,18 +455,18 @@ defmodule Thrift.Generator.BinaryProtocolTest do
   """
 
   thrift_test "default values can be constants" do
-    assert true == Const.Constants.const_bool
-    assert 5 == Const.Constants.const_byte
-    assert 5.0 == Const.Constants.const_double
-    assert 5 == Const.Constants.const_i16
-    assert 5 == Const.Constants.const_i32
-    assert 5 == Const.Constants.const_i64
-    assert "abc123" == Const.Constants.const_string
-    assert "abc123" == Const.Constants.const_binary
-    assert %ConstStructVal{num: 5} == Const.Constants.const_struct
-    assert %{"a" => 1, "b" => 2} == Const.Constants.const_map
-    assert MapSet.new(["a", "b"]) == Const.Constants.const_set
-    assert ["a", "b"] == Const.Constants.const_list
+    assert true == Const.const_bool
+    assert 5 == Const.const_byte
+    assert 5.0 == Const.const_double
+    assert 5 == Const.const_i16
+    assert 5 == Const.const_i32
+    assert 5 == Const.const_i64
+    assert "abc123" == Const.const_string
+    assert "abc123" == Const.const_binary
+    assert %ConstStructVal{num: 5} == Const.const_struct
+    assert %{"a" => 1, "b" => 2} == Const.const_map
+    assert MapSet.new(["a", "b"]) == Const.const_set
+    assert ["a", "b"] == Const.const_list
 
     struct = %ConstFieldsStruct{}
     assert struct.bool_val == true

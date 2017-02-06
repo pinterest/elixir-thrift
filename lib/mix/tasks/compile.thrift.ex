@@ -25,7 +25,7 @@ defmodule Mix.Tasks.Compile.Thrift do
 
   @spec run(OptionParser.argv) :: :ok
   def run(args) do
-    {opts, _} = OptionParser.parse!(args,
+    {opts, _, _} = OptionParser.parse(args,
       switches: [force: :boolean, verbose: :boolean])
 
     config      = Keyword.get(Mix.Project.config, :thrift, [])

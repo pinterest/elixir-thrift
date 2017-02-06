@@ -26,6 +26,7 @@
 
       {Credo.Check.Readability.FunctionNames},
       {Credo.Check.Readability.LargeNumbers, false},
+      {Credo.Check.Readability.NoParenthesesWhenZeroArity, false}, # Fixes a crash in credo 0.6.1
       {Credo.Check.Readability.MaxLineLength, false},
       {Credo.Check.Readability.ModuleAttributeNames},
       {Credo.Check.Readability.ModuleNames},

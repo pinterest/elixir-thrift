@@ -15,6 +15,8 @@ defmodule Thrift.Parser.Models do
     """
 
     @type t :: %Namespace{name: String.t, path: String.t}
+
+    @enforce_keys [:name, :path]
     defstruct name: nil, path: nil
 
     import Thrift.Parser.Conversions
@@ -32,6 +34,8 @@ defmodule Thrift.Parser.Models do
     """
 
     @type t :: %Include{path: String.t}
+
+    @enforce_keys [:path]
     defstruct path: nil
 
     import Thrift.Parser.Conversions
@@ -49,6 +53,8 @@ defmodule Thrift.Parser.Models do
     """
 
     @type t :: %Constant{name: String.t, value: Literal.t, type: Types.t}
+
+    @enforce_keys [:name, :value, :type]
     defstruct name: nil, value: nil, type: nil
 
     import Thrift.Parser.Conversions
@@ -68,6 +74,8 @@ defmodule Thrift.Parser.Models do
 
     @type enum_value :: bitstring | integer
     @type t :: %TEnum{name: String.t, values: %{String.t => enum_value}}
+
+    @enforce_keys [:name, :values]
     defstruct name: nil, values: []
 
     import Thrift.Parser.Conversions
@@ -104,6 +112,8 @@ defmodule Thrift.Parser.Models do
     @type printable :: String.t | atom
     @type t :: %Field{id: integer, name: String.t, type: Types.t,
                       required: boolean, default: Literals.t}
+
+    @enforce_keys [:id, :name, :type]
     defstruct id: nil, name: nil, type: nil, required: :default, default: nil
 
     import Thrift.Parser.Conversions
@@ -168,6 +178,8 @@ defmodule Thrift.Parser.Models do
     """
 
     @type t :: %Exception{name: String.t, fields: [%Field{}]}
+
+    @enforce_keys [:name, :fields]
     defstruct fields: %{}, name: nil
 
     import Thrift.Parser.Conversions
@@ -190,6 +202,8 @@ defmodule Thrift.Parser.Models do
     """
 
     @type t :: %Struct{name: String.t, fields: %{String.t => %Field{}}}
+
+    @enforce_keys [:name, :fields]
     defstruct name: nil, fields: %{}
 
     import Thrift.Parser.Conversions
@@ -212,6 +226,8 @@ defmodule Thrift.Parser.Models do
     """
 
     @type t :: %Union{name: String.t, fields: %{String.t => %Field{}}}
+
+    @enforce_keys [:name, :fields]
     defstruct name: nil, fields: %{}
 
     import Thrift.Parser.Conversions
@@ -272,6 +288,8 @@ defmodule Thrift.Parser.Models do
     """
 
     @type t :: %TypeRef{referenced_type: atom}
+
+    @enforce_keys [:referenced_type]
     defstruct referenced_type: nil
 
     import Thrift.Parser.Conversions
@@ -288,6 +306,8 @@ defmodule Thrift.Parser.Models do
     """
 
     @type t :: %ValueRef{referenced_value: atom}
+
+    @enforce_keys [:referenced_value]
     defstruct referenced_value: nil
 
     import Thrift.Parser.Conversions
@@ -310,7 +330,10 @@ defmodule Thrift.Parser.Models do
     @type return :: :void | Types.t
     @type t :: %Function{oneway: boolean, return_type: return, name: String.t,
                          params: [%Field{}], exceptions: [%Exception{}]}
+
+    @enforce_keys [:name]
     defstruct oneway: false, return_type: :void, name: nil, params: [], exceptions: []
+
     alias Thrift.Parser.Models.Field
     import Thrift.Parser.Conversions
 
@@ -337,6 +360,8 @@ defmodule Thrift.Parser.Models do
     """
 
     @type t :: %Service{name: String.t, extends: String.t, functions: %{atom => %Function{}}}
+
+    @enforce_keys [:name, :functions]
     defstruct name: nil, extends: nil, functions: %{}
 
     import Thrift.Parser.Conversions

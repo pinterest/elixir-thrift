@@ -1,4 +1,5 @@
 defmodule Thrift.Mixfile do
+  @moduledoc false
   use Mix.Project
 
   @description """
@@ -40,7 +41,7 @@ defmodule Thrift.Mixfile do
      package: package(),
 
      # Dialyzer
-     dialyzer: [plt_add_deps: :transitive, plt_add_apps: [:ex_unit, :mix]],
+     dialyzer: [plt_add_deps: :transitive, plt_add_apps: [:ex_unit, :mix, :public_key, :ssl]],
 
      # Docs
      name: "Thrift",

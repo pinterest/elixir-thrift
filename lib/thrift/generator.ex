@@ -110,7 +110,7 @@ defmodule Thrift.Generator do
     # name and all we really need is the values
     constants = Map.values(schema.constants)
     # name of the generated module
-    full_name = FileGroup.dest_module(schema.file_group, %Constant{})
+    full_name = FileGroup.dest_module(schema.file_group, Constant)
     [{full_name, ConstantGenerator.generate(full_name, constants, schema)}]
   end
 

@@ -143,7 +143,7 @@ defmodule Thrift.Parser.FileGroup do
     dest_module(file_group, name)
   end
 
-  def dest_module(file_group, %Constant{}) do
+  def dest_module(file_group, Constant) do
     # for constants the name of the module is
     #   <Namespace>.<filename>
     initial_file = file_group.initial_file

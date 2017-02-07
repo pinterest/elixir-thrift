@@ -6,10 +6,10 @@ defmodule Thrift.Binary.Framed.ProtocolHandler do
   @default_timeout 20_000
 
   @typedoc "A module that implements the :ranch_transport behaviour"
-  @type transport :: :ranch_tcp | :ranch_ssl
+  @type transport :: :ranch_tcp
 
   @typedoc "Transport-specific options"
-  @type transport_opts :: :ranch_tcp.opts | :ranch_ssl.opts
+  @type transport_opts :: :ranch_tcp.opts
 
   alias Thrift.{
     Protocol,

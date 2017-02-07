@@ -42,6 +42,7 @@ defmodule Thrift.Generator.StructGenerator do
           end
         end)
         unquote(define_block)
+        @type t :: %__MODULE__{}
         def new, do: %__MODULE__{}
         defmodule BinaryProtocol do
           unquote_splicing(binary_protocol_defs)

@@ -12,6 +12,7 @@ defmodule Thrift.Protocol.Binary do
 
   require Thrift.Protocol.Binary.Type, as: Type
 
+  @type serializable :: Thrift.data_type | :message_begin | :application_exception
   @type deserializable :: :message_begin | :application_exception
 
   @stop 0
@@ -37,7 +38,7 @@ defmodule Thrift.Protocol.Binary do
   @doc """
   Serializes a value as an IO list using Thrift's type-specific encoding rules.
   """
-  @spec serialize(Thrift.data_type | :message_begin, any) :: iolist
+  @spec serialize(serializable, any) :: iolist
   def serialize(:bool, false),   do: <<0::8-signed>>
   def serialize(:bool, true),    do: <<1::8-signed>>
   def serialize(:i8, value),     do: <<value::8-signed>>

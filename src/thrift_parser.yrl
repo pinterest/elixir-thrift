@@ -68,13 +68,13 @@ file_def ->
     file string: 'Elixir.List':to_string(unwrap('$2')).
 
 headers -> '$empty': [].
-headers -> header headers: ['$1'] ++ '$2'.
+headers -> header headers: ['$1' | '$2'].
 
 header -> namespace_def: '$1'.
 header -> include_def: '$1'.
 
 definitions -> '$empty': [].
-definitions -> definition definitions: ['$1'] ++ '$2'.
+definitions -> definition definitions: ['$1'| '$2'].
 
 definition -> constant_def: '$1'.
 definition -> enum_def: '$1'.
@@ -123,11 +123,11 @@ ns_name -> ident: unwrap('$1').
 mapping -> literal ':' literal: {'$1', '$3'}.
 mappings -> '$empty': [].
 mappings -> mapping: ['$1'].
-mappings -> mapping ',' mappings: ['$1'] ++ '$3'.
+mappings -> mapping ',' mappings: ['$1' | '$3'].
 
 % A list of literals ["hi", "bye", 3, 4]
 literal_list -> literal: ['$1'].
-literal_list -> literal ',' literal_list: ['$1'] ++ '$3'.
+literal_list -> literal ',' literal_list: ['$1' | '$3'].
 
 literal -> ident: 'Elixir.Thrift.Parser.Models.ValueRef':new(unwrap('$1')).
 literal -> true: unwrap('$1').
@@ -147,7 +147,7 @@ enum_def ->
     enum ident '{' enum_body '}':
         'Elixir.Thrift.Parser.Models.TEnum':new(unwrap('$2'), '$4').
 enum_body -> enum_value field_sep: ['$1'].
-enum_body -> enum_value field_sep enum_body: ['$1'] ++ '$3'.
+enum_body -> enum_value field_sep enum_body: ['$1' | '$3'].
 
 enum_value -> ident: unwrap('$1').
 enum_value -> ident '=' int: {unwrap('$1'), unwrap('$3')}.
@@ -157,7 +157,7 @@ exception_def ->
         'Elixir.Thrift.Parser.Models.Exception':new(unwrap('$2'), '$4').
 
 fields -> '$empty': [].
-fields -> field_spec field_sep fields: ['$1'] ++ '$3'.
+fields -> field_spec field_sep fields: ['$1' | '$3'].
 
 field_id -> int ':': unwrap('$1').
 field_id -> '$empty': nil.
@@ -195,7 +195,7 @@ service_extends -> '$empty': nil.
 
 
 functions -> '$empty': [].
-functions -> function functions: ['$1'] ++ '$2'.
+functions -> function functions: ['$1' | '$2'].
 
 function ->
     oneway_marker return_type ident '(' fields ')' throws_clause field_sep:

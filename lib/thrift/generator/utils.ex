@@ -30,7 +30,7 @@ defmodule Thrift.Generator.Utils do
     def bar, do: 2
     def baz, do: 3
   """
-  @spec merge_blocks(list) :: list
+  @spec merge_blocks(Macro.t) :: Macro.t
   def merge_blocks([{:__block__, _, contents} | rest]) do
     merge_blocks(contents) ++ merge_blocks(rest)
   end
@@ -45,7 +45,7 @@ defmodule Thrift.Generator.Utils do
   Sort a list of quoted def/defp function clauses by name and arity. When
   similar clauses are not grouped together, Elixir prints a warning.
   """
-  @spec sort_defs(list) :: list
+  @spec sort_defs(Macro.t) :: Macro.t
   def sort_defs(statements) do
     Enum.sort_by(statements, fn
       {:def, _, [{:when, _, [{name, _, args} | _]} | _]} ->
@@ -66,7 +66,7 @@ defmodule Thrift.Generator.Utils do
     a |> Atom.to_string |> underscore |> String.to_atom
   end
 
-  @spec underscore(bitstring) :: bitstring
+  @spec underscore(binary) :: binary
   def underscore(s) when is_bitstring(s), do: Macro.underscore(s)
 
   # Change this to true to see iolist optimizations as they are applied.
@@ -89,7 +89,7 @@ defmodule Thrift.Generator.Utils do
   # Optimize a quoted expression that returns an iolist. The high level strategy
   # is to flatten lists and combine adjacent binaries.
   #
-  @spec optimize_iolist(list) :: any
+  @spec optimize_iolist(list) :: iodata
   def optimize_iolist([[a | b] | c] = expr) do
     debug_optimization(expr, "flatten list")
     optimize_iolist([a, b | c])

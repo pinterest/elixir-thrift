@@ -32,6 +32,12 @@ defmodule Thrift.Generator.ModelsTest do
     assert Status.member?(6) == true
     assert Status.member?(7) == false
 
+    assert Status.name?(:active) == true
+    assert Status.name?(:inactive) == true
+    assert Status.name?(:banned) == true
+    assert Status.name?(:evil) == true
+    assert Status.name?(:bamboozled) == false
+
     assert Status.value_to_name(1) == {:ok, :active}
     assert Status.value_to_name(2) == {:ok, :inactive}
     assert Status.value_to_name(6) == {:ok, :banned}
@@ -44,7 +50,21 @@ defmodule Thrift.Generator.ModelsTest do
     assert Status.value_to_name!(32) == :evil
     assert_raise MatchError, fn -> Status.value_to_name!(38210) end
 
-    assert Status.names == [:active, :inactive, :banned, :evil]
+    assert Status.name_to_value(:active) == {:ok, 1}
+    assert Status.name_to_value(:inactive) == {:ok, 2}
+    assert Status.name_to_value(:banned) == {:ok, 6}
+    assert Status.name_to_value(:evil) == {:ok, 32}
+    assert Status.name_to_value(:just_weird) ==
+      {:error, {:invalid_enum_name, :just_weird}}
+
+    assert Status.name_to_value!(:active) == 1
+    assert Status.name_to_value!(:inactive) == 2
+    assert Status.name_to_value!(:banned) == 6
+    assert Status.name_to_value!(:evil) == 32
+    assert_raise MatchError, fn -> Status.name_to_value!(:just_weird) end
+
+    assert Status.meta(:names) == [:active, :inactive, :banned, :evil]
+    assert Status.meta(:values) == [1, 2, 6, 32]
 
     struct = %StructWithEnum{}
     assert struct.status_field == nil

@@ -1,6 +1,7 @@
 defmodule Thrift.Parser.Conversions do
   @moduledoc false
 
+  @spec atomify(charlist | nil) :: atom
   def atomify(nil), do: nil
   def atomify(l) when is_list(l) do
     List.to_atom(l)
@@ -9,6 +10,7 @@ defmodule Thrift.Parser.Conversions do
   # convert a charlist to a snake_case atom
   #   e.g., 'FooBar', 'foo_bar', 'fooBar', and 'FOO_BAR'
   #   should all produce :foo_bar
+  @spec atomic_snake(charlist | nil) :: atom
   def atomic_snake(nil), do: nil
   def atomic_snake(l) when is_list(l) do
     l
@@ -19,6 +21,7 @@ defmodule Thrift.Parser.Conversions do
     |> String.to_atom
   end
 
+  @spec cast(Thrift.data_type, any) :: any
   def cast(_, nil) do
     nil
   end

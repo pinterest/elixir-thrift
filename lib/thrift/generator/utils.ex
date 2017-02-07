@@ -8,6 +8,7 @@ defmodule Thrift.Generator.Utils do
     Constant,
     Field,
     Struct,
+    Schema,
     TypeRef,
     TEnum,
     ValueRef,
@@ -171,6 +172,7 @@ defmodule Thrift.Generator.Utils do
 
   The values returned by this function are suitable for unquoting.
   """
+  @spec quote_value(term, term, Schema.t) :: Macro.t
   def quote_value(%ValueRef{} = ref, type, schema) do
     value = FileGroup.resolve(schema.file_group, ref)
     quote_value(value, type, schema)

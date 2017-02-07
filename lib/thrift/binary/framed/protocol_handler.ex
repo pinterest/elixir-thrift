@@ -11,12 +11,13 @@ defmodule Thrift.Binary.Framed.ProtocolHandler do
   }
   require Logger
 
-  @spec start_link(reference, pid, module, {module, module}) :: GenServer.on_start
+  @spec start_link(reference, pid, module, {module, module, Keyword.t}) :: GenServer.on_start
   def start_link(ref, socket, transport, {server_module, handler_module, tcp_opts}) do
     pid = spawn_link(__MODULE__, :init, [ref, socket, transport, server_module, handler_module, tcp_opts])
     {:ok, pid}
   end
 
+  @spec init(reference, pid, module, module, module, Keyword.t) :: :ok | no_return
   def init(ref, socket, transport, server_module, handler_module, tcp_opts) do
     :ok = :ranch.accept_ack(ref)
 
@@ -50,7 +51,7 @@ defmodule Thrift.Binary.Framed.ProtocolHandler do
     end
   end
 
-  def handle_thrift_message({:ok, {:call, sequence_id, name, args_binary}}, server_module, handler_module) do
+  defp handle_thrift_message({:ok, {:call, sequence_id, name, args_binary}}, server_module, handler_module) do
     case server_module.handle_thrift(name, args_binary, handler_module) do
       {:reply, serialized_reply} ->
         message = Protocol.Binary.serialize(:message_begin, {:reply, sequence_id, name})
@@ -71,12 +72,12 @@ defmodule Thrift.Binary.Framed.ProtocolHandler do
 
   end
 
-  def handle_thrift_message({:ok, {:oneway, _seq_id, name, args_binary}}, server_module, handler_module) do
+  defp handle_thrift_message({:ok, {:oneway, _seq_id, name, args_binary}}, server_module, handler_module) do
     spawn(server_module, :handle_thrift, [name, args_binary, handler_module])
     {:ok, :reply, <<0>>}
   end
 
-  def handle_thrift_message({:error, msg} = err, _, _) do
+  defp handle_thrift_message({:error, msg} = err, _, _) do
     Logger.warn("Could not decode Thrift message: #{inspect msg}")
     err
   end

@@ -6,7 +6,7 @@ defmodule Mix.Tasks.Thrift.GenerateTest do
   @fixture_project Path.join(@project_root, "test/fixtures/app")
 
   setup do
-    in_fixture(fn -> File.rm_rf!("lib") end)
+    on_exit(fn -> File.rm_rf!(Path.join(@fixture_project, "lib")) end)
     :ok
   end
 
@@ -44,9 +44,8 @@ defmodule Mix.Tasks.Thrift.GenerateTest do
 
   test "specifying an alternate output directory (--out)" do
     in_fixture fn ->
-      run(["--out", "thrift_lib", "thrift/ThriftTest.thrift"])
-      assert File.exists?("thrift_lib/thrift_test/thrift_test.ex")
-      File.rm_rf!("thrift_lib")
+      run(["--out", "lib/thrift", "thrift/ThriftTest.thrift"])
+      assert File.exists?("lib/thrift/thrift_test/thrift_test.ex")
     end
   end
 

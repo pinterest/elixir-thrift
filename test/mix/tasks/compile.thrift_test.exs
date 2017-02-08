@@ -6,7 +6,7 @@ defmodule Mix.Tasks.Compile.ThriftTest do
   @fixture_project Path.join(@project_root, "test/fixtures/app")
 
   setup do
-    in_fixture(fn -> File.rm_rf!("lib") end)
+    on_exit(fn -> File.rm_rf!(Path.join(@fixture_project, "lib")) end)
     :ok
   end
 

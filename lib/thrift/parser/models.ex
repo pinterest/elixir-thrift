@@ -5,6 +5,7 @@ defmodule Thrift.Parser.Models do
   `Thrift.Parser` module.
   """
 
+  import Thrift.Parser.Conversions
   alias Thrift.Parser.{Literals, Types}
 
   defmodule Namespace do
@@ -18,8 +19,6 @@ defmodule Thrift.Parser.Models do
 
     @enforce_keys [:name, :path]
     defstruct name: nil, path: nil
-
-    import Thrift.Parser.Conversions
 
     @spec new(char_list, char_list) :: %Namespace{}
     def new(name, path) do
@@ -38,8 +37,6 @@ defmodule Thrift.Parser.Models do
     @enforce_keys [:path]
     defstruct path: nil
 
-    import Thrift.Parser.Conversions
-
     @spec new(char_list) :: %Include{}
     def new(path) do
       %Include{path: List.to_string(path)}
@@ -56,8 +53,6 @@ defmodule Thrift.Parser.Models do
 
     @enforce_keys [:name, :value, :type]
     defstruct name: nil, value: nil, type: nil
-
-    import Thrift.Parser.Conversions
 
     @spec new(char_list, Literals.t, Types.t) :: %Constant{}
     def new(name, val, type) do
@@ -77,8 +72,6 @@ defmodule Thrift.Parser.Models do
 
     @enforce_keys [:name, :values]
     defstruct name: nil, values: []
-
-    import Thrift.Parser.Conversions
 
     @spec new(char_list, %{char_list => enum_value}) :: %TEnum{}
     def new(name, values) do
@@ -115,8 +108,6 @@ defmodule Thrift.Parser.Models do
 
     @enforce_keys [:id, :name, :type]
     defstruct id: nil, name: nil, type: nil, required: :default, default: nil
-
-    import Thrift.Parser.Conversions
 
     @spec new(integer, boolean, Types.t, char_list, Literals.t) :: %Field{}
     def new(id, required, type, name, default) do
@@ -182,9 +173,6 @@ defmodule Thrift.Parser.Models do
     @enforce_keys [:name, :fields]
     defstruct fields: %{}, name: nil
 
-    import Thrift.Parser.Conversions
-    alias Thrift.Parser.Models.Field
-
     @spec new(char_list, [%Field{}, ...]) :: %Exception{}
     def new(name, fields) do
       ex_name = atomify(name)
@@ -206,9 +194,6 @@ defmodule Thrift.Parser.Models do
     @enforce_keys [:name, :fields]
     defstruct name: nil, fields: %{}
 
-    import Thrift.Parser.Conversions
-    alias Thrift.Parser.Models.Field
-
     @spec new(char_list, [%Field{}, ...]) :: %Struct{}
     def new(name, fields) do
       struct_name = atomify(name)
@@ -229,9 +214,6 @@ defmodule Thrift.Parser.Models do
 
     @enforce_keys [:name, :fields]
     defstruct name: nil, fields: %{}
-
-    import Thrift.Parser.Conversions
-    alias Thrift.Parser.Models.Field
 
     @spec new(char_list, [%Field{}, ...]) :: %Union{}
     def new(name, fields) do
@@ -292,8 +274,6 @@ defmodule Thrift.Parser.Models do
     @enforce_keys [:referenced_type]
     defstruct referenced_type: nil
 
-    import Thrift.Parser.Conversions
-
     @spec new(char_list) :: %TypeRef{}
     def new(referenced_type) do
       %TypeRef{referenced_type: atomify(referenced_type)}
@@ -309,8 +289,6 @@ defmodule Thrift.Parser.Models do
 
     @enforce_keys [:referenced_value]
     defstruct referenced_value: nil
-
-    import Thrift.Parser.Conversions
 
     @spec new(char_list) :: %ValueRef{}
     def new(referenced_value) do
@@ -333,9 +311,6 @@ defmodule Thrift.Parser.Models do
 
     @enforce_keys [:name]
     defstruct oneway: false, return_type: :void, name: nil, params: [], exceptions: []
-
-    alias Thrift.Parser.Models.Field
-    import Thrift.Parser.Conversions
 
     @spec new(boolean, Types.t, char_list, [%Field{}, ...], [%Exception{}, ...]) :: %Function{}
     def new(oneway, return_type, name, params, exceptions) do
@@ -363,8 +338,6 @@ defmodule Thrift.Parser.Models do
 
     @enforce_keys [:name, :functions]
     defstruct name: nil, extends: nil, functions: %{}
-
-    import Thrift.Parser.Conversions
 
     @spec new(char_list, [%Function{}, ...], char_list) :: %Service{}
     def new(name, functions, extends) do
@@ -414,7 +387,6 @@ defmodule Thrift.Parser.Models do
     exceptions: %{},
     typedefs: %{}
 
-    import Thrift.Parser.Conversions
     alias Thrift.Parser.Models.{Constant,
                                 Exception,
                                 Include,

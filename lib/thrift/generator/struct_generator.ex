@@ -1,6 +1,5 @@
 defmodule Thrift.Generator.StructGenerator do
-  alias Thrift.Generator.StructBinaryProtocol
-  alias Thrift.Generator.Utils
+  alias Thrift.Generator.{StructBinaryProtocol, Utils}
   alias Thrift.Parser.FileGroup
   alias Thrift.Parser.Models.{
     Constant,

@@ -15,7 +15,8 @@ defmodule Mix.Tasks.Thrift.Generate do
 
     * `-I dir` / `--include dir` - add a directory to the list of
       directory paths in which to search for included files, overriding
-      the `:include_paths` configuration value
+      the `:include_paths` configuration value. This option can be repeated
+      in order to add multiple directories to the search list.
     * `-o dir` / `--out dir` - set the output directory, overriding the
       `:output_path` configuration value
     * `-v` / `--verbose` - enable verbose task logging

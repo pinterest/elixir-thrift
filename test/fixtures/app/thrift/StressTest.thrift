@@ -17,30 +17,20 @@
  * under the License.
  */
 
-/**
- * This Thrift file can be included by other Thrift files that want to share
- * these definitions.
- */
+namespace cpp test.stress
+namespace d thrift.test.stress
+namespace go stress
+namespace elixir stress
 
-namespace cpp shared
-namespace d share // "shared" would collide with the eponymous D keyword.
-namespace dart shared
-namespace java shared
-namespace perl shared
-namespace php shared
-namespace haxe shared
-namespace elixir shared
+service Service {
 
-struct SharedStruct {
-  1: i32 key
-  2: string value
+  void echoVoid(),
+  byte echoByte(1: byte arg),
+  i32 echoI32(1: i32 arg),
+  i64 echoI64(1: i64 arg),
+  string echoString(1: string arg),
+  list<byte>  echoList(1: list<byte> arg),
+  set<byte>  echoSet(1: set<byte> arg),
+  map<byte, byte>  echoMap(1: map<byte, byte> arg),
 }
 
-exception SharedException {
-  1: string message,
-  2: i32 code
-}
-
-service SharedService {
-  SharedStruct getStruct(1: i32 key)
-}

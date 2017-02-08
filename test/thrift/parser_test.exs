@@ -665,10 +665,7 @@ defmodule ParserTest do
     # just make sure we don't blow up on parse and can parse
     # complex thrift files.
 
-    File.read!("./test/fixtures/app/thrift/tutorial.thrift")
-    |> parse
-
-    File.read!("./test/fixtures/app/thrift/shared.thrift")
+    File.read!("./test/fixtures/app/thrift/ThriftTest.thrift")
     |> parse
   end
 

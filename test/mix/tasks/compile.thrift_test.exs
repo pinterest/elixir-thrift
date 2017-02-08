@@ -80,6 +80,18 @@ defmodule Mix.Tasks.Compile.ThriftTest do
     end
   end
 
+  test "specifying an additional include path" do
+    config = [
+      files: ~w(thrift/include/Include.thrift),
+      include_paths: ~w(thrift)
+    ]
+    in_fixture fn ->
+      with_project_config [thrift: config], fn ->
+        assert run([]) =~ "Compiled thrift/include/Include.thrift"
+      end
+    end
+  end
+
   test "specifying an unknown option" do
     in_fixture fn ->
       with_project_config [], fn ->

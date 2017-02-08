@@ -19,6 +19,8 @@ defmodule Mix.Tasks.Compile.Thrift do
   ## Configuration
 
     * `:files` - list of `.thrift` schema files to compile
+    * `:include_paths` - list of additional directory paths in which to
+      search for included files
     * `:output_path` - output directory into which the generated Elixir
       source files will be generated. Defaults to `"lib"`.
   """
@@ -28,13 +30,14 @@ defmodule Mix.Tasks.Compile.Thrift do
     {opts, _, _} = OptionParser.parse(args,
       switches: [force: :boolean, verbose: :boolean])
 
-    config      = Keyword.get(Mix.Project.config, :thrift, [])
-    files       = Keyword.get(config, :files, [])
-    output_path = Keyword.get(config, :output_path, "lib")
+    config        = Keyword.get(Mix.Project.config, :thrift, [])
+    files         = Keyword.get(config, :files, [])
+    include_paths = Keyword.get(config, :include_paths, [])
+    output_path   = Keyword.get(config, :output_path, "lib")
 
     file_groups =
       files
-      |> Enum.map(&parse/1)
+      |> Enum.map(&parse(&1, include_paths))
       |> Enum.reject(&is_nil/1)
 
     stale_groups = Enum.filter(file_groups, fn file_group ->
@@ -48,9 +51,9 @@ defmodule Mix.Tasks.Compile.Thrift do
     end
   end
 
-  defp parse(thrift_file) do
+  defp parse(thrift_file, include_paths) do
     try do
-      Thrift.Parser.parse_file(thrift_file)
+      Thrift.Parser.parse_file(thrift_file, include_paths)
     rescue
       e ->
         Mix.shell.error "Failed to parse #{thrift_file}: #{Exception.message(e)}"

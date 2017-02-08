@@ -49,6 +49,13 @@ defmodule Mix.Tasks.Thrift.GenerateTest do
     end
   end
 
+  test "specifying an include path (--include)" do
+    in_fixture fn ->
+      run(~w(--include thrift thrift/include/Include.thrift))
+      assert File.exists?("lib/thrift_test/thrift_test.ex")
+    end
+  end
+
   defp run(args) when is_list(args), do: run(:stdio, args)
   defp run(device, args) when device in [:stdio, :stderr] and is_list(args) do
     args = ["--verbose" | args]

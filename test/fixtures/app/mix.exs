@@ -4,6 +4,6 @@ defmodule App.Mixfile do
   def project do
     [app: :app,
      version: "1.0.0",
-     thrift: [files: Path.wildcard("thrift/**/*.thrift")]]
+     thrift: [files: ~w(thrift/StressTest.thrift thrift/ThriftTest.thrift)]]
   end
 end

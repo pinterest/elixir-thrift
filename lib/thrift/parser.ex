@@ -54,15 +54,14 @@ defmodule Thrift.Parser do
   In addition to the given file, all included files are also parsed and
   returned as part of the resulting `Thrift.Parser.FileGroup`.
   """
-  @spec parse_file(Path.t) :: FileGroup.t
-  def parse_file(file_path) do
+  @spec parse_file(Path.t, [Path.t]) :: FileGroup.t
+  def parse_file(file_path, include_paths \\ []) do
     parsed_file = file_path
     |> FileRef.new
     |> ParsedFile.new
 
-    file_group = FileGroup.new(file_path)
+    FileGroup.new(file_path, include_paths)
     |> FileGroup.add(parsed_file)
-
-    FileGroup.update_resolutions(file_group)
+    |> FileGroup.update_resolutions
   end
 end

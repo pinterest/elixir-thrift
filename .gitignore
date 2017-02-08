@@ -6,6 +6,7 @@
 /lib/generated
 /src/thrift_lexer.erl
 /src/thrift_parser.erl
+/test/fixtures/app/_build
 /test/fixtures/app/lib
 /tmp
 erl_crash.dump

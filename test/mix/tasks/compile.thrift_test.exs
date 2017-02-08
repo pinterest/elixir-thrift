@@ -6,7 +6,7 @@ defmodule Mix.Tasks.Compile.ThriftTest do
   @fixture_project Path.join(@project_root, "test/fixtures/app")
 
   setup do
-    in_fixture(fn -> File.rm_rf!("lib") end)
+    on_exit(fn -> File.rm_rf!(Path.join(@fixture_project, "lib")) end)
     :ok
   end
 
@@ -14,13 +14,12 @@ defmodule Mix.Tasks.Compile.ThriftTest do
     in_fixture fn ->
       with_project_config [], fn ->
         assert run([]) =~ """
-          Compiling 3 files (.thrift)
-          Compiled thrift/shared.thrift
-          Compiled thrift/simple.thrift
-          Compiled thrift/tutorial.thrift
+          Compiling 2 files (.thrift)
+          Compiled thrift/StressTest.thrift
+          Compiled thrift/ThriftTest.thrift
           """
-        assert File.exists?("lib/shared/shared_struct.ex")
-        assert File.exists?("lib/tutorial/calculator.ex")
+        assert File.exists?("lib/stress/service.ex")
+        assert File.exists?("lib/thrift_test/thrift_test.ex")
       end
     end
   end
@@ -28,7 +27,7 @@ defmodule Mix.Tasks.Compile.ThriftTest do
   test "recompiling unchanged targets" do
     in_fixture fn ->
       with_project_config [], fn ->
-        assert run([]) =~ "Compiled thrift/tutorial.thrift"
+        assert run([]) =~ "Compiled thrift/ThriftTest.thrift"
         assert run([]) == ""
       end
     end
@@ -37,9 +36,9 @@ defmodule Mix.Tasks.Compile.ThriftTest do
   test "recompiling stale targets" do
     in_fixture fn ->
       with_project_config [], fn ->
-        assert run([]) =~ "Compiled thrift/tutorial.thrift"
+        assert run([]) =~ "Compiled thrift/ThriftTest.thrift"
         File.rm_rf!("lib")
-        assert run([]) =~ "Compiled thrift/tutorial.thrift"
+        assert run([]) =~ "Compiled thrift/ThriftTest.thrift"
       end
     end
   end
@@ -47,8 +46,8 @@ defmodule Mix.Tasks.Compile.ThriftTest do
   test "forcing compilation" do
     in_fixture fn ->
       with_project_config [], fn ->
-        assert run([]) =~ "Compiled thrift/tutorial.thrift"
-        assert run(["--force"]) =~ "Compiled thrift/tutorial.thrift"
+        assert run([]) =~ "Compiled thrift/ThriftTest.thrift"
+        assert run(["--force"]) =~ "Compiled thrift/ThriftTest.thrift"
       end
     end
   end

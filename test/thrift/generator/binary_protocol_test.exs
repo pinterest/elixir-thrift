@@ -4,8 +4,6 @@ defmodule Thrift.Generator.BinaryProtocolTest do
   alias Thrift.Protocol.Binary
   alias Thrift.Union.TooManyFieldsSetException
 
-  @thrift_test_opts [cleanup: false]
-
   def assert_serializes(%{__struct__: mod} = struct, binary) do
     assert binary == Binary.serialize(:struct, struct) |> IO.iodata_to_binary
     assert {^struct, ""} = mod.deserialize(binary)

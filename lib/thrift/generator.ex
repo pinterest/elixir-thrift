@@ -81,6 +81,7 @@ defmodule Thrift.Generator do
 
   defp write_schema_to_file(generated_modules, output_dir) do
     generated_modules
+    |> resolve_name_collisions
     |> Enum.map(fn {name, quoted} ->
       filename = target_path(name)
       source = Macro.to_string(quoted)
@@ -91,6 +92,48 @@ defmodule Thrift.Generator do
 
       filename
     end)
+  end
+  
+  defp resolve_name_collisions(generated_modules) do
+    Enum.reduce(generated_modules, [], fn({name, quoted}, acc) ->
+      Keyword.update(
+        acc,
+        name,
+        quoted,
+        fn(existing) -> resolve_name_collision(name, existing, quoted) end
+      )
+    end)
+  end
+
+  defp resolve_name_collision(name, q1, q2) do
+    {meta1, ast1} = get_meta_and_ast(q1)
+    {meta2, ast2} = get_meta_and_ast(q2)
+
+    context1 = Keyword.get(meta1, :context)
+    context2 = Keyword.get(meta2, :context)
+    combined_ast = [name, [do: {:__block__, [], ast1 ++ ast2}]]
+
+    # the context will be the generating module
+    # we can combine constants into other modules, but no other combinations
+    # furthermore, we want to keep whichever context is _not_ the constant
+    # generator so that subsequent combinations will work properly
+    cond do
+      context1 == Thrift.Generator.ConstantGenerator ->
+        combine_module_defs(name, meta2, ast1, ast2)
+      context2 == Thrift.Generator.ConstantGenerator ->
+        combine_module_defs(name, meta1, ast1, ast2)
+      true ->
+        raise "Name collision: #{name}"
+    end
+  end
+
+  defp get_meta_and_ast(quoted) do
+    {:defmodule, meta, [_name, [do: {:__block__, [], ast}]]} = quoted
+    {meta, ast}
+  end
+
+  defp combine_module_defs(name, meta, ast1, ast2) do
+    {:defmodule, meta, [name, [do: {:__block__, [], ast1 ++ ast2}]]}
   end
 
   defp generate_enum_modules(schema) do

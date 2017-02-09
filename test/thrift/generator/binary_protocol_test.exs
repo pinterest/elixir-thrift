@@ -554,15 +554,25 @@ defmodule Thrift.Generator.BinaryProtocolTest do
     4: PowerLevel power_level
   }
 
-
-  const XMan Wolverine = {"handle": "Wolverine", "name": "Logan", "power_level": BETA}
-  const XMan Cyclops = {"handle": "Cyclops", "name": "Scott Summers", "power_level": BETA}
-  const XMan Storm = {"handle": "Storm", "name": "Ororo Monroe", "power_level": ALPHA}
-  const XMan Phoenix = {"handle": "Phoenix", "name": "Jean Grey", "power_level": OMEGA}
+  const XMan Wolverine = {"handle": "Wolverine", "name": "Logan", "power_level": PowerLevel.BETA}
+  const XMan Cyclops = {"handle": "Cyclops", "name": "Scott Summers", "power_level": PowerLevel.BETA}
+  const XMan Storm = {"handle": "Storm", "name": "Ororo Monroe", "power_level": PowerLevel.ALPHA}
+  const XMan Phoenix = {"handle": "Phoenix", "name": "Jean Grey", "power_level": PowerLevel.OMEGA}
   """
 
   thrift_test "constants and structs defined in the same file" do
-    assert %XMan{} = XMan.wolverine
+    assert %XMan{
+      handle: "Wolverine", name: "Logan", power_level: PowerLevel.beta, universe: XMan.earth_616
+    } == XMan.wolverine
+    assert %XMan{
+      handle: "Cyclops", name: "Scott Summers", power_level: PowerLevel.beta, universe: XMan.earth_616
+    } == XMan.cyclops
+    assert %XMan{
+      handle: "Storm", name: "Ororo Monroe", power_level: PowerLevel.alpha, universe: XMan.earth_616
+    } == XMan.storm
+    assert %XMan{
+      handle: "Phoenix", name: "Jean Grey", power_level: PowerLevel.omega, universe: XMan.earth_616
+    } == XMan.phoenix
   end
 
   thrift_test "lists serialize into maps" do

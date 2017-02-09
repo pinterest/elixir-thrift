@@ -69,7 +69,7 @@ defmodule Mix.Tasks.Thrift.Generate do
       |> Enum.uniq
       |> Enum.sort
       |> Enum.each(fn file ->
-        Mix.shell.info "Wrote #{file}"
+        Mix.shell.info "Wrote #{Path.join(output_path, file)}"
       end)
     end
   end

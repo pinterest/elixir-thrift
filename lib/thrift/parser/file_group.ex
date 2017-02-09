@@ -31,23 +31,23 @@ defmodule Thrift.Parser.FileGroup do
 
   @type t :: %FileGroup{
     initial_file: Path.t,
-    include_paths: [Path.t],
     parsed_files: %{FileRef.thrift_include => %ParsedFile{}},
     schemas: %{FileRef.thrift_include => %Schema{}},
-    ns_mappings: %{atom => %Namespace{}}
+    ns_mappings: %{atom => %Namespace{}},
+    opts: Parser.opts
   }
 
-  @enforce_keys [:initial_file]
+  @enforce_keys [:initial_file, :opts]
   defstruct initial_file: nil,
-            include_paths: [],
             parsed_files: %{},
             schemas: %{},
             resolutions: %{},
-            ns_mappings: %{}
+            ns_mappings: %{},
+            opts: Keyword.new()
 
-  @spec new(Path.t, [Path.t]) :: t
-  def new(initial_file, include_paths \\ []) do
-    %FileGroup{initial_file: initial_file, include_paths: include_paths}
+  @spec new(Path.t, Parser.opts) :: t
+  def new(initial_file, opts \\ []) do
+    %FileGroup{initial_file: initial_file, opts: opts}
   end
 
   @spec add(t, ParsedFile.t) :: t
@@ -66,7 +66,8 @@ defmodule Thrift.Parser.FileGroup do
   defp add_includes(%FileGroup{} = group, %ParsedFile{schema: schema, file_ref: file_ref}) do
     # Search for included files in the current directory (relative to the
     # parsed file) as well as any additionally configured include paths.
-    include_paths = [Path.dirname(file_ref.path) | group.include_paths]
+    include_paths =
+      [Path.dirname(file_ref.path) | Keyword.get(group.opts, :include_paths, [])]
 
     Enum.reduce(schema.includes, group, fn(include, group) ->
       parsed_file =

@@ -32,12 +32,12 @@ defmodule Mix.Tasks.Compile.Thrift do
 
     config        = Keyword.get(Mix.Project.config, :thrift, [])
     files         = Keyword.get(config, :files, [])
-    include_paths = Keyword.get(config, :include_paths, [])
     output_path   = Keyword.get(config, :output_path, "lib")
+    parser_opts   = Keyword.take(config, [:include_paths])
 
     file_groups =
       files
-      |> Enum.map(&parse(&1, include_paths))
+      |> Enum.map(&parse(&1, parser_opts))
       |> Enum.reject(&is_nil/1)
 
     stale_groups = Enum.filter(file_groups, fn file_group ->
@@ -51,9 +51,9 @@ defmodule Mix.Tasks.Compile.Thrift do
     end
   end
 
-  defp parse(thrift_file, include_paths) do
+  defp parse(thrift_file, opts) do
     try do
-      Thrift.Parser.parse_file(thrift_file, include_paths)
+      Thrift.Parser.parse_file(thrift_file, opts)
     rescue
       e ->
         Mix.shell.error "Failed to parse #{thrift_file}: #{Exception.message(e)}"

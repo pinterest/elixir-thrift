@@ -3,11 +3,15 @@ defmodule Thrift.Parser do
   This module provides functions for parsing Thrift IDL files (`.thrift`).
   """
 
+  alias Thrift.Parser.{FileGroup, FileRef, Models, ParsedFile}
+  alias Thrift.Parser.Models.Schema
+
   @typedoc "A schema path element"
   @type path_element :: String.t | atom
 
-  alias Thrift.Parser.{FileGroup, FileRef, Models, ParsedFile}
-  alias Thrift.Parser.Models.Schema
+  @typedoc "Available parser options"
+  @type opt :: {:include_paths, [Path.t]}
+  @type opts :: [opt]
 
   @doc """
   Parses a Thrift document and returns the schema that it represents.
@@ -54,13 +58,13 @@ defmodule Thrift.Parser do
   In addition to the given file, all included files are also parsed and
   returned as part of the resulting `Thrift.Parser.FileGroup`.
   """
-  @spec parse_file(Path.t, [Path.t]) :: FileGroup.t
-  def parse_file(file_path, include_paths \\ []) do
+  @spec parse_file(Path.t, opts) :: FileGroup.t
+  def parse_file(file_path, opts \\ []) do
     parsed_file = file_path
     |> FileRef.new
     |> ParsedFile.new
 
-    FileGroup.new(file_path, include_paths)
+    FileGroup.new(file_path, opts)
     |> FileGroup.add(parsed_file)
     |> FileGroup.update_resolutions
   end

@@ -77,7 +77,7 @@ defmodule Thrift.Generator.Utils do
     a |> Atom.to_string |> underscore |> String.to_atom
   end
 
-  # NOTE 
+  # NOTE
   # this is basically the same as Macro.underscore/1, but this version properly
   # handles SCREAMING_SNAKE_CASE strings
   # Macro.underscore/1 has been fixed upstream in the Elixir source

@@ -19,7 +19,7 @@ defmodule Mix.Tasks.Compile.ThriftTest do
           Compiled thrift/ThriftTest.thrift
           Compiled thrift/numbers.thrift
           """
-        assert File.exists?("lib/stress/service.ex")
+        assert File.exists?("lib/generated/service.ex")
         assert File.exists?("lib/thrift_test/thrift_test.ex")
         assert File.exists?("lib/tutorial/numbers.ex")
       end

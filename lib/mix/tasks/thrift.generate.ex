@@ -17,14 +17,18 @@ defmodule Mix.Tasks.Thrift.Generate do
       directory paths in which to search for included files, overriding
       the `:include_paths` configuration value. This option can be repeated
       in order to add multiple directories to the search list.
-    * `-o dir` / `--out dir` - set the output directory, overriding the
-      `:output_path` configuration value
+    * `--namespace namespace` - set the default namespace for generated
+      modules, overriding the `:namespace` configuration value
+    * `--out dir` - set the output directory, overriding the `:output_path`
+      configuration value
     * `-v` / `--verbose` - enable verbose task logging
 
   ## Configuration
 
     * `:include_paths` - list of additional directory paths in which to
       search for included files. Defaults to `[]`.
+    * `:namespace` - default namespace for generated modules, which will
+      be used when Thrift files don't specify their own `elixir` namespace.
     * `:output_path` - output directory into which the generated Elixir
       source files will be generated. Defaults to `"lib"`.
   """
@@ -32,11 +36,13 @@ defmodule Mix.Tasks.Thrift.Generate do
   @spec run(OptionParser.argv) :: :ok
   def run(args) do
     {opts, files} = OptionParser.parse!(args,
-      aliases: [I: :include, o: :out, v: :verbose],
-      switches: [include: :keep, out: :string, verbose: :boolean])
+      switches: [include: :keep, namespace: :string, out: :string,
+                 verbose: :boolean],
+      aliases: [I: :include, v: :verbose])
 
     config        = Keyword.get(Mix.Project.config, :thrift, [])
     output_path   = opts[:out] || Keyword.get(config, :output_path, "lib")
+    namespace     = opts[:namespace] || Keyword.get(config, :namespace)
     include_paths =
       (opts[:include] && Keyword.get_values(opts, :include))
       || Keyword.get(config, :include_paths, [])
@@ -44,6 +50,7 @@ defmodule Mix.Tasks.Thrift.Generate do
     parser_opts =
       Keyword.new
       |> Keyword.put(:include_paths, include_paths)
+      |> Keyword.put(:namespace, namespace)
 
     unless Enum.empty?(files) do
       File.mkdir_p!(output_path)

@@ -5,11 +5,8 @@ defmodule App.Mixfile do
     [app: :app,
      version: "1.0.0",
      thrift: [
-       files: [
-         "thrift/StressTest.thrift",
-         "thrift/ThriftTest.thrift",
-         "thrift/numbers.thrift"
-       ]
+       files: Path.wildcard("thrift/*.thrift"),
+       namespace: "Generated"
      ]]
   end
 end

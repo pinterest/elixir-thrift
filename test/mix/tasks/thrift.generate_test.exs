@@ -18,11 +18,13 @@ defmodule Mix.Tasks.Thrift.GenerateTest do
 
   test "specifying multiple Thrift files" do
     in_fixture fn ->
-      output = run(["thrift/StressTest.thrift", "thrift/ThriftTest.thrift"])
-      assert output =~ "Parsing thrift/StressTest.thrift"
-      assert output =~ "Parsing thrift/ThriftTest.thrift"
-      assert File.exists?("lib/stress/service.ex")
-      assert File.exists?("lib/thrift_test/thrift_test.ex")
+      with_project_config [], fn ->
+        output = run(["thrift/StressTest.thrift", "thrift/ThriftTest.thrift"])
+        assert output =~ "Parsing thrift/StressTest.thrift"
+        assert output =~ "Parsing thrift/ThriftTest.thrift"
+        assert File.exists?("lib/generated/service.ex")
+        assert File.exists?("lib/thrift_test/thrift_test.ex")
+      end
     end
   end
 
@@ -44,15 +46,19 @@ defmodule Mix.Tasks.Thrift.GenerateTest do
 
   test "specifying an alternate output directory (--out)" do
     in_fixture fn ->
-      run(["--out", "lib/thrift", "thrift/ThriftTest.thrift"])
-      assert File.exists?("lib/thrift/thrift_test/thrift_test.ex")
+      with_project_config [], fn ->
+        run(["--out", "lib/thrift", "thrift/ThriftTest.thrift"])
+        assert File.exists?("lib/thrift/thrift_test/thrift_test.ex")
+      end
     end
   end
 
   test "specifying an include path (--include)" do
     in_fixture fn ->
-      run(~w(--include thrift thrift/include/Include.thrift))
-      assert File.exists?("lib/thrift_test/thrift_test.ex")
+      with_project_config [], fn ->
+        run(~w(--include thrift thrift/include/Include.thrift))
+        assert File.exists?("lib/thrift_test/thrift_test.ex")
+      end
     end
   end
 
@@ -64,5 +70,9 @@ defmodule Mix.Tasks.Thrift.GenerateTest do
 
   defp in_fixture(fun) do
     File.cd!(@fixture_project, fun)
+  end
+
+  defp with_project_config(config, fun) do
+    Mix.Project.in_project(:app, @fixture_project, config, fn(_) -> fun.() end)
   end
 end

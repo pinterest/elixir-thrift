@@ -10,7 +10,9 @@ defmodule Thrift.Parser do
   @type path_element :: String.t | atom
 
   @typedoc "Available parser options"
-  @type opt :: {:include_paths, [Path.t]}
+  @type opt ::
+    {:include_paths, [Path.t]} |
+    {:namespace, String.t}
   @type opts :: [opt]
 
   @doc """

@@ -3,6 +3,17 @@ defmodule Thrift.Generator.Utils do
   Collection of utilities for working with generated code.
   """
 
+  alias Thrift.Parser.FileGroup
+  alias Thrift.Parser.Models.{
+    Constant,
+    Field,
+    Struct,
+    Schema,
+    TypeRef,
+    TEnum,
+    ValueRef,
+  }
+
   @doc """
   When nesting a quote with multiple defs into another quote, the defs end up
   wrapped in blocks. Take the following code, for example.
@@ -154,5 +165,92 @@ defmodule Thrift.Generator.Utils do
   def optimize_iolist(expr) do
     debug_optimization(expr, "done")
     expr
+  end
+
+  @doc """
+  Returns a quoted value, resolving it in the schema if necessary
+
+  The values returned by this function are suitable for unquoting.
+  """
+  @spec quote_value(term, term, Schema.t) :: Macro.t
+  def quote_value(%ValueRef{} = ref, type, schema) do
+    value = FileGroup.resolve(schema.file_group, ref)
+    quote_value(value, type, schema)
+  end
+  def quote_value(value, %TypeRef{} = ref, schema) do
+    type = FileGroup.resolve(schema.file_group, ref)
+    quote_value(value, type, schema)
+  end
+  def quote_value(%Constant{type: %TypeRef{} = ref} = constant, type, schema) do
+    constant = %Constant{constant | type: FileGroup.resolve(schema.file_group, ref)}
+    quote_value(constant, type, schema)
+  end
+  def quote_value(%Constant{type: type, value: value}, type, schema) do
+    quote_value(value, type, schema)
+  end
+  def quote_value(value, %TEnum{} = enum, _schema) when is_integer(value) do
+    value_found = Enum.any?(enum.values, fn
+      {_, ^value} -> true
+      {_, _value} -> false
+    end)
+    unless value_found do
+      raise RuntimeError,
+        message: "Default value #{inspect value} is not a member of enum #{enum.name}"
+    end
+    value
+  end
+  def quote_value(nil, _type, _schema) do
+    nil
+  end
+  def quote_value(value, :bool, _schema) when is_boolean(value), do: value
+  def quote_value(value, :byte, _schema) when is_integer(value), do: value
+  def quote_value(value, :double, _schema) when is_number(value), do: value
+  def quote_value(value, :i8, _schema) when is_integer(value), do: value
+  def quote_value(value, :i16, _schema) when is_integer(value), do: value
+  def quote_value(value, :i32, _schema) when is_integer(value), do: value
+  def quote_value(value, :i64, _schema) when is_integer(value), do: value
+  def quote_value(value, :string, _schema) when is_binary(value), do: value
+  def quote_value(value, :string, _schema) when is_list(value) do
+    List.to_string(value)
+  end
+  def quote_value(value, :binary, schema) do
+    quote_value(value, :string, schema)
+  end
+  def quote_value(values, %Struct{fields: fields} = struct, schema) when is_list(values) do
+    struct_module = FileGroup.dest_module(schema.file_group, struct)
+    types = Map.new(fields, fn %Field{name: name, type: type} ->
+      {name, type}
+    end)
+    defaults = Enum.map(fields, fn %Field{name: name, type: type, default: default} ->
+      {name, quote_value(default, type, schema)}
+    end)
+    values = Enum.map(values, fn {name_charlist, value} ->
+      name = List.to_string(name_charlist) |> String.to_existing_atom
+      type = Map.fetch!(types, name)
+      {name, quote_value(value, type, schema)}
+    end)
+    quote do
+      %{unquote_splicing([{:__struct__, struct_module} | Keyword.new(defaults ++ values)])}
+    end
+  end
+  def quote_value(value, {:map, {key_type, value_type}}, schema) when is_list(value) do
+    quote_value(Enum.into(value, %{}), {:map, {key_type, value_type}}, schema)
+  end
+  def quote_value(%{} = value, {:map, {key_type, value_type}}, schema) do
+    Map.new(value, fn {key, value} ->
+      {
+        quote_value(key, key_type, schema),
+        quote_value(value, value_type, schema),
+      }
+    end)
+  end
+  def quote_value(%MapSet{} = set, {:set, type}, schema) do
+    values = Enum.map(set, &quote_value(&1, type, schema))
+    quote do
+      MapSet.new(unquote(values))
+    end
+  end
+  def quote_value(list, {:list, type}, schema) when is_list(list) do
+    Enum.map(list, &quote_value(&1, type, schema))
   end
 end

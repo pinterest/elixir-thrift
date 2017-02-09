@@ -17,6 +17,7 @@ defmodule Thrift.Parser.FileGroup do
 
   alias Thrift.Parser.Models.{
     TEnum,
+    Constant,
     Exception,
     Field,
     Namespace,
@@ -159,22 +160,31 @@ defmodule Thrift.Parser.FileGroup do
     dest_module(file_group, name)
   end
 
+  def dest_module(file_group, Constant) do
+    # for constants the name of the module is
+    #   <Namespace>.<filename>
+    initial_file = file_group.initial_file
+    base = Path.basename(initial_file, Path.extname(initial_file))
+    name = String.to_atom(base <> "." <> Macro.camelize(base))
+    dest_module(file_group, name)
+  end
+
   def dest_module(file_group, name) do
-    [thrift_module, struct_name] = name
+    [thrift_module | struct_name] = name
     |> Atom.to_string
     |> String.split(".")
     |> Enum.map(&String.to_atom/1)
 
     case file_group.ns_mappings[thrift_module] do
       nil ->
-        Module.concat(Elixir, struct_name)
+        Module.concat(List.flatten([Elixir, struct_name]))
       namespace = %Namespace{} ->
-        namespace.path
+        namespace_module = namespace.path
         |> String.split(".")
         |> Enum.map(&Macro.camelize/1)
         |> Enum.join(".")
         |> String.to_atom
-        |> Module.concat(struct_name)
+        Module.concat(List.flatten([namespace_module, struct_name]))
     end
   end
 

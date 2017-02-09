@@ -4,9 +4,14 @@ defmodule Thrift.Generator do
   IDL files (`.thrift`).
   """
 
-  alias Thrift.Parser.FileGroup
+  alias Thrift.Parser.{
+    FileGroup,
+    Models.Schema,
+    Models.Constant
+  }
   alias Thrift.{
     Generator,
+    Generator.ConstantGenerator,
     Generator.EnumGenerator,
     Generator.StructGenerator
   }
@@ -65,6 +70,7 @@ defmodule Thrift.Generator do
   def generate_schema(schema) do
     List.flatten([
       generate_enum_modules(schema),
+      generate_const_modules(schema),
       generate_struct_modules(schema),
       generate_union_modules(schema),
       generate_exception_modules(schema),
@@ -92,6 +98,20 @@ defmodule Thrift.Generator do
       full_name = FileGroup.dest_module(schema.file_group, enum)
       {full_name, EnumGenerator.generate(full_name, enum)}
     end
+  end
+
+  defp generate_const_modules(%Schema{constants: constants})
+  when constants == %{} do
+    # no constants => nothing to generate
+    []
+  end
+  defp generate_const_modules(schema) do
+    # schema.constants is a map %{name: constant} but constant includes the
+    # name and all we really need is the values
+    constants = Map.values(schema.constants)
+    # name of the generated module
+    full_name = FileGroup.dest_module(schema.file_group, Constant)
+    [{full_name, ConstantGenerator.generate(full_name, constants, schema)}]
   end
 
   defp generate_struct_modules(schema) do

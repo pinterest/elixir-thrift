@@ -4,6 +4,8 @@ defmodule Thrift.Generator.BinaryProtocolTest do
   alias Thrift.Protocol.Binary
   alias Thrift.Union.TooManyFieldsSetException
 
+  @thrift_test_opts [cleanup: false]
+
   def assert_serializes(%{__struct__: mod} = struct, binary) do
     assert binary == Binary.serialize(:struct, struct) |> IO.iodata_to_binary
     assert {^struct, ""} = mod.deserialize(binary)
@@ -536,6 +538,33 @@ defmodule Thrift.Generator.BinaryProtocolTest do
     assert struct.empty_set == MapSet.new
     assert struct.empty_list == []
     :ok
+  end
+
+  @thrift_file name: "x_man.thrift", contents: """
+  enum PowerLevel {
+    ALPHA,
+    BETA,
+    OMEGA
+  }
+
+  const string EARTH_616 = "Earth-616"
+
+  struct XMan{
+    1: string handle
+    2: string name
+    3: string universe = EARTH_616
+    4: PowerLevel power_level
+  }
+
+
+  const XMan Wolverine = {"handle": "Wolverine", "name": "Logan", "power_level": BETA}
+  const XMan Cyclops = {"handle": "Cyclops", "name": "Scott Summers", "power_level": BETA}
+  const XMan Storm = {"handle": "Storm", "name": "Ororo Monroe", "power_level": ALPHA}
+  const XMan Phoenix = {"handle": "Phoenix", "name": "Jean Grey", "power_level": OMEGA}
+  """
+
+  thrift_test "constants and structs defined in the same file" do
+    assert %XMan{} = XMan.wolverine
   end
 
   thrift_test "lists serialize into maps" do

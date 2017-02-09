@@ -19,8 +19,8 @@ defmodule Mix.Tasks.Thrift.Generate do
       in order to add multiple directories to the search list.
     * `--namespace namespace` - set the default namespace for generated
       modules, overriding the `:namespace` configuration value
-    * `--out dir` - set the output directory, overriding the `:output_path`
-      configuration value
+    * `-o dir` / `--out dir` - set the output directory, overriding the
+      `:output_path` configuration value
     * `-v` / `--verbose` - enable verbose task logging
 
   ## Configuration
@@ -38,7 +38,7 @@ defmodule Mix.Tasks.Thrift.Generate do
     {opts, files} = OptionParser.parse!(args,
       switches: [include: :keep, namespace: :string, out: :string,
                  verbose: :boolean],
-      aliases: [I: :include, v: :verbose])
+      aliases: [I: :include, o: :out, v: :verbose])
 
     config        = Keyword.get(Mix.Project.config, :thrift, [])
     output_path   = opts[:out] || Keyword.get(config, :output_path, "lib")

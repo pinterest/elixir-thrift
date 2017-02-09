@@ -7,8 +7,7 @@ defmodule App.Mixfile do
      thrift: [
        files: [
          "thrift/StressTest.thrift",
-         "thrift/ThriftTest.thrift",
-         "thrift/numbers.thrift"
+         "thrift/ThriftTest.thrift"
        ]
      ]]
   end

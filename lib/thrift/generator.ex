@@ -93,7 +93,7 @@ defmodule Thrift.Generator do
       filename
     end)
   end
-  
+
   defp resolve_name_collisions(generated_modules) do
     Enum.reduce(generated_modules, [], fn({name, quoted}, acc) ->
       Keyword.update(

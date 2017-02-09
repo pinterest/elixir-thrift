@@ -1,7 +1,7 @@
 defmodule Thrift.Parser.FileGroup do
   @moduledoc """
   Represents a group of parsed files.
-  
+
   When you parse a file, it might include other thrift files. These files are
   in turn accumulated and parsed and added to this module. Additionally, this
   module allows resolution of the names of Structs / Enums / Unions etc across
@@ -31,21 +31,26 @@ defmodule Thrift.Parser.FileGroup do
 
   @type t :: %FileGroup{
     initial_file: Path.t,
+    include_paths: [Path.t],
     parsed_files: %{FileRef.thrift_include => %ParsedFile{}},
     schemas: %{FileRef.thrift_include => %Schema{}},
     ns_mappings: %{atom => %Namespace{}}
   }
 
+  @enforce_keys [:initial_file]
   defstruct initial_file: nil,
+            include_paths: [],
             parsed_files: %{},
             schemas: %{},
             resolutions: %{},
             ns_mappings: %{}
 
-  def new(initial_file) do
-    %FileGroup{initial_file: initial_file}
+  @spec new(Path.t, [Path.t]) :: t
+  def new(initial_file, include_paths \\ []) do
+    %FileGroup{initial_file: initial_file, include_paths: include_paths}
   end
 
+  @spec add(t, ParsedFile.t) :: t
   def add(file_group, parsed_file) do
     file_group = add_includes(file_group, parsed_file)
     new_parsed_files = Map.put(file_group.parsed_files, parsed_file.name, parsed_file)
@@ -58,19 +63,29 @@ defmodule Thrift.Parser.FileGroup do
                 resolutions: resolutions}
   end
 
-  def add_includes(%__MODULE__{} = group,
-                   %ParsedFile{schema: schema, file_ref: file_ref}) do
+  defp add_includes(%FileGroup{} = group, %ParsedFile{schema: schema, file_ref: file_ref}) do
+    # Search for included files in the current directory (relative to the
+    # parsed file) as well as any additionally configured include paths.
+    include_paths = [Path.dirname(file_ref.path) | group.include_paths]
 
-    Enum.reduce(schema.includes, group, fn(include, file_group) ->
-      parsed_file = file_ref.path
-      |> Path.dirname
-      |> Path.join(include.path)
-      |> FileRef.new
-      |> ParsedFile.new
-      add(file_group, parsed_file)
+    Enum.reduce(schema.includes, group, fn(include, group) ->
+      parsed_file =
+        include.path
+        |> find_include(include_paths)
+        |> FileRef.new
+        |> ParsedFile.new
+      add(group, parsed_file)
     end)
   end
 
+  # Attempt to locate `path` in one of `dirs`, returning the path of the
+  # first match on success or the original `path` if not match is found.
+  defp find_include(path, dirs) do
+    Enum.map(dirs, &Path.join(&1, path))
+    |> Enum.find(path, &File.exists?/1)
+  end
+
+  @spec update_resolutions(t) :: t
   def update_resolutions(file_group) do
     # since in a file, we can refer to things defined in that file in a non-qualified
     # way, we add unqualified names to the resolutions map.
@@ -93,6 +108,7 @@ defmodule Thrift.Parser.FileGroup do
                ns_mappings: ns_mappings}
   end
 
+  @spec resolve(t, any) :: any
   for type <- [:bool, :byte, :i8, :i16, :i32, :i64, :double, :string, :binary] do
     def resolve(_, unquote(type)), do: unquote(type)
   end
@@ -123,6 +139,7 @@ defmodule Thrift.Parser.FileGroup do
     other
   end
 
+  @spec dest_module(t, any) :: atom
   def dest_module(file_group, %Struct{name: name}) do
     dest_module(file_group, name)
   end

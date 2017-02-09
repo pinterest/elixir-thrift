@@ -1,8 +1,8 @@
 %{configs: [
   %{name: "default",
     files: %{
-      included: ["lib/", "test/"],
-      excluded: ["_build/", "deps/", "ext/"]
+      included: ["lib/", "test/support/"],
+      excluded: ["_build/", "deps/"]
     },
     requires: [],
     check_for_updates: false,

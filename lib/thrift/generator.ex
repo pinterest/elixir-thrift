@@ -100,23 +100,28 @@ defmodule Thrift.Generator do
         acc,
         name,
         quoted,
-        fn(existing) -> resolve_name_collision(name, existing, quoted) end
+        &resolve_name_collision(name, &1, quoted)
       )
     end)
   end
 
+  # We resolve name collisions (two generated modules with the same name)
+  # pairwise by inspecting the types of modules generated.
+  # Most collisions cannot be resolved.  Constants can be merged into
+  # modules that define other types (structs, etc).
   defp resolve_name_collision(name, q1, q2) do
+    # breaks apart the module's ast and gets the parts we need
     {meta1, ast1} = get_meta_and_ast(q1)
     {meta2, ast2} = get_meta_and_ast(q2)
 
+    # the context will tell us what type (e.g., Enum, Constant, etc.)
+    #   was defined by each module
     context1 = Keyword.get(meta1, :context)
     context2 = Keyword.get(meta2, :context)
-    combined_ast = [name, [do: {:__block__, [], ast1 ++ ast2}]]
 
-    # the context will be the generating module
-    # we can combine constants into other modules, but no other combinations
-    # furthermore, we want to keep whichever context is _not_ the constant
-    # generator so that subsequent combinations will work properly
+    # only allow constants to be merged into other modules
+    #   but make sure the meta is for the not-constant module, so that
+    #   subsequent collisions are properly dealt with
     cond do
       context1 == Thrift.Generator.ConstantGenerator ->
         combine_module_defs(name, meta2, ast1, ast2)

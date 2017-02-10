@@ -81,6 +81,7 @@ defmodule Thrift.Generator do
 
   defp write_schema_to_file(generated_modules, output_dir) do
     generated_modules
+    |> resolve_name_collisions
     |> Enum.map(fn {name, quoted} ->
       filename = target_path(name)
       source = Macro.to_string(quoted)
@@ -91,6 +92,53 @@ defmodule Thrift.Generator do
 
       filename
     end)
+  end
+
+  defp resolve_name_collisions(generated_modules) do
+    Enum.reduce(generated_modules, [], fn({name, quoted}, acc) ->
+      Keyword.update(
+        acc,
+        name,
+        quoted,
+        &resolve_name_collision(name, &1, quoted)
+      )
+    end)
+  end
+
+  # We resolve name collisions (two generated modules with the same name)
+  # pairwise by inspecting the types of modules generated.
+  # Most collisions cannot be resolved.  Constants can be merged into
+  # modules that define other types (structs, etc).
+  defp resolve_name_collision(name, q1, q2) do
+    # breaks apart the module's ast and gets the parts we need
+    {meta1, ast1} = get_meta_and_ast(q1)
+    {meta2, ast2} = get_meta_and_ast(q2)
+
+    # the context will tell us what type (e.g., Enum, Constant, etc.)
+    #   was defined by each module
+    context1 = Keyword.get(meta1, :context)
+    context2 = Keyword.get(meta2, :context)
+
+    # only allow constants to be merged into other modules
+    #   but make sure the meta is for the not-constant module, so that
+    #   subsequent collisions are properly dealt with
+    cond do
+      context1 == Thrift.Generator.ConstantGenerator ->
+        combine_module_defs(name, meta2, ast1, ast2)
+      context2 == Thrift.Generator.ConstantGenerator ->
+        combine_module_defs(name, meta1, ast1, ast2)
+      true ->
+        raise "Name collision: #{name}"
+    end
+  end
+
+  defp get_meta_and_ast(quoted) do
+    {:defmodule, meta, [_name, [do: {:__block__, [], ast}]]} = quoted
+    {meta, ast}
+  end
+
+  defp combine_module_defs(name, meta, ast1, ast2) do
+    {:defmodule, meta, [name, [do: {:__block__, [], ast1 ++ ast2}]]}
   end
 
   defp generate_enum_modules(schema) do

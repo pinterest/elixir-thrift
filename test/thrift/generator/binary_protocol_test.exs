@@ -538,6 +538,43 @@ defmodule Thrift.Generator.BinaryProtocolTest do
     :ok
   end
 
+  @thrift_file name: "x_man.thrift", contents: """
+  enum PowerLevel {
+    ALPHA,
+    BETA,
+    OMEGA
+  }
+
+  const string EARTH_616 = "Earth-616"
+
+  struct XMan{
+    1: string handle
+    2: string name
+    3: string universe = EARTH_616
+    4: PowerLevel power_level
+  }
+
+  const XMan Wolverine = {"handle": "Wolverine", "name": "Logan", "power_level": PowerLevel.BETA}
+  const XMan Cyclops = {"handle": "Cyclops", "name": "Scott Summers", "power_level": PowerLevel.BETA}
+  const XMan Storm = {"handle": "Storm", "name": "Ororo Monroe", "power_level": PowerLevel.ALPHA}
+  const XMan Phoenix = {"handle": "Phoenix", "name": "Jean Grey", "power_level": PowerLevel.OMEGA}
+  """
+
+  thrift_test "constants and structs defined in the same file" do
+    assert %XMan{
+      handle: "Wolverine", name: "Logan", power_level: PowerLevel.beta, universe: XMan.earth_616
+    } == XMan.wolverine
+    assert %XMan{
+      handle: "Cyclops", name: "Scott Summers", power_level: PowerLevel.beta, universe: XMan.earth_616
+    } == XMan.cyclops
+    assert %XMan{
+      handle: "Storm", name: "Ororo Monroe", power_level: PowerLevel.alpha, universe: XMan.earth_616
+    } == XMan.storm
+    assert %XMan{
+      handle: "Phoenix", name: "Jean Grey", power_level: PowerLevel.omega, universe: XMan.earth_616
+    } == XMan.phoenix
+  end
+
   thrift_test "lists serialize into maps" do
     binary = <<13, 0, 2, 3, 3, 0, 0, 0, 1, 91, 92, 0>>
     assert binary == %Byte{val_map: %{91 => 92}} |> Byte.serialize() |> IO.iodata_to_binary

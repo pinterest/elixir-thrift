@@ -77,8 +77,17 @@ defmodule Thrift.Generator.Utils do
     a |> Atom.to_string |> underscore |> String.to_atom
   end
 
+  # NOTE
+  # this is basically the same as Macro.underscore/1, but this version properly
+  # handles SCREAMING_SNAKE_CASE strings
+  # Macro.underscore/1 has been fixed upstream in the Elixir source
   @spec underscore(binary) :: binary
-  def underscore(s) when is_bitstring(s), do: Macro.underscore(s)
+  def underscore(s) when is_binary(s) do
+    s
+    |> String.split("_")
+    |> Enum.map(&Macro.underscore/1)
+    |> Enum.join("_")
+  end
 
   # Change this to true to see iolist optimizations as they are applied.
   @debug_optimization false

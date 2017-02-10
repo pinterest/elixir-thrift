@@ -588,9 +588,20 @@ defmodule Thrift.Generator.BinaryProtocolTest do
   }
   """
 
+  @thrift_file name: "also_includes.thrift", contents: """
+  include "included_constants.thrift"
+
+  struct SomeOtherName {
+    1: i32 id
+  }
+  """
+
   thrift_test "including a file with constants" do
     assert 26 == IncludedConstants.z
     assert %IncludesConstants{z: 26} == %IncludesConstants{}
+    assert_raise UndefinedFunctionError, fn -> 26 == IncludesConstants.z end
+    assert %SomeOtherName{} == SomeOtherName.new()
+    assert_raise UndefinedFunctionError, fn -> 26 == AlsoIncludes.z end
   end
 
   thrift_test "lists serialize into maps" do

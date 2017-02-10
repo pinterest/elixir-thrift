@@ -49,7 +49,7 @@ defmodule Thrift.Parser.Models do
     Constants of any primitive or container type can be created in Thrift.
     """
 
-    @type t :: %Constant{name: String.t, value: Literal.t, type: Types.t}
+    @type t :: %Constant{name: String.t, value: Literals.t, type: Types.t}
 
     @enforce_keys [:name, :value, :type]
     defstruct name: nil, value: nil, type: nil

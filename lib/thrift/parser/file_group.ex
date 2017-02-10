@@ -8,6 +8,7 @@ defmodule Thrift.Parser.FileGroup do
   files.
   """
 
+  alias Thrift.Parser
   alias Thrift.Parser.{
     FileGroup,
     FileRef,

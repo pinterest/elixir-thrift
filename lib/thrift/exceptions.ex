@@ -1,6 +1,8 @@
 defmodule Thrift.TApplicationException do
   defexception message: nil, type: nil
 
+  alias Thrift.Protocol
+
   @exception_mappings %{
     unknown_method: 1,
     invalid_message_type: 2,

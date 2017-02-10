@@ -20,7 +20,6 @@
 namespace cpp test.stress
 namespace d thrift.test.stress
 namespace go stress
-namespace elixir stress
 
 service Service {
 

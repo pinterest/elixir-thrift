@@ -102,7 +102,11 @@ defmodule Thrift.Parser.FileGroup do
     |> Map.new
 
     resolutions = Map.merge(file_group.resolutions, to_update)
-    ns_mappings = build_ns_mappings(file_group.schemas)
+
+    default_namespace = if file_group.opts[:namespace] do
+      %Namespace{:name => :elixir, :path => file_group.opts[:namespace]}
+    end
+    ns_mappings = build_ns_mappings(file_group.schemas, default_namespace)
 
     %FileGroup{file_group |
                resolutions: resolutions,
@@ -189,10 +193,11 @@ defmodule Thrift.Parser.FileGroup do
     end
   end
 
-  defp build_ns_mappings(schemas) do
+  defp build_ns_mappings(schemas, default_namespace) do
     schemas
     |> Enum.map(fn {module_name, %Schema{namespaces: ns}} ->
-      {String.to_atom(module_name), ns[:elixir]}
+      namespace = Map.get(ns, :elixir, default_namespace)
+      {String.to_atom(module_name), namespace}
     end)
     |> Map.new
   end

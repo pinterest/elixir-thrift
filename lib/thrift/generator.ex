@@ -163,9 +163,15 @@ defmodule Thrift.Generator do
     |> Map.values
     |> Enum.filter(&FileGroup.own_constant?(schema.file_group, &1))
 
-    # name of the generated module
-    full_name = FileGroup.dest_module(schema.file_group, Constant)
-    [{full_name, ConstantGenerator.generate(full_name, constants, schema)}]
+    if Enum.empty?(constants) do
+      # if we filtered out all of the constants, we don't need to write
+      # anything
+      []
+    else
+      # name of the generated module
+      full_name = FileGroup.dest_module(schema.file_group, Constant)
+      [{full_name, ConstantGenerator.generate(full_name, constants, schema)}]
+    end
   end
 
   defp generate_struct_modules(schema) do

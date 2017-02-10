@@ -601,7 +601,9 @@ defmodule Thrift.Generator.BinaryProtocolTest do
     assert %IncludesConstants{z: 26} == %IncludesConstants{}
     assert_raise UndefinedFunctionError, fn -> 26 == IncludesConstants.z end
     assert %SomeOtherName{} == SomeOtherName.new()
-    assert_raise UndefinedFunctionError, fn -> 26 == AlsoIncludes.z end
+    assert Code.ensure_loaded?(IncludedConstants)
+    # AlsoIncludes should not define anything
+    refute Code.ensure_loaded?(AlsoIncludes)
   end
 
   thrift_test "lists serialize into maps" do

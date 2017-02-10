@@ -156,7 +156,13 @@ defmodule Thrift.Generator do
   defp generate_const_modules(schema) do
     # schema.constants is a map %{name: constant} but constant includes the
     # name and all we really need is the values
-    constants = Map.values(schema.constants)
+    # 
+    # we also only want constants that are defined in the main file from this
+    # file group
+    constants = schema.constants
+    |> Map.values
+    |> Enum.filter(&FileGroup.own_constant?(schema.file_group, &1))
+
     # name of the generated module
     full_name = FileGroup.dest_module(schema.file_group, Constant)
     [{full_name, ConstantGenerator.generate(full_name, constants, schema)}]

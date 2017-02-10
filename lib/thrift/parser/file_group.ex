@@ -193,6 +193,16 @@ defmodule Thrift.Parser.FileGroup do
     end
   end
 
+  # check if the given model is defined in the root file of the file group
+  #   this should eventually be replaced if we find a way to only parse files
+  #   once
+  @spec own_constant?(t, Constant.t) :: boolean
+  def own_constant?(file_group, constant = %Constant{}) do
+    basename = Path.basename(file_group.initial_file, ".thrift")
+    initial_file = file_group.parsed_files[basename]
+    Enum.member?(Map.keys(initial_file.schema.constants), constant.name)
+  end
+
   defp build_ns_mappings(schemas, default_namespace) do
     schemas
     |> Enum.map(fn {module_name, %Schema{namespaces: ns}} ->

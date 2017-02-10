@@ -197,7 +197,7 @@ defmodule Thrift.Parser.FileGroup do
   #   this should eventually be replaced if we find a way to only parse files
   #   once
   @spec own_constant?(t, Constant.t) :: boolean
-  def own_constant?(file_group, constant = %Constant{}) do
+  def own_constant?(file_group, %Constant{} = constant) do
     basename = Path.basename(file_group.initial_file, ".thrift")
     initial_file = file_group.parsed_files[basename]
     Enum.member?(Map.keys(initial_file.schema.constants), constant.name)

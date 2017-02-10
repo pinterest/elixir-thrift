@@ -156,7 +156,7 @@ defmodule Thrift.Generator do
   defp generate_const_modules(schema) do
     # schema.constants is a map %{name: constant} but constant includes the
     # name and all we really need is the values
-    # 
+    #
     # we also only want constants that are defined in the main file from this
     # file group
     constants = schema.constants

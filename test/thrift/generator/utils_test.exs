@@ -1,5 +1,5 @@
 defmodule Thrift.Generator.UtilsTest do
-  use ExUnit.Case
+  use ExUnit.Case, async: true
   import Thrift.Generator.Utils
 
   defmacro check(input, expected_output) do

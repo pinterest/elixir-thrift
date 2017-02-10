@@ -694,7 +694,7 @@ defmodule ParserTest do
       1: i32 id
     }
     """
-    
+
     path = Path.join(@test_file_dir, "get_namespaced.thrift")
     File.write!(path, contents)
 

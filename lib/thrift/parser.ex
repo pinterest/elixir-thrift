@@ -62,12 +62,32 @@ defmodule Thrift.Parser do
   """
   @spec parse_file(Path.t, opts) :: FileGroup.t
   def parse_file(file_path, opts \\ []) do
+    normalized_opts = normalize_opts(opts)
+
     parsed_file = file_path
     |> FileRef.new
     |> ParsedFile.new
 
-    FileGroup.new(file_path, opts)
+    FileGroup.new(file_path, normalized_opts)
     |> FileGroup.add(parsed_file)
     |> FileGroup.update_resolutions
+  end
+
+  # normalize various type permutations that we could get options as
+  defp normalize_opts(opts) do
+    opts
+    |> Keyword.update(:namespace, nil, &namespace_string/1)
+  end
+
+  # namespace can be an atom or a binary
+  #   - convert an atom to a binary and remove the "Elixir." we get from atoms
+  #      like `Foo`
+  #   - make sure values are valid module names (CamelCase)
+  defp namespace_string(b) when is_binary(b), do: Macro.camelize(b)
+  defp namespace_string(a) when is_atom(a) do
+    a
+    |> Atom.to_string
+    |> String.replace_leading("Elixir.", "")
+    |> namespace_string
   end
 end

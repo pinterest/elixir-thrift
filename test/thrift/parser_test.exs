@@ -1,8 +1,10 @@
 defmodule ParserTest do
-
   use ExUnit.Case, async: true
 
-  import Thrift.Parser, only: [parse: 1, parse: 2]
+  @project_root Path.expand("../..", __DIR__)
+  @test_file_dir Path.join([@project_root, "tmp", "parser_error"])
+
+  import Thrift.Parser, only: [parse: 1, parse: 2, parse_file: 2]
 
   alias Thrift.Parser.Models.Constant
   alias Thrift.Parser.Models.Exception
@@ -19,6 +21,12 @@ defmodule ParserTest do
   alias Thrift.Parser.Models.ValueRef
 
   import ExUnit.CaptureIO
+
+  setup do
+    File.rm_rf!(@test_file_dir)
+    File.mkdir_p!(@test_file_dir)
+    on_exit fn -> File.rm_rf!(@test_file_dir) end
+  end
 
   test "parsing comments" do
     {:ok, schema} = """
@@ -678,5 +686,32 @@ defmodule ParserTest do
     assert_raise RuntimeError, "Name collision: Foo", fn ->
       parse(thrift)
     end
+  end
+
+  test "namespace option can be a string or atom" do
+    contents = """
+    struct GetNamespaced {
+      1: i32 id
+    }
+    """
+    
+    path = Path.join(@test_file_dir, "get_namespaced.thrift")
+    File.write!(path, contents)
+
+    opts = [namespace: "WithNamespace"]
+    result = parse_file(path, opts)
+    assert "WithNamespace" == result.ns_mappings.get_namespaced.path
+
+    opts = [namespace: WithNamespace]
+    result = parse_file(path, opts)
+    assert "WithNamespace" == result.ns_mappings.get_namespaced.path
+
+    opts = [namespace: "with_namespace"]
+    result = parse_file(path, opts)
+    assert "WithNamespace" == result.ns_mappings.get_namespaced.path
+
+    opts = [namespace: :with_namespace]
+    result = parse_file(path, opts)
+    assert "WithNamespace" == result.ns_mappings.get_namespaced.path
   end
 end

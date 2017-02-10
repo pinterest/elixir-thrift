@@ -2,7 +2,7 @@ defmodule ParserTest do
   use ExUnit.Case, async: true
 
   @project_root Path.expand("../..", __DIR__)
-  @test_file_dir Path.join([@project_root, "tmp", "parser_error"])
+  @test_file_dir Path.join([@project_root, "tmp", "parser_test"])
 
   import Thrift.Parser, only: [parse: 1, parse: 2, parse_file: 2]
 
@@ -22,7 +22,7 @@ defmodule ParserTest do
 
   import ExUnit.CaptureIO
 
-  setup do
+  setup_all do
     File.rm_rf!(@test_file_dir)
     File.mkdir_p!(@test_file_dir)
     on_exit fn -> File.rm_rf!(@test_file_dir) end

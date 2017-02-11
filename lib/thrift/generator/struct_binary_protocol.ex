@@ -112,14 +112,14 @@ defmodule Thrift.Generator.StructBinaryProtocol do
   end
   defp field_deserializer(:i16, field, name, _file_group) do
     quote do
-      defp unquote(name)(<<unquote(Type.i16), unquote(field.id)::16-signed, value::size(16), rest::binary>>, acc) do
+      defp unquote(name)(<<unquote(Type.i16), unquote(field.id)::16-signed, value::16-signed, rest::binary>>, acc) do
         unquote(name)(rest, %{acc | unquote(field.name) => value})
       end
     end
   end
   defp field_deserializer(:i32, field, name, _file_group) do
     quote do
-      defp unquote(name)(<<unquote(Type.i32), unquote(field.id)::16-signed, value::size(32), rest::binary>>, acc) do
+      defp unquote(name)(<<unquote(Type.i32), unquote(field.id)::16-signed, value::32-signed, rest::binary>>, acc) do
         unquote(name)(rest, %{acc | unquote(field.name) => value})
       end
     end
@@ -129,7 +129,7 @@ defmodule Thrift.Generator.StructBinaryProtocol do
   end
   defp field_deserializer(:i64, field, name, _file_group) do
     quote do
-      defp unquote(name)(<<unquote(Type.i64), unquote(field.id)::16-signed, value::size(64), rest::binary>>, acc) do
+      defp unquote(name)(<<unquote(Type.i64), unquote(field.id)::16-signed, value::64-signed, rest::binary>>, acc) do
         unquote(name)(rest, %{acc | unquote(field.name) => value})
       end
     end
@@ -196,7 +196,7 @@ defmodule Thrift.Generator.StructBinaryProtocol do
                            unquote(field.id)::16-signed,
                            unquote(type_id(key_type, file_group)),
                            unquote(type_id(value_type, file_group)),
-                           map_size::size(32),
+                           map_size::32-signed,
                            rest::binary>>, struct) do
         unquote(key_name)(rest, [%{}, map_size, struct])
       end
@@ -277,14 +277,14 @@ defmodule Thrift.Generator.StructBinaryProtocol do
   end
   defp map_key_deserializer(:i16, key_name, value_name, _file_group) do
     quote do
-      defp unquote(key_name)(<<key::size(16), rest::binary>>, stack) do
+      defp unquote(key_name)(<<key::16-signed, rest::binary>>, stack) do
         unquote(value_name)(rest, key, stack)
       end
     end
   end
   defp map_key_deserializer(:i32, key_name, value_name, _file_group) do
     quote do
-      defp unquote(key_name)(<<key::size(32), rest::binary>>, stack) do
+      defp unquote(key_name)(<<key::32-signed, rest::binary>>, stack) do
         unquote(value_name)(rest, key, stack)
       end
     end
@@ -294,7 +294,7 @@ defmodule Thrift.Generator.StructBinaryProtocol do
   end
   defp map_key_deserializer(:i64, key_name, value_name, _file_group) do
     quote do
-      defp unquote(key_name)(<<key::size(64), rest::binary>>, stack) do
+      defp unquote(key_name)(<<key::64-signed, rest::binary>>, stack) do
         unquote(value_name)(rest, key, stack)
       end
     end
@@ -426,14 +426,14 @@ defmodule Thrift.Generator.StructBinaryProtocol do
   end
   defp map_value_deserializer(:i16, key_name, value_name, _file_group) do
     quote do
-      defp unquote(value_name)(<<value::size(16), rest::binary>>, key, [map, remaining | stack]) do
+      defp unquote(value_name)(<<value::16-signed, rest::binary>>, key, [map, remaining | stack]) do
         unquote(key_name)(rest, [Map.put(map, key, value), remaining - 1 | stack])
       end
     end
   end
   defp map_value_deserializer(:i32, key_name, value_name, _file_group) do
     quote do
-      defp unquote(value_name)(<<value::size(32), rest::binary>>, key, [map, remaining | stack]) do
+      defp unquote(value_name)(<<value::32-signed, rest::binary>>, key, [map, remaining | stack]) do
         unquote(key_name)(rest, [Map.put(map, key, value), remaining - 1 | stack])
       end
     end
@@ -443,7 +443,7 @@ defmodule Thrift.Generator.StructBinaryProtocol do
   end
   defp map_value_deserializer(:i64, key_name, value_name, _file_group) do
     quote do
-      defp unquote(value_name)(<<value::size(64), rest::binary>>, key, [map, remaining | stack]) do
+      defp unquote(value_name)(<<value::64-signed, rest::binary>>, key, [map, remaining | stack]) do
         unquote(key_name)(rest, [Map.put(map, key, value), remaining - 1 | stack])
       end
     end
@@ -571,21 +571,21 @@ defmodule Thrift.Generator.StructBinaryProtocol do
   end
   defp list_deserializer(:i8, name, _file_group) do
     quote do
-      defp unquote(name)(<<element::size(8), rest::binary>>, [list, remaining | stack]) do
+      defp unquote(name)(<<element::8-signed, rest::binary>>, [list, remaining | stack]) do
         unquote(name)(rest, [[element | list], remaining - 1 | stack])
       end
     end
   end
   defp list_deserializer(:i16, name, _file_group) do
     quote do
-      defp unquote(name)(<<element::size(16), rest::binary>>, [list, remaining | stack]) do
+      defp unquote(name)(<<element::16-signed, rest::binary>>, [list, remaining | stack]) do
         unquote(name)(rest, [[element | list], remaining - 1 | stack])
       end
     end
   end
   defp list_deserializer(:i32, name, _file_group) do
     quote do
-      defp unquote(name)(<<element::size(32), rest::binary>>, [list, remaining | stack]) do
+      defp unquote(name)(<<element::32-signed, rest::binary>>, [list, remaining | stack]) do
         unquote(name)(rest, [[element | list], remaining - 1 | stack])
       end
     end
@@ -595,7 +595,7 @@ defmodule Thrift.Generator.StructBinaryProtocol do
   end
   defp list_deserializer(:i64, name, _file_group) do
     quote do
-      defp unquote(name)(<<element::size(64), rest::binary>>, [list, remaining | stack]) do
+      defp unquote(name)(<<element::64-signed, rest::binary>>, [list, remaining | stack]) do
         unquote(name)(rest, [[element | list], remaining - 1 | stack])
       end
     end

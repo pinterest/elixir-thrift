@@ -113,7 +113,9 @@ defmodule Thrift.Generator.BinaryProtocolTest do
     assert_serializes %I16{val: 1},                     <<6, 0, 1, 0, 1, 0>>
     assert_serializes %I16{val: 255},                   <<6, 0, 1, 0, 255, 0>>
     assert_serializes %I16{val: 256},                   <<6, 0, 1, 1, 0, 0>>
-    assert_serializes %I16{val: 65535},                 <<6, 0, 1, 255, 255, 0>>
+    assert_serializes %I16{val: 32767},                 <<6, 0, 1, 127, 255, 0>>
+    assert_serializes %I16{val: -1},                    <<6, 0, 1, 255, 255, 0>>
+    assert_serializes %I16{val: -32768},                <<6, 0, 1, 128, 0, 0>>
     assert_serializes %I16{val: 65536},                 <<6, 0, 1, 0, 0, 0>>, %I16{val: 0}
     assert_serializes %I16{val_map: %{}},               <<13, 0, 2, 6, 6, 0, 0, 0, 0, 0>>
     assert_serializes %I16{val_map: %{91 => 92}},       <<13, 0, 2, 6, 6, 0, 0, 0, 1, 0, 91, 0, 92, 0>>
@@ -141,6 +143,9 @@ defmodule Thrift.Generator.BinaryProtocolTest do
     assert_serializes %I32{val: 255},                   <<8, 0, 1, 0, 0, 0, 255, 0>>
     assert_serializes %I32{val: 256},                   <<8, 0, 1, 0, 0, 1, 0, 0>>
     assert_serializes %I32{val: 65535},                 <<8, 0, 1, 0, 0, 255, 255, 0>>
+    assert_serializes %I32{val: 2_147_483_647},         <<8, 0, 1, 127, 255, 255, 255, 0>>
+    assert_serializes %I32{val: -2_147_483_648},        <<8, 0, 1, 128, 0, 0, 0, 0>>
+    assert_serializes %I32{val: -1},                    <<8, 0, 1, 255, 255, 255, 255, 0>>
     assert_serializes %I32{val_map: %{}},               <<13, 0, 2, 8, 8, 0, 0, 0, 0, 0>>
     assert_serializes %I32{val_map: %{91 => 92}},       <<13, 0, 2, 8, 8, 0, 0, 0, 1, 0, 0, 0, 91, 0, 0, 0, 92, 0>>
     assert_serializes %I32{val_set: MapSet.new},        <<14, 0, 3, 8, 0, 0, 0, 0, 0>>
@@ -160,12 +165,18 @@ defmodule Thrift.Generator.BinaryProtocolTest do
   """
 
   thrift_test "i64 serialization" do
+    i64_max = 9_223_372_036_854_775_807
+    i64_min = -9_223_372_036_854_775_808
+
     assert_serializes %I64{},                           <<0>>
     assert_serializes %I64{val: 0},                     <<10, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0>>
     assert_serializes %I64{val: 1},                     <<10, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0>>
     assert_serializes %I64{val: 255},                   <<10, 0, 1, 0, 0, 0, 0, 0, 0, 0, 255, 0>>
     assert_serializes %I64{val: 256},                   <<10, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0>>
     assert_serializes %I64{val: 65535},                 <<10, 0, 1, 0, 0, 0, 0, 0, 0, 255, 255, 0>>
+    assert_serializes %I64{val: i64_min},               <<10, 0, 1, 128, 0, 0, 0, 0, 0, 0, 0, 0>>
+    assert_serializes %I64{val: i64_max},               <<10, 0, 1, 127, 255, 255, 255, 255, 255, 255, 255, 0>>
+    assert_serializes %I64{val: -1},                    <<10, 0, 1, 255, 255, 255, 255, 255, 255, 255, 255, 0>>
     assert_serializes %I64{val_map: %{}},               <<13, 0, 2, 10, 10, 0, 0, 0, 0, 0>>
     assert_serializes %I64{val_map: %{91 => 92}},       <<13, 0, 2, 10, 10, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 91, 0, 0, 0, 0, 0, 0, 0, 92, 0>>
     assert_serializes %I64{val_set: MapSet.new},        <<14, 0, 3, 10, 0, 0, 0, 0, 0>>

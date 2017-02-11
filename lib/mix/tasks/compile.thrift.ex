@@ -2,6 +2,10 @@ defmodule Mix.Tasks.Compile.Thrift do
   use Mix.Task
   alias Thrift.Parser.FileGroup
 
+  @recursive true
+  @manifest ".compile.thrift"
+  @manifest_vsn :v1
+
   @moduledoc """
   Compiler task that generates Elixir source files from Thrift schema files
   (`.thrift`).
@@ -27,32 +31,40 @@ defmodule Mix.Tasks.Compile.Thrift do
       source files will be generated. Defaults to `"lib"`.
   """
 
+  @switches [force: :boolean, verbose: :boolean]
+
   @spec run(OptionParser.argv) :: :ok
   def run(args) do
-    {opts, _, _} = OptionParser.parse(args,
-      switches: [force: :boolean, verbose: :boolean])
+    {opts, _, _} = OptionParser.parse(args, switches: @switches)
 
-    config        = Keyword.get(Mix.Project.config, :thrift, [])
-    files         = Keyword.get(config, :files, [])
-    output_path   = Keyword.get(config, :output_path, "lib")
-    parser_opts   = Keyword.take(config, [:include_paths, :namespace])
+    config      = Keyword.get(Mix.Project.config, :thrift, [])
+    files       = Keyword.get(config, :files, ["./test/fixtures/app/thrift/StressTest.thrift"])
+    output_path = Keyword.get(config, :output_path, "lib")
+    parser_opts = Keyword.take(config, [:include_paths, :namespace])
 
-    file_groups =
+    targets =
       files
       |> Enum.map(&parse(&1, parser_opts))
       |> Enum.reject(&is_nil/1)
+      |> extract_targets(output_path, opts[:force])
 
-    stale_groups = Enum.filter(file_groups, fn file_group ->
-      opts[:force] || stale?(file_group, output_path)
-    end)
-
-    unless Enum.empty?(stale_groups) do
-      File.mkdir_p!(output_path)
-      Mix.Utils.compiling_n(length(stale_groups), :thrift)
-      Enum.each(stale_groups, &generate(&1, output_path, opts))
-    end
+    generate(manifest(), targets, output_path, opts)
   end
 
+  @doc "Returns the Thrift compiler's manifests."
+  @spec manifests :: [Path.t]
+  def manifests, do: [manifest()]
+  defp manifest, do: Path.join(Mix.Project.manifest_path, @manifest)
+
+  @doc "Cleans up generated files."
+  @spec clean :: :ok | {:error, File.posix}
+  def clean, do: clean(manifest())
+  defp clean(manifest) do
+    Enum.each(read_manifest(manifest), &File.rm/1)
+    File.rm(manifest)
+  end
+
+  @spec parse(Path.t, OptionParser.parsed) :: FileGroup.t
   defp parse(thrift_file, opts) do
     try do
       Thrift.Parser.parse_file(thrift_file, opts)
@@ -63,18 +75,79 @@ defmodule Mix.Tasks.Compile.Thrift do
     end
   end
 
-  defp stale?(%FileGroup{initial_file: thrift_file} = group, output_path) do
-    targets =
-      group
-      |> Thrift.Generator.targets
-      |> Enum.map(&Path.join(output_path, &1))
-    Mix.Utils.stale?([thrift_file], targets)
+  @typep mappings ::
+    [{:stale, FileGroup.t, [Path.t]} | {:ok, FileGroup.t, [Path.t]}]
+
+  @spec extract_targets([FileGroup.t], Path.t, boolean) :: mappings
+  defp extract_targets(groups, output_path, force) when is_list(groups) do
+    for %FileGroup{initial_file: file} = group <- groups do
+      targets =
+        group
+        |> Thrift.Generator.targets
+        |> Enum.map(&Path.join(output_path, &1))
+
+      if force || Mix.Utils.stale?([file], targets) do
+        {:stale, group, targets}
+      else
+        {:ok, group, targets}
+      end
+    end
   end
 
-  defp generate(%FileGroup{} = group, output_path, opts) do
-    Thrift.Generator.generate!(group, output_path)
-    if opts[:verbose] do
-      Mix.shell.info "Compiled #{group.initial_file}"
+  @spec generate(Path.t, mappings, Path.t, OptionParser.parsed) :: :ok | :noop
+  defp generate(manifest, mappings, output_path, opts) do
+    timestamp = :calendar.universal_time()
+    verbose = opts[:verbose]
+
+    # Load the list of previously-generated files.
+    previous = read_manifest(manifest)
+
+    # Determine which of our current targets are in need of (re)generation.
+    stale = for {:stale, group, targets} <- mappings, do: {group, targets}
+
+    # Determine if there are any files that appear in our existing manifest
+    # that are no longer relevant based on our current target mappings.
+    removed = Enum.filter(previous, fn file ->
+      not Enum.any?(mappings, fn {_, _, targets} -> file in targets end)
+    end)
+
+    if stale == [] && removed == [] do
+      :noop
+    else
+      # Ensure we have an output directory and remove old target files.
+      File.mkdir_p!(output_path)
+      Enum.each(removed, &File.rm/1)
+
+      Mix.Utils.compiling_n(length(stale), :thrift)
+      Enum.each(stale, fn {group, _targets} ->
+        Thrift.Generator.generate!(group, output_path)
+        verbose && Mix.shell.info "Compiled #{group.initial_file}"
+      end)
+
+      # Update and rewrite the manifest.
+      entries = (previous -- removed) ++ Enum.flat_map(stale, &elem(&1, 1))
+      write_manifest(manifest, :lists.usort(entries), timestamp)
+      :ok
     end
+  end
+
+  @spec read_manifest(Path.t) :: [Path.t]
+  defp read_manifest(manifest) do
+    try do
+      manifest |> File.read! |> :erlang.binary_to_term
+    rescue
+      _ -> []
+    else
+      [@manifest_vsn | paths] -> paths
+      _ -> []
+    end
+  end
+
+  @spec write_manifest(Path.t, [Path.t], :calendar.datetime) :: :ok
+  defp write_manifest(manifest, paths, timestamp) do
+    data = [@manifest_vsn | paths] |> :erlang.term_to_binary(compressed: 9)
+    Path.dirname(manifest) |> File.mkdir_p!
+    File.write!(manifest, data)
+    File.touch!(manifest, timestamp)
   end
 end

@@ -38,17 +38,17 @@ defmodule Mix.Tasks.Compile.Thrift do
     {opts, _, _} = OptionParser.parse(args, switches: @switches)
 
     config      = Keyword.get(Mix.Project.config, :thrift, [])
-    files       = Keyword.get(config, :files, [])
+    input_files = Keyword.get(config, :files, [])
     output_path = Keyword.get(config, :output_path, "lib")
     parser_opts = Keyword.take(config, [:include_paths, :namespace])
 
-    targets =
-      files
+    mappings =
+      input_files
       |> Enum.map(&parse(&1, parser_opts))
       |> Enum.reject(&is_nil/1)
       |> extract_targets(output_path, opts[:force])
 
-    generate(manifest(), targets, output_path, opts)
+    generate(manifest(), mappings, output_path, opts)
   end
 
   @doc "Returns the Thrift compiler's manifests."
@@ -65,12 +65,12 @@ defmodule Mix.Tasks.Compile.Thrift do
   end
 
   @spec parse(Path.t, OptionParser.parsed) :: FileGroup.t
-  defp parse(thrift_file, opts) do
+  defp parse(file, opts) do
     try do
-      Thrift.Parser.parse_file(thrift_file, opts)
+      Thrift.Parser.parse_file(file, opts)
     rescue
       e ->
-        Mix.shell.error "Failed to parse #{thrift_file}: #{Exception.message(e)}"
+        Mix.shell.error "Failed to parse #{file}: #{Exception.message(e)}"
         nil
     end
   end

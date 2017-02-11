@@ -118,11 +118,13 @@ defmodule Mix.Tasks.Compile.Thrift do
       File.mkdir_p!(output_path)
       Enum.each(removed, &File.rm/1)
 
-      Mix.Utils.compiling_n(length(stale), :thrift)
-      Enum.each(stale, fn {group, _targets} ->
-        Thrift.Generator.generate!(group, output_path)
-        verbose && Mix.shell.info "Compiled #{group.initial_file}"
-      end)
+      unless Enum.empty?(stale) do
+        Mix.Utils.compiling_n(length(stale), :thrift)
+        Enum.each(stale, fn {group, _targets} ->
+          Thrift.Generator.generate!(group, output_path)
+          verbose && Mix.shell.info "Compiled #{group.initial_file}"
+        end)
+      end
 
       # Update and rewrite the manifest.
       entries = (previous -- removed) ++ Enum.flat_map(stale, &elem(&1, 1))

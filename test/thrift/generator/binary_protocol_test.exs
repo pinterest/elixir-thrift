@@ -575,6 +575,37 @@ defmodule Thrift.Generator.BinaryProtocolTest do
     } == XMan.phoenix
   end
 
+  @thrift_file name: "included_constants.thrift", contents: """
+  const i8 Z = 26
+  """
+
+  @thrift_file name: "includes_constants.thrift", contents: """
+  include "included_constants.thrift"
+
+  struct IncludesConstants {
+    1: string name
+    2: i8 z = included_constants.Z
+  }
+  """
+
+  @thrift_file name: "also_includes.thrift", contents: """
+  include "included_constants.thrift"
+
+  struct SomeOtherName {
+    1: i32 id
+  }
+  """
+
+  thrift_test "including a file with constants" do
+    assert 26 == IncludedConstants.z
+    assert %IncludesConstants{z: 26} == %IncludesConstants{}
+    assert_raise UndefinedFunctionError, fn -> 26 == IncludesConstants.z end
+    assert %SomeOtherName{} == SomeOtherName.new()
+    assert Code.ensure_loaded?(IncludedConstants)
+    # AlsoIncludes should not define anything
+    refute Code.ensure_loaded?(AlsoIncludes)
+  end
+
   thrift_test "lists serialize into maps" do
     binary = <<13, 0, 2, 3, 3, 0, 0, 0, 1, 91, 92, 0>>
     assert binary == %Byte{val_map: %{91 => 92}} |> Byte.serialize() |> IO.iodata_to_binary

@@ -38,7 +38,7 @@ defmodule Mix.Tasks.Compile.Thrift do
     {opts, _, _} = OptionParser.parse(args, switches: @switches)
 
     config      = Keyword.get(Mix.Project.config, :thrift, [])
-    files       = Keyword.get(config, :files, ["./test/fixtures/app/thrift/StressTest.thrift"])
+    files       = Keyword.get(config, :files, [])
     output_path = Keyword.get(config, :output_path, "lib")
     parser_opts = Keyword.take(config, [:include_paths, :namespace])
 

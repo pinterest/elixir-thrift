@@ -64,7 +64,7 @@ defmodule Thrift.Generator.BinaryProtocolTest do
     assert_serializes %Byte{},                          <<0>>
     assert_serializes %Byte{val: 0},                    <<3, 0, 1, 0, 0>>
     assert_serializes %Byte{val: 1},                    <<3, 0, 1, 1, 0>>
-    assert_serializes %Byte{val: 255},                  <<3, 0, 1, 255, 0>>
+    assert_serializes %Byte{val: -1},                   <<3, 0, 1, 255, 0>>
     assert_serializes %Byte{val: 256},                  <<3, 0, 1, 0, 0>>, %Byte{val: 0}
     assert_serializes %Byte{val_map: %{}},              <<13, 0, 2, 3, 3, 0, 0, 0, 0, 0>>
     assert_serializes %Byte{val_map: %{91 => 92}},      <<13, 0, 2, 3, 3, 0, 0, 0, 1, 91, 92, 0>>

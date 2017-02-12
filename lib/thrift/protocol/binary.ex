@@ -45,24 +45,24 @@ defmodule Thrift.Protocol.Binary do
   def serialize(:i16, value),    do: <<value::16-signed>>
   def serialize(:i32, value),    do: <<value::32-signed>>
   def serialize(:i64, value),    do: <<value::64-signed>>
-  def serialize(:double, value), do: <<value::signed-float>>
-  def serialize(:string, value), do: [<<byte_size(value)::size(32)>>, value]
-  def serialize(:binary, value), do: [<<byte_size(value)::size(32)>>, value]
+  def serialize(:double, value), do: <<value::float-signed>>
+  def serialize(:string, value), do: [<<byte_size(value)::32-signed>>, value]
+  def serialize(:binary, value), do: [<<byte_size(value)::32-signed>>, value]
 
   def serialize({:list, elem_type}, elems) when is_list(elems) do
     rest = Enum.map(elems, &serialize(elem_type, &1))
-    [<<Type.of(elem_type)::size(8), Enum.count(elems)::32-signed>>, rest]
+    [<<Type.of(elem_type)::8-signed, Enum.count(elems)::32-signed>>, rest]
   end
   def serialize({:set, elem_type}, %MapSet{} = elems) do
     rest = Enum.map(elems, &serialize(elem_type, &1))
-    [<<Type.of(elem_type)::size(8), Enum.count(elems)::32-signed>>, rest]
+    [<<Type.of(elem_type)::8-signed, Enum.count(elems)::32-signed>>, rest]
   end
   def serialize({:map, {key_type, val_type}}, map) when is_map(map) do
     elem_count = map_size(map)
     rest = Enum.map(map, fn {key, value} ->
       [serialize(key_type, key), serialize(val_type, value)]
     end)
-    [<<Type.of(key_type)::size(8), Type.of(val_type)::size(8), elem_count::32-signed>>, rest]
+    [<<Type.of(key_type)::8-signed, Type.of(val_type)::8-signed, elem_count::32-signed>>, rest]
   end
   def serialize(:struct, %{__struct__: mod} = struct) do
     mod.serialize(struct, :binary)
@@ -151,23 +151,23 @@ defmodule Thrift.Protocol.Binary do
   @spec skip_field(binary, Type.t) :: binary | :error
   def skip_field(<<_, rest::binary>>, unquote(Type.bool)), do: rest
   def skip_field(<<_, rest::binary>>, unquote(Type.byte)), do: rest
-  def skip_field(<<_::signed-float, rest::binary>>, unquote(Type.double)), do: rest
-  def skip_field(<<_::size(16), rest::binary>>, unquote(Type.i16)), do: rest
-  def skip_field(<<_::size(32), rest::binary>>, unquote(Type.i32)), do: rest
-  def skip_field(<<_::size(64), rest::binary>>, unquote(Type.i64)), do: rest
+  def skip_field(<<_::float-signed, rest::binary>>, unquote(Type.double)), do: rest
+  def skip_field(<<_::16-signed, rest::binary>>, unquote(Type.i16)), do: rest
+  def skip_field(<<_::32-signed, rest::binary>>, unquote(Type.i32)), do: rest
+  def skip_field(<<_::64-signed, rest::binary>>, unquote(Type.i64)), do: rest
   def skip_field(<<length::32-signed, _::binary-size(length), rest::binary>>, unquote(Type.string)) do
     rest
   end
   def skip_field(<<rest::binary>>, unquote(Type.struct)) do
     rest |> skip_struct
   end
-  def skip_field(<<key_type, val_type, length::size(32), rest::binary>>, unquote(Type.map)) do
+  def skip_field(<<key_type, val_type, length::32-signed, rest::binary>>, unquote(Type.map)) do
     rest |> skip_map_entry(key_type, val_type, length)
   end
-  def skip_field(<<elem_type, length::size(32), rest::binary>>, unquote(Type.set)) do
+  def skip_field(<<elem_type, length::32-signed, rest::binary>>, unquote(Type.set)) do
     rest |> skip_list_element(elem_type, length)
   end
-  def skip_field(<<elem_type, length::size(32), rest::binary>>, unquote(Type.list)) do
+  def skip_field(<<elem_type, length::32-signed, rest::binary>>, unquote(Type.list)) do
     rest |> skip_list_element(elem_type, length)
   end
   def skip_field(_, _), do: :error

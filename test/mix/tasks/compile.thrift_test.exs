@@ -54,6 +54,20 @@ defmodule Mix.Tasks.Compile.ThriftTest do
     end
   end
 
+  test "cleaning generated files" do
+    in_fixture fn ->
+      with_project_config [], fn ->
+        run([])
+        assert File.exists?("lib/thrift_test/thrift_test.ex")
+        assert Enum.all?(Mix.Tasks.Compile.Thrift.manifests, &File.exists?/1)
+
+        Mix.Tasks.Compile.Thrift.clean()
+        refute File.exists?("lib/thrift_test/thrift_test.ex")
+        refute Enum.any?(Mix.Tasks.Compile.Thrift.manifests, &File.exists?/1)
+      end
+    end
+  end
+
   test "specifying an empty :files list" do
     in_fixture fn ->
       with_project_config [thrift: [files: []]], fn ->

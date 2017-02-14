@@ -133,21 +133,29 @@ defmodule Mix.Tasks.Compile.Thrift do
     end
   end
 
+  defp package_vsn do
+    Keyword.get(Mix.Project.config, :version)
+  end
+
   @spec read_manifest(Path.t) :: [Path.t]
   defp read_manifest(manifest) do
+    header = {@manifest_vsn, package_vsn()}
     try do
       manifest |> File.read! |> :erlang.binary_to_term
     rescue
       _ -> []
     else
-      [@manifest_vsn | paths] -> paths
+      [^header | paths] -> paths
       _ -> []
     end
   end
 
   @spec write_manifest(Path.t, [Path.t], :calendar.datetime) :: :ok
   defp write_manifest(manifest, paths, timestamp) do
-    data = [@manifest_vsn | paths] |> :erlang.term_to_binary(compressed: 9)
+    data =
+      [{@manifest_vsn, package_vsn()} | paths]
+      |> :erlang.term_to_binary(compressed: 9)
+
     Path.dirname(manifest) |> File.mkdir_p!
     File.write!(manifest, data)
     File.touch!(manifest, timestamp)

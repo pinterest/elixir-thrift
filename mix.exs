@@ -41,7 +41,10 @@ defmodule Thrift.Mixfile do
      package: package(),
 
      # Dialyzer
-     dialyzer: [plt_add_deps: :transitive, plt_add_apps: [:ex_unit, :mix, :public_key, :ssl]],
+     dialyzer: [
+       plt_add_deps: :transitive,
+       plt_add_apps: [:mix],
+       ignore_warnings: ".dialyzerignore"],
 
      # Docs
      name: "Thrift",

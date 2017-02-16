@@ -74,7 +74,7 @@ defmodule Thrift.Mixfile do
       {:dialyxir, "~> 0.4", only: :dev, runtime: false},
       {:benchfella, "~> 0.3", only: [:dev, :test]},
       {:connection, "~> 1.0"},
-      {:ranch, "~> 1.2"},
+      {:ranch, "~> 1.3"},
      ]
   end
 

@@ -306,6 +306,9 @@ defmodule Thrift.Generator.BinaryProtocolTest do
      1: optional string message,
     99: optional byte num;
   }
+  exception Ex2 {
+    1: optional i16 error_code;
+  }
   struct Exception {
     1: optional Ex val;
     2: optional map<Ex, Ex> val_map;
@@ -327,9 +330,10 @@ defmodule Thrift.Generator.BinaryProtocolTest do
     assert_serializes %Exception{val_list: [%Ex{num: 91}]},             <<15, 0, 4, 12, 0, 0, 0, 1, 3, 0, 99, 91, 0, 0>>
   end
 
-  thrift_test "exceptions provide message/1" do
-    assert Ex.message(%Ex{message: "text", num: 1}) ==
-      ~s(%Thrift.Generator.BinaryProtocolTest.Ex{message: "text", num: 1})
+  thrift_test "exceptions always provide message/1" do
+    assert Ex.message(%Ex{message: "text", num: 1}) == "text"
+    assert Ex2.message(%Ex2{error_code: 1}) ==
+      ~s(%Thrift.Generator.BinaryProtocolTest.Ex2{error_code: 1})
   end
 
   @thrift_file name: "composite.thrift", contents: """

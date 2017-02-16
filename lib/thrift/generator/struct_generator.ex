@@ -24,12 +24,17 @@ defmodule Thrift.Generator.StructGenerator do
     |> Utils.sort_defs
 
     define_block = case label do
-      :struct ->
-        quote do: defstruct unquote(struct_parts)
-      :union ->
-        quote do: defstruct unquote(struct_parts)
       :exception ->
         quote do: defexception unquote(struct_parts)
+      _ ->
+        quote do: defstruct unquote(struct_parts)
+    end
+
+    extra_defs = if label == :exception and not Keyword.has_key?(struct_parts, :message) do
+      quote do
+        @spec message(Exception.t) :: String.t
+        def message(exception), do: inspect(exception)
+      end
     end
 
     quote do
@@ -43,6 +48,7 @@ defmodule Thrift.Generator.StructGenerator do
         unquote(define_block)
         @type t :: %__MODULE__{}
         def new, do: %__MODULE__{}
+        unquote_splicing(List.wrap(extra_defs))
         defmodule BinaryProtocol do
           unquote_splicing(binary_protocol_defs)
         end

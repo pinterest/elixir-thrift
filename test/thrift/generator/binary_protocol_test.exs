@@ -327,6 +327,11 @@ defmodule Thrift.Generator.BinaryProtocolTest do
     assert_serializes %Exception{val_list: [%Ex{num: 91}]},             <<15, 0, 4, 12, 0, 0, 0, 1, 3, 0, 99, 91, 0, 0>>
   end
 
+  thrift_test "exceptions provide message/1" do
+    assert Ex.message(%Ex{message: "text", num: 1}) ==
+      ~s(%Thrift.Generator.BinaryProtocolTest.Ex{message: "text", num: 1})
+  end
+
   @thrift_file name: "composite.thrift", contents: """
   struct Composite {
     1: optional map<map<byte, byte>, map<byte, byte>> map_of_maps;

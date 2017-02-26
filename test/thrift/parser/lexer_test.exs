@@ -7,9 +7,12 @@ defmodule LexerTest do
   end
 
   test "complete document" do
-    "test/fixtures/app/thrift/ThriftTest.thrift"
-    |> File.read!
-    |> tokenize
+    result =
+      "test/fixtures/app/thrift/ThriftTest.thrift"
+      |> File.read!
+      |> String.to_charlist
+      |> :thrift_lexer.string
+    assert {:ok, _, _} = result
   end
 
   test "whitespace" do

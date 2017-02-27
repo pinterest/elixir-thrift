@@ -659,20 +659,16 @@ defmodule Thrift.Parser.ParserTest do
     path = Path.join(@test_file_dir, "get_namespaced.thrift")
     File.write!(path, contents)
 
-    opts = [namespace: "WithNamespace"]
-    result = parse_file(path, opts)
+    result = parse_file(path, namespace: "WithNamespace")
     assert "WithNamespace" == result.ns_mappings.get_namespaced.path
 
-    opts = [namespace: WithNamespace]
-    result = parse_file(path, opts)
+    result = parse_file(path, namespace: WithNamespace)
     assert "WithNamespace" == result.ns_mappings.get_namespaced.path
 
-    opts = [namespace: "with_namespace"]
-    result = parse_file(path, opts)
+    result = parse_file(path, namespace: "with_namespace")
     assert "WithNamespace" == result.ns_mappings.get_namespaced.path
 
-    opts = [namespace: :with_namespace]
-    result = parse_file(path, opts)
+    result = parse_file(path, namespace: :with_namespace)
     assert "WithNamespace" == result.ns_mappings.get_namespaced.path
   end
 end

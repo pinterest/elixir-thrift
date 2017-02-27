@@ -1,4 +1,4 @@
-defmodule ParserTest do
+defmodule Thrift.Parser.ParserTest do
   use ExUnit.Case, async: true
 
   @project_root Path.expand("../..", __DIR__)
@@ -146,24 +146,6 @@ defmodule ParserTest do
                                  type: :string}
   end
 
-  test "parsing a set constant" do
-    constant = "const set<string> SET_CONST = {\"hello\", \"bye\"}"
-    |> parse([:constants, :SET_CONST])
-
-    assert constant == %Constant{name: :SET_CONST,
-                                 value: MapSet.new(["hello", "bye"]),
-                                 type: {:set, :string}}
-  end
-
-  test "parsing a set int constant" do
-    constant = "const set<i32> SET_INT_CONST = {1, 3}"
-    |> parse([:constants, :SET_INT_CONST])
-
-    assert constant == %Constant{name: :SET_INT_CONST,
-                                 value: MapSet.new([1, 3]),
-                                 type: {:set, :i32}}
-  end
-
   test "parsing a map constant" do
     constant = "const map<string, i32> MAP_CONST = {\"hello\": 1, \"world\": 2};"
     |> parse([:constants, :MAP_CONST])
@@ -179,6 +161,15 @@ defmodule ParserTest do
 
     assert constant == %Constant{name: :LIST_CONST,
                                  value: [5, 6, 7, 8],
+                                 type: {:list, :i32}}
+  end
+
+  test "parsing a list constant with mixed separators" do
+    constant = "const list<i32> LIST_CONST = [1, 2; 3; 4, 5]"
+    |> parse([:constants, :LIST_CONST])
+
+    assert constant == %Constant{name: :LIST_CONST,
+                                 value: [1, 2, 3, 4, 5],
                                  type: {:list, :i32}}
   end
 
@@ -212,28 +203,6 @@ defmodule ParserTest do
         %ValueRef{referenced_value: :"Weather.RAINY"},
         %ValueRef{referenced_value: :"Weather.SNOWY"},
       ]}
-  end
-
-  test "parsing a set constant with enum values" do
-    constant = """
-    const set<string> WEATHER_TYPES = {
-      Weather.SUNNY,
-      Weather.CLOUDY,
-      Weather.RAINY,
-      Weather.SNOWY
-    }
-    """
-    |> parse([:constants, :WEATHER_TYPES])
-
-    assert constant == %Constant{
-      name: :WEATHER_TYPES,
-      type: {:set, :string},
-      value: MapSet.new([
-        %ValueRef{referenced_value: :"Weather.SUNNY"},
-        %ValueRef{referenced_value: :"Weather.CLOUDY"},
-        %ValueRef{referenced_value: :"Weather.RAINY"},
-        %ValueRef{referenced_value: :"Weather.SNOWY"},
-      ])}
   end
 
   test "parsing a map constant with enum keys" do
@@ -652,21 +621,13 @@ defmodule ParserTest do
       boolean ping()
     }
 
-    service Extender (extends Pinger)  {
+    service Extender extends Pinger {
       boolean is_ready()
-    }
-
-    service OtherExtender extends Pinger {
-      boolean has_failed()
     }
     """
     |> parse([:services])
 
-    pinger = services[:Extender]
-    other  = services[:OtherExtender]
-
-    assert pinger.extends == :Pinger
-    assert other.extends == :Pinger
+    assert services[:Extender].extends == :Pinger
   end
 
   test "parsing a real thrift file" do

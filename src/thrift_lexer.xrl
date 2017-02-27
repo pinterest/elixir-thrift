@@ -15,7 +15,6 @@
 Definitions.
 
 WHITESPACE      = [\s\t\r\n]+
-IGNORED         = [;]
 COMMENT         = //[^\n]*
 CCOMMENT        = /\*/*([^*/]|[^*]/|\*[^/])*\**\*/
 UNIXCOMMENT     = #[^\n]*
@@ -24,7 +23,7 @@ COMMENTS        = {COMMENT}|{CCOMMENT}|{UNIXCOMMENT}
 INT             = [+-]?[0-9]+
 HEX             = [+-]?0x[0-9A-Fa-f]+
 DOUBLE          = [+-]?[0-9]+(\.[0-9]+)?([eE][+-]?[0-9]+)?
-PUNCTUATOR      = [\{\}\[\]\(\)<>,:=\*]
+PUNCTUATOR      = [\{\}\[\]\(\)<>,:;=\*]
 STRING          = '(\\'|[^\'])*'|"(\\"|[^\"])*"
 BOOLEAN         = true|false
 
@@ -39,7 +38,6 @@ KEYWORD         = {KEYWORDS1}|{KEYWORDS2}|{KEYWORDS3}|{KEYWORDS4}
 Rules.
 
 {WHITESPACE}    : skip_token.
-{IGNORED}       : skip_token.
 {COMMENTS}      : skip_token.
 
 __file__        : {token, {file, TokenLine}}.

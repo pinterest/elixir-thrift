@@ -1,4 +1,4 @@
-defmodule LexerTest do
+defmodule Thrift.Parser.LexerTest do
   use ExUnit.Case, async: true
 
   defp tokenize(s) when is_binary(s) do
@@ -17,10 +17,6 @@ defmodule LexerTest do
 
   test "whitespace" do
     assert tokenize(" ") == []
-  end
-
-  test "ignored characters" do
-    assert tokenize(";") == []
   end
 
   test "comments" do
@@ -64,8 +60,8 @@ defmodule LexerTest do
       """) == [{true, 4}]
   end
 
-  test "symbols" do
-    assert tokenize(";") == []
+  test "punctuation" do
+    assert tokenize(";") == [{:";", 1}]
     assert tokenize("=") == [{:=, 1}]
   end
 

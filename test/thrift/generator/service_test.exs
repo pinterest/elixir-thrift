@@ -315,7 +315,11 @@ defmodule Thrift.Generator.ServiceTest do
   # connection tests
 
   thrift_test "clients can be closed", ctx do
+    ref = Process.monitor(ctx.client)
     :ok = Client.close(ctx.client)
+
+    assert_receive {:DOWN, ^ref, _, _, _}
+    refute Process.alive?(ctx.client)
   end
 
   thrift_test "clients don't retry by default", ctx do
@@ -365,7 +369,6 @@ defmodule Thrift.Generator.ServiceTest do
   thrift_test "clients exit if they try to use a closed client", ctx do
     Process.flag(:trap_exit, true)
 
-    Client.close(ctx.client)
     ref = Process.monitor(ctx.server)
     Process.exit(ctx.server, :normal)
 

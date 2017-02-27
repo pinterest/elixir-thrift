@@ -316,7 +316,7 @@ defmodule Thrift.Generator.ServiceTest do
 
   thrift_test "clients can be closed", ctx do
     ref = Process.monitor(ctx.client)
-    Client.close(ctx.client)
+    :ok = Client.close(ctx.client)
 
     assert_receive {:DOWN, ^ref, _, _, _}
     refute Process.alive?(ctx.client)

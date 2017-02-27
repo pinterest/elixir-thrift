@@ -1,13 +1,26 @@
 defmodule LexerTest do
   use ExUnit.Case, async: true
 
-  defp tokenize(s) do
-    {:ok, value, _} = :thrift_lexer.string(String.to_char_list(s))
+  defp tokenize(s) when is_binary(s) do
+    {:ok, value, _} = :thrift_lexer.string(String.to_charlist(s))
     value
+  end
+
+  test "complete document" do
+    result =
+      "test/fixtures/app/thrift/ThriftTest.thrift"
+      |> File.read!
+      |> String.to_charlist
+      |> :thrift_lexer.string
+    assert {:ok, _, _} = result
   end
 
   test "whitespace" do
     assert tokenize(" ") == []
+  end
+
+  test "ignored characters" do
+    assert tokenize(";") == []
   end
 
   test "comments" do
@@ -59,8 +72,8 @@ defmodule LexerTest do
   test "keywords" do
     keywords = ~w(
       namespace include
-      void bool byte i8 i16 i64 double string binary list map set
       typedef enum struct union exception
+      void bool byte i8 i16 i64 double string binary list map set
       const oneway extends throws service required optional
     )
     for keyword <- keywords do
@@ -95,12 +108,15 @@ defmodule LexerTest do
   end
 
   test "string literals" do
-    assert tokenize("''") == [{:string, 1, ''}]
-    assert tokenize("'foo'") == [{:string, 1, 'foo'}]
-    assert tokenize("\"foo\"") == [{:string, 1, 'foo'}]
-    assert tokenize("'foo\nbar'") == [{:string, 1, 'foo\nbar'}]
-    assert tokenize("'\\'") == [{:string, 1, '\\'}]
-    assert tokenize("'\"\"'") == [{:string, 1, '""'}]
+    assert tokenize(~S['']) == [{:string, 1, ~c[]}]
+    assert tokenize(~S['" "']) == [{:string, 1, ~c[" "]}]
+    assert tokenize(~S["' '"]) == [{:string, 1, ~c[' ']}]
+    assert tokenize(~S['foo']) == [{:string, 1, ~c[foo]}]
+    assert tokenize(~S["foo"]) == [{:string, 1, ~c[foo]}]
+    assert tokenize(~S["\"]) == [{:string, 1, ~c[\\]}]
+    assert tokenize(~S["foo\nbar"]) == [{:string, 1, ~c[foo\nbar]}]
+    assert tokenize(~S["It's \"fun\"!"]) == [{:string, 1, ~c[It's "fun"!]}]
+    assert tokenize(~S['It\'s "fun"!']) == [{:string, 1, ~c[It's "fun"!]}]
   end
 
   test "list literals" do
@@ -142,7 +158,6 @@ defmodule LexerTest do
 
   test "identifiers" do
     assert tokenize("abc_123.xzy") == [{:ident, 1, 'abc_123.xzy'}]
-    assert tokenize("abc-") == [{:st_ident, 1, 'abc-'}]
   end
 
   test "typedef" do
@@ -232,15 +247,15 @@ defmodule LexerTest do
 
   test "namespace definition" do
     assert tokenize("""
-    namespace py foo.bar.baz
-    namespace java com.pinterest.foo.bar.baz
-    namespace * foo.bar
-    """) ==
-      [
-        {:namespace, 1}, {:ident, 1, 'py'}, {:ident, 1, 'foo.bar.baz'},
-        {:namespace, 2}, {:ident, 2, 'java'}, {:ident, 2, 'com.pinterest.foo.bar.baz'},
-        {:namespace, 3}, {:*, 3}, {:ident, 3, 'foo.bar'}
-      ]
+      namespace elixir Foo
+      namespace py foo.bar.baz
+      namespace java com.pinterest.foo.bar.baz
+      namespace * foo.bar
+    """) == [
+      {:namespace, 1}, {:ident, 1, 'elixir'}, {:ident, 1, 'Foo'},
+      {:namespace, 2}, {:ident, 2, 'py'}, {:ident, 2, 'foo.bar.baz'},
+      {:namespace, 3}, {:ident, 3, 'java'}, {:ident, 3, 'com.pinterest.foo.bar.baz'},
+      {:namespace, 4}, {:*, 4}, {:ident, 4, 'foo.bar'}]
   end
 
   test "a const definition" do

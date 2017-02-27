@@ -158,13 +158,16 @@ defmodule Thrift.Binary.Framed.Client do
     case info do
       {:close, from} ->
         Connection.reply(from, :ok)
+        {:stop, :normal, nil}
 
       {:error, :closed} ->
         Logger.error("Connection closed")
+        {:connect, info, %{s | sock: nil}}
 
       {:error, reason} ->
         reason = :inet.format_error(reason)
         Logger.error("Connection error: #{reason}")
+        {:connect, info, %{s | sock: nil}}
 
       {:retry, _} ->
         case s.last_message do
@@ -173,8 +176,8 @@ defmodule Thrift.Binary.Framed.Client do
           _ ->
             Logger.info("Retrying failed call")
         end
+        {:connect, info, %{s | sock: nil}}
     end
-    {:connect, info, %{s | sock: nil}}
   end
 
   @spec oneway(pid, String.t, data, options) :: :ok

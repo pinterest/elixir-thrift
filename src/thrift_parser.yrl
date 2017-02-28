@@ -1,216 +1,203 @@
+Header
+"%% Copyright 2017 Pinterest, Inc."
+"%%"
+"%% Licensed under the Apache License, Version 2.0 (the \"License\");"
+"%% you may not use this file except in compliance with the License."
+"%% You may obtain a copy of the License at"
+"%%"
+"%%    http://www.apache.org/licenses/LICENSE-2.0"
+"%%"
+"%% Unless required by applicable law or agreed to in writing, software"
+"%% distributed under the License is distributed on an \"AS IS\" BASIS,"
+"%% WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied."
+"%% See the License for the specific language governing permissions and"
+"%% limitations under the License.".
 
 Nonterminals
-schema
-file_def
-headers header
-definitions definition
-namespace_def constant_def include_def
-type base_type literal set_type map_type list_type literal_list
-
-mapping mappings
-
-enum_def enum_body enum_value
-exception_def
-fields field_spec field_sep field_required field_id field_default
-typedef_def
-ns_name
-struct_def union_def service_def
-functions function
-service_extends
-oneway_marker
-return_type
-throws_clause.
+    Schema File
+    Headers Header
+    Include Namespace
+    Definitions Definition
+    Typedef Struct Union Exception
+    Const ConstValue ConstList ConstMap
+    Enum EnumList EnumValue
+    Service Extends
+    FunctionList Function Oneway ReturnType Throws
+    FieldList Field FieldIdentifier FieldRequired FieldDefault
+    FieldType BaseType MapType SetType ListType
+    Separator.
 
 Terminals
-'*' '{' '}' '[' ']' '(' ')' '=' '>' '<' ',' ':'
-file
-namespace
-include
-ident
-int
-double
-const
-bool
-true
-false
-byte
-i8
-i16
-i32
-i64
-string
-binary
-list
-map
-set
-enum
-exception
-required
-optional
-typedef
-struct
-union
-service
-extends
-oneway
-void
-throws.
+    '*' '{' '}' '[' ']' '(' ')' '=' '>' '<' ',' ':' ';'
+    file
+    include namespace
+    int ident
+    bool byte i8 i16 i32 i64 double string binary list map set
+    true false
+    typedef const enum struct union service exception
+    void oneway required optional extends throws.
 
+Rootsymbol Schema.
 
-Rootsymbol schema.
+% Schema
 
-schema ->
-    headers definitions file_def:
-        'Elixir.Thrift.Parser.Models.Schema':new('$3', '$1', '$2').
+Schema -> Headers Definitions File:
+    'Elixir.Thrift.Parser.Models.Schema':new('$3', '$1', '$2').
 
-file_def -> '$empty': nil.
-file_def ->
-    file string: 'Elixir.List':to_string(unwrap('$2')).
+File -> '$empty': nil.
+File -> file string: 'Elixir.List':to_string(unwrap('$2')).
 
-headers -> '$empty': [].
-headers -> header headers: ['$1' | '$2'].
+% Headers
 
-header -> namespace_def: '$1'.
-header -> include_def: '$1'.
+Headers -> '$empty': [].
+Headers -> Header Headers: ['$1'|'$2'].
 
-definitions -> '$empty': [].
-definitions -> definition definitions: ['$1'| '$2'].
+Header -> Include: '$1'.
+Header -> Namespace: '$1'.
 
-definition -> constant_def: '$1'.
-definition -> enum_def: '$1'.
-definition -> exception_def: '$1'.
-definition -> typedef_def: '$1'.
-definition -> struct_def: '$1'.
-definition -> union_def: '$1'.
-definition -> service_def: '$1'.
+Include -> include string:
+    'Elixir.Thrift.Parser.Models.Include':new(unwrap('$2')).
 
-type -> base_type: '$1'.
-type -> set_type: {set, '$1'}.
-type -> map_type: {map, '$1'}.
-type -> list_type: {list, '$1'}.
-type -> ident: 'Elixir.Thrift.Parser.Models.TypeRef':new(unwrap('$1')).
+Namespace -> namespace '*' ident:
+    'Elixir.Thrift.Parser.Models.Namespace':new("*", unwrap('$3')).
+Namespace -> namespace ident ident:
+    'Elixir.Thrift.Parser.Models.Namespace':new(unwrap('$2'), unwrap('$3')).
 
-base_type -> bool: bool.
-base_type -> byte: i8.
-base_type -> i8: i8.
-base_type -> i16: i16.
-base_type -> i32: i32.
-base_type -> i64: i64.
-base_type -> double: double.
-base_type -> string: string.
-base_type -> binary: binary.
+% Definitions
 
-set_type -> set '<' type '>': '$3'.
-map_type -> map '<' type ',' type '>': {'$3', '$5'}.
-list_type -> list '<' type '>': '$3'.
+Definitions -> '$empty': [].
+Definitions -> Definition Definitions: ['$1'|'$2'].
 
-include_def ->
-    include string:
-        'Elixir.Thrift.Parser.Models.Include':new(unwrap('$2')).
+Definition -> Const: '$1'.
+Definition -> Typedef: '$1'.
+Definition -> Enum: '$1'.
+Definition -> Struct: '$1'.
+Definition -> Union: '$1'.
+Definition -> Exception: '$1'.
+Definition -> Service: '$1'.
 
-namespace_def ->
-    namespace ns_name ident:
-        'Elixir.Thrift.Parser.Models.Namespace':new('$2', unwrap('$3')).
+% Constants
 
-constant_def ->
-    const type ident '=' literal:
-        'Elixir.Thrift.Parser.Models.Constant':new(unwrap('$3'), '$5', '$2').
+Const -> const FieldType ident '=' ConstValue Separator:
+    'Elixir.Thrift.Parser.Models.Constant':new(unwrap('$3'), '$5', '$2').
 
-ns_name -> '*': "*".
-ns_name -> ident: unwrap('$1').
+ConstValue -> ident: 'Elixir.Thrift.Parser.Models.ValueRef':new(unwrap('$1')).
+ConstValue -> true: unwrap('$1').
+ConstValue -> false: unwrap('$1').
+ConstValue -> int: unwrap('$1').
+ConstValue -> double: unwrap('$1').
+ConstValue -> string: unwrap('$1').
 
-%% JS Style mapping "foo": 32
-mapping -> literal ':' literal: {'$1', '$3'}.
-mappings -> '$empty': [].
-mappings -> mapping: ['$1'].
-mappings -> mapping ',' mappings: ['$1' | '$3'].
+ConstValue -> '{' ConstMap '}': '$2'.
+ConstValue -> '[' ConstList ']': '$2'.
 
-% A list of literals ["hi", "bye", 3, 4]
-literal_list -> literal: ['$1'].
-literal_list -> literal ',' literal_list: ['$1' | '$3'].
+ConstMap -> '$empty': [].
+ConstMap -> ConstValue ':' ConstValue Separator ConstMap: [{'$1','$3'}|'$5'].
 
-literal -> ident: 'Elixir.Thrift.Parser.Models.ValueRef':new(unwrap('$1')).
-literal -> true: unwrap('$1').
-literal -> false: unwrap('$1').
-literal -> int: unwrap('$1').
-literal -> double: unwrap('$1').
-literal -> string: unwrap('$1').
-literal -> '{' literal_list '}': '$2'.
-literal -> '{' mappings '}': '$2'.
-literal -> '[' ']' : [].
-literal -> '[' literal_list ']': '$2'.
+ConstList -> '$empty': [].
+ConstList -> ConstValue Separator ConstList: ['$1'|'$3'].
 
-field_sep -> '$empty': nil.
-field_sep -> ',': nil.
+% Typedef
 
-enum_def ->
-    enum ident '{' enum_body '}':
-        'Elixir.Thrift.Parser.Models.TEnum':new(unwrap('$2'), '$4').
-enum_body -> enum_value field_sep: ['$1'].
-enum_body -> enum_value field_sep enum_body: ['$1' | '$3'].
+Typedef -> typedef FieldType ident Separator:
+    {typedef, '$2', unwrap('$3')}.
 
-enum_value -> ident: unwrap('$1').
-enum_value -> ident '=' int: {unwrap('$1'), unwrap('$3')}.
+% Enum
 
-exception_def ->
-    exception ident '{' fields '}':
-        'Elixir.Thrift.Parser.Models.Exception':new(unwrap('$2'), '$4').
+Enum -> enum ident '{' EnumList '}':
+    'Elixir.Thrift.Parser.Models.TEnum':new(unwrap('$2'), '$4').
 
-fields -> '$empty': [].
-fields -> field_spec field_sep fields: ['$1' | '$3'].
+EnumList -> EnumValue Separator: ['$1'].
+EnumList -> EnumValue Separator EnumList: ['$1'|'$3'].
 
-field_id -> int ':': unwrap('$1').
-field_id -> '$empty': nil.
+EnumValue -> ident '=' int: {unwrap('$1'), unwrap('$3')}.
+EnumValue -> ident: unwrap('$1').
 
-field_spec ->
-    field_id field_required type ident field_default:
-        'Elixir.Thrift.Parser.Models.Field':new('$1', '$2', '$3', unwrap('$4'), '$5').
+% Struct
 
-field_required -> required: true.
-field_required -> optional: false.
-field_required -> '$empty': default.
+Struct -> struct ident '{' FieldList '}':
+    'Elixir.Thrift.Parser.Models.Struct':new(unwrap('$2'), '$4').
 
-field_default -> '$empty': nil.
-field_default -> '=' literal: '$2'.
+% Union
 
-typedef_def ->
-    typedef type ident:
-        {typedef, '$2', unwrap('$3')}.
+Union -> union ident '{' FieldList '}':
+    'Elixir.Thrift.Parser.Models.Union':new(unwrap('$2'), '$4').
 
-struct_def ->
-    struct ident '{' fields '}':
-        'Elixir.Thrift.Parser.Models.Struct':new(unwrap('$2'), '$4').
+% Exception
 
-service_def ->
-    service ident service_extends '{' functions '}':
-        'Elixir.Thrift.Parser.Models.Service':new(unwrap('$2'), '$5', '$3').
+Exception -> exception ident '{' FieldList '}':
+    'Elixir.Thrift.Parser.Models.Exception':new(unwrap('$2'), '$4').
 
-union_def ->
-    union ident '{' fields '}':
-        'Elixir.Thrift.Parser.Models.Union':new(unwrap('$2'), '$4').
+% Service
 
-service_extends -> '(' extends ident ')': unwrap('$3').
-service_extends -> extends ident: unwrap('$2').
-service_extends -> '$empty': nil.
+Service -> service ident Extends '{' FunctionList '}':
+    'Elixir.Thrift.Parser.Models.Service':new(unwrap('$2'), '$5', '$3').
 
+Extends -> extends ident: unwrap('$2').
+Extends -> '$empty': nil.
 
-functions -> '$empty': [].
-functions -> function functions: ['$1' | '$2'].
+% Functions
 
-function ->
-    oneway_marker return_type ident '(' fields ')' throws_clause field_sep:
-        'Elixir.Thrift.Parser.Models.Function':new('$1', '$2', unwrap('$3'), '$5', '$7').
+FunctionList -> '$empty': [].
+FunctionList -> Function FunctionList: ['$1'|'$2'].
 
-oneway_marker -> '$empty': false.
-oneway_marker -> oneway: true.
+Function -> Oneway ReturnType ident '(' FieldList ')' Throws Separator:
+    'Elixir.Thrift.Parser.Models.Function':new('$1', '$2', unwrap('$3'), '$5', '$7').
 
-return_type -> void: void.
-return_type -> type: '$1'.
+Oneway -> '$empty': false.
+Oneway -> oneway: true.
 
-throws_clause -> '$empty': [].
-throws_clause ->
-    throws '(' fields ')':
-        '$3'.
+ReturnType -> void: void.
+ReturnType -> FieldType: '$1'.
+
+Throws -> '$empty': [].
+Throws -> throws '(' FieldList ')': '$3'.
+
+% Fields
+
+FieldList -> '$empty': [].
+FieldList -> Field FieldList: ['$1'|'$2'].
+
+Field -> FieldIdentifier FieldRequired FieldType ident FieldDefault Separator:
+    'Elixir.Thrift.Parser.Models.Field':new('$1', '$2', '$3', unwrap('$4'), '$5').
+
+FieldIdentifier -> int ':': unwrap('$1').
+FieldIdentifier -> '$empty': nil.
+
+FieldRequired -> required: true.
+FieldRequired -> optional: false.
+FieldRequired -> '$empty': default.
+
+FieldDefault -> '$empty': nil.
+FieldDefault -> '=' ConstValue: '$2'.
+
+% Types
+
+FieldType -> ident: 'Elixir.Thrift.Parser.Models.TypeRef':new(unwrap('$1')).
+FieldType -> BaseType: '$1'.
+FieldType -> MapType: {map, '$1'}.
+FieldType -> SetType: {set, '$1'}.
+FieldType -> ListType: {list, '$1'}.
+
+BaseType -> bool: bool.
+BaseType -> byte: i8.
+BaseType -> i8: i8.
+BaseType -> i16: i16.
+BaseType -> i32: i32.
+BaseType -> i64: i64.
+BaseType -> double: double.
+BaseType -> string: string.
+BaseType -> binary: binary.
+
+MapType -> map '<' FieldType ',' FieldType '>': {'$3', '$5'}.
+SetType -> set '<' FieldType '>': '$3'.
+ListType -> list '<' FieldType '>': '$3'.
+
+% Separator
+
+Separator -> ',': nil.
+Separator -> ';': nil.
+Separator -> '$empty': nil.
 
 Erlang code.
 

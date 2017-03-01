@@ -12,6 +12,12 @@ defmodule Thrift.Generator.Service do
     Struct
   }
 
+  # The response struct uses a %Field{} to represent the service function's
+  # return value. Functions can return :void while fields cannot. Until we can
+  # sort out that mismatch, disable dialyzer warnings for those functions.
+  @dialyzer [{:nowarn_function, generate: 2},
+             {:nowarn_function, generate_response_struct: 2}]
+
   def generate(schema, service) do
     file_group = schema.file_group
     dest_module = FileGroup.dest_module(file_group, service)

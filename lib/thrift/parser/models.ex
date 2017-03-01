@@ -15,12 +15,12 @@ defmodule Thrift.Parser.Models do
     placed.
     """
 
-    @type t :: %Namespace{name: String.t, path: String.t}
+    @type t :: %Namespace{name: atom, path: String.t}
 
     @enforce_keys [:name, :path]
     defstruct name: nil, path: nil
 
-    @spec new(char_list, char_list) :: %Namespace{}
+    @spec new(charlist, charlist) :: t
     def new(name, path) do
       %Namespace{name: atomify(name), path: List.to_string(path)}
     end
@@ -37,7 +37,7 @@ defmodule Thrift.Parser.Models do
     @enforce_keys [:path]
     defstruct path: nil
 
-    @spec new(char_list) :: %Include{}
+    @spec new(charlist) :: t
     def new(path) do
       %Include{path: List.to_string(path)}
     end
@@ -49,12 +49,12 @@ defmodule Thrift.Parser.Models do
     Constants of any primitive or container type can be created in Thrift.
     """
 
-    @type t :: %Constant{name: String.t, value: Literals.t, type: Types.t}
+    @type t :: %Constant{name: atom, value: Literals.t, type: Types.t}
 
     @enforce_keys [:name, :value, :type]
     defstruct name: nil, value: nil, type: nil
 
-    @spec new(char_list, Literals.t, Types.t) :: %Constant{}
+    @spec new(charlist, Literals.t, Types.t) :: t
     def new(name, val, type) do
       %Constant{name: atomify(name), value: cast(type, val), type: type}
     end
@@ -68,18 +68,18 @@ defmodule Thrift.Parser.Models do
     """
 
     @type enum_value :: bitstring | integer
-    @type t :: %TEnum{name: String.t, values: %{String.t => enum_value}}
+    @type t :: %TEnum{name: atom, values: [{atom, enum_value}]}
 
     @enforce_keys [:name, :values]
     defstruct name: nil, values: []
 
-    @spec new(char_list, %{char_list => enum_value}) :: %TEnum{}
+    @spec new(charlist, %{charlist => enum_value}) :: t
     def new(name, values) do
       values = values
       |> Enum.with_index
       |> Enum.map(fn
         {{name, value}, _index} ->
-          {atomify(name),  value}
+          {atomify(name), value}
 
         {name, index} ->
           {atomify(name), index + 1}
@@ -103,13 +103,13 @@ defmodule Thrift.Parser.Models do
     """
 
     @type printable :: String.t | atom
-    @type t :: %Field{id: integer, name: String.t, type: Types.t,
+    @type t :: %Field{id: integer, name: atom, type: Types.t,
                       required: boolean, default: Literals.t}
 
     @enforce_keys [:id, :name, :type]
     defstruct id: nil, name: nil, type: nil, required: :default, default: nil
 
-    @spec new(integer, boolean, Types.t, char_list, Literals.t) :: %Field{}
+    @spec new(integer, boolean, Types.t, charlist, Literals.t) :: t
     def new(id, required, type, name, default) do
       %Field{id: id,
              type: type,
@@ -118,7 +118,7 @@ defmodule Thrift.Parser.Models do
              default: cast(type, default)}
     end
 
-    @spec build_field_list(printable, [%Field{}]) :: [%Field{}]
+    @spec build_field_list(printable, [Field.t]) :: [Field.t]
     def build_field_list(parent_name, fields) do
       fields
       |> update_ids(parent_name)
@@ -168,12 +168,12 @@ defmodule Thrift.Parser.Models do
     Exceptions can happen when the remote service encounters an error.
     """
 
-    @type t :: %Exception{name: String.t, fields: [%Field{}]}
+    @type t :: %Exception{name: atom, fields: [Field.t]}
 
     @enforce_keys [:name, :fields]
     defstruct fields: %{}, name: nil
 
-    @spec new(char_list, [%Field{}, ...]) :: %Exception{}
+    @spec new(charlist, [Field.t, ...]) :: t
     def new(name, fields) do
       ex_name = atomify(name)
       updated_fields = Field.build_field_list(ex_name, fields)
@@ -189,12 +189,12 @@ defmodule Thrift.Parser.Models do
     The basic datastructure in Thrift, structs have aa name and a field list.
     """
 
-    @type t :: %Struct{name: String.t, fields: %{String.t => %Field{}}}
+    @type t :: %Struct{name: atom, fields: [Field.t]}
 
     @enforce_keys [:name, :fields]
     defstruct name: nil, fields: %{}
 
-    @spec new(char_list, [%Field{}, ...]) :: %Struct{}
+    @spec new(charlist, [Field.t, ...]) :: t
     def new(name, fields) do
       struct_name = atomify(name)
       fields = Field.build_field_list(struct_name, fields)
@@ -210,12 +210,12 @@ defmodule Thrift.Parser.Models do
     Unions can have one field set at a time.
     """
 
-    @type t :: %Union{name: String.t, fields: %{String.t => %Field{}}}
+    @type t :: %Union{name: atom, fields: [Field.t]}
 
     @enforce_keys [:name, :fields]
     defstruct name: nil, fields: %{}
 
-    @spec new(char_list, [%Field{}, ...]) :: %Union{}
+    @spec new(charlist, [Field.t, ...]) :: t
     def new(name, fields) do
       name = atomify(name)
 
@@ -274,7 +274,7 @@ defmodule Thrift.Parser.Models do
     @enforce_keys [:referenced_type]
     defstruct referenced_type: nil
 
-    @spec new(char_list) :: %TypeRef{}
+    @spec new(charlist) :: t
     def new(referenced_type) do
       %TypeRef{referenced_type: atomify(referenced_type)}
     end
@@ -290,7 +290,7 @@ defmodule Thrift.Parser.Models do
     @enforce_keys [:referenced_value]
     defstruct referenced_value: nil
 
-    @spec new(char_list) :: %ValueRef{}
+    @spec new(charlist) :: t
     def new(referenced_value) do
       %ValueRef{referenced_value: atomify(referenced_value)}
     end
@@ -306,13 +306,13 @@ defmodule Thrift.Parser.Models do
     """
 
     @type return :: :void | Types.t
-    @type t :: %Function{oneway: boolean, return_type: return, name: String.t,
-                         params: [%Field{}], exceptions: [%Exception{}]}
+    @type t :: %Function{oneway: boolean, return_type: return, name: atom,
+                         params: [Field.t], exceptions: [Exception.t]}
 
     @enforce_keys [:name]
     defstruct oneway: false, return_type: :void, name: nil, params: [], exceptions: []
 
-    @spec new(boolean, Types.t, char_list, [%Field{}, ...], [%Exception{}, ...]) :: %Function{}
+    @spec new(boolean, Types.t, charlist, [Field.t, ...], [Exception.t, ...]) :: t
     def new(oneway, return_type, name, params, exceptions) do
       name = atomify(name)
       params = Field.build_field_list(name, params)
@@ -334,12 +334,12 @@ defmodule Thrift.Parser.Models do
     Services hold RPC functions and can extend other services.
     """
 
-    @type t :: %Service{name: String.t, extends: String.t, functions: %{atom => %Function{}}}
+    @type t :: %Service{name: atom, extends: atom, functions: %{atom => Function.t}}
 
     @enforce_keys [:name, :functions]
     defstruct name: nil, extends: nil, functions: %{}
 
-    @spec new(char_list, [%Function{}, ...], char_list) :: %Service{}
+    @spec new(charlist, [Function.t, ...], charlist) :: t
     def new(name, functions, extends) do
       fn_map = Enum.into(functions, %{}, fn(f) -> {f.name, f} end)
       %Service{name: atomify(name), extends: atomify(extends), functions: fn_map}
@@ -356,22 +356,22 @@ defmodule Thrift.Parser.Models do
     This is the root datastructure that the parser emits after running.
     """
 
-    @type header :: %Include{} | %Namespace{}
+    @type header :: Include.t | Namespace.t
     @type typedef :: {:typedef, Types.t, atom}
-    @type definition :: %Service{} | %TEnum{} | %Exception{} | %Union{} | %Struct{} | %Constant{} | typedef
+    @type definition :: Service.t | TEnum.t | Exception.t | Union.t | Struct.t | Constant.t | typedef
     @type model :: header | definition
     @type t :: %Schema{
       absolute_path: Path.t,
       module: String.t,
       thrift_namespace: String.t,
-      namespaces: %{String.t => %Namespace{}},
-      structs: %{String.t => %Struct{}},
-      services: %{String.t => %Service{}},
-      enums: %{String.t => %TEnum{}},
-      unions: %{String.t => %Union{}},
-      includes: [%Include{}],
+      namespaces: %{String.t => Namespace.t},
+      structs: %{String.t => Struct.t},
+      services: %{String.t => Service.t},
+      enums: %{String.t => TEnum.t},
+      unions: %{String.t => Union.t},
+      includes: [Include.t],
       constants: %{String.t => Literals.t},
-      exceptions: %{String.t => %Exception{}},
+      exceptions: %{String.t => Exception.t},
       typedefs: %{String.t => Types.t}
     }
     defstruct absolute_path: nil,
@@ -477,5 +477,5 @@ defmodule Thrift.Parser.Models do
     end
   end
 
-  @type all :: %Namespace{} | %Include{} | %Constant{} | %TEnum{} | %Field{} | %Exception{} | %Struct{} | %Union{} | %Function{} | %Service{} | %Schema{}
+  @type all :: Namespace.t | Include.t | Constant.t | TEnum.t | Field.t | Exception.t | Struct.t | Union.t | Function.t | Service.t | Schema.t
 end

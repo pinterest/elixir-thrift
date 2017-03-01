@@ -15,10 +15,10 @@ defmodule Thrift.Parser.Models do
     placed.
     """
 
-    @type t :: %Namespace{name: atom, path: String.t}
+    @type t :: %Namespace{line: non_neg_integer, name: atom, path: String.t}
 
     @enforce_keys [:name, :path]
-    defstruct name: nil, path: nil
+    defstruct line: 0, name: nil, path: nil
 
     @spec new(charlist, charlist) :: t
     def new(name, path) do
@@ -32,10 +32,10 @@ defmodule Thrift.Parser.Models do
     In Thrift, you can include other files to share structs, enums and the like.
     """
 
-    @type t :: %Include{path: String.t}
+    @type t :: %Include{line: non_neg_integer, path: String.t}
 
     @enforce_keys [:path]
-    defstruct path: nil
+    defstruct line: 0, path: nil
 
     @spec new(charlist) :: t
     def new(path) do
@@ -49,10 +49,10 @@ defmodule Thrift.Parser.Models do
     Constants of any primitive or container type can be created in Thrift.
     """
 
-    @type t :: %Constant{name: atom, value: Literals.t, type: Types.t}
+    @type t :: %Constant{line: non_neg_integer, name: atom, value: Literals.t, type: Types.t}
 
     @enforce_keys [:name, :value, :type]
-    defstruct name: nil, value: nil, type: nil
+    defstruct line: 0, name: nil, value: nil, type: nil
 
     @spec new(charlist, Literals.t, Types.t) :: t
     def new(name, val, type) do
@@ -68,10 +68,10 @@ defmodule Thrift.Parser.Models do
     """
 
     @type enum_value :: bitstring | integer
-    @type t :: %TEnum{name: atom, values: [{atom, enum_value}]}
+    @type t :: %TEnum{line: non_neg_integer, name: atom, values: [{atom, enum_value}]}
 
     @enforce_keys [:name, :values]
-    defstruct name: nil, values: []
+    defstruct line: 0, name: nil, values: []
 
     @spec new(charlist, %{charlist => enum_value}) :: t
     def new(name, values) do
@@ -103,11 +103,11 @@ defmodule Thrift.Parser.Models do
     """
 
     @type printable :: String.t | atom
-    @type t :: %Field{id: integer, name: atom, type: Types.t,
+    @type t :: %Field{line: non_neg_integer, id: integer, name: atom, type: Types.t,
                       required: boolean, default: Literals.t}
 
     @enforce_keys [:id, :name, :type]
-    defstruct id: nil, name: nil, type: nil, required: :default, default: nil
+    defstruct line: 0, id: nil, name: nil, type: nil, required: :default, default: nil
 
     @spec new(integer, boolean, Types.t, charlist, Literals.t) :: t
     def new(id, required, type, name, default) do
@@ -168,10 +168,10 @@ defmodule Thrift.Parser.Models do
     Exceptions can happen when the remote service encounters an error.
     """
 
-    @type t :: %Exception{name: atom, fields: [Field.t]}
+    @type t :: %Exception{line: non_neg_integer, name: atom, fields: [Field.t]}
 
     @enforce_keys [:name, :fields]
-    defstruct fields: %{}, name: nil
+    defstruct line: 0, fields: %{}, name: nil
 
     @spec new(charlist, [Field.t, ...]) :: t
     def new(name, fields) do
@@ -189,10 +189,10 @@ defmodule Thrift.Parser.Models do
     The basic datastructure in Thrift, structs have aa name and a field list.
     """
 
-    @type t :: %Struct{name: atom, fields: [Field.t]}
+    @type t :: %Struct{line: non_neg_integer, name: atom, fields: [Field.t]}
 
     @enforce_keys [:name, :fields]
-    defstruct name: nil, fields: %{}
+    defstruct line: 0, name: nil, fields: %{}
 
     @spec new(charlist, [Field.t, ...]) :: t
     def new(name, fields) do
@@ -210,10 +210,10 @@ defmodule Thrift.Parser.Models do
     Unions can have one field set at a time.
     """
 
-    @type t :: %Union{name: atom, fields: [Field.t]}
+    @type t :: %Union{line: non_neg_integer, name: atom, fields: [Field.t]}
 
     @enforce_keys [:name, :fields]
-    defstruct name: nil, fields: %{}
+    defstruct line: 0, name: nil, fields: %{}
 
     @spec new(charlist, [Field.t, ...]) :: t
     def new(name, fields) do
@@ -269,10 +269,10 @@ defmodule Thrift.Parser.Models do
     another.
     """
 
-    @type t :: %TypeRef{referenced_type: atom}
+    @type t :: %TypeRef{line: non_neg_integer, referenced_type: atom}
 
     @enforce_keys [:referenced_type]
-    defstruct referenced_type: nil
+    defstruct line: 0, referenced_type: nil
 
     @spec new(charlist) :: t
     def new(referenced_type) do
@@ -285,10 +285,10 @@ defmodule Thrift.Parser.Models do
     A reference to another value, such as an enum or const.
     """
 
-    @type t :: %ValueRef{referenced_value: atom}
+    @type t :: %ValueRef{line: non_neg_integer, referenced_value: atom}
 
     @enforce_keys [:referenced_value]
-    defstruct referenced_value: nil
+    defstruct line: 0, referenced_value: nil
 
     @spec new(charlist) :: t
     def new(referenced_value) do
@@ -306,11 +306,11 @@ defmodule Thrift.Parser.Models do
     """
 
     @type return :: :void | Types.t
-    @type t :: %Function{oneway: boolean, return_type: return, name: atom,
+    @type t :: %Function{line: non_neg_integer, oneway: boolean, return_type: return, name: atom,
                          params: [Field.t], exceptions: [Exception.t]}
 
     @enforce_keys [:name]
-    defstruct oneway: false, return_type: :void, name: nil, params: [], exceptions: []
+    defstruct line: 0, oneway: false, return_type: :void, name: nil, params: [], exceptions: []
 
     @spec new(boolean, Types.t, charlist, [Field.t, ...], [Exception.t, ...]) :: t
     def new(oneway, return_type, name, params, exceptions) do
@@ -334,10 +334,10 @@ defmodule Thrift.Parser.Models do
     Services hold RPC functions and can extend other services.
     """
 
-    @type t :: %Service{name: atom, extends: atom, functions: %{atom => Function.t}}
+    @type t :: %Service{line: non_neg_integer, name: atom, extends: atom, functions: %{atom => Function.t}}
 
     @enforce_keys [:name, :functions]
-    defstruct name: nil, extends: nil, functions: %{}
+    defstruct line: 0, name: nil, extends: nil, functions: %{}
 
     @spec new(charlist, [Function.t, ...], charlist) :: t
     def new(name, functions, extends) do

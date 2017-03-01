@@ -54,7 +54,7 @@ defmodule Thrift.Parser.ParserTest do
     include "foo.thrift"
     """ |> parse([:includes])
 
-    assert includes == [%Include{path: "foo.thrift"}]
+    assert includes == [%Include{line: 1, path: "foo.thrift"}]
   end
 
   test "parsing namespace headers" do
@@ -65,9 +65,9 @@ defmodule Thrift.Parser.ParserTest do
     """
     |> parse([:namespaces])
 
-    assert namespaces[:py] == %Namespace{name: :py, path: "foo.bar.baz"}
-    assert namespaces[:erl] == %Namespace{name: :erl, path: "foo_bar"}
-    assert namespaces[:*] == %Namespace{name: :*, path: "bar.baz"}
+    assert namespaces[:py] == %Namespace{line: 1, name: :py, path: "foo.bar.baz"}
+    assert namespaces[:erl] == %Namespace{line: 2, name: :erl, path: "foo_bar"}
+    assert namespaces[:*] == %Namespace{line: 3, name: :*, path: "bar.baz"}
   end
 
   test "parsing include headers" do
@@ -78,8 +78,8 @@ defmodule Thrift.Parser.ParserTest do
     |> parse([:includes])
 
     assert includes == [
-      %Include{path: "foo.thrift"},
-      %Include{path: "bar.thrift"}
+      %Include{line: 1, path: "foo.thrift"},
+      %Include{line: 2, path: "bar.thrift"}
     ]
   end
 
@@ -87,7 +87,8 @@ defmodule Thrift.Parser.ParserTest do
     constant = "const i8 BYTE_CONST = 2;"
     |> parse([:constants, :BYTE_CONST])
 
-    assert constant == %Constant{name: :BYTE_CONST,
+    assert constant == %Constant{line: 1,
+                                 name: :BYTE_CONST,
                                  value: 2,
                                  type: :i8}
   end
@@ -96,7 +97,8 @@ defmodule Thrift.Parser.ParserTest do
     constant = "const i16 NEG_INT_CONST = -281;"
     |> parse([:constants, :NEG_INT_CONST])
 
-    assert constant == %Constant{name: :NEG_INT_CONST,
+    assert constant == %Constant{line: 1,
+                                 name: :NEG_INT_CONST,
                                  value: -281,
                                  type: :i16}
   end
@@ -105,7 +107,8 @@ defmodule Thrift.Parser.ParserTest do
     constant = "const i16 SMALL_INT_CONST = 65535;"
     |> parse([:constants, :SMALL_INT_CONST])
 
-    assert constant == %Constant{name: :SMALL_INT_CONST,
+    assert constant == %Constant{line: 1,
+                                 name: :SMALL_INT_CONST,
                                  value: 65535,
                                  type: :i16}
   end
@@ -114,7 +117,8 @@ defmodule Thrift.Parser.ParserTest do
     constant = "const i32 INT_CONST = 1234;"
     |> parse([:constants, :INT_CONST])
 
-    assert constant == %Constant{name: :INT_CONST,
+    assert constant == %Constant{line: 1,
+                                 name: :INT_CONST,
                                  value: 1234,
                                  type: :i32}
   end
@@ -123,7 +127,8 @@ defmodule Thrift.Parser.ParserTest do
     constant = "const i64 LARGE_INT_CONST = 12347437812391;"
     |> parse([:constants, :LARGE_INT_CONST])
 
-    assert constant == %Constant{name: :LARGE_INT_CONST,
+    assert constant == %Constant{line: 1,
+                                 name: :LARGE_INT_CONST,
                                  value: 12347437812391,
                                  type: :i64}
   end
@@ -132,7 +137,8 @@ defmodule Thrift.Parser.ParserTest do
     constant = "const double DOUBLE_CONST = 123.4"
     |> parse([:constants, :DOUBLE_CONST])
 
-    assert constant == %Constant{name: :DOUBLE_CONST,
+    assert constant == %Constant{line: 1,
+                                 name: :DOUBLE_CONST,
                                  value: 123.4,
                                  type: :double}
   end
@@ -141,7 +147,8 @@ defmodule Thrift.Parser.ParserTest do
     constant = "const string STRING_CONST = \"hi\""
     |> parse([:constants, :STRING_CONST])
 
-    assert constant == %Constant{name: :STRING_CONST,
+    assert constant == %Constant{line: 1,
+                                 name: :STRING_CONST,
                                  value: "hi",
                                  type: :string}
   end
@@ -150,7 +157,8 @@ defmodule Thrift.Parser.ParserTest do
     constant = "const map<string, i32> MAP_CONST = {\"hello\": 1, \"world\": 2};"
     |> parse([:constants, :MAP_CONST])
 
-    assert constant == %Constant{name: :MAP_CONST,
+    assert constant == %Constant{line: 1,
+                                 name: :MAP_CONST,
                                  value: %{"world" => 2, "hello" => 1},
                                  type: {:map, {:string, :i32}}}
   end
@@ -159,7 +167,8 @@ defmodule Thrift.Parser.ParserTest do
     constant = "const list<i32> LIST_CONST = [5, 6, 7, 8]"
     |> parse([:constants, :LIST_CONST])
 
-    assert constant == %Constant{name: :LIST_CONST,
+    assert constant == %Constant{line: 1,
+                                 name: :LIST_CONST,
                                  value: [5, 6, 7, 8],
                                  type: {:list, :i32}}
   end
@@ -168,7 +177,8 @@ defmodule Thrift.Parser.ParserTest do
     constant = "const list<i32> LIST_CONST = [1, 2; 3; 4, 5]"
     |> parse([:constants, :LIST_CONST])
 
-    assert constant == %Constant{name: :LIST_CONST,
+    assert constant == %Constant{line: 1,
+                                 name: :LIST_CONST,
                                  value: [1, 2, 3, 4, 5],
                                  type: {:list, :i32}}
   end
@@ -178,8 +188,9 @@ defmodule Thrift.Parser.ParserTest do
     |> parse([:constants, :SUNNY])
 
     assert constant == %Constant{
+      line: 1,
       name: :SUNNY,
-      value: %ValueRef{referenced_value: :"Weather.SUNNY"},
+      value: %ValueRef{line: 1, referenced_value: :"Weather.SUNNY"},
       type: :string}
   end
 
@@ -195,13 +206,14 @@ defmodule Thrift.Parser.ParserTest do
     |> parse([:constants, :WEATHER_TYPES])
 
     assert constant == %Constant{
+      line: 1,
       name: :WEATHER_TYPES,
       type: {:list, :string},
       value: [
-        %ValueRef{referenced_value: :"Weather.SUNNY"},
-        %ValueRef{referenced_value: :"Weather.CLOUDY"},
-        %ValueRef{referenced_value: :"Weather.RAINY"},
-        %ValueRef{referenced_value: :"Weather.SNOWY"},
+        %ValueRef{line: 2, referenced_value: :"Weather.SUNNY"},
+        %ValueRef{line: 3, referenced_value: :"Weather.CLOUDY"},
+        %ValueRef{line: 4, referenced_value: :"Weather.RAINY"},
+        %ValueRef{line: 5, referenced_value: :"Weather.SNOWY"},
       ]}
   end
 
@@ -217,13 +229,14 @@ defmodule Thrift.Parser.ParserTest do
     |> parse([:constants, :weather_messages])
 
     assert constant == %Constant{
+      line: 1,
       name: :weather_messages,
-      type: {:map, {%TypeRef{referenced_type: :Weather}, :string}},
+      type: {:map, {%TypeRef{line: 1, referenced_type: :Weather}, :string}},
       value: %{
-        %ValueRef{referenced_value: :"Weather.CLOUDY"} => "Welcome to Cleveland!",
-        %ValueRef{referenced_value: :"Weather.RAINY"} => "Welcome to Seattle!",
-        %ValueRef{referenced_value: :"Weather.SNOWY"} => "Welcome to Canada!",
-        %ValueRef{referenced_value: :"Weather.SUNNY"} => "Yay, it's sunny!"}}
+        %ValueRef{line: 2, referenced_value: :"Weather.SUNNY"} => "Yay, it's sunny!",
+        %ValueRef{line: 3, referenced_value: :"Weather.CLOUDY"} => "Welcome to Cleveland!",
+        %ValueRef{line: 4, referenced_value: :"Weather.RAINY"} => "Welcome to Seattle!",
+        %ValueRef{line: 5, referenced_value: :"Weather.SNOWY"} => "Welcome to Canada!"}}
   end
 
   test "parsing a map constant with enum values as values" do
@@ -238,13 +251,14 @@ defmodule Thrift.Parser.ParserTest do
     |> parse([:constants, :clothes_to_wear])
 
     assert constant == %Constant{
+      line: 1,
       name: :clothes_to_wear,
-      type: {:map, {:string, %TypeRef{referenced_type: :Weather}}},
+      type: {:map, {:string, %TypeRef{line: 1, referenced_type: :Weather}}},
       value: %{
-        "gloves" => %ValueRef{referenced_value: :"Weather.SNOWY"},
-        "umbrella" => %ValueRef{referenced_value: :"Weather.RAINY"},
-        "sweater" => %ValueRef{referenced_value: :"Weather.CLOUDY"},
-        "sunglasses" => %ValueRef{referenced_value: :"Weather.SUNNY"}}}
+        "gloves" => %ValueRef{line: 2, referenced_value: :"Weather.SNOWY"},
+        "umbrella" => %ValueRef{line: 3, referenced_value: :"Weather.RAINY"},
+        "sweater" => %ValueRef{line: 4, referenced_value: :"Weather.CLOUDY"},
+        "sunglasses" => %ValueRef{line: 5, referenced_value: :"Weather.SUNNY"}}}
   end
 
   test "parsing an enum" do
@@ -258,7 +272,8 @@ defmodule Thrift.Parser.ParserTest do
     """
     |> parse([:enums, :UserStatus])
 
-    assert user_status == %TEnum{name: :UserStatus,
+    assert user_status == %TEnum{line: 1,
+                                 name: :UserStatus,
                                  values: [ACTIVE: 1, INACTIVE: 2, BANNED: 6, EVIL: 32]}
   end
 
@@ -277,13 +292,14 @@ defmodule Thrift.Parser.ParserTest do
       exc = parse(program, [:exceptions, :ApplicationException])
 
       assert exc == %Exception{
+        line: 1,
         name: :ApplicationException,
         fields: [
-          %Field{id: 1, name: :message, type: :string},
-          %Field{id: 2, name: :count, type: :i32, required: true},
-          %Field{id: 3, name: :reason, type: :string, required: false},
-          %Field{id: 4, name: :other, type: :string, required: false},
-          %Field{id: 5, name: :fixed, type: :string, required: false, default: "foo"}
+          %Field{line: 2, id: 1, name: :message, type: :string},
+          %Field{line: 3, id: 2, name: :count, type: :i32, required: true},
+          %Field{line: 4, id: 3, name: :reason, type: :string, required: false},
+          %Field{line: 5, id: 4, name: :other, type: :string, required: false},
+          %Field{line: 6, id: 5, name: :fixed, type: :string, required: false, default: "foo"}
         ]}
     end)
     |> String.split("\n")
@@ -334,12 +350,13 @@ defmodule Thrift.Parser.ParserTest do
     |> parse([:structs, :MyStruct])
 
     assert s == %Struct{
+      line: 1,
       name: :MyStruct,
       fields: [
-        %Field{id: 1, name: :negative, type: :bool, required: false, default: nil},
-        %Field{id: 2, name: :positive, type: :bool, required: false, default: true},
-        %Field{id: 3, name: :c_positive, type: :bool, required: false, default: true},
-        %Field{id: 4, name: :c_negative, type: :bool, required: false, default: false},
+        %Field{line: 2, id: 1, name: :negative, type: :bool, required: false, default: nil},
+        %Field{line: 3, id: 2, name: :positive, type: :bool, required: false, default: true},
+        %Field{line: 4, id: 3, name: :c_positive, type: :bool, required: false, default: true},
+        %Field{line: 5, id: 4, name: :c_negative, type: :bool, required: false, default: false},
       ]}
   end
 
@@ -352,9 +369,10 @@ defmodule Thrift.Parser.ParserTest do
     |> parse([:structs, :MyStruct])
 
     assert s == %Struct{
+      line: 1,
       name: :MyStruct,
       fields: [
-        %Field{id: 1, name: :name, type: :string, required: false}
+        %Field{line: 2, id: 1, name: :name, type: :string, required: false}
       ]}
   end
 
@@ -369,8 +387,8 @@ defmodule Thrift.Parser.ParserTest do
     """ |> parse([:structs, :User])
 
     assert s.fields == [
-      %Field{id: 1, name: :user_id, required: true, type: %TypeRef{referenced_type: :id}},
-      %Field{id: 2, name: :username, required: true, type: :string}
+      %Field{line: 4, id: 1, name: :user_id, required: true, type: %TypeRef{line: 4, referenced_type: :id}},
+      %Field{line: 5, id: 2, name: :username, required: true, type: :string}
     ]
   end
 
@@ -388,12 +406,13 @@ defmodule Thrift.Parser.ParserTest do
       s = parse(struct_def, [:structs, :Optionals])
 
       assert s == %Struct{
+        line: 1,
         name: :Optionals,
         fields: [
-          %Field{id: 1, name: :name, type: :string, required: :default},
-          %Field{id: 2, name: :count, type: :i32, required: :default},
-          %Field{id: 3, name: :long_thing, type: :i64, required: :default, default: 12345},
-          %Field{id: 4, name: :optional_list, type: {:list, :i32}, required: false}
+          %Field{line: 2, id: 1, name: :name, type: :string, required: :default},
+          %Field{line: 3, id: 2, name: :count, type: :i32, required: :default},
+          %Field{line: 4, id: 3, name: :long_thing, type: :i64, required: :default, default: 12345},
+          %Field{line: 5, id: 4, name: :optional_list, type: {:list, :i32}, required: false}
         ]
       }
     end)
@@ -418,10 +437,11 @@ defmodule Thrift.Parser.ParserTest do
     |> parse([:structs, :EmptyDefault])
 
     assert struct == %Struct{
+      line: 1,
       name: :EmptyDefault,
       fields: [
-        %Field{default: nil, id: 1, name: :id, required: :default, type: :i64},
-        %Field{default: %{}, id: 2, name: :my_map,
+        %Field{line: 2, default: nil, id: 1, name: :id, required: :default, type: :i64},
+        %Field{line: 3, default: %{}, id: 2, name: :my_map,
                required: :default, type: {:map, {:string, :string}}}
       ]}
   end
@@ -453,10 +473,11 @@ defmodule Thrift.Parser.ParserTest do
     }
     """ |> parse([:structs, :User])
     assert user == %Struct{
+      line: 6,
       name: :User,
       fields: [
-        %Field{id: 1, type: :i64, name: :id},
-        %Field{id: 2, type: %TypeRef{referenced_type: :Name}, name: :name}
+        %Field{line: 7, id: 1, type: :i64, name: :id},
+        %Field{line: 8, id: 2, type: %TypeRef{line: 8, referenced_type: :Name}, name: :name}
       ]
     }
   end
@@ -471,10 +492,11 @@ defmodule Thrift.Parser.ParserTest do
     |> parse([:unions, :Highlander])
 
     assert union == %Union{
+      line: 1,
       name: :Highlander,
       fields: [
-        %Field{id: 1, name: :connery, type: :i32, required: false},
-        %Field{id: 2, name: :lambert, type: :i64, required: false},
+        %Field{line: 2, id: 1, name: :connery, type: :i32, required: false},
+        %Field{line: 3, id: 2, name: :lambert, type: :i64, required: false},
       ]
     }
   end
@@ -503,8 +525,9 @@ defmodule Thrift.Parser.ParserTest do
     |> parse([:services, :MyService])
 
     assert service == %Service{
+      line: 1,
       name: :MyService,
-      functions: %{hi: %Function{name: :hi, return_type: :void, params: []}}
+      functions: %{hi: %Function{line: 2, name: :hi, return_type: :void, params: []}}
     }
   end
 
@@ -520,10 +543,11 @@ defmodule Thrift.Parser.ParserTest do
     |> parse([:services, :MyService])
 
     assert service == %Service{
+      line: 4,
       name: :MyService,
       functions: %{usernames_to_ids:
-        %Function{name: :usernames_to_ids, oneway: false, return_type: {:map, {:string, :i64}},
-                  params: [%Field{id: 1, name: :user, type: %TypeRef{referenced_type: :User}}]
+        %Function{line: 5, name: :usernames_to_ids, oneway: false, return_type: {:map, {:string, :i64}},
+                  params: [%Field{line: 5, id: 1, name: :user, type: %TypeRef{line: 5, referenced_type: :User}}]
                  }
       }
     }
@@ -538,12 +562,14 @@ defmodule Thrift.Parser.ParserTest do
     |> parse([:services, :OneWay])
 
     assert service == %Service{
+      line: 1,
       name: :OneWay,
       functions: %{
         fireAndForget: %Function{
+          line: 2,
           name: :fireAndForget, oneway: true, return_type: :void,
           params: [
-            %Field{id: 1, name: :value, type: :i64}
+            %Field{line: 2, id: 1, name: :value, type: :i64}
           ]
         }
       }
@@ -565,7 +591,7 @@ defmodule Thrift.Parser.ParserTest do
 
     %{blowup: function} = service.functions
     assert function.exceptions == [
-      %Field{id: 1, name: :svc, type: %TypeRef{referenced_type: :ServiceException}}
+      %Field{line: 7, id: 1, name: :svc, type: %TypeRef{line: 7, referenced_type: :ServiceException}}
     ]
   end
 
@@ -592,25 +618,27 @@ defmodule Thrift.Parser.ParserTest do
 
       %{ping: ping, update: update, get_users: get_users} = service.functions
 
-      assert ping == %Function{name: :ping}
+      assert ping == %Function{line: 12, name: :ping}
       assert update == %Function{
+        line: 13,
         oneway: true,
         name: :update,
         params: [
-          %Field{id: 1, name: :user_id, type: :i64},
-          %Field{id: 2, name: :field, type: :string},
-          %Field{id: 3, name: :value, type: :string}
+          %Field{line: 13, id: 1, name: :user_id, type: :i64},
+          %Field{line: 13, id: 2, name: :field, type: :string},
+          %Field{line: 13, id: 3, name: :value, type: :string}
         ]
       }
       assert get_users == %Function{
+        line: 14,
         name: :get_users,
         exceptions: [
-          %Field{id: 1, name: :svc, type: %TypeRef{referenced_type: :ServiceException}}
+          %Field{line: 14, id: 1, name: :svc, type: %TypeRef{line: 14, referenced_type: :ServiceException}}
         ],
         params: [
-          %Field{id: 1, name: :user_ids, type: {:set, :i64}},
+          %Field{line: 14, id: 1, name: :user_ids, type: {:set, :i64}},
         ],
-        return_type: {:map, {:i64, %TypeRef{referenced_type: :User}}}
+        return_type: {:map, {:i64, %TypeRef{line: 14, referenced_type: :User}}}
       }
     end
   end

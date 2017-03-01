@@ -42,7 +42,7 @@ Rootsymbol Schema.
 % Schema
 
 Schema -> Headers Definitions File:
-    'Elixir.Thrift.Parser.Models.Schema':new('$3', '$1', '$2').
+    build_model('Schema', ['$3', '$1', '$2']).
 
 File -> '$empty': nil.
 File -> file string: 'Elixir.List':to_string(unwrap('$2')).
@@ -56,12 +56,12 @@ Header -> Include: '$1'.
 Header -> Namespace: '$1'.
 
 Include -> include string:
-    'Elixir.Thrift.Parser.Models.Include':new(unwrap('$2')).
+    build_model('Include', line('$1'), [unwrap('$2')]).
 
 Namespace -> namespace '*' ident:
-    'Elixir.Thrift.Parser.Models.Namespace':new("*", unwrap('$3')).
+    build_model('Namespace', line('$1'), ["*", unwrap('$3')]).
 Namespace -> namespace ident ident:
-    'Elixir.Thrift.Parser.Models.Namespace':new(unwrap('$2'), unwrap('$3')).
+    build_model('Namespace', line('$1'), [unwrap('$2'), unwrap('$3')]).
 
 % Definitions
 
@@ -79,9 +79,9 @@ Definition -> Service: '$1'.
 % Constants
 
 Const -> const FieldType ident '=' ConstValue Separator:
-    'Elixir.Thrift.Parser.Models.Constant':new(unwrap('$3'), '$5', '$2').
+    build_model('Constant', line('$1'), [unwrap('$3'), '$5', '$2']).
 
-ConstValue -> ident: 'Elixir.Thrift.Parser.Models.ValueRef':new(unwrap('$1')).
+ConstValue -> ident: build_model('ValueRef', line('$1'), [unwrap('$1')]).
 ConstValue -> true: unwrap('$1').
 ConstValue -> false: unwrap('$1').
 ConstValue -> int: unwrap('$1').
@@ -105,7 +105,7 @@ Typedef -> typedef FieldType ident Separator:
 % Enum
 
 Enum -> enum ident '{' EnumList '}':
-    'Elixir.Thrift.Parser.Models.TEnum':new(unwrap('$2'), '$4').
+    build_model('TEnum', line('$1'), [unwrap('$2'), '$4']).
 
 EnumList -> EnumValue Separator: ['$1'].
 EnumList -> EnumValue Separator EnumList: ['$1'|'$3'].
@@ -116,22 +116,22 @@ EnumValue -> ident: unwrap('$1').
 % Struct
 
 Struct -> struct ident '{' FieldList '}':
-    'Elixir.Thrift.Parser.Models.Struct':new(unwrap('$2'), '$4').
+    build_model('Struct', line('$1'), [unwrap('$2'), '$4']).
 
 % Union
 
 Union -> union ident '{' FieldList '}':
-    'Elixir.Thrift.Parser.Models.Union':new(unwrap('$2'), '$4').
+    build_model('Union', line('$1'), [unwrap('$2'), '$4']).
 
 % Exception
 
 Exception -> exception ident '{' FieldList '}':
-    'Elixir.Thrift.Parser.Models.Exception':new(unwrap('$2'), '$4').
+    build_model('Exception', line('$1'), [unwrap('$2'), '$4']).
 
 % Service
 
 Service -> service ident Extends '{' FunctionList '}':
-    'Elixir.Thrift.Parser.Models.Service':new(unwrap('$2'), '$5', '$3').
+    build_model('Service', line('$1'), [unwrap('$2'), '$5', '$3']).
 
 Extends -> extends ident: unwrap('$2').
 Extends -> '$empty': nil.
@@ -142,7 +142,7 @@ FunctionList -> '$empty': [].
 FunctionList -> Function FunctionList: ['$1'|'$2'].
 
 Function -> Oneway ReturnType ident '(' FieldList ')' Throws Separator:
-    'Elixir.Thrift.Parser.Models.Function':new('$1', '$2', unwrap('$3'), '$5', '$7').
+    build_model('Function', line('$3'), ['$1', '$2', unwrap('$3'), '$5', '$7']).
 
 Oneway -> '$empty': false.
 Oneway -> oneway: true.
@@ -159,7 +159,7 @@ FieldList -> '$empty': [].
 FieldList -> Field FieldList: ['$1'|'$2'].
 
 Field -> FieldIdentifier FieldRequired FieldType ident FieldDefault Separator:
-    'Elixir.Thrift.Parser.Models.Field':new('$1', '$2', '$3', unwrap('$4'), '$5').
+    build_model('Field', line('$4'), ['$1', '$2', '$3', unwrap('$4'), '$5']).
 
 FieldIdentifier -> int ':': unwrap('$1').
 FieldIdentifier -> '$empty': nil.
@@ -173,7 +173,7 @@ FieldDefault -> '=' ConstValue: '$2'.
 
 % Types
 
-FieldType -> ident: 'Elixir.Thrift.Parser.Models.TypeRef':new(unwrap('$1')).
+FieldType -> ident: build_model('TypeRef', line('$1'), [unwrap('$1')]).
 FieldType -> BaseType: '$1'.
 FieldType -> MapType: {map, '$1'}.
 FieldType -> SetType: {set, '$1'}.
@@ -195,11 +195,28 @@ ListType -> list '<' FieldType '>': '$3'.
 
 % Separator
 
-Separator -> ',': nil.
-Separator -> ';': nil.
-Separator -> '$empty': nil.
+Separator -> ','.
+Separator -> ';'.
+Separator -> '$empty'.
 
 Erlang code.
 
-unwrap({V, _}) -> V;
+% Construct a new model of the requested Type. Args are passed to the model's
+% `new` function and, if provided, line number information is assigned to the
+% resulting model.
+build_model(Type, Args) when is_list(Args) ->
+    Module = list_to_atom("Elixir.Thrift.Parser.Models." ++ atom_to_list(Type)),
+    apply(Module, 'new', Args).
+build_model(Type, Line, Args) when is_integer(Line) and is_list(Args) ->
+    Model = build_model(Type, Args),
+    maps:put(line, Line, Model).
+
+% Extract the line number from the lexer's expression tuple.
+line({_Token, Line}) -> Line;
+line({_Token, Line, _Value}) -> Line;
+line(_) -> 0.
+
+% Return either the atom from a 2-tuple lexer expression or the processed
+% value from a 3-tuple lexer expression.
+unwrap({V, _}) when is_atom(V) -> V;
 unwrap({_,_,V}) -> V.

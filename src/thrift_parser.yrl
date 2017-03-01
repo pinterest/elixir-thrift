@@ -214,7 +214,7 @@ build_model(Type, Line, Args) when is_integer(Line) and is_list(Args) ->
 % Extract the line number from the lexer's expression tuple.
 line({_Token, Line}) -> Line;
 line({_Token, Line, _Value}) -> Line;
-line(_) -> 0.
+line(_) -> nil.
 
 % Return either the atom from a 2-tuple lexer expression or the processed
 % value from a 3-tuple lexer expression.

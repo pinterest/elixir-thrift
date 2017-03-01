@@ -6,6 +6,9 @@ defmodule Thrift.Parser do
   alias Thrift.Parser.{FileGroup, FileRef, Models, ParsedFile}
   alias Thrift.Parser.Models.Schema
 
+  @typedoc "A Thrift IDL line number"
+  @type line :: pos_integer | nil
+
   @typedoc "A schema path element"
   @type path_element :: String.t | atom
 

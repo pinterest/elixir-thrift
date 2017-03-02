@@ -123,9 +123,21 @@ defmodule Thrift.Parser.Models do
     @spec build_field_list(printable, [Field.t]) :: [Field.t]
     def build_field_list(parent_name, fields) do
       fields
-      |> update_ids(parent_name)
+      |> assign_missing_ids
       |> validate_ids(parent_name)
     end
+
+    # Fields without explicit indices are automatically assigned starting from
+    # -1 and working their way down. Implicit field indices were deprecated by
+    # Apache Thrift, but we support them for greater compatibility.
+    defp assign_missing_ids(fields, auto_index \\ -1)
+    defp assign_missing_ids([%Field{id: nil} = field | fields], auto_index) do
+      [%Field{field | id: auto_index} | assign_missing_ids(fields, auto_index-1)]
+    end
+    defp assign_missing_ids([field | fields], auto_index) do
+      [field | assign_missing_ids(fields, auto_index)]
+    end
+    defp assign_missing_ids([], _), do: []
 
     defp validate_ids(fields, name) do
       dupes = fields
@@ -144,22 +156,6 @@ defmodule Thrift.Parser.Models do
       end
 
       fields
-    end
-
-    defp update_ids(fields, parent_name) do
-      alias Thrift.Parser.Shell
-      fields
-      |> Enum.with_index
-      |> Enum.map(fn
-        {%__MODULE__{} = field, idx} ->
-          case field.id do
-            nil ->
-              Shell.warn "Warning: id not set for field '#{parent_name}.#{field.name}'."
-              %__MODULE__{field | id: idx + 1}
-            _ ->
-              field
-          end
-      end)
     end
   end
 

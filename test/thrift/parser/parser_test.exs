@@ -298,18 +298,13 @@ defmodule Thrift.Parser.ParserTest do
           %Field{line: 2, id: 1, name: :message, type: :string},
           %Field{line: 3, id: 2, name: :count, type: :i32, required: true},
           %Field{line: 4, id: 3, name: :reason, type: :string, required: false},
-          %Field{line: 5, id: 4, name: :other, type: :string, required: false},
-          %Field{line: 6, id: 5, name: :fixed, type: :string, required: false, default: "foo"}
+          %Field{line: 5, id: -1, name: :other, type: :string, required: false},
+          %Field{line: 6, id: -2, name: :fixed, type: :string, required: false, default: "foo"}
         ]}
     end)
-    |> String.split("\n")
-    |> Enum.map(&String.slice(&1, (5..-5)))
 
-    warning_1 = "Warning: id not set for field 'ApplicationException.other'."
-    warning_2 = "Warning: id not set for field 'ApplicationException.fixed'."
-
-    assert warning_1 in warnings
-    assert warning_2 in warnings
+    assert warnings =~ ~s("other" is missing an explicit field identifier)
+    assert warnings =~ ~s("fixed" is missing an explicit field identifier)
   end
 
   test "an exception with duplicate ids" do
@@ -409,21 +404,17 @@ defmodule Thrift.Parser.ParserTest do
         line: 1,
         name: :Optionals,
         fields: [
-          %Field{line: 2, id: 1, name: :name, type: :string, required: :default},
-          %Field{line: 3, id: 2, name: :count, type: :i32, required: :default},
-          %Field{line: 4, id: 3, name: :long_thing, type: :i64, required: :default, default: 12345},
-          %Field{line: 5, id: 4, name: :optional_list, type: {:list, :i32}, required: false}
+          %Field{line: 2, id: -1, name: :name, type: :string, required: :default},
+          %Field{line: 3, id: -2, name: :count, type: :i32, required: :default},
+          %Field{line: 4, id: -3, name: :long_thing, type: :i64, required: :default, default: 12345},
+          %Field{line: 5, id: -4, name: :optional_list, type: {:list, :i32}, required: false}
         ]
       }
     end)
-    |> String.split("\n")
-    |> Enum.map(&String.slice(&1, 5..-5)) # get rid of the terminal chars
 
     [:name, :count, :long_thing, :optional_list]
-    |> Enum.each(fn(field_name) ->
-
-      warning = "Warning: id not set for field 'Optionals.#{field_name}'."
-      assert warning in warnings
+    |> Enum.each(fn name ->
+      assert warnings =~ ~s("#{name}" is missing an explicit field identifier)
     end)
   end
 
@@ -452,7 +443,7 @@ defmodule Thrift.Parser.ParserTest do
       capture_io fn ->
         """
         struct BadFields {
-          required i32 first,
+          1: required i32 first,
           1: optional i64 other
         }
         """ |> parse
@@ -506,7 +497,7 @@ defmodule Thrift.Parser.ParserTest do
       assert_raise RuntimeError, fn ->
       """
         union Highlander {
-          i32 connery,
+          1: i32 connery,
           1: i64 lambert
         }
       """
@@ -625,8 +616,8 @@ defmodule Thrift.Parser.ParserTest do
         name: :update,
         params: [
           %Field{line: 13, id: 1, name: :user_id, type: :i64},
-          %Field{line: 13, id: 2, name: :field, type: :string},
-          %Field{line: 13, id: 3, name: :value, type: :string}
+          %Field{line: 13, id: -1, name: :field, type: :string},
+          %Field{line: 13, id: -2, name: :value, type: :string}
         ]
       }
       assert get_users == %Function{

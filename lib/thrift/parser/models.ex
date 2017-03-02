@@ -132,7 +132,7 @@ defmodule Thrift.Parser.Models do
     # Apache Thrift, but we support them for greater compatibility.
     defp assign_missing_ids(fields, auto_index \\ -1)
     defp assign_missing_ids([%Field{id: nil} = field | fields], auto_index) do
-      [%Field{field | id: auto_index} | assign_missing_ids(fields, auto_index-1)]
+      [%Field{field | id: auto_index} | assign_missing_ids(fields, auto_index - 1)]
     end
     defp assign_missing_ids([field | fields], auto_index) do
       [field | assign_missing_ids(fields, auto_index)]

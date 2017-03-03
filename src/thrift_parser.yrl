@@ -159,7 +159,7 @@ FieldList -> '$empty': [].
 FieldList -> Field FieldList: ['$1'|'$2'].
 
 Field -> FieldIdentifier FieldRequired FieldType ident FieldDefault Separator:
-    warn_field_identifier('$1', unwrap('$4'), line('$4')),
+    validate_field(line('$4'), unwrap('$4'), '$1'),
     build_model('Field', line('$4'), ['$1', '$2', '$3', unwrap('$4'), '$5']).
 
 FieldIdentifier -> int ':': unwrap('$1').
@@ -223,6 +223,6 @@ unwrap({V, _}) when is_atom(V) -> V;
 unwrap({_,_,V}) -> V.
 
 % Warn when the field identifier isn't explicit.
-warn_field_identifier(nil, Name, Line) ->
+validate_field(Line, Name, nil) ->
     io:format('~p: ~p is missing an explicit field identifier~n', [Line, Name]);
-warn_field_identifier(_, _, _) -> nil.
+validate_field(_, _, _) -> ok.

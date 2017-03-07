@@ -86,6 +86,7 @@ defmodule Thrift.Parser do
   #   - convert an atom to a binary and remove the "Elixir." we get from atoms
   #      like `Foo`
   #   - make sure values are valid module names (CamelCase)
+  defp namespace_string(nil), do: nil
   defp namespace_string(b) when is_binary(b), do: Macro.camelize(b)
   defp namespace_string(a) when is_atom(a) do
     a

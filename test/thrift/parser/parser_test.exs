@@ -678,6 +678,9 @@ defmodule Thrift.Parser.ParserTest do
     path = Path.join(@test_file_dir, "get_namespaced.thrift")
     File.write!(path, contents)
 
+    result = parse_file(path, namespace: nil)
+    assert nil == result.ns_mappings.get_namespaced
+
     result = parse_file(path, namespace: "WithNamespace")
     assert "WithNamespace" == result.ns_mappings.get_namespaced.path
 

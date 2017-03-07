@@ -102,7 +102,12 @@ defmodule Thrift.Parser.FileGroup do
     end)
     |> Map.new
 
-    resolutions = Map.merge(file_group.resolutions, to_update)
+    # Merge the non-qualified names into the resolution map. We always replace
+    # existing entries with the same key. This produces a predictable result
+    # but is wrong in the sense that it doesn't implement the expected scoping
+    # rules. For example, this still allows a non-qualified name to "leak"
+    # from one included file into another. TODO: revisit resolution scoping
+    resolutions = Map.merge(file_group.resolutions, to_update, fn _k, _v1, v2 -> v2 end)
 
     default_namespace = if file_group.opts[:namespace] do
       %Namespace{:name => :elixir, :path => file_group.opts[:namespace]}

@@ -192,4 +192,33 @@ defmodule ResolverTest do
       assert %TEnum{} = FileGroup.resolve(file_group, :"enums.JobStatus")
     end
   end
+
+  test "it should be able resolve qualified and non-qualified names" do
+    with_thrift_files([
+      "included.thrift": """
+      enum SortType {
+        DESC = 100,
+        ASC = 110
+      }
+      """,
+      "local.thrift": """
+      include "included.thrift"
+      enum SortType {
+        DESC,
+        ASC
+      }
+
+      const SortType SORT1 = SortType.ASC;
+      const included.SortType SORT2 = included.SortType.ASC;
+      """, as: :file_group, parse: "local.thrift"]) do
+
+      sort1 = FileGroup.resolve(file_group, :"local.SORT1")
+      assert %TEnum{name: :"local.SortType"} = FileGroup.resolve(file_group, sort1.type)
+      assert 2 == FileGroup.resolve(file_group, sort1.value)
+
+      sort2 = FileGroup.resolve(file_group, :"local.SORT2")
+      assert %TEnum{name: :"included.SortType"} = FileGroup.resolve(file_group, sort2.type)
+      assert 110 == FileGroup.resolve(file_group, sort2.value)
+    end
+  end
 end

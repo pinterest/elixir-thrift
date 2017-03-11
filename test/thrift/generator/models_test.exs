@@ -165,7 +165,7 @@ defmodule Thrift.Generator.ModelsTest do
   include "shared.thrift"
 
   struct StructWithIncludedNum {
-    1: optional MyInteger num = 5;
+    1: optional shared.MyInteger num = 5;
   }
   """
 
@@ -227,8 +227,8 @@ defmodule Thrift.Generator.ModelsTest do
   include "empty_container.thrift"
   include "nonempty_container.thrift"
 
-  const Cargo ImportantCargo = {"bad_approximations": {1: "zero"}}
-  const Goth TimmyDoesntUnderstandGoth = {"empty_like_my_soul": [1, 2, 3]}
+  const nonempty_container.Cargo ImportantCargo = {"bad_approximations": {1: "zero"}}
+  const empty_container.Goth TimmyDoesntUnderstandGoth = {"empty_like_my_soul": [1, 2, 3]}
   """
 
   thrift_test "constants" do

@@ -370,7 +370,8 @@ defmodule Thrift.Parser.Models do
       includes: [Include.t],
       constants: %{String.t => Literals.t},
       exceptions: %{String.t => Exception.t},
-      typedefs: %{String.t => Types.t}
+      typedefs: %{String.t => Types.t},
+      file_group: FileGroup.t
     }
     defstruct absolute_path: nil,
     module: nil,
@@ -383,7 +384,8 @@ defmodule Thrift.Parser.Models do
     includes: [],
     constants: %{},
     exceptions: %{},
-    typedefs: %{}
+    typedefs: %{},
+    file_group: nil
 
     alias Thrift.Parser.Models.{Constant,
                                 Exception,

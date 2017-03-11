@@ -212,6 +212,8 @@ defmodule ResolverTest do
       const included.SortType SORT2 = included.SortType.ASC;
       """, as: :file_group, parse: "local.thrift"]) do
 
+      file_group = FileGroup.set_current_module(file_group, :local)
+
       sort1 = FileGroup.resolve(file_group, :"local.SORT1")
       assert %TEnum{name: :"local.SortType"} = FileGroup.resolve(file_group, sort1.type)
       assert 2 == FileGroup.resolve(file_group, sort1.value)
@@ -219,6 +221,9 @@ defmodule ResolverTest do
       sort2 = FileGroup.resolve(file_group, :"local.SORT2")
       assert %TEnum{name: :"included.SortType"} = FileGroup.resolve(file_group, sort2.type)
       assert 110 == FileGroup.resolve(file_group, sort2.value)
+
+      local_sort = FileGroup.resolve(file_group, :SortType)
+      assert %TEnum{name: :"local.SortType", values: [DESC: 1, ASC: 2], line: 2} == local_sort
     end
   end
 end

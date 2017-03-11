@@ -71,9 +71,14 @@ defmodule Thrift.Parser do
     |> FileRef.new
     |> ParsedFile.new
 
+    mod_name = file_path
+    |> Path.basename
+    |> Path.rootname
+    |> String.to_atom
+
     FileGroup.new(file_path, normalized_opts)
     |> FileGroup.add(parsed_file)
-    |> FileGroup.update_resolutions
+    |> FileGroup.set_current_module(mod_name)
   end
 
   # normalize various type permutations that we could get options as

@@ -183,15 +183,15 @@ defmodule Thrift.Generator.Utils do
   """
   @spec quote_value(term, term, Schema.t) :: Macro.t
   def quote_value(%ValueRef{} = ref, type, schema) do
-    value = FileGroup.resolve(schema.file_group, ref)
+    value = resolve!(schema.file_group, ref)
     quote_value(value, type, schema)
   end
   def quote_value(value, %TypeRef{} = ref, schema) do
-    type = FileGroup.resolve(schema.file_group, ref)
+    type = resolve!(schema.file_group, ref)
     quote_value(value, type, schema)
   end
   def quote_value(%Constant{type: %TypeRef{} = ref} = constant, type, schema) do
-    constant = %Constant{constant | type: FileGroup.resolve(schema.file_group, ref)}
+    constant = %Constant{constant | type: resolve!(schema.file_group, ref)}
     quote_value(constant, type, schema)
   end
   def quote_value(%Constant{type: type, value: value}, type, schema) do
@@ -261,5 +261,21 @@ defmodule Thrift.Generator.Utils do
   end
   def quote_value(list, {:list, type}, schema) when is_list(list) do
     Enum.map(list, &quote_value(&1, type, schema))
+  end
+
+  defp resolve!(file_group, ref) do
+    case FileGroup.resolve(file_group, ref) do
+      nil ->
+        resolution_failed(ref)
+      other ->
+        other
+    end
+  end
+
+  defp resolution_failed(%TypeRef{} = ref) do
+    raise "Fatal error: Could not find type: #{ref.referenced_type}"
+  end
+  defp resolution_failed(%ValueRef{} = ref) do
+    raise "Fatal error: Could not find value: #{ref.referenced_value}"
   end
 end

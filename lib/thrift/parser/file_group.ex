@@ -87,27 +87,28 @@ defmodule Thrift.Parser.FileGroup do
     |> Enum.find(path, &File.exists?/1)
   end
 
-  @spec update_resolutions(t) :: t
-  def update_resolutions(file_group) do
+  @spec set_current_module(t, atom) :: t
+  def set_current_module(file_group, module) do
     # since in a file, we can refer to things defined in that file in a non-qualified
     # way, we add unqualified names to the resolutions map.
-    to_update = file_group.resolutions
-    |> Enum.map(fn {name, v} ->
-      case String.split(Atom.to_string(name), ".") do
-        [_module, enum_name, value_name] ->
-          {:"#{enum_name}.#{value_name}", v}
-        [_initial_module, rest] ->
-          {:"#{rest}", v}
-      end
+
+    current_module = Atom.to_string(module)
+    resolutions = file_group.resolutions
+    |> Enum.flat_map(
+      fn {name, v} = original_mapping ->
+
+        case String.split(Atom.to_string(name), ".") do
+          [^current_module, enum_name, value_name] ->
+            [{:"#{enum_name}.#{value_name}", v}, original_mapping]
+
+          [^current_module, rest] ->
+            [{:"#{rest}", v}, original_mapping]
+
+          _ ->
+            [{name, v}, original_mapping]
+        end
     end)
     |> Map.new
-
-    # Merge the non-qualified names into the resolution map. We always replace
-    # existing entries with the same key. This produces a predictable result
-    # but is wrong in the sense that it doesn't implement the expected scoping
-    # rules. For example, this still allows a non-qualified name to "leak"
-    # from one included file into another. TODO: revisit resolution scoping
-    resolutions = Map.merge(file_group.resolutions, to_update, fn _k, _v1, v2 -> v2 end)
 
     default_namespace = if file_group.opts[:namespace] do
       %Namespace{:name => :elixir, :path => file_group.opts[:namespace]}

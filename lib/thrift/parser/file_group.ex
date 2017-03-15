@@ -43,6 +43,7 @@ defmodule Thrift.Parser.FileGroup do
             parsed_files: %{},
             schemas: %{},
             resolutions: %{},
+            immutable_resolutions: %{},
             ns_mappings: %{},
             opts: Keyword.new()
 
@@ -61,6 +62,7 @@ defmodule Thrift.Parser.FileGroup do
     %__MODULE__{file_group |
                 parsed_files: new_parsed_files,
                 schemas: new_schemas,
+                immutable_resolutions: resolutions,
                 resolutions: resolutions}
   end
 
@@ -93,11 +95,11 @@ defmodule Thrift.Parser.FileGroup do
     # way, we add unqualified names to the resolutions map.
 
     current_module = Atom.to_string(module)
-    resolutions = file_group.resolutions
+    resolutions = file_group.immutable_resolutions
     |> Enum.flat_map(
       fn {name, v} = original_mapping ->
-
         case String.split(Atom.to_string(name), ".") do
+
           [^current_module, enum_name, value_name] ->
             [{:"#{enum_name}.#{value_name}", v}, original_mapping]
 
@@ -105,7 +107,7 @@ defmodule Thrift.Parser.FileGroup do
             [{:"#{rest}", v}, original_mapping]
 
           _ ->
-            [{name, v}, original_mapping]
+            [original_mapping]
         end
     end)
     |> Map.new

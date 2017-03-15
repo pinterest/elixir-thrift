@@ -288,23 +288,18 @@ defmodule Thrift.Parser.ParserTest do
     }
     """
 
-    warnings = capture_io(fn ->
-      exc = parse(program, [:exceptions, :ApplicationException])
+    exc = parse(program, [:exceptions, :ApplicationException])
 
-      assert exc == %Exception{
-        line: 1,
-        name: :ApplicationException,
-        fields: [
-          %Field{line: 2, id: 1, name: :message, type: :string},
-          %Field{line: 3, id: 2, name: :count, type: :i32, required: true},
-          %Field{line: 4, id: 3, name: :reason, type: :string, required: false},
-          %Field{line: 5, id: -1, name: :other, type: :string, required: false},
-          %Field{line: 6, id: -2, name: :fixed, type: :string, required: false, default: "foo"}
-        ]}
-    end)
-
-    assert warnings =~ ~s("other" is missing an explicit field identifier)
-    assert warnings =~ ~s("fixed" is missing an explicit field identifier)
+    assert exc == %Exception{
+      line: 1,
+      name: :ApplicationException,
+      fields: [
+        %Field{line: 2, id: 1, name: :message, type: :string},
+        %Field{line: 3, id: 2, name: :count, type: :i32, required: true},
+        %Field{line: 4, id: 3, name: :reason, type: :string, required: false},
+        %Field{line: 5, id: -1, name: :other, type: :string, required: false},
+        %Field{line: 6, id: -2, name: :fixed, type: :string, required: false, default: "foo"}
+      ]}
   end
 
   test "an exception with duplicate ids" do
@@ -397,25 +392,18 @@ defmodule Thrift.Parser.ParserTest do
     }
     """
 
-    warnings = capture_io(fn ->
-      s = parse(struct_def, [:structs, :Optionals])
+    s = parse(struct_def, [:structs, :Optionals])
 
-      assert s == %Struct{
-        line: 1,
-        name: :Optionals,
-        fields: [
-          %Field{line: 2, id: -1, name: :name, type: :string, required: :default},
-          %Field{line: 3, id: -2, name: :count, type: :i32, required: :default},
-          %Field{line: 4, id: -3, name: :long_thing, type: :i64, required: :default, default: 12345},
-          %Field{line: 5, id: -4, name: :optional_list, type: {:list, :i32}, required: false}
-        ]
-      }
-    end)
-
-    [:name, :count, :long_thing, :optional_list]
-    |> Enum.each(fn name ->
-      assert warnings =~ ~s("#{name}" is missing an explicit field identifier)
-    end)
+    assert s == %Struct{
+      line: 1,
+      name: :Optionals,
+      fields: [
+        %Field{line: 2, id: -1, name: :name, type: :string, required: :default},
+        %Field{line: 3, id: -2, name: :count, type: :i32, required: :default},
+        %Field{line: 4, id: -3, name: :long_thing, type: :i64, required: :default, default: 12345},
+        %Field{line: 5, id: -4, name: :optional_list, type: {:list, :i32}, required: false}
+      ]
+    }
   end
 
   test "parsing an empty map default value" do

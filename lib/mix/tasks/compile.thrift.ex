@@ -41,7 +41,9 @@ defmodule Mix.Tasks.Compile.Thrift do
     config      = Keyword.get(Mix.Project.config, :thrift, [])
     input_files = Keyword.get(config, :files, [])
     output_path = Keyword.get(config, :output_path, "lib")
-    parser_opts = Keyword.take(config, [:include_paths, :namespace])
+    parser_opts =
+      Keyword.take(config, [:include_paths, :namespace])
+      |> Keyword.put_new(:namespace, "Thrift.Generated")
 
     mappings =
       input_files

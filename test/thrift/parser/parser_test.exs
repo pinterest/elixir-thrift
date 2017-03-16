@@ -670,12 +670,9 @@ defmodule Thrift.Parser.ParserTest do
       end
     end
 
-    test "is the default (nil)", context do
-      assert "Thrift.Generated" == parse_namespace(context, nil)
-    end
-
-    test "is explicitly empty", context do
+    test "is empty", context do
       assert nil == parse_namespace(context, "")
+      assert nil == parse_namespace(context, nil)
     end
 
     test "is a string", context do

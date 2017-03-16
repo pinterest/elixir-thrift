@@ -29,7 +29,6 @@ defmodule Mix.Tasks.Thrift.Generate do
       search for included files. Defaults to `[]`.
     * `:namespace` - default namespace for generated modules, which will
       be used when Thrift files don't specify their own `elixir` namespace.
-      Defaults to `"Thrift.Generated"`.
     * `:output_path` - output directory into which the generated Elixir
       source files will be generated. Defaults to `"lib"`.
   """

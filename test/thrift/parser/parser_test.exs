@@ -656,29 +656,33 @@ defmodule Thrift.Parser.ParserTest do
     end
   end
 
-  test "namespace option can be a string or atom" do
-    contents = """
-    struct GetNamespaced {
-      1: i32 id
-    }
-    """
+  describe "namespace option" do
+    setup do
+      path = Path.join(@test_file_dir, "namespace.thrift")
+      File.write!(path, "struct Struct { 1: i32 id }")
+      {:ok, [path: path]}
+    end
 
-    path = Path.join(@test_file_dir, "get_namespaced.thrift")
-    File.write!(path, contents)
+    defp parse_namespace(context, namespace) do
+      result = parse_file(context[:path], namespace: namespace)
+      if is_map(result.ns_mappings.namespace) do
+        result.ns_mappings.namespace.path
+      end
+    end
 
-    result = parse_file(path, namespace: nil)
-    assert nil == result.ns_mappings.get_namespaced
+    test "is empty", context do
+      assert nil == parse_namespace(context, "")
+      assert nil == parse_namespace(context, nil)
+    end
 
-    result = parse_file(path, namespace: "WithNamespace")
-    assert "WithNamespace" == result.ns_mappings.get_namespaced.path
+    test "is a string", context do
+      assert "WithNamespace" == parse_namespace(context, "WithNamespace")
+      assert "WithNamespace" == parse_namespace(context, "with_namespace")
+    end
 
-    result = parse_file(path, namespace: WithNamespace)
-    assert "WithNamespace" == result.ns_mappings.get_namespaced.path
-
-    result = parse_file(path, namespace: "with_namespace")
-    assert "WithNamespace" == result.ns_mappings.get_namespaced.path
-
-    result = parse_file(path, namespace: :with_namespace)
-    assert "WithNamespace" == result.ns_mappings.get_namespaced.path
+    test "is an atom", context do
+      assert "WithNamespace" == parse_namespace(context, :WithNamespace)
+      assert "WithNamespace" == parse_namespace(context, :with_namespace)
+    end
   end
 end

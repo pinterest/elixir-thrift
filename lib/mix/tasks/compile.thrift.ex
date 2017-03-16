@@ -27,6 +27,9 @@ defmodule Mix.Tasks.Compile.Thrift do
       search for included files
     * `:namespace` - default namespace for generated modules, which will
       be used when a Thrift file doesn't define its own `elixir` namespace.
+      This value may be given as a string or atom. `nil` indicates that the
+      files should be generated in the `:output_path` root. Defaults to
+      `"Thrift.Generated"`.
     * `:output_path` - output directory into which the generated Elixir
       source files will be generated. Defaults to `"lib"`.
   """
@@ -40,7 +43,10 @@ defmodule Mix.Tasks.Compile.Thrift do
     config      = Keyword.get(Mix.Project.config, :thrift, [])
     input_files = Keyword.get(config, :files, [])
     output_path = Keyword.get(config, :output_path, "lib")
-    parser_opts = Keyword.take(config, [:include_paths, :namespace])
+    parser_opts =
+      config
+      |> Keyword.take([:include_paths, :namespace])
+      |> Keyword.put_new(:namespace, "Thrift.Generated")
 
     mappings =
       input_files

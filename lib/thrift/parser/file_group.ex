@@ -175,12 +175,27 @@ defmodule Thrift.Parser.FileGroup do
   end
 
   def dest_module(file_group, Constant) do
-    # for constants the name of the module is
-    #   <Namespace>.<filename>
-    initial_file = file_group.initial_file
-    base = Path.basename(initial_file, Path.extname(initial_file))
-    name = String.to_atom(base <> "." <> Macro.camelize(base))
-    dest_module(file_group, name)
+    # Default to naming the constants module after the namespaced, camelized
+    # basename of its file. For foo.thrift, this would be `foo.Foo`.
+    base = Path.basename(file_group.initial_file, ".thrift")
+    default = base <> "." <> Macro.camelize(base)
+
+    # However, if we're already going to generate an equivalent module name
+    # (ignoring case), use that instead to avoid generating two modules with
+    # the same spellings but different cases.
+    schema = file_group.schemas[base]
+    symbols = List.flatten([
+      Enum.map(schema.enums, fn {_, s} -> s.name end),
+      Enum.map(schema.exceptions, fn {_, s} -> s.name end),
+      Enum.map(schema.structs, fn {_, s} -> s.name end),
+      Enum.map(schema.services, fn {_, s} -> s.name end),
+      Enum.map(schema.unions, fn {_, s} -> s.name end)
+    ]) |> Enum.map(&Atom.to_string/1)
+
+    target = String.downcase(default)
+    name = Enum.find(symbols, default, fn s -> String.downcase(s) == target end)
+
+    dest_module(file_group, String.to_atom(name))
   end
 
   def dest_module(file_group, name) do

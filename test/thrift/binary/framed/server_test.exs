@@ -72,7 +72,7 @@ defmodule Servers.Binary.Framed.IntegrationTest do
 
   alias Servers.Binary.Framed.IntegrationTest.ServerTest.Binary.Framed.Client
   alias Servers.Binary.Framed.IntegrationTest.ServerTest.Binary.Framed.Server
-  alias Thrift.TApplicationException, as: TAE
+  alias Thrift.TApplicationException
 
   def stop_server(server_pid) do
     try do
@@ -137,8 +137,10 @@ defmodule Servers.Binary.Framed.IntegrationTest do
   end
 
   thrift_test "it can handle unexpected exceptions", ctx do
-    assert {:error, {:exception, %TAE{message: msg, type: :internal_error}}} = Client.server_exception(ctx.client)
-    assert String.contains?(msg, "Server error: ** (RuntimeError) This wasn't supposed to happen")
+    {:error, {:exception, %TApplicationException{} = exception}} = Client.server_exception(ctx.client)
+
+    assert :internal_error == exception.type
+    assert exception.message =~ "Server error: ** (RuntimeError) This wasn't supposed to happen"
   end
 
   thrift_test "it can return nothing", ctx do

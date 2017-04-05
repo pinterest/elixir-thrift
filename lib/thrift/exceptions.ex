@@ -1,38 +1,47 @@
 defmodule Thrift.TApplicationException do
-  defexception message: nil, type: nil
+  @moduledoc """
+  Application-level exception
+  """
 
-  alias Thrift.Protocol
+  @enforce_keys [:message, :type]
+  defexception message: nil, type: :unknown
 
-  @exception_mappings %{
-    unknown_method: 1,
-    invalid_message_type: 2,
-    wrong_method_name: 3,
-    bad_sequence_id: 4,
-    missing_result: 5,
-    internal_error: 6,
-    protocol_error: 7,
-    invalid_transform: 8,
-    invalid_protocol: 9,
-    unsupported_client_type: 10
-  }
+  # This list represents the set of well-known TApplicationException types.
+  # We primarily use their atom names, but we also need their standardized
+  # integer values for representing these values in their serialized form.
+  @exception_types [
+    unknown:                  0,
+    unknown_method:           1,
+    invalid_message_type:     2,
+    wrong_method_name:        3,
+    bad_sequence_id:          4,
+    missing_result:           5,
+    internal_error:           6,
+    protocol_error:           7,
+    invalid_transform:        8,
+    invalid_protocol:         9,
+    unsupported_client_type:  10,
+    loadshedding:             11,
+    timeout:                  12,
+    injected_failure:         13,
+  ]
 
-  for {atom_name, type_id} <- @exception_mappings do
-    def exception_type(unquote(type_id)), do: unquote(atom_name)
+  def exception(args) when is_list(args) do
+    %__MODULE__{message: args[:message], type: normalize_type(args[:type])}
   end
-  def exception_type(_), do: :unknown
 
-  for {atom_name, type_id} <- @exception_mappings do
-    def exception_type_to_int(unquote(atom_name)), do: unquote(type_id)
-  end
+  @doc """
+  Converts an exception type to its integer identifier.
+  """
+  @spec type_id(atom) :: non_neg_integer
+  def type_id(type)
 
-  def exception_type_to_int(_), do: 0
-
-  def serialize(exception, :binary) do
-    Protocol.Binary.serialize(:application_exception, exception)
+  for {type, id} <- @exception_types do
+    def type_id(unquote(type)), do: unquote(id)
+    defp normalize_type(unquote(id)), do: unquote(type)
+    defp normalize_type(unquote(type)), do: unquote(type)
   end
-  def deserialize(binary) do
-    Protocol.Binary.deserialize(:application_exception, binary)
-  end
+  defp normalize_type(type) when is_integer(type), do: :unknown
 end
 
 defmodule Thrift.Union.TooManyFieldsSetException do

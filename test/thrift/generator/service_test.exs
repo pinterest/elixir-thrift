@@ -221,7 +221,9 @@ defmodule Thrift.Generator.ServiceTest do
     ServerSpy.set_reply(:this_isnt_a_valid_reply)
 
     {:error, {:exception, ex}} = Client.update_username(ctx.client, 1234, "user")
-    assert %TApplicationException{message: "An unknown handler error occurred.", type: :unknown} == ex
+    assert %TApplicationException{
+      message: "An unknown handler error occurred.",
+      type: :unknown} = ex
   end
 
   thrift_test "bang functions return only the value", ctx do

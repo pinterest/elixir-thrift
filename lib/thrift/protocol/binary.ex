@@ -78,14 +78,11 @@ defmodule Thrift.Protocol.Binary do
     0::size(5), from_message_type(message_type)::size(3),
     byte_size(name)::32-signed, name::binary, sequence_id::32-signed>>
   end
-  def serialize(:application_exception, %TApplicationException{type: t} = exc) when is_atom(t) do
-    serialize(:application_exception, %TApplicationException{exc | type: TApplicationException.exception_type_to_int(t)})
-  end
   def serialize(:application_exception, %TApplicationException{message: message, type: type}) do
+    type_id = TApplicationException.type_id(type)
     <<Type.string::size(8), 1::16-signed, byte_size(message)::size(32), message::binary,
-      Type.i32::size(8), 2::16-signed, type::32-signed, @stop>>
+      Type.i32::size(8), 2::16-signed, type_id::32-signed, @stop>>
   end
-
 
   @doc """
   Deserializes a Thrift-encoded binary.
@@ -111,7 +108,7 @@ defmodule Thrift.Protocol.Binary do
   end
 
   def deserialize(:application_exception, binary) when is_binary(binary) do
-    do_read_application_exception(binary, %TApplicationException{})
+    do_read_application_exception(binary, TApplicationException.exception(type: :unknown))
   end
 
   defp do_read_application_exception(
@@ -121,7 +118,8 @@ defmodule Thrift.Protocol.Binary do
         message::binary-size(message_size),
         rest::binary>>, accum) do
     # read the message string
-    do_read_application_exception(rest, Map.put(accum, :message, message))
+    exception = TApplicationException.exception(type: accum.type, message: message)
+    do_read_application_exception(rest, exception)
   end
   defp do_read_application_exception(
         <<Type.i32::size(8),
@@ -129,17 +127,17 @@ defmodule Thrift.Protocol.Binary do
         type::32-signed,
         rest::binary>>, accum) do
     # read the type
-    exception_type = TApplicationException.exception_type(type)
-    do_read_application_exception(rest, Map.put(accum, :type, exception_type))
+    exception = TApplicationException.exception(type: type, message: accum.message)
+    do_read_application_exception(rest, exception)
   end
   defp do_read_application_exception(<<@stop>>, accum) do
     # read the field stop and return
     accum
   end
   defp do_read_application_exception(error, _) do
-    message = "Could not decode TApplicationException, remaining was #{inspect error}"
-    %TApplicationException{message: message,
-                           type: TApplicationException.exception_type(7)}
+    TApplicationException.exception(
+      type: :protocol_error,
+      message: "Unable to decode exception (#{inspect error})")
   end
 
   @doc """

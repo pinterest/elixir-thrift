@@ -108,31 +108,21 @@ defmodule Thrift.Protocol.Binary do
   end
 
   def deserialize(:application_exception, binary) when is_binary(binary) do
-    do_read_application_exception(binary, TApplicationException.exception(type: :unknown))
+    do_read_application_exception(binary, Keyword.new())
   end
 
-  defp do_read_application_exception(
-        <<Type.string::size(8),
-        1::16-unsigned,
-        message_size::32-signed,
-        message::binary-size(message_size),
-        rest::binary>>, accum) do
-    # read the message string
-    exception = TApplicationException.exception(type: accum.type, message: message)
-    do_read_application_exception(rest, exception)
+  defp do_read_application_exception(<<Type.string::size(8), 1::16-unsigned,
+                                       message_size::32-signed,
+                                       message::binary-size(message_size),
+                                       rest::binary>>, opts) do
+    do_read_application_exception(rest, Keyword.put(opts, :message, message))
   end
-  defp do_read_application_exception(
-        <<Type.i32::size(8),
-        2::16-unsigned,
-        type::32-signed,
-        rest::binary>>, accum) do
-    # read the type
-    exception = TApplicationException.exception(type: type, message: accum.message)
-    do_read_application_exception(rest, exception)
+  defp do_read_application_exception(<<Type.i32::size(8), 2::16-unsigned,
+                                       type::32-signed, rest::binary>>, opts) do
+    do_read_application_exception(rest, Keyword.put(opts, :type, type))
   end
-  defp do_read_application_exception(<<@stop>>, accum) do
-    # read the field stop and return
-    accum
+  defp do_read_application_exception(<<@stop>>, opts) do
+    TApplicationException.exception(opts)
   end
   defp do_read_application_exception(error, _) do
     TApplicationException.exception(

@@ -80,7 +80,7 @@ defmodule ThriftTestCase do
     not Enum.any?(modules, &(:lists.prefix(&1, module) and &1 != module))
   end
 
-  def generate_files(files, namespace, dir, opts) do
+  defp generate_files(files, namespace, dir, opts) do
     generate_elixir_files(files, namespace, dir)
 
     if opts[:gen_erl] do

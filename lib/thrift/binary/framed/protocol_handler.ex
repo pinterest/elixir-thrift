@@ -36,17 +36,12 @@ defmodule Thrift.Binary.Framed.ProtocolHandler do
   end
 
   defp do_thrift_call({transport, socket, server_module, handler_module, recv_timeout} = args) do
-    thrift_response  = with({:ok, message}      <- transport.recv(socket, 0, recv_timeout),
-                            parsed_response     <- Protocol.Binary.deserialize(:message_begin, message)) do
-
-      handle_thrift_message(parsed_response, server_module, handler_module)
-    end
-
-    case thrift_response do
-      {:ok, :reply, thrift_data} ->
-        :ok = transport.send(socket, thrift_data)
-        do_thrift_call(args)
-
+    with {:ok, message} <- transport.recv(socket, 0, recv_timeout),
+         parsed <- Protocol.Binary.deserialize(:message_begin, message),
+         {:ok, :reply, data} <- handle_thrift_message(parsed, server_module, handler_module),
+         :ok <- transport.send(socket, data) do
+      do_thrift_call(args)
+    else
       {:error, {:server_error, thrift_data}} ->
         :ok = transport.send(socket, thrift_data)
         exit({:shutdown, :server_error})

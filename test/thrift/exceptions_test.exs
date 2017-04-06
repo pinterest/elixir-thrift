@@ -37,6 +37,12 @@ defmodule Thrift.ExceptionsTest do
       assert Exception.message(exception) == "Message Text"
     end
 
+    test "message defaults to the :type string" do
+      exception = TApplicationException.exception(type: :invalid_protocol)
+      assert exception.message == "invalid_protocol"
+      assert Exception.message(exception) == "invalid_protocol"
+    end
+
     test "can convert valid atom type values to integer type values" do
       assert 9 == TApplicationException.type_id(:invalid_protocol)
       assert_raise FunctionClauseError, fn ->

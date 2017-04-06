@@ -4,7 +4,7 @@ defmodule Thrift.TApplicationException do
   """
 
   @enforce_keys [:message, :type]
-  defexception message: "", type: :unknown
+  defexception message: "unknown", type: :unknown
 
   # This list represents the set of well-known TApplicationException types.
   # We primarily use their atom names, but we also need their standardized
@@ -28,7 +28,8 @@ defmodule Thrift.TApplicationException do
 
   def exception(args) when is_list(args) do
     type = Keyword.fetch!(args, :type) |> normalize_type
-    %__MODULE__{message: args[:message] || "", type: type}
+    message = args[:message] || Atom.to_string(type)
+    %__MODULE__{message: message, type: type}
   end
 
   @doc """

@@ -70,8 +70,8 @@ defmodule ThriftTestCase do
       nil ->
         []
       modules ->
-        modules = Enum.map(modules, fn({module, _}) -> Module.split(module) end)
-        Enum.filter_map(modules, &alias?(&1, modules), &Module.concat/1)
+        parts = Enum.map(modules, fn({module, _}) -> Module.split(module) end)
+        Enum.filter_map(parts, &alias?(&1, parts), &Module.concat/1)
       end
   end
 

@@ -76,7 +76,7 @@ defmodule ThriftTestCase do
   end
 
   defp alias?(module, modules) do
-    # alias when module when parent in namespace does not exist
+    # alias when parent module in namespace does not exist
     not Enum.any?(modules, &(:lists.prefix(&1, module) and &1 != module))
   end
 

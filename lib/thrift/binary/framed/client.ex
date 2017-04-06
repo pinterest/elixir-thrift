@@ -273,21 +273,21 @@ defmodule Thrift.Binary.Framed.Client do
     {:error, {:exception, exception}}
   end
   defp handle_message({:ok, {message_type, seq_id, rpc_name, _}}, seq_id, rpc_name) do
-    exception = %TApplicationException{
-      message: "The server replied with invalid message type #{message_type}",
-      type: :invalid_message_type}
+    exception = TApplicationException.exception(
+      type: :invalid_message_type,
+      message: "The server replied with invalid message type (#{message_type})")
     {:error, {:exception, exception}}
   end
   defp handle_message({:ok, {_, seq_id, mismatched_rpc_name, _}}, seq_id, rpc_name) do
-    exception = %TApplicationException{
-      message: "The server replied to #{mismatched_rpc_name}, but we sent #{rpc_name}",
-      type: :wrong_method_name}
+    exception = TApplicationException.exception(
+      type: :wrong_method_name,
+      message: "The server replied to #{mismatched_rpc_name}, but we sent #{rpc_name}")
     {:error, {:exception, exception}}
   end
   defp handle_message({:ok, {_, mismatched_seq_id, _, _}}, seq_id, _) do
-    exception = %TApplicationException{
-      message: "Invalid sequence id. The client sent #{seq_id}, but the server replied with #{mismatched_seq_id}",
-      type: :bad_sequence_id}
+    exception = TApplicationException.exception(
+      type: :bad_sequence_id,
+      message: "Invalid sequence id. The client sent #{seq_id}, but the server replied with #{mismatched_seq_id}")
     {:error, {:exception, exception}}
   end
   defp handle_message({:error, _} = err, _, _) do

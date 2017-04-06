@@ -67,10 +67,9 @@ defmodule Thrift.Generator.Binary.Framed.Server do
             unquote(build_handler_call(file_group, function, response_module))
 
           {_, extra} ->
-            raise Thrift.TApplicationException, [
-              message: "Could not decode #{inspect extra}",
-              type: :protocol_error
-            ]
+            raise Thrift.TApplicationException,
+              type: :protocol_error,
+              message: "Could not decode #{inspect extra}"
         end
       end
     end
@@ -112,9 +111,10 @@ defmodule Thrift.Generator.Binary.Framed.Server do
       catch kind, reason ->
         formatted_exception = Exception.format(kind, reason, System.stacktrace)
         Logger.error("Exception not defined in thrift spec was thrown: #{formatted_exception}")
-        {:server_error, Thrift.TApplicationException.exception(
-          message: "Server error: #{formatted_exception}",
-          type: :internal_error)}
+        error = Thrift.TApplicationException.exception(
+          type: :internal_error,
+          message: "Server error: #{formatted_exception}")
+        {:server_error, error}
       end
     end
   end

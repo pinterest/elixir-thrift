@@ -68,7 +68,7 @@ defmodule Thrift.Binary.Framed.ProtocolHandler do
         message = Protocol.Binary.serialize(:message_begin, {:exception, sequence_id, name})
         serialized_exception = Protocol.Binary.serialize(:application_exception, exc)
 
-        {:error, {:server_error, [message |  serialized_exception]}}
+        {:error, {:server_error, [message | serialized_exception]}}
 
       :noreply ->
         message = Protocol.Binary.serialize(:message_begin, {:reply, sequence_id, name})

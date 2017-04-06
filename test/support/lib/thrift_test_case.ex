@@ -163,7 +163,7 @@ defmodule ThriftTestCase do
   end
 
   defp loaded?(source_file \\ nil, mod) do
-    source_file = source_file && String.to_char_list(source_file)
+    source_file = source_file && String.to_charlist(source_file)
     case :code.is_loaded(mod) do
       {:file, ^source_file} ->
         true
@@ -175,7 +175,7 @@ defmodule ThriftTestCase do
   end
 
   defp erlang_compile(source_file) do
-    source_file = String.to_char_list(source_file)
+    source_file = String.to_charlist(source_file)
     {:ok, mod_name, code} = :compile.file(source_file, [:binary])
 
     {:module, ^mod_name} = :code.load_binary(mod_name, source_file, code)

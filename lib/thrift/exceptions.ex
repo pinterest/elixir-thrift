@@ -27,7 +27,8 @@ defmodule Thrift.TApplicationException do
   ]
 
   def exception(args) when is_list(args) do
-    %__MODULE__{message: args[:message], type: normalize_type(args[:type])}
+    type = Keyword.fetch!(args, :type) |> normalize_type
+    %__MODULE__{message: args[:message], type: type}
   end
 
   @doc """

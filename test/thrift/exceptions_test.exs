@@ -26,7 +26,7 @@ defmodule Thrift.ExceptionsTest do
     end
 
     test "raises for missing atom type values" do
-      assert_raise FunctionClauseError, fn ->
+      assert_raise KeyError, fn ->
         TApplicationException.exception(Keyword.new())
       end
     end

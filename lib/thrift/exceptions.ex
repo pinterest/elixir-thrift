@@ -51,6 +51,7 @@ defmodule Thrift.Union.TooManyFieldsSetException do
   This exception occurs when a Union is serialized and more than one
   field is set.
   """
+  @enforce_keys [:message, :set_fields]
   defexception message: nil, set_fields: nil
 end
 
@@ -59,6 +60,7 @@ defmodule Thrift.FileParseException do
   This exception occurs when a thrift file fails to parse
   """
 
+  @enforce_keys [:message]
   defexception message: nil
 
   @doc false  # Exception callback, should not be called by end user
@@ -81,5 +83,6 @@ defmodule Thrift.FileParseException do
 end
 
 defmodule Thrift.InvalidValueException do
+  @enforce_keys [:message]
   defexception message: nil
 end

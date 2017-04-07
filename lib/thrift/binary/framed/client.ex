@@ -217,15 +217,11 @@ defmodule Thrift.Binary.Framed.Client do
     message = Binary.serialize(:message_begin, {:call, seq_id, rpc_name})
     timeout = Keyword.get(tcp_opts, :timeout, default_timeout)
 
-    rsp = with :ok <- :gen_tcp.send(sock, [message | serialized_args]) do
-      :gen_tcp.recv(sock, 0, timeout)
-    end
-
-    case rsp do
-      {:ok, message} ->
-        reply =  deserialize_message_reply(message, rpc_name, seq_id)
-        {:reply, reply, s}
-
+    with :ok <- :gen_tcp.send(sock, [message | serialized_args]),
+         {:ok, message} <- :gen_tcp.recv(sock, 0, timeout) do
+      reply = deserialize_message_reply(message, rpc_name, seq_id)
+      {:reply, reply, s}
+    else
       {:error, :timeout} = timeout ->
         {:reply, timeout, s}
 

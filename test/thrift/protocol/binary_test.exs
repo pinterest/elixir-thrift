@@ -1,6 +1,5 @@
 defmodule BinaryProtocolTest do
-  use ThriftTestCase, gen_erl: true
-  use ExUnit.Case, async: true
+  use ThriftTestCase, gen_erl: true, async: true
 
   alias Thrift.Protocol.Binary
 

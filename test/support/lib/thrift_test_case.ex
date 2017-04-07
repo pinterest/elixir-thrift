@@ -1,131 +1,134 @@
 defmodule ThriftTestCase do
   @project_root Path.expand("../../../", __DIR__)
 
-  defmacro __using__(opts \\ []) do
+  use ExUnit.CaseTemplate
+
+  using(opts) do
+    dir_prefix = Path.join([@project_root, "tmp", inspect(__MODULE__)])
     quote do
+      Module.register_attribute(__MODULE__, :thrift_test_opts, persist: true)
       @thrift_test_opts unquote(opts)
-      import unquote(__MODULE__)
+      Module.register_attribute(__MODULE__, :thrift_test_dir, persist: true)
+      @thrift_test_dir Path.join(unquote(dir_prefix), inspect(__MODULE__))
+      File.rm_rf!(@thrift_test_dir)
+      File.mkdir_p!(@thrift_test_dir)
+      import unquote(__MODULE__), only: [thrift_test: 2, thrift_test: 3]
       Module.register_attribute(__MODULE__, :thrift_file, accumulate: true)
-      Module.register_attribute(__MODULE__, :thrift_test, accumulate: true)
-      @before_compile unquote(__MODULE__)
-      use ExUnit.Case, async: true
+      Module.register_attribute(__MODULE__, :thrift_elixir_modules, accumulate: true)
+      Module.register_attribute(__MODULE__, :thrift_record_modules, accumulate: true)
     end
   end
 
-  defmacro __before_compile__(env) do
-    tag = Module.get_attribute(__CALLER__.module, :moduletag)
+  def implement?(module) do
+    tag = Module.get_attribute(module, :moduletag)
     |> Map.new(fn tag ->  {tag, true} end)
 
     config = ExUnit.configuration
     case ExUnit.Filters.eval(config[:include], config[:exclude], tag, []) do
       :ok ->
-        compile_and_build_erlang_helpers(__CALLER__, env)
+        true
       {:error, _} ->
-        nil
+        false
     end
   end
 
-  defp compile_and_build_erlang_helpers(caller, env) do
-    opts = Module.get_attribute(caller.module, :thrift_test_opts)
+  def quoted_contents(module, contents) do
+    compile_and_build_helpers(module)
+    directives = quoted_directives(module)
+    [directives, contents]
+  end
 
-    namespace = inspect(env.module)
+  defp compile_and_build_helpers(module) do
+    files = get_thrift_files(module)
+    dir = Module.get_attribute(module, :thrift_test_dir)
+    opts = Module.get_attribute(module, :thrift_test_opts)
+    generate_files(files, module, dir, opts)
+  end
 
-    out_root = Path.join(@project_root, "tmp")
-    dir = Path.join([out_root, inspect(__MODULE__), namespace])
-    File.rm_rf!(dir)
-    File.mkdir_p!(dir)
+  defp get_thrift_files(module) do
+    files = Module.get_attribute(module, :thrift_file)
+    Module.delete_attribute(module, :thrift_file)
+    Module.register_attribute(module, :thrift_file, [accumulate: true])
 
+    Enum.reverse(files)
+  end
 
-    modules = caller.module
-    |> Module.get_attribute(:thrift_file)
-    |> Enum.reverse
-    |> Enum.map(fn [name: filename, contents: contents] ->
-      filename = Path.expand(filename, dir)
-      File.write!(filename, "namespace elixir #{namespace}\n" <> contents)
-      filename
-    end)
-    |> Enum.flat_map(&Thrift.Generator.generate!(&1, dir))
-    |> Enum.uniq
-    |> Enum.map(fn output_file ->
-      output_file
+  defp write_thrift_file(config, namespace, dir) do
+    filename = config
+      |> Keyword.fetch!(:name)
       |> Path.expand(dir)
-      |> Code.eval_file
 
-      namespace_module = output_file
-      |> Path.dirname
-      |> String.split("/")
-      |> Enum.map(&Macro.camelize/1)
-      |> Enum.join(".")
+    contents = Keyword.fetch!(config, :contents)
 
-      basename_module = output_file
-      |> Path.basename(".ex")
-      |> Macro.camelize
+    File.write!(filename, "namespace elixir #{inspect namespace}\n" <> contents)
 
-      :"Elixir.#{namespace_module}.#{basename_module}"
-    end)
+    filename
+  end
 
-    record_requires = if opts[:gen_erl] do
-      caller.module
-      |> Module.get_attribute(:thrift_file)
-      |> Enum.reverse
-      |> generate_erlang_files(dir)
-    else
-      []
-    end
-
-    tests = caller.module
-    |> Module.get_attribute(:thrift_test)
-    |> Enum.reverse
-    |> Enum.map(fn
-      {test_name, block} ->
-        quote location: :keep do
-          test unquote(test_name) do
-            unquote(block)
-           end
-         end
-      {test_name, context, block} ->
-        quote location: :keep do
-          test unquote(test_name), unquote(context) do
-            unquote(block)
-          end
-        end
-    end)
-
-    # we don't want to alias every ".Constants" module as "Constants"
-    modules_to_alias = Enum.map(modules, fn module ->
-      parts = Module.split(module)
-      case Enum.reverse(parts) do
-        ["Constants" | _] ->
-          Module.concat(Enum.take(parts, length(parts) - 1))
-        _ -> module
+  defp require_file(file, dir) do
+    case Code.require_file(file, dir) do
+      nil ->
+        []
+      modules ->
+        parts = Enum.map(modules, fn({module, _}) -> Module.split(module) end)
+        Enum.filter_map(parts, &alias?(&1, parts), &Module.concat/1)
       end
-    end)
+  end
+
+  defp alias?(module, modules) do
+    # alias when parent module in namespace does not exist
+    not Enum.any?(modules, &(:lists.prefix(&1, module) and &1 != module))
+  end
+
+  defp generate_files(files, namespace, dir, opts) do
+    generate_elixir_files(files, namespace, dir)
+
+    if opts[:gen_erl] do
+      files
+      |> generate_erlang_files(namespace, dir)
+    else
+      :ok
+    end
+  end
+
+  defp generate_elixir_files(files, namespace, dir) do
+    files
+    |> Enum.map(&write_thrift_file(&1, namespace, dir))
+    |> Enum.flat_map(&Thrift.Generator.generate!(&1, dir))
+    |> Enum.flat_map(&require_file(&1, dir))
+    |> Enum.each(&Module.put_attribute(namespace, :thrift_elixir_modules, &1))
+  end
+
+  defp quoted_directives(namespace) do
+    elixir_modules = Module.get_attribute(namespace, :thrift_elixir_modules)
+    record_modules = Module.get_attribute(namespace, :thrift_record_modules)
 
     quote do
-      unquote_splicing(Enum.map(modules_to_alias, fn module ->
+      unquote_splicing(Enum.map(elixir_modules, fn module ->
         quote do: alias unquote(module)
       end))
-      unquote_splicing(Enum.map(modules, fn module ->
+      unquote_splicing(Enum.map(elixir_modules ++ record_modules, fn module ->
         quote do: require unquote(module)
       end))
-
-      unquote_splicing(record_requires)
-      setup_all do
-        on_exit fn ->
-          unquote(if Keyword.get(opts, :cleanup, true) do
-            quote do: File.rm_rf!(unquote(dir))
-          else
-            quote do: IO.puts IO.ANSI.format([:yellow, unquote("Leaving files in #{inspect dir}")])
-          end)
-        end
-        :ok
-      end
-
-      unquote_splicing(tests)
     end
   end
 
-  defp generate_erlang_files(list_of_files, dir) do
+  setup_all %{case: module} do
+    attributes = module.__info__(:attributes)
+    opts = attributes[:thrift_test_opts]
+    [dir] = attributes[:thrift_test_dir]
+
+    on_exit fn ->
+      if Keyword.get(opts, :cleanup, true) do
+        File.rm_rf!(dir)
+      else
+        IO.puts IO.ANSI.format([:yellow, "Leaving files in #{inspect dir}"])
+      end
+    end
+    :ok
+  end
+
+  defp generate_erlang_files(list_of_files, namespace, dir) do
     erlang_source_dir = Path.join(dir, "src")
 
     File.mkdir(erlang_source_dir)
@@ -142,22 +145,52 @@ defmodule ThriftTestCase do
     end
 
     for source_file <- Path.wildcard("#{erlang_source_dir}/*.erl") do
-      {:ok, mod_name, code} = source_file
-      |> String.to_char_list
-      |> :compile.file([:binary])
-
-      :code.load_binary(mod_name, [], code)
+      ensure_erlang_compiled(source_file)
     end
 
     Path.wildcard("#{erlang_source_dir}/*_types.hrl")
-    |> Enum.map(&build_records/1)
+    |> Enum.map(&ensure_record_compiled/1)
+    |> Enum.each(&Module.put_attribute(namespace, :thrift_record_modules, &1))
   end
 
-  defp build_records(file_path) do
-    erlang_module =  file_path
+  defp ensure_erlang_compiled(source_file) do
+    module = erlang_module(source_file)
+    if loaded?(source_file, module) do
+      module
+    else
+      erlang_compile(source_file)
+    end
+  end
+
+  defp loaded?(source_file \\ nil, mod) do
+    source_file = source_file && String.to_charlist(source_file)
+    case :code.is_loaded(mod) do
+      {:file, ^source_file} ->
+        true
+      {:file, :in_memory} ->
+        true
+      _ ->
+        false
+    end
+  end
+
+  defp erlang_compile(source_file) do
+    source_file = String.to_charlist(source_file)
+    {:ok, mod_name, code} = :compile.file(source_file, [:binary])
+
+    {:module, ^mod_name} = :code.load_binary(mod_name, source_file, code)
+    mod_name
+  end
+
+  defp erlang_module(filepath) do
+    filepath
     |> Path.basename
     |> Path.rootname
     |> String.to_atom
+  end
+
+  defp ensure_record_compiled(file_path) do
+    erlang_module = erlang_module(file_path)
 
     record_module_name = erlang_module
     |> Atom.to_string
@@ -167,6 +200,14 @@ defmodule ThriftTestCase do
 
     module_name = Module.concat(Erlang, record_module_name)
 
+    if loaded?(module_name) do
+      module_name
+    else
+      record_compile(file_path, erlang_module, module_name)
+    end
+  end
+
+  defp record_compile(file_path, erlang_module, module_name) do
     records = Record.extract_all(from: file_path)
     |> Enum.map(fn {record_name, fields} ->
       underscored_record_name = record_name
@@ -243,18 +284,23 @@ defmodule ThriftTestCase do
     end
     |> Code.compile_quoted
 
-    quote do: require unquote(module_name)
+    module_name
   end
 
-  defmacro thrift_test(name, do: block) do
-    quote do
-      @thrift_test {unquote(name), unquote({:quote, [], [[do: block]]})}
-    end
-  end
+  defmacro thrift_test(message, var \\ quote(do: _), do: block) do
+    var = Macro.escape(var)
+    block = Macro.escape(block, unquote: true)
 
-  defmacro thrift_test(name, ctx, do: block) do
-   quote do
-      @thrift_test {unquote(name), unquote({:quote, [], [[do: ctx]]}),  unquote({:quote, [], [[do: block]]})}
+    quote bind_quoted: [module: __MODULE__, message: message, var: var, block: block] do
+      if module.implement?(__MODULE__) do
+        contents = module.quoted_contents(__MODULE__, block)
+        name = ExUnit.Case.register_test(__ENV__, :test, message, [])
+        def unquote(name)(unquote(var)), do: unquote(contents)
+      else
+        ExUnit.Case.test message do
+          flunk "not implemented"
+        end
+      end
     end
   end
 

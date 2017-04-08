@@ -115,7 +115,7 @@ defmodule Thrift.Generator.ServiceTest do
       [handler_pid, client, server]
       |> Enum.each(fn pid ->
         ref = Process.monitor(pid)
-        Process.exit(pid, :normal)
+        :thrift_socket_server.stop(pid)
         receive do
           {:DOWN, ^ref, _, _, _} ->
             :ok
@@ -372,7 +372,7 @@ defmodule Thrift.Generator.ServiceTest do
     Process.flag(:trap_exit, true)
 
     ref = Process.monitor(ctx.server)
-    Process.exit(ctx.server, :normal)
+    :thrift_socket_server.stop(ctx.server)
 
     assert_receive {:DOWN, ^ref, _, _, _}
     assert {{:error, :econnrefused}, _} = catch_exit(Client.friend_ids_of(ctx.client, 1234))
@@ -414,7 +414,7 @@ defmodule Thrift.Generator.ServiceTest do
     ServerSpy.set_reply(:noreply)
 
     ref = Process.monitor(ctx.server)
-    Process.exit(ctx.server, :normal)
+    :thrift_socket_server.stop(ctx.server)
 
     assert_receive {:DOWN, ^ref, _, _, _}
     assert_receive {:EXIT, _, {:error, :econnrefused}}, 100

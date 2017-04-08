@@ -370,8 +370,11 @@ defmodule Thrift.Generator.ServiceTest do
 
   thrift_test "clients exit if they try to use a closed client", ctx do
     Process.flag(:trap_exit, true)
+
+    ref = Process.monitor(ctx.server)
     Process.exit(ctx.server, :normal)
 
+    assert_receive {:DOWN, ^ref, _, _, _}
     assert {{:error, :econnrefused}, _} = catch_exit(Client.friend_ids_of(ctx.client, 1234))
   end
 

@@ -370,11 +370,7 @@ defmodule Thrift.Generator.ServiceTest do
 
   thrift_test "clients exit if they try to use a closed client", ctx do
     Process.flag(:trap_exit, true)
-
-    ref = Process.monitor(ctx.server)
-    :thrift_socket_server.stop(ctx.server)
-
-    assert_receive {:DOWN, ^ref, _, _, _}
+    stop_server(ctx.server)
     assert {{:error, :econnrefused}, _} = catch_exit(Client.friend_ids_of(ctx.client, 1234))
   end
 
@@ -409,14 +405,11 @@ defmodule Thrift.Generator.ServiceTest do
 
   thrift_test "it returns :ok on void oneway functions if the server dies", ctx do
     Process.unlink(ctx.server)
-
     Process.flag(:trap_exit, true)
     ServerSpy.set_reply(:noreply)
 
-    ref = Process.monitor(ctx.server)
-    :thrift_socket_server.stop(ctx.server)
+    stop_server(ctx.server)
 
-    assert_receive {:DOWN, ^ref, _, _, _}
     assert_receive {:EXIT, _, {:error, :econnrefused}}, 100
 
     # this assertion is unusual, as it should exit, but the server

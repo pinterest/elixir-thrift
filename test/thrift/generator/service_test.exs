@@ -92,10 +92,8 @@ defmodule Thrift.Generator.ServiceTest do
   end
 
   def stop_server(server_pid) do
-    Process.unlink(server_pid)
     ref = Process.monitor(server_pid)
     :thrift_socket_server.stop(server_pid)
-
     assert_receive {:DOWN, ^ref, _, _, _}
   end
 
@@ -113,14 +111,7 @@ defmodule Thrift.Generator.ServiceTest do
 
     on_exit fn ->
       [handler_pid, client, server]
-      |> Enum.each(fn pid ->
-        ref = Process.monitor(pid)
-        :thrift_socket_server.stop(pid)
-        receive do
-          {:DOWN, ^ref, _, _, _} ->
-            :ok
-        end
-      end)
+      |> Enum.each(&stop_server/1)
     end
 
     {:ok, port: port, client: client, server: server}
@@ -395,7 +386,6 @@ defmodule Thrift.Generator.ServiceTest do
         :ok
     end
     Process.flag(:trap_exit, true)
-    Process.unlink(ctx.server)
     Process.exit(ctx.server, :kill)
 
     client = ctx.client
@@ -404,7 +394,6 @@ defmodule Thrift.Generator.ServiceTest do
   end
 
   thrift_test "it returns :ok on void oneway functions if the server dies", ctx do
-    Process.unlink(ctx.server)
     Process.flag(:trap_exit, true)
     ServerSpy.set_reply(:noreply)
 

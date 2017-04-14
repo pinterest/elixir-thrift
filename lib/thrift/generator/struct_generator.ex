@@ -50,6 +50,7 @@ defmodule Thrift.Generator.StructGenerator do
         def new, do: %__MODULE__{}
         unquote_splicing(List.wrap(extra_defs))
         defmodule BinaryProtocol do
+          @moduledoc false
           unquote_splicing(binary_protocol_defs)
         end
         def serialize(struct) do
@@ -65,31 +66,31 @@ defmodule Thrift.Generator.StructGenerator do
     end
   end
 
-  def to_thrift(base_type, _file_group) when is_atom(base_type) do
+  defp to_thrift(base_type, _file_group) when is_atom(base_type) do
     Atom.to_string(base_type)
   end
-  def to_thrift({:map, {key_type, val_type}}, file_group) do
+  defp to_thrift({:map, {key_type, val_type}}, file_group) do
     "map<#{to_thrift key_type, file_group},#{to_thrift val_type, file_group}>"
   end
-  def to_thrift({:set, element_type}, file_group) do
+  defp to_thrift({:set, element_type}, file_group) do
     "set<#{to_thrift element_type, file_group}>"
   end
-  def to_thrift({:list, element_type}, file_group) do
+  defp to_thrift({:list, element_type}, file_group) do
     "list<#{to_thrift element_type, file_group}>"
   end
-  def to_thrift(%TEnum{name: name}, _file_group) do
+  defp to_thrift(%TEnum{name: name}, _file_group) do
     "#{name}"
   end
-  def to_thrift(%Struct{name: name}, _file_group) do
+  defp to_thrift(%Struct{name: name}, _file_group) do
     "#{name}"
   end
-  def to_thrift(%Exception{name: name}, _file_group) do
+  defp to_thrift(%Exception{name: name}, _file_group) do
     "#{name}"
   end
-  def to_thrift(%Union{name: name}, _file_group) do
+  defp to_thrift(%Union{name: name}, _file_group) do
     "#{name}"
   end
-  def to_thrift(%TypeRef{referenced_type: type}, file_group) do
+  defp to_thrift(%TypeRef{referenced_type: type}, file_group) do
     FileGroup.resolve(file_group, type) |> to_thrift(file_group)
   end
 end

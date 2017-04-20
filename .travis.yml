@@ -9,7 +9,7 @@ sudo: required
 dist: trusty
 services: docker
 env:
-  - THRIFT=${TRAVIS_BUILD_DIR}/ci/thrift-docker
+  - THRIFT="docker run -v ${TRAVIS_BUILD_DIR}:/thrift-elixir -w /thrift-elixir/test/fixtures/app --rm thrift:0.9.3 thrift"
 after_script:
   - mix coveralls.travis
 cache:

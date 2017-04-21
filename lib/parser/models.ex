@@ -152,7 +152,7 @@ end
 
       import Thrift.Parser.Conversions
 
-      @spec new(char_list, char_list) :: %Namespace{}
+      @spec new(charlist, charlist) :: %Namespace{}
       def new(name, path) do
         %Namespace{name: atomify(name), path: List.to_string(path)}
       end
@@ -169,7 +169,7 @@ end
 
       import Thrift.Parser.Conversions
 
-      @spec new(char_list) :: %Include{}
+      @spec new(charlist) :: %Include{}
       def new(path) do
         %Include{path: List.to_string(path)}
       end
@@ -186,7 +186,7 @@ end
 
       import Thrift.Parser.Conversions
 
-      @spec new(char_list, Literals.t, Types.t) :: %Constant{}
+      @spec new(charlist, Literals.t, Types.t) :: %Constant{}
       def new(name, val, type) do
         %Constant{name: atomify(name), value: cast(type, val), type: type}
       end
@@ -205,7 +205,7 @@ end
 
       import Thrift.Parser.Conversions
 
-      @spec new(char_list, %{char_list => enum_value}) :: %TEnum{}
+      @spec new(charlist, %{charlist => enum_value}) :: %TEnum{}
       def new(name, values) do
         values = values
         |> Enum.with_index
@@ -241,7 +241,7 @@ end
 
       import Thrift.Parser.Conversions
 
-      @spec new(integer, boolean, Types.t, char_list, Literals.t) :: %Field{}
+      @spec new(integer, boolean, Types.t, charlist, Literals.t) :: %Field{}
       def new(id, required, type, name, default) do
         %Field{id: id,
                type: type,
@@ -306,7 +306,7 @@ end
       import Thrift.Parser.Conversions
       alias Thrift.Parser.Models.Field
 
-      @spec new(char_list, [%Field{}, ...]) :: %Exception{}
+      @spec new(charlist, [%Field{}, ...]) :: %Exception{}
       def new(name, fields) do
         ex_name = atomify(name)
         updated_fields = Field.build_field_list(ex_name, fields)
@@ -328,7 +328,7 @@ end
       import Thrift.Parser.Conversions
       alias Thrift.Parser.Models.Field
 
-      @spec new(char_list, [%Field{}, ...]) :: %Struct{}
+      @spec new(charlist, [%Field{}, ...]) :: %Struct{}
       def new(name, fields) do
         struct_name = atomify(name)
         fields = Field.build_field_list(struct_name, fields)
@@ -350,7 +350,7 @@ end
       import Thrift.Parser.Conversions
       alias Thrift.Parser.Models.Field
 
-      @spec new(char_list, [%Field{}, ...]) :: %Union{}
+      @spec new(charlist, [%Field{}, ...]) :: %Union{}
       def new(name, fields) do
         name = atomify(name)
 
@@ -379,7 +379,7 @@ end
 
       import Thrift.Parser.Conversions
 
-      @spec new(char_list) :: %StructRef{}
+      @spec new(charlist) :: %StructRef{}
       def new(referenced_type) do
         %StructRef{referenced_type: atomify(referenced_type)}
       end
@@ -401,7 +401,7 @@ end
       alias Thrift.Parser.Models.Field
       import Thrift.Parser.Conversions
 
-      @spec new(boolean, Types.t, char_list, [%Field{}, ...], [%Exception{}, ...]) :: %Function{}
+      @spec new(boolean, Types.t, charlist, [%Field{}, ...], [%Exception{}, ...]) :: %Function{}
       def new(oneway, return_type, name, params, exceptions) do
         name = atomify(name)
         params = Field.build_field_list(name, params)
@@ -428,7 +428,7 @@ end
 
       import Thrift.Parser.Conversions
 
-      @spec new(char_list, [%Function{}, ...], char_list) :: %Service{}
+      @spec new(charlist, [%Function{}, ...], charlist) :: %Service{}
       def new(name, functions, extends) do
         fn_map = Enum.into(functions, %{}, fn(f) -> {f.name, f} end)
         %Service{name: atomify(name), extends: atomify(extends), functions: fn_map}

@@ -13,7 +13,7 @@ defmodule Thrift.Parser do
   """
   @spec parse(String.t) :: %Schema{}
   def parse(doc) do
-    doc = String.to_char_list(doc)
+    doc = String.to_charlist(doc)
 
     {:ok, tokens, _} = :thrift_lexer.string(doc)
     {:ok, schema} = :thrift_parser.parse(tokens)

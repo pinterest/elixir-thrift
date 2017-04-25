@@ -82,7 +82,7 @@ defmodule Thrift.Generator.ServiceTest do
   alias Thrift.Generator.ServiceTest.SimpleService.Binary.Framed.Client
   alias Thrift.Generator.ServiceTest.UsernameTakenException
 
-  def start_server(port, recv_timeout \\ :infinity) do
+  defp start_server(port, recv_timeout \\ :infinity) do
     :thrift_socket_server.start(
       handler: ServerSpy,
       port: port,
@@ -91,13 +91,19 @@ defmodule Thrift.Generator.ServiceTest do
       socket_opts: [recv_timeout: recv_timeout])
   end
 
-  def stop_server(server_pid) do
+  defp stop_server(server_pid) when is_pid(server_pid) do
     ref = Process.monitor(server_pid)
     :thrift_socket_server.stop(server_pid)
     assert_receive {:DOWN, ^ref, _, _, _}
   end
 
-  def random_port do
+  defp stop_process(pid) when is_pid(pid) do
+    ref = Process.monitor(pid)
+    Process.exit(pid, :normal)
+    assert_receive {:DOWN, ^ref, _, _, _}
+  end
+
+  defp random_port do
     :erlang.unique_integer([:positive, :monotonic]) + 10_000
   end
 
@@ -110,8 +116,9 @@ defmodule Thrift.Generator.ServiceTest do
     {:ok, handler_pid} = ServerSpy.start_link
 
     on_exit fn ->
-      [handler_pid, client, server]
-      |> Enum.each(&stop_server/1)
+      stop_process(handler_pid)
+      stop_process(client)
+      stop_server(server)
     end
 
     {:ok, port: port, client: client, server: server}

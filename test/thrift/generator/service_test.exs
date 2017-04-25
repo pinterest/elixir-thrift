@@ -82,7 +82,7 @@ defmodule Thrift.Generator.ServiceTest do
   alias Thrift.Generator.ServiceTest.SimpleService.Binary.Framed.Client
   alias Thrift.Generator.ServiceTest.UsernameTakenException
 
-  def start_server(port, recv_timeout \\ :infinity) do
+  defp start_server(port, recv_timeout \\ :infinity) do
     :thrift_socket_server.start(
       handler: ServerSpy,
       port: port,
@@ -91,15 +91,18 @@ defmodule Thrift.Generator.ServiceTest do
       socket_opts: [recv_timeout: recv_timeout])
   end
 
-  def stop_server(server_pid) do
-    Process.unlink(server_pid)
+  defp stop_server(server_pid) when is_pid(server_pid) do
     ref = Process.monitor(server_pid)
     :thrift_socket_server.stop(server_pid)
-
     assert_receive {:DOWN, ^ref, _, _, _}
   end
 
-  def random_port do
+  defp wait_for_exit(pid) when is_pid(pid) do
+    ref = Process.monitor(pid)
+    assert_receive {:DOWN, ^ref, _, _, _}
+  end
+
+  defp random_port do
     :erlang.unique_integer([:positive, :monotonic]) + 10_000
   end
 
@@ -112,15 +115,9 @@ defmodule Thrift.Generator.ServiceTest do
     {:ok, handler_pid} = ServerSpy.start_link
 
     on_exit fn ->
-      [handler_pid, client, server]
-      |> Enum.each(fn pid ->
-        ref = Process.monitor(pid)
-        Process.exit(pid, :normal)
-        receive do
-          {:DOWN, ^ref, _, _, _} ->
-            :ok
-        end
-      end)
+      wait_for_exit(handler_pid)
+      wait_for_exit(client)
+      wait_for_exit(server)
     end
 
     {:ok, port: port, client: client, server: server}
@@ -324,7 +321,7 @@ defmodule Thrift.Generator.ServiceTest do
     refute Process.alive?(ctx.client)
   end
 
-  thrift_test "clients don't retry by default", ctx do
+  thrift_test "clients don't retry by default" do
     Process.flag(:trap_exit, true)
 
     new_server_port = random_port()
@@ -340,7 +337,7 @@ defmodule Thrift.Generator.ServiceTest do
     end
   end
 
-  thrift_test "clients retry when making an RPC on a closed server when retry is true", ctx do
+  thrift_test "clients retry when making an RPC on a closed server when retry is true" do
     new_server_port = random_port()
     {:ok, server} = start_server(new_server_port, 20)
     {:ok, client} = Client.start_link("127.0.0.1", new_server_port, [tcp_opts: [retry: true]])
@@ -355,7 +352,7 @@ defmodule Thrift.Generator.ServiceTest do
     end
   end
 
-  thrift_test "clients retry when making a oneway call on a closed server when retry is true", ctx do
+  thrift_test "clients retry when making a oneway call on a closed server when retry is true" do
     new_server_port = random_port()
     {:ok, server} = start_server(new_server_port, 20)
     {:ok, client} = Client.start_link("127.0.0.1", new_server_port, [tcp_opts: [retry: true]])
@@ -370,10 +367,7 @@ defmodule Thrift.Generator.ServiceTest do
 
   thrift_test "clients exit if they try to use a closed client", ctx do
     Process.flag(:trap_exit, true)
-
-    ref = Process.monitor(ctx.server)
-    Process.exit(ctx.server, :normal)
-
+    stop_server(ctx.server)
     assert {{:error, :econnrefused}, _} = catch_exit(Client.friend_ids_of(ctx.client, 1234))
   end
 
@@ -398,7 +392,6 @@ defmodule Thrift.Generator.ServiceTest do
         :ok
     end
     Process.flag(:trap_exit, true)
-    Process.unlink(ctx.server)
     Process.exit(ctx.server, :kill)
 
     client = ctx.client
@@ -407,15 +400,11 @@ defmodule Thrift.Generator.ServiceTest do
   end
 
   thrift_test "it returns :ok on void oneway functions if the server dies", ctx do
-    Process.unlink(ctx.server)
-
     Process.flag(:trap_exit, true)
     ServerSpy.set_reply(:noreply)
 
-    ref = Process.monitor(ctx.server)
-    Process.exit(ctx.server, :normal)
+    stop_server(ctx.server)
 
-    assert_receive {:DOWN, ^ref, _, _, _}
     assert_receive {:EXIT, _, {:error, :econnrefused}}, 100
 
     # this assertion is unusual, as it should exit, but the server

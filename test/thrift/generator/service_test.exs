@@ -97,9 +97,8 @@ defmodule Thrift.Generator.ServiceTest do
     assert_receive {:DOWN, ^ref, _, _, _}
   end
 
-  defp stop_process(pid) when is_pid(pid) do
+  defp wait_for_exit(pid) when is_pid(pid) do
     ref = Process.monitor(pid)
-    Process.exit(pid, :normal)
     assert_receive {:DOWN, ^ref, _, _, _}
   end
 
@@ -116,9 +115,9 @@ defmodule Thrift.Generator.ServiceTest do
     {:ok, handler_pid} = ServerSpy.start_link
 
     on_exit fn ->
-      stop_process(handler_pid)
-      stop_process(client)
-      stop_server(server)
+      wait_for_exit(handler_pid)
+      wait_for_exit(client)
+      wait_for_exit(server)
     end
 
     {:ok, port: port, client: client, server: server}

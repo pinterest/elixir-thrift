@@ -71,7 +71,7 @@ defmodule ThriftTestCase do
         []
       modules ->
         parts = Enum.map(modules, fn({module, _}) -> Module.split(module) end)
-        Enum.filter_map(parts, &alias?(&1, parts), &Module.concat/1)
+        for part <- parts, alias?(part, parts), do: Module.concat(part)
       end
   end
 

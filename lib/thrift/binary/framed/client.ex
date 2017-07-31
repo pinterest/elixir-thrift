@@ -291,7 +291,7 @@ defmodule Thrift.Binary.Framed.Client do
   end
 
   defp to_host(host) when is_bitstring(host) do
-    String.to_char_list(host)
+    String.to_charlist(host)
   end
   defp to_host(host) when is_list(host), do: host
 end

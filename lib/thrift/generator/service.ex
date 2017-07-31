@@ -24,7 +24,9 @@ defmodule Thrift.Generator.Service do
 
     functions = service.functions |> Map.values
     arg_structs = Enum.map(functions, &generate_args_struct(schema, &1))
-    response_structs = Enum.filter_map(functions, &(!&1.oneway), &generate_response_struct(schema, &1))
+    response_structs = for function <- functions, !function.oneway do
+      generate_response_struct(schema, function)
+    end
 
     framed_client = Generator.Binary.Framed.Client.generate(dest_module, service)
     framed_server = Generator.Binary.Framed.Server.generate(dest_module, service, file_group)
@@ -46,7 +48,7 @@ defmodule Thrift.Generator.Service do
   def generate_args_struct(schema, function) do
     arg_module_name = module_name(function, :args)
 
-    struct = Struct.new(Atom.to_char_list(arg_module_name), function.params)
+    struct = Struct.new(Atom.to_charlist(arg_module_name), function.params)
 
     StructGenerator.generate(:struct, schema, struct.name, struct)
   end
@@ -63,7 +65,7 @@ defmodule Thrift.Generator.Service do
     fields = [success | exceptions]
 
     response_module_name = module_name(function, :response)
-    response_struct = Struct.new(Atom.to_char_list(response_module_name), fields)
+    response_struct = Struct.new(Atom.to_charlist(response_module_name), fields)
 
     StructGenerator.generate(:struct, schema, response_struct.name, response_struct)
   end

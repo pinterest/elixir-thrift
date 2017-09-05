@@ -490,7 +490,7 @@ defmodule Thrift.Parser.Models do
     end
 
     defp merge(schema, {:typedef, actual_type, type_alias}) do
-      %Schema{schema | typedefs: put_new_strict(schema.typedefs, atomify(type_alias), actual_type)}
+      %Schema{schema | typedefs: put_new_strict(schema.typedefs, atomify(type_alias), canonicalize_type(schema, actual_type))}
     end
 
     defp canonicalize_name(%{module: nil}, model) do
@@ -508,6 +508,30 @@ defmodule Thrift.Parser.Models do
         _ ->
           raise "Name collision: #{key}"
       end
+    end
+
+    defp canonicalize_type(schema, %TypeRef{referenced_type: t} = type) do
+      %TypeRef{type | referenced_type: canonicalize_type(schema, t)}
+    end
+    defp canonicalize_type(schema, {:set, elem_type}) do
+      {:set, canonicalize_type(schema, elem_type)}
+    end
+    defp canonicalize_type(schema, {:list, elem_type}) do
+      {:list, canonicalize_type(schema, elem_type)}
+    end
+    defp canonicalize_type(schema, {:map, {key_type, val_type}}) do
+      {:map, {canonicalize_type(schema, key_type), canonicalize_type(schema, val_type)}}
+    end
+    for type <- [:bool, :i8, :i16, :i32, :i64, :binary, :string, :byte] do
+      defp canonicalize_type(_, unquote(type)) do
+        unquote(type)
+      end
+    end
+    defp canonicalize_type(schema, type_name) when is_atom(type_name) do
+      :"#{schema.module}.#{type_name}"
+    end
+    defp canonicalize_name(schema, type_name) when is_bitstring(type_name) do
+      :"#{schema.module}.#{type_name}"
     end
   end
 

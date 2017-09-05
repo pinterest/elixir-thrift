@@ -637,4 +637,26 @@ defmodule Thrift.Generator.BinaryProtocolTest do
     assert binary == %Byte{val_set: MapSet.new([91])} |> Byte.serialize() |> IO.iodata_to_binary
     assert binary == %Byte{val_set: [91]            } |> Byte.serialize() |> IO.iodata_to_binary
   end
+
+  @thrift_file name: "additions.thrift", contents: """
+  enum ChocolateAdditionsType {
+    ALMONDS = 1,
+    NOUGAT  = 2
+  }
+
+  typedef set<ChocolateAdditionsType> ChocolateAdditions
+  """
+
+  @thrift_file name: "chocolate.thrift", contents: """
+  include "additions.thrift"
+
+  struct Chocolate {
+    1: optional additions.ChocolateAdditions extra_stuff
+  }
+  """
+
+  thrift_test "including a file with typedefs" do
+    serialized = <<14, 0, 1, 8, 0, 0, 0, 2, 0, 0, 0, 1, 0, 0, 0, 2, 0>>
+    assert serialized == %Chocolate{extra_stuff: MapSet.new([1, 2])} |> Chocolate.serialize |> IO.iodata_to_binary
+  end
 end

@@ -127,29 +127,30 @@ defmodule Thrift.Parser.FileGroup do
   for type <- [:bool, :byte, :i8, :i16, :i32, :i64, :double, :string, :binary] do
     def resolve(_, unquote(type)), do: unquote(type)
   end
-  def resolve(%FileGroup{} = group, %Field{type: %TypeRef{} = ref} = field) do
-    %Field{field | type: resolve(group, ref)}
+  def resolve(%FileGroup{} = group, %Field{type: type} = field) do
+    %Field{field | type: resolve(group, type)}
   end
-  def resolve(%FileGroup{} = group, %Field{type: {:list, elem_type}} = field) do
-    %Field{field | type: {:list, resolve(group, elem_type)}}
+  def resolve(%FileGroup{resolutions: resolutions} = group, %TypeRef{referenced_type: type_name}) do
+    resolve(group, resolutions[type_name])
   end
-  def resolve(%FileGroup{} = group, %Field{type: {:set, elem_type}} = field) do
-    %Field{field | type: {:set, resolve(group, elem_type)}}
+  def resolve(%FileGroup{resolutions: resolutions} = group, %ValueRef{referenced_value: value_name}) do
+    resolve(group, resolutions[value_name])
   end
-  def resolve(%FileGroup{} = group, %Field{type: {:map, {key_type, val_type}}} = field) do
-    %Field{field | type: {:map, {resolve(group, key_type), resolve(group, val_type)}}}
-  end
-  def resolve(%FileGroup{resolutions: resolutions}, %TypeRef{referenced_type: type_name}) do
-    resolutions[type_name]
-  end
-  def resolve(%FileGroup{resolutions: resolutions}, %ValueRef{referenced_value: value_name}) do
-    resolutions[value_name]
-  end
-  def resolve(%FileGroup{resolutions: resolutions}, path) when is_atom(path) do
+  def resolve(%FileGroup{resolutions: resolutions} = group, path) when is_atom(path) do
     # this can resolve local mappings like :Weather or
     # remote mappings like :"common.Weather"
-    resolutions[path]
+    resolve(group, resolutions[path])
   end
+  def resolve(%FileGroup{} = group, {:list, elem_type}) do
+    {:list, resolve(group, elem_type)}
+  end
+  def resolve(%FileGroup{} = group, {:set, elem_type}) do
+    {:set, resolve(group, elem_type)}
+  end
+  def resolve(%FileGroup{} = group, {:map, {key_type, val_type}}) do
+    {:map, {resolve(group, key_type), resolve(group, val_type)}}
+  end
+
   def resolve(_, other) do
     other
   end
@@ -190,8 +191,8 @@ defmodule Thrift.Parser.FileGroup do
       Enum.map(schema.exceptions, fn {_, s} -> s.name end),
       Enum.map(schema.structs, fn {_, s} -> s.name end),
       Enum.map(schema.services, fn {_, s} -> s.name end),
-      Enum.map(schema.unions, fn {_, s} -> s.name end)
-    ]), &Atom.to_string/1)
+      Enum.map(schema.unions, fn {_, s} -> s.name end),
+    ]) |> Enum.map(&Atom.to_string/1)
 
     target = String.downcase(default)
     name = Enum.find(symbols, default, fn s -> String.downcase(s) == target end)

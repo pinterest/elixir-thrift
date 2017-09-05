@@ -530,9 +530,6 @@ defmodule Thrift.Parser.Models do
     defp canonicalize_type(schema, type_name) when is_atom(type_name) do
       :"#{schema.module}.#{type_name}"
     end
-    defp canonicalize_name(schema, type_name) when is_bitstring(type_name) do
-      :"#{schema.module}.#{type_name}"
-    end
   end
 
   @type all :: Namespace.t | Include.t | Constant.t | TEnum.t | Field.t | Exception.t | Struct.t | Union.t | Function.t | Service.t | Schema.t

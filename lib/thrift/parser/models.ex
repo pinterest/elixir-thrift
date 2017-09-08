@@ -8,8 +8,6 @@ defmodule Thrift.Parser.Models do
   import Thrift.Parser.Conversions
   alias Thrift.Parser.{Literals, Types}
 
-  @type line :: nil | pos_integer
-
   defmodule Namespace do
     @moduledoc """
     A Thrift namespace.
@@ -70,10 +68,14 @@ defmodule Thrift.Parser.Models do
     """
 
     @type enum_value :: bitstring | integer
-    @type t :: %TEnum{line: Parser.line, name: atom, values: [{atom, enum_value}]}
+    @type t :: %TEnum{
+      line: Parser.line,
+      annotations: Parser.annotations,
+      name: atom,
+      values: [{atom, enum_value}]}
 
     @enforce_keys [:name, :values]
-    defstruct line: nil, name: nil, values: []
+    defstruct line: nil, annotations: %{}, name: nil, values: []
 
     @spec new(charlist, %{charlist => enum_value}) :: t
     def new(name, values) do
@@ -105,11 +107,18 @@ defmodule Thrift.Parser.Models do
     """
 
     @type printable :: String.t | atom
-    @type t :: %Field{line: Parser.line, id: integer, name: atom, type: Types.t,
-                      required: boolean, default: Literals.t}
+    @type t :: %Field{
+      line: Parser.line,
+      annotations: Parser.annotations,
+      id: integer,
+      name: atom,
+      type: Types.t,
+      required: boolean,
+      default: Literals.t}
 
     @enforce_keys [:id, :name, :type]
-    defstruct line: nil, id: nil, name: nil, type: nil, required: :default, default: nil
+    defstruct line: nil, annotations: %{}, id: nil, name: nil, type: nil,
+      required: :default, default: nil
 
     @spec new(integer, boolean, Types.t, charlist, Literals.t) :: t
     def new(id, required, type, name, default) do
@@ -166,10 +175,14 @@ defmodule Thrift.Parser.Models do
     Exceptions can happen when the remote service encounters an error.
     """
 
-    @type t :: %Exception{line: Parser.line, name: atom, fields: [Field.t]}
+    @type t :: %Exception{
+      line: Parser.line,
+      annotations: Parser.annotations,
+      name: atom,
+      fields: [Field.t]}
 
     @enforce_keys [:name, :fields]
-    defstruct line: nil, fields: %{}, name: nil
+    defstruct line: nil, annotations: %{}, fields: %{}, name: nil
 
     @spec new(charlist, [Field.t, ...]) :: t
     def new(name, fields) do
@@ -187,10 +200,14 @@ defmodule Thrift.Parser.Models do
     The basic datastructure in Thrift, structs have aa name and a field list.
     """
 
-    @type t :: %Struct{line: Parser.line, name: atom, fields: [Field.t]}
+    @type t :: %Struct{
+      line: Parser.line,
+      annotations: Parser.annotations,
+      name: atom,
+      fields: [Field.t]}
 
     @enforce_keys [:name, :fields]
-    defstruct line: nil, name: nil, fields: %{}
+    defstruct line: nil, annotations: %{}, name: nil, fields: %{}
 
     @spec new(charlist, [Field.t, ...]) :: t
     def new(name, fields) do
@@ -208,10 +225,14 @@ defmodule Thrift.Parser.Models do
     Unions can have one field set at a time.
     """
 
-    @type t :: %Union{line: Parser.line, name: atom, fields: [Field.t]}
+    @type t :: %Union{
+      line: Parser.line,
+      annotations: Parser.annotations,
+      name: atom,
+      fields: [Field.t]}
 
     @enforce_keys [:name, :fields]
-    defstruct line: nil, name: nil, fields: %{}
+    defstruct line: nil, annotations: %{}, name: nil, fields: %{}
 
     @spec new(charlist, [Field.t, ...]) :: t
     def new(name, fields) do
@@ -304,11 +325,18 @@ defmodule Thrift.Parser.Models do
     """
 
     @type return :: :void | Types.t
-    @type t :: %Function{line: Parser.line, oneway: boolean, return_type: return, name: atom,
-                         params: [Field.t], exceptions: [Exception.t]}
+    @type t :: %Function{
+      line: Parser.line,
+      annotations: Parser.annotations,
+      oneway: boolean,
+      return_type: return,
+      name: atom,
+      params: [Field.t],
+      exceptions: [Exception.t]}
 
     @enforce_keys [:name]
-    defstruct line: nil, oneway: false, return_type: :void, name: nil, params: [], exceptions: []
+    defstruct line: nil, annotations: %{}, oneway: false, return_type: :void,
+      name: nil, params: [], exceptions: []
 
     @spec new(boolean, Types.t, charlist, [Field.t, ...], [Exception.t, ...]) :: t
     def new(oneway, return_type, name, params, exceptions) do
@@ -332,10 +360,16 @@ defmodule Thrift.Parser.Models do
     Services hold RPC functions and can extend other services.
     """
 
-    @type t :: %Service{line: Parser.line, name: atom, extends: atom, functions: %{atom => Function.t}}
+    @type t :: %Service{
+      line: Parser.line,
+      annotations: Parser.annotations,
+      name: atom,
+      extends: atom,
+      functions: %{atom => Function.t}}
 
     @enforce_keys [:name, :functions]
-    defstruct line: nil, name: nil, extends: nil, functions: %{}
+    defstruct line: nil, annotations: %{}, name: nil, extends: nil,
+      functions: %{}
 
     @spec new(charlist, [Function.t, ...], charlist) :: t
     def new(name, functions, extends) do

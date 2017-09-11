@@ -9,7 +9,7 @@ defmodule Thrift.Parser do
   @typedoc "A Thrift IDL line number"
   @type line :: pos_integer | nil
 
-  @typedoc "A map of Thrift IDL annotations"
+  @typedoc "A map of Thrift annotation keys to values"
   @type annotations :: %{String.t => String.t}
 
   @typedoc "A schema path element"

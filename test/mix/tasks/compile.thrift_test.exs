@@ -14,7 +14,8 @@ defmodule Mix.Tasks.Compile.ThriftTest do
     in_fixture fn ->
       with_project_config [], fn ->
         assert run([]) =~ """
-          Compiling 3 files (.thrift)
+          Compiling 4 files (.thrift)
+          Compiled thrift/AnnotationTest.thrift
           Compiled thrift/StressTest.thrift
           Compiled thrift/ThriftTest.thrift
           Compiled thrift/numbers.thrift

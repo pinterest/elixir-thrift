@@ -25,6 +25,7 @@ Nonterminals
     FunctionList Function Oneway ReturnType Throws
     FieldList Field FieldIdentifier FieldRequired FieldDefault
     FieldType BaseType MapType SetType ListType
+    Annotations Annotation AnnotationList
     Separator.
 
 Terminals
@@ -99,39 +100,39 @@ ConstList -> ConstValue Separator ConstList: ['$1'|'$3'].
 
 % Typedef
 
-Typedef -> typedef FieldType ident Separator:
-    {typedef, '$2', unwrap('$3')}.
+Typedef -> typedef FieldType Annotations ident Annotations Separator:
+    {typedef, '$2', unwrap('$4')}.
 
 % Enum
 
-Enum -> enum ident '{' EnumList '}':
-    build_model('TEnum', line('$1'), [unwrap('$2'), '$4']).
+Enum -> enum ident '{' EnumList '}' Annotations:
+    build_model('TEnum', line('$1'), '$6', [unwrap('$2'), '$4']).
 
 EnumList -> EnumValue Separator: ['$1'].
 EnumList -> EnumValue Separator EnumList: ['$1'|'$3'].
 
-EnumValue -> ident '=' int: {unwrap('$1'), unwrap('$3')}.
-EnumValue -> ident: unwrap('$1').
+EnumValue -> ident '=' int Annotations: {unwrap('$1'), unwrap('$3')}.
+EnumValue -> ident Annotations: unwrap('$1').
 
 % Struct
 
-Struct -> struct ident '{' FieldList '}':
-    build_model('Struct', line('$1'), [unwrap('$2'), '$4']).
+Struct -> struct ident '{' FieldList '}' Annotations:
+    build_model('Struct', line('$1'), '$6', [unwrap('$2'), '$4']).
 
 % Union
 
-Union -> union ident '{' FieldList '}':
-    build_model('Union', line('$1'), [unwrap('$2'), '$4']).
+Union -> union ident '{' FieldList '}' Annotations:
+    build_model('Union', line('$1'), '$6', [unwrap('$2'), '$4']).
 
 % Exception
 
-Exception -> exception ident '{' FieldList '}':
-    build_model('Exception', line('$1'), [unwrap('$2'), '$4']).
+Exception -> exception ident '{' FieldList '}' Annotations:
+    build_model('Exception', line('$1'), '$6', [unwrap('$2'), '$4']).
 
 % Service
 
-Service -> service ident Extends '{' FunctionList '}':
-    build_model('Service', line('$1'), [unwrap('$2'), '$5', '$3']).
+Service -> service ident Extends '{' FunctionList '}' Annotations:
+    build_model('Service', line('$1'), '$7', [unwrap('$2'), '$5', '$3']).
 
 Extends -> extends ident: unwrap('$2').
 Extends -> '$empty': nil.
@@ -141,8 +142,8 @@ Extends -> '$empty': nil.
 FunctionList -> '$empty': [].
 FunctionList -> Function FunctionList: ['$1'|'$2'].
 
-Function -> Oneway ReturnType ident '(' FieldList ')' Throws Separator:
-    build_model('Function', line('$3'), ['$1', '$2', unwrap('$3'), '$5', '$7']).
+Function -> Oneway ReturnType ident '(' FieldList ')' Throws Annotations Separator:
+    build_model('Function', line('$3'), '$8', ['$1', '$2', unwrap('$3'), '$5', '$7']).
 
 Oneway -> '$empty': false.
 Oneway -> oneway: true.
@@ -158,8 +159,8 @@ Throws -> throws '(' FieldList ')': '$3'.
 FieldList -> '$empty': [].
 FieldList -> Field FieldList: ['$1'|'$2'].
 
-Field -> FieldIdentifier FieldRequired FieldType ident FieldDefault Separator:
-    build_model('Field', line('$4'), ['$1', '$2', '$3', unwrap('$4'), '$5']).
+Field -> FieldIdentifier FieldRequired FieldType ident FieldDefault Annotations Separator:
+    build_model('Field', line('$4'), '$6', ['$1', '$2', '$3', unwrap('$4'), '$5']).
 
 FieldIdentifier -> int ':': unwrap('$1').
 FieldIdentifier -> '$empty': nil.
@@ -191,7 +192,20 @@ BaseType -> binary: binary.
 
 MapType -> map '<' FieldType ',' FieldType '>': {'$3', '$5'}.
 SetType -> set '<' FieldType '>': '$3'.
-ListType -> list '<' FieldType '>': '$3'.
+ListType -> list '<' FieldType Annotations '>': '$3'.
+
+% Annotations
+
+Annotations -> '(' AnnotationList ')': '$2'.
+Annotations -> '$empty': #{}.
+
+Annotation -> ident Separator:
+    #{list_to_atom(unwrap('$1')) => <<"1">>}.
+Annotation -> ident '=' string Separator:
+    #{list_to_atom(unwrap('$1')) => list_to_binary(unwrap('$3'))}.
+
+AnnotationList -> '$empty': #{}.
+AnnotationList -> Annotation AnnotationList: maps:merge('$1', '$2').
 
 % Separator
 
@@ -210,6 +224,10 @@ build_model(Type, Args) when is_list(Args) ->
 build_model(Type, Line, Args) when is_integer(Line) and is_list(Args) ->
     Model = build_model(Type, Args),
     maps:put(line, Line, Model).
+build_model(Type, Line, Annotations, Args)
+  when is_integer(Line) and is_map(Annotations) and is_list(Args) ->
+    Model = build_model(Type, Line, Args),
+    maps:put(annotations, Annotations, Model).
 
 % Extract the line number from the lexer's expression tuple.
 line({_Token, Line}) -> Line;

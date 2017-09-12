@@ -1,4 +1,4 @@
-defmodule Thrift.Parser.ParserTest do
+defmodule Thrift.Parser.AnnotationTest do
   use ExUnit.Case, async: true
   import Thrift.Parser, only: [parse: 1]
 

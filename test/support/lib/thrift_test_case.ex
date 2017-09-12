@@ -138,10 +138,10 @@ defmodule ThriftTestCase do
 
     for file <- list_of_files do
       filename = Path.join(reldir, file[:name])
-      System.cmd(System.get_env("THRIFT") || "thrift",
-                 ["-out", outdir,
-                  "--gen", "erl", "-r", filename],
-                 cd: @project_root)
+      {_, 0} = System.cmd(System.get_env("THRIFT") || "thrift",
+                          ["-out", outdir,
+                          "--gen", "erl", "-r", filename],
+                          cd: @project_root)
     end
 
     for source_file <- Path.wildcard("#{erlang_source_dir}/*.erl") do

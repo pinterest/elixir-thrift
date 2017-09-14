@@ -1,25 +1,28 @@
 defmodule Mix.Tasks.Compile.ThriftTest do
   use ExUnit.Case
-
-  import Mix.Tasks.Compile.Thrift, only: [run: 1]
   import ExUnit.CaptureIO
 
-  @fixture_project Path.expand("../../fixtures/app", __DIR__)
+  @project_root Path.expand("../../../", __DIR__)
+  @fixture_project Path.join(@project_root, "test/fixtures/app")
 
   setup do
-    in_fixture(fn -> File.rm_rf!("src") end)
+    on_exit(fn -> File.rm_rf!(Path.join(@fixture_project, "lib")) end)
     :ok
   end
 
-  test "compiling default :thrift_files" do
+  test "compiling default :files" do
     in_fixture fn ->
       with_project_config [], fn ->
-        assert capture_io(fn -> run([]) end) =~ """
-          Compiled thrift/shared.thrift
-          Compiled thrift/tutorial.thrift
+        assert run([]) =~ """
+          Compiling 4 files (.thrift)
+          Compiled thrift/AnnotationTest.thrift
+          Compiled thrift/StressTest.thrift
+          Compiled thrift/ThriftTest.thrift
+          Compiled thrift/numbers.thrift
           """
-        assert File.exists?("src/shared_types.hrl")
-        assert File.exists?("src/tutorial_types.hrl")
+        assert File.exists?("lib/generated/service.ex")
+        assert File.exists?("lib/thrift_test/thrift_test.ex")
+        assert File.exists?("lib/tutorial/numbers.ex")
       end
     end
   end
@@ -27,8 +30,8 @@ defmodule Mix.Tasks.Compile.ThriftTest do
   test "recompiling unchanged targets" do
     in_fixture fn ->
       with_project_config [], fn ->
-        assert capture_io(fn -> run([]) end) =~ "Compiled thrift/tutorial.thrift"
-        assert capture_io(fn -> run([]) end) == ""
+        assert run([]) =~ "Compiled thrift/ThriftTest.thrift"
+        assert run([]) == ""
       end
     end
   end
@@ -36,9 +39,9 @@ defmodule Mix.Tasks.Compile.ThriftTest do
   test "recompiling stale targets" do
     in_fixture fn ->
       with_project_config [], fn ->
-        assert capture_io(fn -> run([]) end) =~ "Compiled thrift/tutorial.thrift"
-        File.rm_rf!("src")
-        assert capture_io(fn -> run([]) end) =~ "Compiled thrift/tutorial.thrift"
+        assert run([]) =~ "Compiled thrift/ThriftTest.thrift"
+        File.rm_rf!("lib")
+        assert run([]) =~ "Compiled thrift/ThriftTest.thrift"
       end
     end
   end
@@ -46,66 +49,78 @@ defmodule Mix.Tasks.Compile.ThriftTest do
   test "forcing compilation" do
     in_fixture fn ->
       with_project_config [], fn ->
-        assert capture_io(fn -> run([]) end) =~ "Compiled thrift/tutorial.thrift"
-        assert capture_io(fn -> run(["--force"]) end) =~ "Compiled thrift/tutorial.thrift"
+        assert run([]) =~ "Compiled thrift/ThriftTest.thrift"
+        assert run(["--force"]) =~ "Compiled thrift/ThriftTest.thrift"
       end
     end
   end
 
-  test "specifying a custom --gen compiler option" do
+  test "cleaning generated files" do
     in_fixture fn ->
-      with_project_config [thrift_options: ~w[--gen erl:maps]], fn ->
-        assert capture_io(fn -> run([]) end) =~ "Compiled thrift/tutorial.thrift"
+      with_project_config [], fn ->
+        run([])
+        assert File.exists?("lib/thrift_test/thrift_test.ex")
+        assert Enum.all?(Mix.Tasks.Compile.Thrift.manifests, &File.exists?/1)
+
+        Mix.Tasks.Compile.Thrift.clean()
+        refute File.exists?("lib/thrift_test/thrift_test.ex")
+        refute Enum.any?(Mix.Tasks.Compile.Thrift.manifests, &File.exists?/1)
       end
     end
   end
 
-  test "specifying an empty :thrift_files list" do
+  test "specifying an empty :files list" do
     in_fixture fn ->
-      with_project_config [thrift_files: []], fn ->
-        assert capture_io(fn -> run([]) end) == ""
+      with_project_config [thrift: [files: []]], fn ->
+        assert run([]) == ""
       end
     end
   end
 
   test "specifying a non-existent Thrift file" do
     in_fixture fn ->
-      with_project_config [thrift_files: ~w("missing.thrift")], fn ->
+      with_project_config [thrift: [files: ~w("missing.thrift")]], fn ->
         capture_io fn ->
-          assert capture_io(:stderr, fn -> run([]) end) =~ "Failed to compile"
+          assert run(:stderr, []) =~ "Failed to parse"
         end
       end
     end
   end
 
-  test "attempting to use a non-existent Thrift executable" do
+  test "specifying an invalid Thrift file" do
     in_fixture fn ->
-      with_project_config [thrift_executable: "nonexistentthrift"], fn ->
-        assert_raise Mix.Error, "`nonexistentthrift` not found in the current path", fn ->
-          run([])
+      with_project_config [thrift: [files: [__ENV__.file]]], fn ->
+        capture_io fn ->
+          assert run(:stderr, []) =~ "Failed to parse"
         end
       end
     end
   end
 
-  test "attempting to use a broken Thrift executable" do
+  test "specifying an additional include path" do
+    config = [
+      files: ~w(thrift/include/Include.thrift),
+      include_paths: ~w(thrift)
+    ]
     in_fixture fn ->
-      with_project_config [thrift_executable: "mix", thrift_version: "0.0.0"], fn ->
-        assert_raise Mix.Error, ~r/Failed to execute/, fn ->
-          run([])
-        end
+      with_project_config [thrift: config], fn ->
+        assert run([]) =~ "Compiled thrift/include/Include.thrift"
       end
     end
   end
 
-  test "attempting to use an unsupported Thrift version" do
+  test "specifying an unknown option" do
     in_fixture fn ->
-      with_project_config [thrift_version: "< 0.0.0"], fn ->
-        assert_raise Mix.Error, ~r/^Unsupported Thrift version/, fn ->
-          run([])
-        end
+      with_project_config [], fn ->
+        assert run(["--unknown-option"]) =~ "Compiling"
       end
     end
+  end
+
+  defp run(args) when is_list(args), do: run(:stdio, args)
+  defp run(device, args) when device in [:stdio, :stderr] and is_list(args) do
+    args = ["--verbose" | args]
+    capture_io(device, fn -> Mix.Tasks.Compile.Thrift.run(args) end)
   end
 
   defp in_fixture(fun) do

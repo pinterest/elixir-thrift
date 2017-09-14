@@ -1,7 +1,7 @@
 {
   "skip_files": [
-    "ext",
-    "src/thrift_lexer.erl",
-    "src/thrift_parser.erl"
+      "src/thrift_lexer.erl",
+      "src/thrift_parser.erl",
+      "test/support"
   ]
 }

@@ -1,216 +1,240 @@
+Header
+"%% Copyright 2017 Pinterest, Inc."
+"%%"
+"%% Licensed under the Apache License, Version 2.0 (the \"License\");"
+"%% you may not use this file except in compliance with the License."
+"%% You may obtain a copy of the License at"
+"%%"
+"%%    http://www.apache.org/licenses/LICENSE-2.0"
+"%%"
+"%% Unless required by applicable law or agreed to in writing, software"
+"%% distributed under the License is distributed on an \"AS IS\" BASIS,"
+"%% WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied."
+"%% See the License for the specific language governing permissions and"
+"%% limitations under the License.".
 
 Nonterminals
-schema
-file_def
-headers header
-definitions definition
-namespace_def constant_def include_def
-type base_type literal set_type map_type list_type literal_list
-
-mapping mappings
-
-enum_def enum_body enum_value
-exception_def
-fields field_spec field_sep field_required field_id field_default
-typedef_def
-ns_name
-struct_def union_def service_def
-functions function
-service_extends
-oneway_marker
-return_type
-throws_clause.
+    Schema File
+    Headers Header
+    Include Namespace
+    Definitions Definition
+    Typedef Struct Union Exception
+    Const ConstValue ConstList ConstMap
+    Enum EnumList EnumValue
+    Service Extends
+    FunctionList Function Oneway ReturnType Throws
+    FieldList Field FieldIdentifier FieldRequired FieldDefault
+    FieldType BaseType MapType SetType ListType
+    Annotations Annotation AnnotationList
+    Separator.
 
 Terminals
-'*' '{' '}' '[' ']' '(' ')' '=' '>' '<' ',' ':'
-file
-namespace
-include
-ident
-int
-double
-const
-bool
-true
-false
-byte
-i8
-i16
-i32
-i64
-string
-binary
-list
-map
-set
-enum
-exception
-required
-optional
-typedef
-struct
-union
-service
-extends
-oneway
-void
-throws.
+    '*' '{' '}' '[' ']' '(' ')' '=' '>' '<' ',' ':' ';'
+    file
+    include namespace
+    int ident
+    bool byte i8 i16 i32 i64 double string binary list map set
+    true false
+    typedef const enum struct union service exception
+    void oneway required optional extends throws.
 
+Rootsymbol Schema.
 
-Rootsymbol schema.
+% Schema
 
-schema ->
-    headers definitions file_def:
-        'Elixir.Thrift.Parser.Models.Schema':new('$3', '$1', '$2').
+Schema -> Headers Definitions File:
+    build_model('Schema', ['$3', '$1', '$2']).
 
-file_def -> '$empty': nil.
-file_def ->
-    file string: 'Elixir.List':to_string(unwrap('$2')).
+File -> '$empty': nil.
+File -> file string: 'Elixir.List':to_string(unwrap('$2')).
 
-headers -> '$empty': [].
-headers -> header headers: ['$1'] ++ '$2'.
+% Headers
 
-header -> namespace_def: '$1'.
-header -> include_def: '$1'.
+Headers -> '$empty': [].
+Headers -> Header Headers: ['$1'|'$2'].
 
-definitions -> '$empty': [].
-definitions -> definition definitions: ['$1'] ++ '$2'.
+Header -> Include: '$1'.
+Header -> Namespace: '$1'.
 
-definition -> constant_def: '$1'.
-definition -> enum_def: '$1'.
-definition -> exception_def: '$1'.
-definition -> typedef_def: '$1'.
-definition -> struct_def: '$1'.
-definition -> union_def: '$1'.
-definition -> service_def: '$1'.
+Include -> include string:
+    build_model('Include', line('$1'), [unwrap('$2')]).
 
-type -> base_type: '$1'.
-type -> set_type: {set, '$1'}.
-type -> map_type: {map, '$1'}.
-type -> list_type: {list, '$1'}.
-type -> ident: 'Elixir.Thrift.Parser.Models.StructRef':new(unwrap('$1')).
+Namespace -> namespace '*' ident:
+    build_model('Namespace', line('$1'), ["*", unwrap('$3')]).
+Namespace -> namespace ident ident:
+    build_model('Namespace', line('$1'), [unwrap('$2'), unwrap('$3')]).
 
-base_type -> bool: bool.
-base_type -> byte: i8.
-base_type -> i8: i8.
-base_type -> i16: i16.
-base_type -> i32: i32.
-base_type -> i64: i64.
-base_type -> double: double.
-base_type -> string: string.
-base_type -> binary: binary.
+% Definitions
 
-set_type -> set '<' type '>': '$3'.
-map_type -> map '<' type ',' type '>': {'$3', '$5'}.
-list_type -> list '<' type '>': '$3'.
+Definitions -> '$empty': [].
+Definitions -> Definition Definitions: ['$1'|'$2'].
 
-include_def ->
-    include string:
-        'Elixir.Thrift.Parser.Models.Include':new(unwrap('$2')).
+Definition -> Const: '$1'.
+Definition -> Typedef: '$1'.
+Definition -> Enum: '$1'.
+Definition -> Struct: '$1'.
+Definition -> Union: '$1'.
+Definition -> Exception: '$1'.
+Definition -> Service: '$1'.
 
-namespace_def ->
-    namespace ns_name ident:
-        'Elixir.Thrift.Parser.Models.Namespace':new('$2', unwrap('$3')).
+% Constants
 
-constant_def ->
-    const type ident '=' literal:
-        'Elixir.Thrift.Parser.Models.Constant':new(unwrap('$3'), '$5', '$2').
+Const -> const FieldType ident '=' ConstValue Separator:
+    build_model('Constant', line('$1'), [unwrap('$3'), '$5', '$2']).
 
-ns_name -> '*': "*".
-ns_name -> ident: unwrap('$1').
+ConstValue -> ident: build_model('ValueRef', line('$1'), [unwrap('$1')]).
+ConstValue -> true: unwrap('$1').
+ConstValue -> false: unwrap('$1').
+ConstValue -> int: unwrap('$1').
+ConstValue -> double: unwrap('$1').
+ConstValue -> string: unwrap('$1').
 
+ConstValue -> '{' ConstMap '}': '$2'.
+ConstValue -> '[' ConstList ']': '$2'.
 
-%% JS Style mapping "foo": 32
-mapping -> literal ':' literal: {'$1', '$3'}.
-mappings -> mapping: ['$1'].
-mappings -> mapping ',' mappings: ['$1'] ++ '$3'.
+ConstMap -> '$empty': [].
+ConstMap -> ConstValue ':' ConstValue Separator ConstMap: [{'$1','$3'}|'$5'].
 
-% A list of literals ["hi", "bye", 3, 4]
-literal_list -> literal: ['$1'].
-literal_list -> literal ',' literal_list: ['$1'] ++ '$3'.
+ConstList -> '$empty': [].
+ConstList -> ConstValue Separator ConstList: ['$1'|'$3'].
 
-literal -> true: unwrap('$1').
-literal -> false: unwrap('$1').
-literal -> int: unwrap('$1').
-literal -> double: unwrap('$1').
-literal -> string: unwrap('$1').
-literal -> '{' literal_list '}': '$2'.
-literal -> '{' mappings '}': '$2'.
-literal -> '[' literal_list ']': '$2'.
+% Typedef
 
-field_sep -> '$empty': nil.
-field_sep -> ',': nil.
+Typedef -> typedef FieldType Annotations ident Annotations Separator:
+    {typedef, '$2', unwrap('$4')}.
 
-enum_def ->
-    enum ident '{' enum_body '}':
-        'Elixir.Thrift.Parser.Models.TEnum':new(unwrap('$2'), '$4').
-enum_body -> enum_value field_sep: ['$1'].
-enum_body -> enum_value field_sep enum_body: ['$1'] ++ '$3'.
+% Enum
 
-enum_value -> ident: unwrap('$1').
-enum_value -> ident '=' int: {unwrap('$1'), unwrap('$3')}.
+Enum -> enum ident '{' EnumList '}' Annotations:
+    build_model('TEnum', line('$1'), '$6', [unwrap('$2'), '$4']).
 
-exception_def ->
-    exception ident '{' fields '}':
-        'Elixir.Thrift.Parser.Models.Exception':new(unwrap('$2'), '$4').
+EnumList -> EnumValue Separator: ['$1'].
+EnumList -> EnumValue Separator EnumList: ['$1'|'$3'].
 
-fields -> '$empty': [].
-fields -> field_spec field_sep fields: ['$1'] ++ '$3'.
+EnumValue -> ident '=' int Annotations: {unwrap('$1'), unwrap('$3')}.
+EnumValue -> ident Annotations: unwrap('$1').
 
-field_id -> int ':': unwrap('$1').
-field_id -> '$empty': nil.
+% Struct
 
-field_spec ->
-    field_id field_required type ident field_default:
-        'Elixir.Thrift.Parser.Models.Field':new('$1', '$2', '$3', unwrap('$4'), '$5').
+Struct -> struct ident '{' FieldList '}' Annotations:
+    build_model('Struct', line('$1'), '$6', [unwrap('$2'), '$4']).
 
-field_required -> required: true.
-field_required -> optional: false.
-field_required -> '$empty': default.
+% Union
 
-field_default -> '$empty': nil.
-field_default -> '=' literal: '$2'.
+Union -> union ident '{' FieldList '}' Annotations:
+    build_model('Union', line('$1'), '$6', [unwrap('$2'), '$4']).
 
-typedef_def ->
-    typedef type ident:
-        {typedef, '$2', unwrap('$3')}.
+% Exception
 
-struct_def ->
-    struct ident '{' fields '}':
-        'Elixir.Thrift.Parser.Models.Struct':new(unwrap('$2'), '$4').
+Exception -> exception ident '{' FieldList '}' Annotations:
+    build_model('Exception', line('$1'), '$6', [unwrap('$2'), '$4']).
 
-service_def ->
-    service ident service_extends '{' functions '}':
-        'Elixir.Thrift.Parser.Models.Service':new(unwrap('$2'), '$5', '$3').
+% Service
 
-union_def ->
-    union ident '{' fields '}':
-        'Elixir.Thrift.Parser.Models.Union':new(unwrap('$2'), '$4').
+Service -> service ident Extends '{' FunctionList '}' Annotations:
+    build_model('Service', line('$1'), '$7', [unwrap('$2'), '$5', '$3']).
 
-service_extends -> '(' extends ident ')': unwrap('$3').
-service_extends -> extends ident: unwrap('$2').
-service_extends -> '$empty': nil.
+Extends -> extends ident: unwrap('$2').
+Extends -> '$empty': nil.
 
+% Functions
 
-functions -> '$empty': [].
-functions -> function functions: ['$1'] ++ '$2'.
+FunctionList -> '$empty': [].
+FunctionList -> Function FunctionList: ['$1'|'$2'].
 
-function ->
-    oneway_marker return_type ident '(' fields ')' throws_clause field_sep:
-        'Elixir.Thrift.Parser.Models.Function':new('$1', '$2', unwrap('$3'), '$5', '$7').
+Function -> Oneway ReturnType ident '(' FieldList ')' Throws Annotations Separator:
+    build_model('Function', line('$3'), '$8', ['$1', '$2', unwrap('$3'), '$5', '$7']).
 
-oneway_marker -> '$empty': false.
-oneway_marker -> oneway: true.
+Oneway -> '$empty': false.
+Oneway -> oneway: true.
 
-return_type -> void: void.
-return_type -> type: '$1'.
+ReturnType -> void: void.
+ReturnType -> FieldType: '$1'.
 
-throws_clause -> '$empty': [].
-throws_clause ->
-    throws '(' fields ')':
-        '$3'.
+Throws -> '$empty': [].
+Throws -> throws '(' FieldList ')': '$3'.
+
+% Fields
+
+FieldList -> '$empty': [].
+FieldList -> Field FieldList: ['$1'|'$2'].
+
+Field -> FieldIdentifier FieldRequired FieldType ident FieldDefault Annotations Separator:
+    build_model('Field', line('$4'), '$6', ['$1', '$2', '$3', unwrap('$4'), '$5']).
+
+FieldIdentifier -> int ':': unwrap('$1').
+FieldIdentifier -> '$empty': nil.
+
+FieldRequired -> required: true.
+FieldRequired -> optional: false.
+FieldRequired -> '$empty': default.
+
+FieldDefault -> '$empty': nil.
+FieldDefault -> '=' ConstValue: '$2'.
+
+% Types
+
+FieldType -> ident: build_model('TypeRef', line('$1'), [unwrap('$1')]).
+FieldType -> BaseType: '$1'.
+FieldType -> MapType: {map, '$1'}.
+FieldType -> SetType: {set, '$1'}.
+FieldType -> ListType: {list, '$1'}.
+
+BaseType -> bool: bool.
+BaseType -> byte: i8.
+BaseType -> i8: i8.
+BaseType -> i16: i16.
+BaseType -> i32: i32.
+BaseType -> i64: i64.
+BaseType -> double: double.
+BaseType -> string: string.
+BaseType -> binary: binary.
+
+MapType -> map '<' FieldType ',' FieldType '>': {'$3', '$5'}.
+SetType -> set '<' FieldType '>': '$3'.
+ListType -> list '<' FieldType Annotations '>': '$3'.
+
+% Annotations
+
+Annotations -> '(' AnnotationList ')': '$2'.
+Annotations -> '$empty': #{}.
+
+Annotation -> ident Separator:
+    #{list_to_atom(unwrap('$1')) => <<"1">>}.
+Annotation -> ident '=' string Separator:
+    #{list_to_atom(unwrap('$1')) => list_to_binary(unwrap('$3'))}.
+
+AnnotationList -> '$empty': #{}.
+AnnotationList -> Annotation AnnotationList: maps:merge('$1', '$2').
+
+% Separator
+
+Separator -> ','.
+Separator -> ';'.
+Separator -> '$empty'.
 
 Erlang code.
 
-unwrap({V, _}) -> V;
+% Construct a new model of the requested Type. Args are passed to the model's
+% `new` function and, if provided, line number information is assigned to the
+% resulting model.
+build_model(Type, Args) when is_list(Args) ->
+    Module = list_to_atom("Elixir.Thrift.Parser.Models." ++ atom_to_list(Type)),
+    apply(Module, 'new', Args).
+build_model(Type, Line, Args) when is_integer(Line) and is_list(Args) ->
+    Model = build_model(Type, Args),
+    maps:put(line, Line, Model).
+build_model(Type, Line, Annotations, Args)
+  when is_integer(Line) and is_map(Annotations) and is_list(Args) ->
+    Model = build_model(Type, Line, Args),
+    maps:put(annotations, Annotations, Model).
+
+% Extract the line number from the lexer's expression tuple.
+line({_Token, Line}) -> Line;
+line({_Token, Line, _Value}) -> Line;
+line(_) -> nil.
+
+% Return either the atom from a 2-tuple lexer expression or the processed
+% value from a 3-tuple lexer expression.
+unwrap({V, _}) when is_atom(V) -> V;
 unwrap({_,_,V}) -> V.

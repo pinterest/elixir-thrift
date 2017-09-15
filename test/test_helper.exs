@@ -1,6 +1,8 @@
+ExUnit.configure(exclude: [pending: true])
 ExUnit.start()
 
 defmodule ThriftTestHelpers do
+
   defmacro __using__(_) do
     quote do
       require ThriftTestHelpers
@@ -56,10 +58,8 @@ defmodule ThriftTestHelpers do
       unquote(thrift_var) = ThriftTestHelpers.parse(full_path)
       try do
         unquote(block)
+      after
         File.rm_rf!(root_dir)
-      rescue e ->
-        File.rm_rf!(root_dir)
-        raise e
       end
     end
   end

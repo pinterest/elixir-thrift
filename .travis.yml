@@ -1,17 +1,17 @@
 language: elixir
 elixir: 1.3.4
-otp_release: 19.2
+otp_release: 18.2
 matrix:
   include:
-    - elixir: 1.2.6
-      otp_release: 18.2
+    - elixir: 1.5.0
+      otp_release: 20.0
 sudo: required
 dist: trusty
 services: docker
 env:
   - THRIFT=${TRAVIS_BUILD_DIR}/ci/thrift-docker
 after_script:
-  - mix coveralls.travis
+  - MIX_ENV=test mix coveralls.travis
 cache:
   directories:
   - $HOME/.mix/archives

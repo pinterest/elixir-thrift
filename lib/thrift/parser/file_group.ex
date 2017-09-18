@@ -136,7 +136,7 @@ defmodule Thrift.Parser.FileGroup do
   def resolve(%FileGroup{resolutions: resolutions} = group, %ValueRef{referenced_value: value_name}) do
     resolve(group, resolutions[value_name])
   end
-  def resolve(%FileGroup{resolutions: resolutions} = group, path) when is_atom(path) do
+  def resolve(%FileGroup{resolutions: resolutions} = group, path) when is_atom(path) and not is_nil(path) do
     # this can resolve local mappings like :Weather or
     # remote mappings like :"common.Weather"
     resolve(group, resolutions[path])

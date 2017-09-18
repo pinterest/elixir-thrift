@@ -474,15 +474,27 @@ defmodule Thrift.Parser.Models do
     end
 
     defp merge(schema, %Exception{} = exc) do
-      %Schema{schema | exceptions: put_new_strict(schema.exceptions, exc.name, canonicalize_name(schema, exc))}
+      fixed_fields = schema
+      |> canonicalize_name(exc)
+      |> canonicalize_fields()
+
+      %Schema{schema | exceptions: put_new_strict(schema.exceptions, exc.name, fixed_fields)}
     end
 
     defp merge(schema, %Struct{} = s) do
-      %Schema{schema | structs: put_new_strict(schema.structs, s.name, canonicalize_name(schema, s))}
+      fixed_fields = schema
+      |> canonicalize_name(s)
+      |> canonicalize_fields()
+
+      %Schema{schema | structs: put_new_strict(schema.structs, s.name, fixed_fields)}
     end
 
     defp merge(schema, %Union{} = union) do
-      %Schema{schema | unions: put_new_strict(schema.unions, union.name, canonicalize_name(schema, union))}
+      fixed_fields = schema
+      |> canonicalize_name(union)
+      |> canonicalize_fields()
+
+      %Schema{schema | unions: put_new_strict(schema.unions, union.name, fixed_fields)}
     end
 
     defp merge(schema, %Service{} = service) do
@@ -529,6 +541,61 @@ defmodule Thrift.Parser.Models do
     end
     defp canonicalize_type(schema, type_name) when is_atom(type_name) do
       :"#{schema.module}.#{type_name}"
+    end
+
+    defp canonicalize_fields(%{fields: fields} = model) do
+      %{model | fields: Enum.map(fields, &canonicalize_field/1)}
+    end
+
+    defp canonicalize_field(%Field{default: nil} = field) do
+      field
+    end
+    defp canonicalize_field(%Field{default: default, type: type} = field) do
+      %Field{field | default: canonicalize_defaults(type, default)}
+    end
+
+    defp canonicalize_defaults({:list, elem_type}, defaults) when is_list(defaults) do
+
+      for elem <- defaults do
+        canonicalize_defaults(elem_type, elem)
+      end
+    end
+    defp canonicalize_defaults({:set, elem_type}, %MapSet{} = defaults) do
+      for elem <- defaults, into: MapSet.new do
+        canonicalize_defaults(elem_type, elem)
+      end
+    end
+    defp canonicalize_defaults({:map, {_, _}}, %ValueRef{}=val) do
+      val
+    end
+    defp canonicalize_defaults({:map, {key_type, val_type}}, defaults) when is_map(defaults) do
+      for {key, val} <- defaults, into: %{} do
+        {canonicalize_defaults(key_type, key), canonicalize_defaults(val_type, val)}
+      end
+    end
+    defp canonicalize_defaults(%TypeRef{referenced_type: referenced_type}, %ValueRef{referenced_value: referenced_value} = val_ref) do
+      %ValueRef{val_ref | referenced_value: canonical_module(referenced_type, referenced_value)}
+    end
+    defp canonicalize_defaults(%TypeRef{referenced_type: referenced_type} = type, defaults) when is_list(defaults) do
+      for default_value <- defaults do
+        canonicalize_defaults(type, default_value)
+      end
+    end
+    defp canonicalize_defaults(ref, {key_type, val_type}) do
+      # this is used for a remote typedef that defines a map
+      {canonicalize_defaults(ref, key_type), canonicalize_defaults(ref, val_type)}
+    end
+    defp canonicalize_defaults(t, val) do
+      val
+    end
+
+    defp canonical_module(type, value) do
+      with string_val <- Atom.to_string(type),
+           [module, _] <- String.split(string_val, ".") do
+        :"#{module}.#{value}"
+      else _ ->
+        value
+      end
     end
   end
 

@@ -641,22 +641,56 @@ defmodule Thrift.Generator.BinaryProtocolTest do
   @thrift_file name: "additions.thrift", contents: """
   enum ChocolateAdditionsType {
     ALMONDS = 1,
-    NOUGAT  = 2
+    NOUGAT  = 2,
+    HAIR    = 3
   }
 
   typedef set<ChocolateAdditionsType> ChocolateAdditions
+  typedef map<ChocolateAdditionsType, string> ChocolateMapping
   """
 
   @thrift_file name: "chocolate.thrift", contents: """
   include "additions.thrift"
 
   struct Chocolate {
-    1: optional additions.ChocolateAdditions extra_stuff
+    1: optional additions.ChocolateAdditions extra_stuff = [ChocolateAdditionsType.HAIR]
+    2: optional additions.ChocolateAdditionsType secret_ingredient = ChocolateAdditionsType.HAIR
+  }
+
+  struct Allergies {
+     1: optional list<additions.ChocolateAdditionsType> may_contain = [ChocolateAdditionsType.ALMONDS]
+  }
+
+  struct OddSnackIngredients {
+     1: optional set<additions.ChocolateAdditionsType> other_things = [ChocolateAdditionsType.NOUGAT]
+  }
+
+  struct ChocoMappings {
+    1: optional map<additions.ChocolateAdditionsType, string> common_name = {ChocolateAdditionsType.HAIR: "love"}
+  }
+
+  struct AdditionalMappings {
+    1: optional additions.ChocolateMapping mapping = {ChocolateAdditionsType.ALMONDS: "almonds",
+                                                      ChocolateAdditionsType.NOUGAT: "nougat"}
   }
   """
 
-  thrift_test "including a file with typedefs" do
-    serialized = <<14, 0, 1, 8, 0, 0, 0, 2, 0, 0, 0, 1, 0, 0, 0, 2, 0>>
-    assert serialized == %Chocolate{extra_stuff: MapSet.new([1, 2])} |> Chocolate.serialize |> IO.iodata_to_binary
+  thrift_test "including a file with typedefs and defaults" do
+    choco = %Chocolate{extra_stuff: MapSet.new([1, 2])}
+
+    assert choco.secret_ingredient == ChocolateAdditionsType.hair
+
+    assert %Allergies{}.may_contain == [ChocolateAdditionsType.almonds]
+    assert %OddSnackIngredients{}.other_things == MapSet.new([ChocolateAdditionsType.nougat])
+    assert %ChocoMappings{}.common_name == %{ChocolateAdditionsType.hair => "love"}
+    assert %AdditionalMappings{}.mapping == %{ChocolateAdditionsType.almonds => "almonds",
+                                              ChocolateAdditionsType.nougat => "nougat"}
+
+    actual = choco
+    |> Chocolate.serialize
+    |> IO.iodata_to_binary
+
+    expected = <<14, 0, 1, 8, 0, 0, 0, 2, 0, 0, 0, 1, 0, 0, 0, 2, 8, 0, 2, 0, 0, 0, 3, 0>>
+    assert actual == expected
   end
 end

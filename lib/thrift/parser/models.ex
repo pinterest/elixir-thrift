@@ -565,7 +565,7 @@ defmodule Thrift.Parser.Models do
         canonicalize_defaults(elem_type, elem)
       end
     end
-    defp canonicalize_defaults({:map, {_, _}}, %ValueRef{}=val) do
+    defp canonicalize_defaults({:map, {_, _}}, %ValueRef{} = val) do
       val
     end
     defp canonicalize_defaults({:map, {key_type, val_type}}, defaults) when is_map(defaults) do

@@ -673,6 +673,10 @@ defmodule Thrift.Generator.BinaryProtocolTest do
     1: optional additions.ChocolateMapping mapping = {ChocolateAdditionsType.ALMONDS: "almonds",
                                                       ChocolateAdditionsType.NOUGAT: "nougat"}
   }
+
+  struct AlreadyNamespaced {
+    1: optional additions.ChocolateAdditionsType namespaced = additions.ChocolateAdditionsType.ALMONDS
+  }
   """
 
   thrift_test "including a file with typedefs and defaults" do
@@ -685,6 +689,8 @@ defmodule Thrift.Generator.BinaryProtocolTest do
     assert %ChocoMappings{}.common_name == %{ChocolateAdditionsType.hair => "love"}
     assert %AdditionalMappings{}.mapping == %{ChocolateAdditionsType.almonds => "almonds",
                                               ChocolateAdditionsType.nougat => "nougat"}
+
+    assert %AlreadyNamespaced{}.namespaced == ChocolateAdditionsType.almonds
 
     actual = choco
     |> Chocolate.serialize

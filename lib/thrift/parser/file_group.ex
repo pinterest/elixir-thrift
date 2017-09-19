@@ -194,7 +194,6 @@ defmodule Thrift.Parser.FileGroup do
       Enum.map(schema.unions, fn {_, s} -> s.name end)
     ]), &Atom.to_string/1)
 
-
     target = String.downcase(default)
     name = Enum.find(symbols, default, fn s -> String.downcase(s) == target end)
 

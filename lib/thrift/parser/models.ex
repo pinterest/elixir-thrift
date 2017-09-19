@@ -508,7 +508,6 @@ defmodule Thrift.Parser.Models do
     defp add_namespace_to_name(nil, model) do
       model
     end
-
     defp add_namespace_to_name(module, %{name: name} = model) do
       %{model | name: add_namespace_to_type(module, name)}
     end
@@ -525,7 +524,7 @@ defmodule Thrift.Parser.Models do
     defp add_namespace_to_type(module, {:map, {key_type, val_type}}) do
       {:map, {add_namespace_to_type(module, key_type), add_namespace_to_type(module, val_type)}}
     end
-    for type <- [:bool, :i8, :i16, :i32, :i64, :binary, :string, :byte] do
+    for type <- [:bool, :i8, :i16, :i32, :i64, :double, :binary, :string, :byte] do
       defp add_namespace_to_type(_, unquote(type)) do
         unquote(type)
       end

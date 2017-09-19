@@ -28,10 +28,10 @@ defmodule Thrift.Parser.AnnotationTest do
       :"java.final" => "",
       :"annotation.without.value" => "1"}
 
-    assert %Field{name: :bar} = bar = find_field(struct.fields, :bar)
-    assert bar.annotations == %{:presence => "required"}
-    assert %Field{name: :baz} = baz = find_field(struct.fields, :baz)
-    assert baz.annotations == %{:presence => "manual", :"cpp.use_pointer" => ""}
+    assert %Field{name: :bar, annotations: annotations} = find_field(struct.fields, :bar)
+    assert %{:presence => "required"} = annotations
+    assert %Field{name: :baz, annotations: baz_annotations} = find_field(struct.fields, :baz)
+    assert %{:presence => "manual", :"cpp.use_pointer" => ""} = baz_annotations
   end
 
   test "service annotations", context do
@@ -48,7 +48,7 @@ defmodule Thrift.Parser.AnnotationTest do
   test "exception annotations", context do
     assert %{exceptions: %{foo_error: exception}} = context[:schema]
     assert exception.annotations == %{:foo => "bar"}
-    assert %Field{name: :error_code} = field = find_field(exception.fields, :error_code)
-    assert field.annotations == %{:foo => "bar"}
+    assert %Field{name: :error_code, annotations: annotations} = find_field(exception.fields, :error_code)
+    assert %{:foo => "bar"} = annotations
   end
 end

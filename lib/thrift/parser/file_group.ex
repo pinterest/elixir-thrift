@@ -85,7 +85,8 @@ defmodule Thrift.Parser.FileGroup do
   # Attempt to locate `path` in one of `dirs`, returning the path of the
   # first match on success or the original `path` if not match is found.
   defp find_include(path, dirs) do
-    Enum.map(dirs, &Path.join(&1, path))
+    dirs
+    |> Enum.map(&Path.join(&1, path))
     |> Enum.find(path, &File.exists?/1)
   end
 
@@ -184,13 +185,13 @@ defmodule Thrift.Parser.FileGroup do
     # (ignoring case), use that instead to avoid generating two modules with
     # the same spellings but different cases.
     schema = file_group.schemas[base]
-    symbols = List.flatten([
+    symbols = Enum.map(List.flatten([
       Enum.map(schema.enums, fn {_, s} -> s.name end),
       Enum.map(schema.exceptions, fn {_, s} -> s.name end),
       Enum.map(schema.structs, fn {_, s} -> s.name end),
       Enum.map(schema.services, fn {_, s} -> s.name end),
       Enum.map(schema.unions, fn {_, s} -> s.name end)
-    ]) |> Enum.map(&Atom.to_string/1)
+    ]), &Atom.to_string/1)
 
     target = String.downcase(default)
     name = Enum.find(symbols, default, fn s -> String.downcase(s) == target end)

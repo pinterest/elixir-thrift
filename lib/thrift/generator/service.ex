@@ -22,7 +22,7 @@ defmodule Thrift.Generator.Service do
     file_group = schema.file_group
     dest_module = FileGroup.dest_module(file_group, service)
 
-    functions = service.functions |> Map.values
+    functions = Map.values(service.functions)
     arg_structs = Enum.map(functions, &generate_args_struct(schema, &1))
     response_structs = for function <- functions, !function.oneway do
       generate_response_struct(schema, function)
@@ -59,8 +59,7 @@ defmodule Thrift.Generator.Service do
                      required: false,
                      type: function.return_type}
 
-    exceptions = function.exceptions
-    |> Enum.map(&Map.put(&1, :required, false))
+    exceptions = Enum.map(function.exceptions, &Map.put(&1, :required, false))
 
     fields = [success | exceptions]
 

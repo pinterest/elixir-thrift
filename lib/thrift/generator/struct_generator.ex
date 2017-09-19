@@ -91,6 +91,6 @@ defmodule Thrift.Generator.StructGenerator do
     "#{name}"
   end
   defp to_thrift(%TypeRef{referenced_type: type}, file_group) do
-    FileGroup.resolve(file_group, type) |> to_thrift(file_group)
+    to_thrift(FileGroup.resolve(file_group, type), file_group)
   end
 end

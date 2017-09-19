@@ -147,16 +147,16 @@ defmodule Thrift.Protocol.Binary do
     rest
   end
   def skip_field(<<rest::binary>>, unquote(Type.struct)) do
-    rest |> skip_struct
+    skip_struct(rest)
   end
   def skip_field(<<key_type, val_type, length::32-signed, rest::binary>>, unquote(Type.map)) do
-    rest |> skip_map_entry(key_type, val_type, length)
+    skip_map_entry(rest, key_type, val_type, length)
   end
   def skip_field(<<elem_type, length::32-signed, rest::binary>>, unquote(Type.set)) do
-    rest |> skip_list_element(elem_type, length)
+    skip_list_element(rest, elem_type, length)
   end
   def skip_field(<<elem_type, length::32-signed, rest::binary>>, unquote(Type.list)) do
-    rest |> skip_list_element(elem_type, length)
+    skip_list_element(rest, elem_type, length)
   end
   def skip_field(_, _), do: :error
 

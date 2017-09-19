@@ -7,8 +7,6 @@ defmodule Thrift.Binary.Framed.Client do
 
   This module ony adds two functions to the connection behaviour,
  `oneway` and `request`.
-
-
   """
   alias Thrift.Protocol.Binary
   alias Thrift.TApplicationException
@@ -95,7 +93,6 @@ defmodule Thrift.Binary.Framed.Client do
      - `send_timeout`: An integer that governs how long our connection waits when sending data.
 
      - `retry`: A boolean that tells the client whether or not it should retry on failures.
-
 
     `gen_server_opts`: A keyword list of options that control the gen_server behaviour.
 
@@ -257,8 +254,7 @@ defmodule Thrift.Binary.Framed.Client do
   end
 
   def deserialize_message_reply(message, rpc_name, seq_id) do
-    Binary.deserialize(:message_begin, message)
-    |> handle_message(seq_id, rpc_name)
+    handle_message(Binary.deserialize(:message_begin, message), seq_id, rpc_name)
    end
 
   defp handle_message({:ok, {:reply, seq_id, rpc_name, serialized_response}}, seq_id, rpc_name) do

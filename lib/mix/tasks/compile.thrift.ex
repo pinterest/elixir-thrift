@@ -72,13 +72,11 @@ defmodule Mix.Tasks.Compile.Thrift do
 
   @spec parse(Path.t, OptionParser.parsed) :: FileGroup.t
   defp parse(file, opts) do
-    try do
-      Thrift.Parser.parse_file(file, opts)
-    rescue
-      e ->
-        Mix.shell.error "Failed to parse #{file}: #{Exception.message(e)}"
-        nil
-    end
+    Thrift.Parser.parse_file(file, opts)
+  rescue
+    e ->
+      Mix.shell.error "Failed to parse #{file}: #{Exception.message(e)}"
+      nil
   end
 
   @typep mappings ::
@@ -158,11 +156,11 @@ defmodule Mix.Tasks.Compile.Thrift do
 
   @spec write_manifest(Path.t, [Path.t], :calendar.datetime) :: :ok
   defp write_manifest(manifest, paths, timestamp) do
-    data =
-      [{@manifest_vsn, package_vsn()} | paths]
-      |> :erlang.term_to_binary(compressed: 9)
+    data = :erlang.term_to_binary(
+      [{@manifest_vsn, package_vsn()} | paths],
+      compressed: 9)
 
-    Path.dirname(manifest) |> File.mkdir_p!
+    File.mkdir_p!(Path.dirname(manifest))
     File.write!(manifest, data)
     File.touch!(manifest, timestamp)
   end

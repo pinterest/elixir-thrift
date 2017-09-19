@@ -31,4 +31,3 @@ defmodule Thrift.Protocol.Binary.Type do
   def of({:set, _}),  do: set()
   def of({:list, _}), do: list()
 end
-

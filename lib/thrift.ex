@@ -10,7 +10,7 @@ defmodule Thrift do
 
   @typedoc "Thrift data types"
   @type data_type ::
-    :bool | :byte | :i16 | :i32 | :i64 | :double | :string |
+    :bool | :byte | :i8 | :i16 | :i32 | :i64 | :double | :string | :binary |
     {:map, data_type, data_type} | {:set, data_type} | {:list, data_type}
 
   @type i8   :: (-128..127)
@@ -21,4 +21,8 @@ defmodule Thrift do
 
   @typedoc "Thrift message types"
   @type message_type :: :call | :reply | :exception | :oneway
+
+  def primitive_names do
+    [:bool, :i8, :i16, :i32, :i64, :binary, :double, :byte, :string]
+  end
 end

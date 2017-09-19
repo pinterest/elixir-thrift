@@ -124,7 +124,7 @@ defmodule Thrift.Parser.FileGroup do
   end
 
   @spec resolve(t, any) :: any
-  for type <- [:bool, :byte, :i8, :i16, :i32, :i64, :double, :string, :binary] do
+  for type <- Thrift.primitive_names do
     def resolve(_, unquote(type)), do: unquote(type)
   end
   def resolve(%FileGroup{} = group, %Field{type: type} = field) do

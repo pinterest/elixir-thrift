@@ -22,6 +22,10 @@ defmodule Thrift do
   @typedoc "Thrift message types"
   @type message_type :: :call | :reply | :exception | :oneway
 
+  @doc """
+  Returns a list of atoms, each of which is a name of a Thrift primitive type.
+  """
+  @spec primitive_names() :: [Thrift.Parser.Types.Primitive.t]
   def primitive_names do
     [:bool, :i8, :i16, :i32, :i64, :binary, :double, :byte, :string]
   end

@@ -244,8 +244,8 @@ defmodule Thrift.Generator.StructBinaryProtocol do
     end
   end
   defp field_deserializer(%TypeRef{referenced_type: type}, field, name, file_group) do
-    FileGroup.resolve(file_group, type)
-    |> field_deserializer(field, name, file_group)
+    resolved = FileGroup.resolve(file_group, type)
+    field_deserializer(resolved, field, name, file_group)
   end
 
   defp map_key_deserializer(:bool, key_name, value_name, _file_group) do
@@ -394,8 +394,8 @@ defmodule Thrift.Generator.StructBinaryProtocol do
     end
   end
   defp map_key_deserializer(%TypeRef{referenced_type: type}, key_name, value_name, file_group) do
-    FileGroup.resolve(file_group, type)
-    |> map_key_deserializer(key_name, value_name, file_group)
+    resolved = FileGroup.resolve(file_group, type)
+    map_key_deserializer(resolved, key_name, value_name, file_group)
   end
   defp map_value_deserializer(:bool, key_name, value_name, _file_group) do
     quote do
@@ -545,8 +545,8 @@ defmodule Thrift.Generator.StructBinaryProtocol do
     end
   end
   defp map_value_deserializer(%TypeRef{referenced_type: type}, key_name, value_name, file_group) do
-    FileGroup.resolve(file_group, type)
-    |> map_value_deserializer(key_name, value_name, file_group)
+    resolved = FileGroup.resolve(file_group, type)
+    map_value_deserializer(resolved, key_name, value_name, file_group)
   end
 
   defp list_deserializer(:bool, name, _file_group) do
@@ -700,8 +700,8 @@ defmodule Thrift.Generator.StructBinaryProtocol do
     end
   end
   defp list_deserializer(%TypeRef{referenced_type: type}, name, file_group) do
-    FileGroup.resolve(file_group, type)
-    |> list_deserializer(name, file_group)
+    resolved = FileGroup.resolve(file_group, type)
+    list_deserializer(resolved, name, file_group)
   end
 
   @doc """
@@ -725,7 +725,7 @@ defmodule Thrift.Generator.StructBinaryProtocol do
 
         quote do
           def serialize(%unquote(name){unquote_splicing(field_matchers)}) do
-            unquote([field_serializers, <<0>>] |> Utils.optimize_iolist)
+            unquote(Utils.optimize_iolist([field_serializers, <<0>>]))
           end
         end
     end)
@@ -757,12 +757,11 @@ defmodule Thrift.Generator.StructBinaryProtocol do
       {name, Macro.var(name, nil)}
     end)
 
-    field_serializers = fields
-    |> Enum.map(&field_serializer(&1, name, file_group))
+    field_serializers = Enum.map(fields, &field_serializer(&1, name, file_group))
 
     quote do
       def serialize(%unquote(name){unquote_splicing(field_matchers)}) do
-        unquote([field_serializers, <<0>>] |> Utils.optimize_iolist)
+        unquote(Utils.optimize_iolist([field_serializers, <<0>>]))
       end
     end
   end
@@ -819,10 +818,10 @@ defmodule Thrift.Generator.StructBinaryProtocol do
 
   defp required_field_serializer(%Field{name: name, type: type, id: id}, file_group) do
     var = Macro.var(name, nil)
-    [
+    Utils.optimize_iolist([
       quote do <<unquote(type_id(type, file_group)), unquote(id)::16-signed>> end,
       value_serializer(type, var, file_group)
-    ] |> Utils.optimize_iolist
+    ])
   end
 
   defp value_serializer(:bool, var, _file_group) do
@@ -850,10 +849,10 @@ defmodule Thrift.Generator.StructBinaryProtocol do
           unquote(type_id(val_type, file_group)),
           Enum.count(unquote(var))::32-signed>>,
         for {unquote(Macro.var(:k, nil)), unquote(Macro.var(:v, nil))} <- unquote(var) do
-          unquote([
+          unquote(Utils.optimize_iolist([
             value_serializer(key_type, Macro.var(:k, nil), file_group),
             value_serializer(val_type, Macro.var(:v, nil), file_group),
-          ] |> Utils.optimize_iolist)
+          ]))
         end
       ]
     end
@@ -863,7 +862,7 @@ defmodule Thrift.Generator.StructBinaryProtocol do
       [
         <<unquote(type_id(type, file_group)), Enum.count(unquote(var))::32-signed>>,
         for unquote(Macro.var(:e, nil)) <- unquote(var) do
-          unquote(value_serializer(type, Macro.var(:e, nil), file_group) |> Utils.optimize_iolist)
+          unquote(Utils.optimize_iolist(value_serializer(type, Macro.var(:e, nil), file_group)))
         end,
       ]
     end
@@ -873,7 +872,7 @@ defmodule Thrift.Generator.StructBinaryProtocol do
       [
         <<unquote(type_id(type, file_group)), length(unquote(var))::32-signed>>,
         for unquote(Macro.var(:e, nil)) <- unquote(var) do
-          unquote(value_serializer(type, Macro.var(:e, nil), file_group) |> Utils.optimize_iolist)
+          unquote(Utils.optimize_iolist(value_serializer(type, Macro.var(:e, nil), file_group)))
         end,
       ]
     end
@@ -897,13 +896,13 @@ defmodule Thrift.Generator.StructBinaryProtocol do
     end
   end
   defp value_serializer(%TypeRef{referenced_type: type}, var, file_group) do
-    FileGroup.resolve(file_group, type)
-    |> value_serializer(var, file_group)
+    resolved = FileGroup.resolve(file_group, type)
+    value_serializer(resolved, var, file_group)
   end
 
   defp type_id(%TypeRef{referenced_type: type}, file_group) do
-    FileGroup.resolve(file_group, type)
-    |> type_id(file_group)
+    resolved = FileGroup.resolve(file_group, type)
+    type_id(resolved, file_group)
   end
   defp type_id(%TEnum{}, _),      do: Type.i32
   defp type_id(%Struct{}, _),     do: Type.struct

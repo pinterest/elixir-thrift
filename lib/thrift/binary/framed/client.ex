@@ -254,8 +254,7 @@ defmodule Thrift.Binary.Framed.Client do
   end
 
   def deserialize_message_reply(message, rpc_name, seq_id) do
-    Binary.deserialize(:message_begin, message)
-    |> handle_message(seq_id, rpc_name)
+    handle_message(Binary.deserialize(:message_begin, message), seq_id, rpc_name)
    end
 
   defp handle_message({:ok, {:reply, seq_id, rpc_name, serialized_response}}, seq_id, rpc_name) do

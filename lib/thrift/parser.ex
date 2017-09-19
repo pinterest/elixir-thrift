@@ -86,8 +86,7 @@ defmodule Thrift.Parser do
 
   # normalize various type permutations that we could get options as
   defp normalize_opts(opts) do
-    opts
-    |> Keyword.update(:namespace, nil, &namespace_string/1)
+    Keyword.update(opts, :namespace, nil, &namespace_string/1)
   end
 
   # namespace can be an atom or a binary

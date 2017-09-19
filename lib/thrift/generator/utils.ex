@@ -234,7 +234,7 @@ defmodule Thrift.Generator.Utils do
       {name, quote_value(default, type, schema)}
     end)
     values = Enum.map(values, fn {name_charlist, value} ->
-      name = List.to_string(name_charlist) |> String.to_existing_atom
+      name = String.to_existing_atom(List.to_string(name_charlist))
       type = Map.fetch!(types, name)
       {name, quote_value(value, type, schema)}
     end)

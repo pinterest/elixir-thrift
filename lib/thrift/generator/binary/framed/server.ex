@@ -32,14 +32,13 @@ defmodule Thrift.Generator.Binary.Framed.Server do
   def generate_handler_function(file_group, service_module, %Function{params: []} = function) do
     fn_name = Atom.to_string(function.name)
     handler_fn_name = Utils.underscore(function.name)
-    response_module = service_module
-    |> Module.concat(Service.module_name(function, :response))
+    response_module = Module.concat(service_module, Service.module_name(function, :response))
 
-    handler = quote do
+    body = quote do
       rsp = handler_module.unquote(handler_fn_name)()
       unquote(build_responder(function.return_type, response_module))
     end
-    |> wrap_with_try_catch(function, file_group, response_module)
+    handler = wrap_with_try_catch(body, function, file_group, response_module)
 
     quote do
       def handle_thrift(unquote(fn_name), _binary_data, handler_module) do
@@ -49,14 +48,10 @@ defmodule Thrift.Generator.Binary.Framed.Server do
   end
   def generate_handler_function(file_group, service_module, function) do
     fn_name = Atom.to_string(function.name)
-    args_module = service_module
-    |> Module.concat(Service.module_name(function, :args))
+    args_module = Module.concat(service_module, Service.module_name(function, :args))
+    response_module = Module.concat(service_module, Service.module_name(function, :response))
 
-    response_module = service_module
-    |> Module.concat(Service.module_name(function, :response))
-
-    struct_matches = function.params
-    |> Enum.map(fn param ->
+    struct_matches = Enum.map(function.params, fn param ->
       {param.name, Macro.var(param.name, nil)}
     end)
 
@@ -77,19 +72,17 @@ defmodule Thrift.Generator.Binary.Framed.Server do
 
   defp build_handler_call(file_group, function, response_module) do
     handler_fn_name = Utils.underscore(function.name)
-    handler_args = function.params
-    |> Enum.map(&Macro.var(&1.name, nil))
+    handler_args = Enum.map(function.params, &Macro.var(&1.name, nil))
 
-    quote do
+    body = quote do
       rsp = handler_module.unquote(handler_fn_name)(unquote_splicing(handler_args))
       unquote(build_responder(function.return_type, response_module))
     end
-    |> wrap_with_try_catch(function, file_group, response_module)
+    wrap_with_try_catch(body, function, file_group, response_module)
   end
 
   defp wrap_with_try_catch(quoted_handler, function, file_group, response_module) do
-    rescue_blocks = function.exceptions
-    |> Enum.flat_map(fn
+    rescue_blocks = Enum.flat_map(function.exceptions, fn
       exc ->
         resolved = FileGroup.resolve(file_group, exc)
         dest_module = FileGroup.dest_module(file_group, resolved.type)

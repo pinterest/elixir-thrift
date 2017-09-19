@@ -56,8 +56,7 @@ defmodule Thrift.Generator do
 
   def generate_to_string!(%FileGroup{} = file_group) do
     Enum.flat_map(file_group.schemas, fn {_, schema} ->
-      %Schema{schema | file_group: file_group}
-      |> generate_schema
+      generate_schema(%Schema{schema | file_group: file_group})
     end)
     |> Enum.reverse
     |> Enum.map(fn {_, code} ->
@@ -89,7 +88,7 @@ defmodule Thrift.Generator do
 
       path = Path.join(output_dir, filename)
       path |> Path.dirname |> File.mkdir_p!
-      path |> File.write!(source)
+      File.write!(path, source)
 
       filename
     end)

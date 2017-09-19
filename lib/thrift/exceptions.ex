@@ -27,7 +27,7 @@ defmodule Thrift.TApplicationException do
   ]
 
   def exception(args) when is_list(args) do
-    type = Keyword.fetch!(args, :type) |> normalize_type
+    type = normalize_type(Keyword.fetch!(args, :type))
     message = args[:message] || Atom.to_string(type)
     %__MODULE__{message: message, type: type}
   end

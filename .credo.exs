@@ -39,7 +39,7 @@
       {Credo.Check.Readability.ParenthesesOnZeroArityDefs, false},
       {Credo.Check.Readability.ParenthesesInCondition},
       {Credo.Check.Readability.PredicateFunctionNames},
-      {Credo.Check.Readability.SinglePipe, false}, # Off for now
+      {Credo.Check.Readability.SinglePipe},
       {Credo.Check.Readability.Specs, false},
       {Credo.Check.Readability.StringSigils},
       {Credo.Check.Readability.TrailingBlankLine},
@@ -50,7 +50,7 @@
       {Credo.Check.Refactor.ABCSize, false},
       {Credo.Check.Refactor.CondStatements},
       {Credo.Check.Refactor.DoubleBooleanNegation, false},
-      {Credo.Check.Refactor.FunctionArity, max_arity: 8},
+      {Credo.Check.Refactor.FunctionArity, max_arity: 6},
       {Credo.Check.Refactor.MatchInCondition},
       {Credo.Check.Refactor.PipeChainStart, false},
       {Credo.Check.Refactor.CyclomaticComplexity},

@@ -72,13 +72,11 @@ defmodule Mix.Tasks.Compile.Thrift do
 
   @spec parse(Path.t, OptionParser.parsed) :: FileGroup.t
   defp parse(file, opts) do
-    try do
-      Thrift.Parser.parse_file(file, opts)
-    rescue
-      e ->
-        Mix.shell.error "Failed to parse #{file}: #{Exception.message(e)}"
-        nil
-    end
+    Thrift.Parser.parse_file(file, opts)
+  rescue
+    e ->
+      Mix.shell.error "Failed to parse #{file}: #{Exception.message(e)}"
+      nil
   end
 
   @typep mappings ::

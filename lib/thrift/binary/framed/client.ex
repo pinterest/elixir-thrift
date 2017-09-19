@@ -7,8 +7,6 @@ defmodule Thrift.Binary.Framed.Client do
 
   This module ony adds two functions to the connection behaviour,
  `oneway` and `request`.
-
-
   """
   alias Thrift.Protocol.Binary
   alias Thrift.TApplicationException
@@ -95,7 +93,6 @@ defmodule Thrift.Binary.Framed.Client do
      - `send_timeout`: An integer that governs how long our connection waits when sending data.
 
      - `retry`: A boolean that tells the client whether or not it should retry on failures.
-
 
     `gen_server_opts`: A keyword list of options that control the gen_server behaviour.
 

@@ -470,11 +470,11 @@ defmodule Thrift.Parser.Models do
     end
 
     defp merge(schema, %TEnum{} = enum) do
-      %Schema{schema | enums: put_new_strict(schema.enums, enum.name, canonicalize_name(schema, enum))}
+      %Schema{schema | enums: put_new_strict(schema.enums, enum.name, canonicalize_name(schema.module, enum))}
     end
 
     defp merge(schema, %Exception{} = exc) do
-      fixed_fields = schema
+      fixed_fields = schema.module
       |> canonicalize_name(exc)
       |> canonicalize_fields()
 
@@ -482,7 +482,7 @@ defmodule Thrift.Parser.Models do
     end
 
     defp merge(schema, %Struct{} = s) do
-      fixed_fields = schema
+      fixed_fields = schema.module
       |> canonicalize_name(s)
       |> canonicalize_fields()
 
@@ -490,7 +490,7 @@ defmodule Thrift.Parser.Models do
     end
 
     defp merge(schema, %Union{} = union) do
-      fixed_fields = schema
+      fixed_fields = schema.module
       |> canonicalize_name(union)
       |> canonicalize_fields()
 
@@ -498,19 +498,19 @@ defmodule Thrift.Parser.Models do
     end
 
     defp merge(schema, %Service{} = service) do
-      %Schema{schema | services: put_new_strict(schema.services, service.name, canonicalize_name(schema, service))}
+      %Schema{schema | services: put_new_strict(schema.services, service.name, canonicalize_name(schema.module, service))}
     end
 
     defp merge(schema, {:typedef, actual_type, type_alias}) do
       %Schema{schema | typedefs: put_new_strict(schema.typedefs, atomify(type_alias), canonicalize_type(schema.module, actual_type))}
     end
 
-    defp canonicalize_name(%{module: nil}, model) do
+    defp canonicalize_name(nil, model) do
       model
     end
 
-    defp canonicalize_name(schema, %{name: name} = model) do
-      %{model | name: :"#{schema.module}.#{name}"}
+    defp canonicalize_name(module, %{name: name} = model) do
+      %{model | name: canonicalize_type(module, name)}
     end
 
     defp put_new_strict(map, key, value) do
@@ -545,7 +545,7 @@ defmodule Thrift.Parser.Models do
       |> String.split(".")
 
       case split_type_name do
-        [^module | rest] ->
+        [^module | _rest] ->
           # this case accounts for types that already have the current module in them
           type_name
 
@@ -588,7 +588,7 @@ defmodule Thrift.Parser.Models do
     defp canonicalize_defaults(%TypeRef{referenced_type: referenced_type}, %ValueRef{referenced_value: referenced_value} = val_ref) do
       %ValueRef{val_ref | referenced_value: canonical_module(referenced_type, referenced_value)}
     end
-    defp canonicalize_defaults(%TypeRef{referenced_type: referenced_type} = type, defaults) when is_list(defaults) do
+    defp canonicalize_defaults(%TypeRef{} = type, defaults) when is_list(defaults) do
       for default_value <- defaults do
         canonicalize_defaults(type, default_value)
       end
@@ -597,7 +597,7 @@ defmodule Thrift.Parser.Models do
       # this is used for a remote typedef that defines a map
       {canonicalize_defaults(ref, key_type), canonicalize_defaults(ref, val_type)}
     end
-    defp canonicalize_defaults(t, val) do
+    defp canonicalize_defaults(_t, val) do
       val
     end
 

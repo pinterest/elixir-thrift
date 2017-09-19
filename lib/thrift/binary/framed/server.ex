@@ -10,7 +10,7 @@ defmodule Thrift.Binary.Framed.Server
     tcp_opts: :ranch_tcp.opts
   ]
 
-  @spec start_link(module, (1..65535), module, server_opts) :: GenServer.on_start
+  @spec start_link(module, (1..65_535), module, server_opts) :: GenServer.on_start
   def start_link(server_module, port, handler_module, opts) do
     name = Keyword.get(opts, :name, handler_module)
     max_restarts = Keyword.get(opts, :max_restarts, 10)

@@ -31,12 +31,12 @@
       {Credo.Check.Design.TagFIXME},
 
       {Credo.Check.Readability.FunctionNames},
-      {Credo.Check.Readability.LargeNumbers, false},
+      {Credo.Check.Readability.LargeNumbers},
       {Credo.Check.Readability.MaxLineLength, false},
       {Credo.Check.Readability.ModuleAttributeNames},
       {Credo.Check.Readability.ModuleDoc},
       {Credo.Check.Readability.ModuleNames},
-      {Credo.Check.Readability.ParenthesesOnZeroArityDefs, false},
+      {Credo.Check.Readability.ParenthesesOnZeroArityDefs, false},  # Crashes credo; needs investigation
       {Credo.Check.Readability.ParenthesesInCondition},
       {Credo.Check.Readability.PredicateFunctionNames},
       {Credo.Check.Readability.SinglePipe},

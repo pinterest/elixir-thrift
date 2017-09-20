@@ -259,6 +259,12 @@ defmodule Thrift.Generator.Utils do
       MapSet.new(unquote(values))
     end
   end
+  def quote_value(set_elements, {:set, type}, schema) do
+    values = Enum.map(set_elements, &quote_value(&1, type, schema))
+    quote do
+      MapSet.new(unquote(values))
+    end
+  end
   def quote_value(list, {:list, type}, schema) when is_list(list) do
     Enum.map(list, &quote_value(&1, type, schema))
   end

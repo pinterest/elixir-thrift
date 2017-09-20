@@ -3,7 +3,7 @@ defmodule Thrift.Parser.Types do
 
   defmodule Primitive do
     @moduledoc false
-    @type t :: :bool | :i8 | :i16 | :i64 | :binary | :double | :byte | :string
+    @type t :: :bool | :i8 | :i16 | :i32 | :i64 | :binary | :double | :byte | :string
   end
 
   defmodule Ident do

@@ -10,7 +10,7 @@ defmodule Thrift do
 
   @typedoc "Thrift data types"
   @type data_type ::
-    :bool | :byte | :i16 | :i32 | :i64 | :double | :string |
+    :bool | :byte | :i8 | :i16 | :i32 | :i64 | :double | :string | :binary |
     {:map, data_type, data_type} | {:set, data_type} | {:list, data_type}
 
   @type i8   :: (-128..127)
@@ -21,4 +21,12 @@ defmodule Thrift do
 
   @typedoc "Thrift message types"
   @type message_type :: :call | :reply | :exception | :oneway
+
+  @doc """
+  Returns a list of atoms, each of which is a name of a Thrift primitive type.
+  """
+  @spec primitive_names() :: [Thrift.Parser.Types.Primitive.t]
+  def primitive_names do
+    [:bool, :i8, :i16, :i32, :i64, :binary, :double, :byte, :string]
+  end
 end

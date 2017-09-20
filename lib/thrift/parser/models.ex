@@ -470,35 +470,134 @@ defmodule Thrift.Parser.Models do
     end
 
     defp merge(schema, %TEnum{} = enum) do
-      %Schema{schema | enums: put_new_strict(schema.enums, enum.name, canonicalize_name(schema, enum))}
+      %Schema{schema | enums: put_new_strict(schema.enums, enum.name, add_namespace_to_name(schema.module, enum))}
     end
 
     defp merge(schema, %Exception{} = exc) do
-      %Schema{schema | exceptions: put_new_strict(schema.exceptions, exc.name, canonicalize_name(schema, exc))}
+      fixed_fields = schema.module
+      |> add_namespace_to_name(exc)
+      |> add_namespace_to_fields()
+
+      %Schema{schema | exceptions: put_new_strict(schema.exceptions, exc.name, fixed_fields)}
     end
 
     defp merge(schema, %Struct{} = s) do
-      %Schema{schema | structs: put_new_strict(schema.structs, s.name, canonicalize_name(schema, s))}
+      fixed_fields = schema.module
+      |> add_namespace_to_name(s)
+      |> add_namespace_to_fields()
+
+      %Schema{schema | structs: put_new_strict(schema.structs, s.name, fixed_fields)}
     end
 
     defp merge(schema, %Union{} = union) do
-      %Schema{schema | unions: put_new_strict(schema.unions, union.name, canonicalize_name(schema, union))}
+      fixed_fields = schema.module
+      |> add_namespace_to_name(union)
+      |> add_namespace_to_fields()
+
+      %Schema{schema | unions: put_new_strict(schema.unions, union.name, fixed_fields)}
     end
 
     defp merge(schema, %Service{} = service) do
-      %Schema{schema | services: put_new_strict(schema.services, service.name, canonicalize_name(schema, service))}
+      %Schema{schema | services: put_new_strict(schema.services, service.name, add_namespace_to_name(schema.module, service))}
     end
 
     defp merge(schema, {:typedef, actual_type, type_alias}) do
-      %Schema{schema | typedefs: put_new_strict(schema.typedefs, atomify(type_alias), actual_type)}
+      %Schema{schema | typedefs: put_new_strict(schema.typedefs, atomify(type_alias), add_namespace_to_type(schema.module, actual_type))}
     end
 
-    defp canonicalize_name(%{module: nil}, model) do
+    defp add_namespace_to_name(nil, model) do
       model
     end
+    defp add_namespace_to_name(module, %{name: name} = model) do
+      %{model | name: add_namespace_to_type(module, name)}
+    end
 
-    defp canonicalize_name(schema, %{name: name} = model) do
-      %{model | name: :"#{schema.module}.#{name}"}
+    defp add_namespace_to_type(module, %TypeRef{referenced_type: t} = type) do
+      %TypeRef{type | referenced_type: add_namespace_to_type(module, t)}
+    end
+    defp add_namespace_to_type(module, {:set, elem_type}) do
+      {:set, add_namespace_to_type(module, elem_type)}
+    end
+    defp add_namespace_to_type(module, {:list, elem_type}) do
+      {:list, add_namespace_to_type(module, elem_type)}
+    end
+    defp add_namespace_to_type(module, {:map, {key_type, val_type}}) do
+      {:map, {add_namespace_to_type(module, key_type), add_namespace_to_type(module, val_type)}}
+    end
+    for type <- Thrift.primitive_names do
+      defp add_namespace_to_type(_, unquote(type)) do
+        unquote(type)
+      end
+    end
+    defp add_namespace_to_type(module, type_name) when is_atom(type_name) do
+      split_type_name = type_name
+      |> Atom.to_string
+      |> String.split(".")
+
+      case split_type_name do
+        [^module | _rest] ->
+          # this case accounts for types that already have the current module in them
+          type_name
+
+        _ ->
+          :"#{module}.#{type_name}"
+
+      end
+    end
+
+    defp add_namespace_to_fields(%{fields: fields} = model) do
+      %{model | fields: Enum.map(fields, &add_namespace_to_field/1)}
+    end
+
+    defp add_namespace_to_field(%Field{default: nil} = field) do
+      field
+    end
+    defp add_namespace_to_field(%Field{default: default, type: type} = field) do
+      %Field{field | default: add_namespace_to_defaults(type, default)}
+    end
+
+    defp add_namespace_to_defaults({:list, elem_type}, defaults) when is_list(defaults) do
+
+      for elem <- defaults do
+        add_namespace_to_defaults(elem_type, elem)
+      end
+    end
+    defp add_namespace_to_defaults({:set, elem_type}, %MapSet{} = defaults) do
+      for elem <- defaults, into: MapSet.new do
+        add_namespace_to_defaults(elem_type, elem)
+      end
+    end
+    defp add_namespace_to_defaults({:map, {_, _}}, %ValueRef{} = val) do
+      val
+    end
+    defp add_namespace_to_defaults({:map, {key_type, val_type}}, defaults) when is_map(defaults) do
+      for {key, val} <- defaults, into: %{} do
+        {add_namespace_to_defaults(key_type, key), add_namespace_to_defaults(val_type, val)}
+      end
+    end
+    defp add_namespace_to_defaults(%TypeRef{referenced_type: referenced_type}, %ValueRef{referenced_value: referenced_value} = val_ref) do
+      %ValueRef{val_ref | referenced_value: namespaced_module(referenced_type, referenced_value)}
+    end
+    defp add_namespace_to_defaults(%TypeRef{} = type, defaults) when is_list(defaults) do
+      for default_value <- defaults do
+        add_namespace_to_defaults(type, default_value)
+      end
+    end
+    defp add_namespace_to_defaults(ref, {key_type, val_type}) do
+      # this is used for a remote typedef that defines a map
+      {add_namespace_to_defaults(ref, key_type), add_namespace_to_defaults(ref, val_type)}
+    end
+    defp add_namespace_to_defaults(_t, val) do
+      val
+    end
+
+    defp namespaced_module(type, value) do
+      with string_val <- Atom.to_string(type),
+           [module, _value | _rest] <- String.split(string_val, ".") do
+        add_namespace_to_type(module, value)
+      else _ ->
+        value
+      end
     end
 
     defp put_new_strict(map, key, value) do

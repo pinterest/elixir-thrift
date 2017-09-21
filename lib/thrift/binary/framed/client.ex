@@ -188,19 +188,50 @@ defmodule Thrift.Binary.Framed.Client do
     :ok
   end
 
-  @spec call(pid, String.t, data, options) :: protocol_response
+  @spec call(pid, String.t, data, module, options) :: protocol_response
   @doc """
   Executes a Thrift RPC. The data argument must be a correctly formatted
   Thrift message.
 
-  The `options` argument takes the same type of keyword list that `start_link` takes.
+  The `opts` argument takes the same type of keyword list that `start_link` takes.
   """
-  def call(conn, rpc_name, serialized_args, opts) do
+  def call(conn, rpc_name, serialized_args, deserialize_module, opts) do
     tcp_opts = Keyword.get(opts, :tcp_opts, [])
     gen_server_opts = Keyword.get(opts, :gen_server_opts, [])
     gen_server_timeout = Keyword.get(gen_server_opts, :timeout, 5000)
 
-    Connection.call(conn, {:call, rpc_name, serialized_args, tcp_opts}, gen_server_timeout)
+    case Connection.call(conn, {:call, rpc_name, serialized_args, tcp_opts}, gen_server_timeout) do
+      {:ok, data} ->
+        deserialize_response(data, deserialize_module)
+
+      {:error, _} = err ->
+        err
+    end
+  end
+
+  defp deserialize_response(data, deserialize_module) do
+    case deserialize_module.deserialize(data) do
+      {%{success: nil} = response, ""} ->
+        responses = response
+        |> Map.from_struct
+        |> Map.values
+        |> Enum.reject(&is_nil(&1))
+
+        case responses do
+          [exception] ->
+            {:error, {:exception, exception}}
+
+          [] ->
+            # This case is when we have a void return on the remote RPC.
+            {:ok, nil}
+        end
+
+      {%{success: result}, ""} ->
+        {:ok, result}
+
+      {:error, _} = err ->
+        err
+    end
   end
 
   def handle_call(_, _, %{sock: nil} = s) do

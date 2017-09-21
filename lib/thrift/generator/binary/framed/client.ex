@@ -97,30 +97,9 @@ defmodule Thrift.Generator.Binary.Framed.Client do
     end
   end
   defp build_response_handler(%Function{oneway: false}, rpc_name, response_module) do
-    module = Module.concat(response_module, :BinaryProtocol)
-    quote bind_quoted: [module: module, rpc_name: rpc_name] do
-      with {:ok, data} <- ClientImpl.call(client, rpc_name, serialized_args, opts),
-           {%{success: result}, ""} when not is_nil(result) <- module.deserialize(data) do
-        {:ok, result}
-      else
-        {%{success: nil} = reply, ""} ->
-          responses = reply
-          |> Map.from_struct
-          |> Map.values
-          |> Enum.reject(&is_nil(&1))
-
-          case responses do
-            [exception] ->
-              {:error, {:exception, exception}}
-
-            [] ->
-              # This case is when we have a void return on the remote RPC.
-              {:ok, nil}
-          end
-
-        {:error, _} = err ->
-          err
-      end
+    deserialize_module = Module.concat(response_module, :BinaryProtocol)
+    quote bind_quoted: [deserialize_module: deserialize_module, rpc_name: rpc_name] do
+      ClientImpl.call(client, rpc_name, serialized_args, deserialize_module, opts)
     end
   end
 end

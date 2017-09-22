@@ -202,37 +202,32 @@ defmodule Thrift.Binary.Framed.Client do
 
     case Connection.call(conn, {:call, rpc_name, serialized_args, tcp_opts}, gen_server_timeout) do
       {:ok, data} ->
-        deserialize_response(data, deserialize_module)
+        data
+        |> deserialize_module.deserialize
+        |> unpack_response
 
       {:error, _} = err ->
         err
     end
   end
 
-  defp deserialize_response(data, deserialize_module) do
-    case deserialize_module.deserialize(data) do
-      {%{success: nil} = response, ""} ->
-        responses = response
-        |> Map.from_struct
-        |> Map.values
-        |> Enum.reject(&is_nil(&1))
+  defp unpack_response({%{success: nil} = response, ""}) do
+    responses = response
+    |> Map.from_struct
+    |> Map.values
+    |> Enum.reject(&is_nil(&1))
 
-        case responses do
-          [exception] ->
-            {:error, {:exception, exception}}
+    case responses do
+      [exception] ->
+        {:error, {:exception, exception}}
 
-          [] ->
-            # This case is when we have a void return on the remote RPC.
-            {:ok, nil}
-        end
-
-      {%{success: result}, ""} ->
-        {:ok, result}
-
-      {:error, _} = err ->
-        err
+      [] ->
+        # This case is when we have a void return on the remote RPC.
+        {:ok, nil}
     end
   end
+  defp unpack_response({%{success: result}, ""}), do: {:ok, result}
+  defp unpack_response({:error, _} = error), do: error
 
   def handle_call(_, _, %{sock: nil} = s) do
     {:reply, {:error, :closed}, s}

@@ -14,6 +14,8 @@ defmodule Thrift.Generator.ServiceTest do
 
   service SimpleService {
     bool ping(),
+    void check_username(1: string username)
+      throws(1: UsernameTakenException taken),
     bool update_username(1: i64 id, 2: string new_username)
       throws(1: UsernameTakenException taken),
     User get_by_id(1: i64 user_id),
@@ -251,6 +253,18 @@ defmodule Thrift.Generator.ServiceTest do
     assert {:ok, nil} == Client.mark_inactive(ctx.client, 5529)
   end
 
+  thrift_test "it handles void functions that can throw exceptions", ctx do
+    ServerSpy.set_reply(:noreply)
+    assert {:ok, nil} == Client.check_username(ctx.client, "foo")
+  end
+
+  thrift_test "it handles void functions that do throw exceptions", ctx do
+    ServerSpy.set_reply({:exception, {:UsernameTakenException, 'blowie up'}})
+    assert_raise UsernameTakenException, fn ->
+      Client.check_username!(ctx.client, "foo")
+    end
+  end
+
   thrift_test "it handles void oneway functions", ctx do
     ServerSpy.set_reply(:noreply)
 
@@ -327,7 +341,7 @@ defmodule Thrift.Generator.ServiceTest do
     new_server_port = random_port()
     {:ok, new_server} = start_server(new_server_port, 20)
 
-    {:ok, client} = Client.start_link("127.0.0.1", new_server_port,[])
+    {:ok, client} = Client.start_link("127.0.0.1", new_server_port, [])
 
     :timer.sleep(50) # sleep beyond the server's recv_timeout
     assert catch_exit(Client.friend_ids_of(client, 1234))

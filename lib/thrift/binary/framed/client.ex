@@ -211,19 +211,23 @@ defmodule Thrift.Binary.Framed.Client do
     end
   end
 
-  defp unpack_response({%{success: nil} = response, ""}) do
-    responses = response
-    |> Map.from_struct
-    |> Map.values
-    |> Enum.reject(&is_nil(&1))
+  # Unpack a "complex" response that contains a `nil` success value and one or
+  # more exception fields. We can't differentiate between a "void" result and
+  # a potential exception without checking each exception field to see if it
+  # contains a non-`nil` value.
+  #
+  # As a small optimization, we only use this function if the response struct
+  # has at least one exception field (hence the `map_size/1` guard check).
+  defp unpack_response({%{success: nil} = response, ""}) when map_size(response) > 2 do
+    exception =
+      response
+      |> Map.from_struct
+      |> Enum.find_value(fn {_, value} -> value end)
 
-    case responses do
-      [exception] ->
-        {:error, {:exception, exception}}
-
-      [] ->
-        # This case is when we have a void return on the remote RPC.
-        {:ok, nil}
+    if exception do
+      {:error, {:exception, exception}}
+    else
+      {:ok, nil}  # "void" function result
     end
   end
   defp unpack_response({%{success: result}, ""}), do: {:ok, result}

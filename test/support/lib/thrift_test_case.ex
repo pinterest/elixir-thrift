@@ -1,4 +1,5 @@
 defmodule ThriftTestCase do
+  @moduledoc false
   @project_root Path.expand("../../../", __DIR__)
 
   use ExUnit.CaseTemplate
@@ -20,8 +21,10 @@ defmodule ThriftTestCase do
   end
 
   def implement?(module) do
-    tag = Module.get_attribute(module, :moduletag)
-    |> Map.new(fn tag ->  {tag, true} end)
+    tag =
+      module
+      |> Module.get_attribute(:moduletag)
+      |> Map.new(fn tag -> {tag, true} end)
 
     config = ExUnit.configuration
     case ExUnit.Filters.eval(config[:include], config[:exclude], tag, []) do
@@ -84,8 +87,7 @@ defmodule ThriftTestCase do
     generate_elixir_files(files, namespace, dir)
 
     if opts[:gen_erl] do
-      files
-      |> generate_erlang_files(namespace, dir)
+      generate_erlang_files(files, namespace, dir)
     else
       :ok
     end
@@ -208,8 +210,7 @@ defmodule ThriftTestCase do
   end
 
   defp record_compile(file_path, erlang_module, module_name) do
-    records = Record.extract_all(from: file_path)
-    |> Enum.map(fn {record_name, fields} ->
+    records = Enum.map(Record.extract_all(from: file_path), fn {record_name, fields} ->
       underscored_record_name = record_name
       |> Atom.to_string
       |> Macro.underscore
@@ -238,8 +239,8 @@ defmodule ThriftTestCase do
 
         def unquote(serialize_fn_name)(record, opts \\ [])
         def unquote(serialize_fn_name)({unquote(record_name), unquote_splicing(match)} = record, opts) do
-          :erlang.setelement(1, record, unquote(underscored_record_name))
-          |> unquote(serialize_fn_name)(opts)
+          record = :erlang.setelement(1, record, unquote(underscored_record_name))
+          unquote(serialize_fn_name)(record, opts)
         end
         def unquote(serialize_fn_name)({unquote(underscored_record_name), unquote_splicing(match)} = record, opts) do
           record = :erlang.setelement(1, record, unquote(record_name))
@@ -276,13 +277,12 @@ defmodule ThriftTestCase do
       end
     end)
 
-    quote do
+    Code.compile_quoted(quote do
       defmodule unquote(module_name) do
         require Record
         unquote_splicing(records)
       end
-    end
-    |> Code.compile_quoted
+    end)
 
     module_name
   end

@@ -93,8 +93,8 @@ defmodule Thrift.Parser.LexerTest do
   test "hex literals" do
     assert tokenize("0x0") == [{:int, 1, 0}]
     assert tokenize("0xff") == [{:int, 1, 255}]
-    assert tokenize("+0xc0c0c0") == [{:int, 1, 12632256}]
-    assert tokenize("-0xc0c0c0") == [{:int, 1, -12632256}]
+    assert tokenize("+0xc0c0c0") == [{:int, 1, 12_632_256}]
+    assert tokenize("-0xc0c0c0") == [{:int, 1, -12_632_256}]
   end
 
   test "double literals" do

@@ -11,9 +11,7 @@ defmodule ThriftTestHelpers do
   end
 
   def build_thrift_file(base_dir, {file_name, contents}) do
-    file_relative_path = file_name
-    |> Atom.to_string
-
+    file_relative_path = Atom.to_string(file_name)
     file_path = Path.join(base_dir, file_relative_path)
 
     file_path
@@ -25,8 +23,7 @@ defmodule ThriftTestHelpers do
   end
 
   def tmp_dir do
-    tmp_path = System.tmp_dir!
-    |> Path.join(Integer.to_string(System.unique_integer))
+    tmp_path = Path.join(System.tmp_dir!, Integer.to_string(System.unique_integer))
 
     File.mkdir(tmp_path)
     tmp_path
@@ -50,11 +47,9 @@ defmodule ThriftTestHelpers do
 
     quote location: :keep do
       root_dir = ThriftTestHelpers.tmp_dir
-      full_path = root_dir
-      |> Path.join(unquote(parsed_file))
+      full_path = Path.join(root_dir, unquote(parsed_file))
 
-      files = unquote(specs)
-      |> Enum.map(&ThriftTestHelpers.build_thrift_file(root_dir, &1))
+      files = Enum.map(unquote(specs), &ThriftTestHelpers.build_thrift_file(root_dir, &1))
       unquote(thrift_var) = ThriftTestHelpers.parse(full_path)
       try do
         unquote(block)

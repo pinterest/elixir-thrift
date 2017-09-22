@@ -9,8 +9,8 @@ defmodule BinaryProtocolTest do
     {serializer_mod, serializer_fn} = serializer_mf
     {deserializer_mod, deserializer_fn} = deserializer_mf
 
-    serialized = :erlang.apply(serializer_mod, serializer_fn, [data, :binary])
-    |> IO.iodata_to_binary
+    data = :erlang.apply(serializer_mod, serializer_fn, [data, :binary])
+    serialized = IO.iodata_to_binary(data)
 
     :erlang.apply(deserializer_mod, deserializer_fn, [serialized])
   end
@@ -66,9 +66,9 @@ defmodule BinaryProtocolTest do
 
     assert Erlang.Scalars.new_scalars(sixteen_bits: 12723) == round_trip_struct(%Scalars{sixteen_bits: 12723}, encoder, decoder)
 
-    assert Erlang.Scalars.new_scalars(thirty_two_bits: 1_8362_832) == round_trip_struct(%Scalars{thirty_two_bits: 1_8362_832}, encoder, decoder)
+    assert Erlang.Scalars.new_scalars(thirty_two_bits: 18_362_832) == round_trip_struct(%Scalars{thirty_two_bits: 18_362_832}, encoder, decoder)
 
-    assert Erlang.Scalars.new_scalars(sixty_four_bits: 8872372) == round_trip_struct(%Scalars{sixty_four_bits: 8872372}, encoder, decoder)
+    assert Erlang.Scalars.new_scalars(sixty_four_bits: 8_872_372) == round_trip_struct(%Scalars{sixty_four_bits: 8_872_372}, encoder, decoder)
 
     assert Erlang.Scalars.new_scalars(double_value: 2.37219) == round_trip_struct(%Scalars{double_value: 2.37219}, encoder, decoder)
 
@@ -78,10 +78,7 @@ defmodule BinaryProtocolTest do
   end
 
   thrift_test "it should not encode unset fields" do
-    encoded =  Scalars.serialize(%Scalars{})
-    |> IO.iodata_to_binary
-
-    assert <<0>> == encoded
+    assert <<0>> == IO.iodata_to_binary(Scalars.serialize(%Scalars{}))
   end
 
   @thrift_file name: "containers.thrift", contents: """
@@ -144,7 +141,6 @@ defmodule BinaryProtocolTest do
     #        %Friend{id: 3, username: "dantswain"}
     #       ]}, encoder, decoder)
   end
-
 
   @thrift_file name: "across.thrift", contents: """
     include "containers.thrift"
@@ -304,8 +300,8 @@ defmodule BinaryProtocolTest do
       new_bool: false,
       new_byte: 4,
       new_i16: 102,
-      new_i32: 919482,
-      new_i64: 18281038461,
+      new_i32: 919_482,
+      new_i64: 18_281_038_461,
       new_double: 22.4,
       new_list: [sub],
       new_string: "This is in the sub struct",
@@ -324,7 +320,6 @@ defmodule BinaryProtocolTest do
 
     assert %OldChangeyStruct{id: 12345, username: "stinkypants"} == deserialized
   end
-
 
   # test "nil nested fields get their default value" do
   #   erlang_nested = serialize_nesting_to_erlang(user: user(:elixir, username: "frank"))

@@ -22,7 +22,8 @@ defmodule ParserUtils do
   end
 
   def compile_module(file_group) do
-    Thrift.Generator.generate_to_string!(file_group)
+    file_group
+    |> Thrift.Generator.generate_to_string!
     |> Code.compile_string
   end
 
@@ -159,16 +160,13 @@ defmodule ParserUtils do
   end
 
   def deserialize_to_erlang(binary_data, struct_definition) do
-    try do
-      with({:ok, memory_buffer_transport} <- :thrift_memory_buffer.new(binary_data),
-           {:ok, binary_protocol} <- :thrift_binary_protocol.new(memory_buffer_transport),
-           {_, {:ok, record}} <- :thrift_protocol.read(binary_protocol, struct_definition)) do
-
-        record
-      end
-    rescue _ ->
-        {:error, :cant_decode}
+    with({:ok, memory_buffer_transport} <- :thrift_memory_buffer.new(binary_data),
+          {:ok, binary_protocol} <- :thrift_binary_protocol.new(memory_buffer_transport),
+          {_, {:ok, record}} <- :thrift_protocol.read(binary_protocol, struct_definition)) do
+      record
     end
+  rescue _ ->
+      {:error, :cant_decode}
   end
 
   defp to_erlang_dict(:undefined), do: :undefined

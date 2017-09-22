@@ -5,7 +5,7 @@ defmodule Thrift.Generator.BinaryProtocolTest do
   alias Thrift.Union.TooManyFieldsSetException
 
   def assert_serializes(%{__struct__: mod} = struct, binary) do
-    assert binary == Binary.serialize(:struct, struct) |> IO.iodata_to_binary
+    assert binary == IO.iodata_to_binary(Binary.serialize(:struct, struct))
     assert {^struct, ""} = mod.deserialize(binary)
 
     # If we randomly mutate any byte in the binary, it may deserialize to a
@@ -25,7 +25,7 @@ defmodule Thrift.Generator.BinaryProtocolTest do
   end
 
   def assert_serializes(%{__struct__: mod} = struct, binary, %{__struct__: mod} = deserialized_struct) do
-    assert binary == Binary.serialize(:struct, struct) |> IO.iodata_to_binary
+    assert binary == IO.iodata_to_binary(Binary.serialize(:struct, struct))
     assert {^deserialized_struct, ""} = mod.deserialize(binary)
   end
 
@@ -629,13 +629,13 @@ defmodule Thrift.Generator.BinaryProtocolTest do
   thrift_test "lists serialize into maps" do
     binary = <<13, 0, 2, 3, 3, 0, 0, 0, 1, 91, 92, 0>>
     assert binary == %Byte{val_map: %{91 => 92}} |> Byte.serialize() |> IO.iodata_to_binary
-    assert binary == %Byte{val_map: [{91, 92}] } |> Byte.serialize() |> IO.iodata_to_binary
+    assert binary == %Byte{val_map: [{91, 92}]} |> Byte.serialize() |> IO.iodata_to_binary
   end
 
   thrift_test "lists serialize into sets" do
     binary = <<14, 0, 3, 3, 0, 0, 0, 1, 91, 0>>
     assert binary == %Byte{val_set: MapSet.new([91])} |> Byte.serialize() |> IO.iodata_to_binary
-    assert binary == %Byte{val_set: [91]            } |> Byte.serialize() |> IO.iodata_to_binary
+    assert binary == %Byte{val_set: [91]} |> Byte.serialize() |> IO.iodata_to_binary
   end
 
   @thrift_file name: "additions.thrift", contents: """

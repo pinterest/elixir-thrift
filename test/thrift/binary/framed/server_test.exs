@@ -70,16 +70,13 @@ defmodule Servers.Binary.Framed.IntegrationTest do
     end
   end
 
-  alias Servers.Binary.Framed.IntegrationTest.ServerTest.Binary.Framed.Client
-  alias Servers.Binary.Framed.IntegrationTest.ServerTest.Binary.Framed.Server
+  alias Servers.Binary.Framed.IntegrationTest.ServerTest.Binary.Framed.{Client, Server}
   alias Thrift.TApplicationException
 
   def stop_server(server_pid) do
-    try do
-      Server.stop(server_pid)
-    catch :exit, _ ->
-      :ok
-    end
+    Server.stop(server_pid)
+  catch :exit, _ ->
+    :ok
   end
 
   setup_all do

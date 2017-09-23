@@ -1,7 +1,7 @@
 %{configs: [
   %{name: "default",
     files: %{
-      included: ["lib/", "src/"],
+      included: ["lib/", "src/", "test/"],
       excluded: [~r"/_build/", ~r"/deps/"]
     },
     requires: [],
@@ -31,7 +31,7 @@
       {Credo.Check.Design.TagFIXME},
 
       {Credo.Check.Readability.FunctionNames},
-      {Credo.Check.Readability.LargeNumbers},
+      {Credo.Check.Readability.LargeNumbers, only_greater_than: 99999},
       {Credo.Check.Readability.MaxLineLength, false},
       {Credo.Check.Readability.ModuleAttributeNames},
       {Credo.Check.Readability.ModuleDoc},

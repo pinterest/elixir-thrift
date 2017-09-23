@@ -3,8 +3,8 @@ defmodule Thrift.Generator.UtilsTest do
   import Thrift.Generator.Utils
 
   defmacro check(input, expected_output) do
-    input_source = optimize_iolist(input) |> Macro.to_string
-    expected_output_source = expected_output |> Macro.to_string
+    input_source = Macro.to_string(optimize_iolist(input))
+    expected_output_source = Macro.to_string(expected_output)
     assert input_source == expected_output_source
   end
 

@@ -19,7 +19,6 @@ dist: trusty
 services: docker
 
 env:
-  - THRIFT=${TRAVIS_BUILD_DIR}/ci/thrift-docker
   - COVERALLS=false
 
 script:

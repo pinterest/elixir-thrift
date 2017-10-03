@@ -7,6 +7,7 @@
 # This script could be used for local testing as long as COVERALLS is not set.
 
 export MIX_ENV=test
+export THRIFT=${TRAVIS_BUILD_DIR}/ci/thrift-docker
 
 if [ "$COVERALLS" = true  ]
 then

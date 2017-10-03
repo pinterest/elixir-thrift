@@ -1,17 +1,30 @@
 language: elixir
-elixir: 1.3.4
-otp_release: 18.2
+
+branches:
+  only:
+    - "master"
+
 matrix:
   include:
-    - elixir: 1.5.0
+    - elixir: 1.4.5
+      otp_release: 19.3
+    - elixir: 1.5.2
+      otp_release: 19.3
+    - elixir: 1.5.2
       otp_release: 20.0
+      env: COVERALLS=true
+
 sudo: required
 dist: trusty
 services: docker
+
 env:
-  - THRIFT=${TRAVIS_BUILD_DIR}/ci/thrift-docker
-after_script:
-  - MIX_ENV=test mix coveralls.travis
+  - COVERALLS=false
+
+script:
+  - MIX_ENV=test mix deps.compile
+  - ./ci/tests.sh
+
 cache:
   directories:
   - $HOME/.mix/archives

@@ -79,10 +79,20 @@ In this example, we gather all of the `.thrift` files under the `thrift`
 directory and write our output to the `lib/thrift/` directory:
 
 ```elixir
-thrift: [
-  files: Path.wildcard("thrift/**/*.thrift"),
-  output_path: "lib/thrift/"
-]
+# example mix.exs
+defmodule MyProject.Mixfile do
+  # ...
+
+  def project do
+    [
+      # other srettings...
+      thrift: [
+        files: Path.wildcard("thrift/**/*.thrift"),
+        output_path: "lib/generated"
+      ]
+    ]
+  end
+end
 ```
 
 ## Working with Thrift

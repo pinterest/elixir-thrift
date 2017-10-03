@@ -31,6 +31,23 @@ defmodule Mix.Tasks.Thrift.Generate do
       be used when Thrift files don't specify their own `elixir` namespace.
     * `:output_path` - output directory into which the generated Elixir
       source files will be generated. Defaults to `"lib"`.
+
+  ```
+  # example mix.exs
+  defmodule MyProject.Mixfile do
+    # ...
+
+    def project do
+      [
+        # other srettings...
+        thrift: [
+          include_paths: ["./extra_thrift"],
+          output_path: "lib/generated"
+        ]
+      ]
+    end
+  end
+  ```
   """
 
   @spec run(OptionParser.argv) :: :ok

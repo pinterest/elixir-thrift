@@ -9,12 +9,7 @@ defmodule Thrift.Parser.Models do
   alias Thrift.Parser.{Literals, Types}
 
   defmodule Namespace do
-    @moduledoc """
-    A Thrift namespace.
-    The namespace is a language-specific place where the generated structs are
-    placed.
-    """
-
+    @moduledoc false
     @type t :: %Namespace{line: Parser.line, name: atom, path: String.t}
 
     @enforce_keys [:name, :path]
@@ -27,11 +22,7 @@ defmodule Thrift.Parser.Models do
   end
 
   defmodule Include do
-    @moduledoc """
-    An included file.
-    In Thrift, you can include other files to share structs, enums and the like.
-    """
-
+    @moduledoc false
     @type t :: %Include{line: Parser.line, path: String.t}
 
     @enforce_keys [:path]
@@ -44,11 +35,7 @@ defmodule Thrift.Parser.Models do
   end
 
   defmodule Constant do
-    @moduledoc """
-    A Thrift constant.
-    Constants of any primitive or container type can be created in Thrift.
-    """
-
+    @moduledoc false
     @type t :: %Constant{line: Parser.line, name: atom, value: Literals.t, type: Types.t}
 
     @enforce_keys [:name, :value, :type]
@@ -61,12 +48,7 @@ defmodule Thrift.Parser.Models do
   end
 
   defmodule TEnum do
-    @moduledoc """
-    A Thrift enumeration
-    An enumeration contains names and (usually sequential) values, and
-    allows you to map from one to the other.
-    """
-
+    @moduledoc false
     @type enum_value :: bitstring | integer
     @type t :: %TEnum{
       line: Parser.line,
@@ -94,18 +76,7 @@ defmodule Thrift.Parser.Models do
   end
 
   defmodule Field do
-    @moduledoc """
-    A Thrift field.
-
-    Fields define a named type and can occur in functions, structs, unions,
-    exceptions and the parameter list and `throws` clauses of functions.
-
-    Fields can refer to each other. These are represented by the FieldReference
-    type.
-
-    This module also contains some utilities for validating and fixing up fields.
-    """
-
+    @moduledoc false
     @type printable :: String.t | atom
     @type t :: %Field{
       line: Parser.line,
@@ -169,12 +140,7 @@ defmodule Thrift.Parser.Models do
   end
 
   defmodule Exception do
-    @moduledoc """
-    A Thrift exception
-
-    Exceptions can happen when the remote service encounters an error.
-    """
-
+    @moduledoc false
     @type t :: %Exception{
       line: Parser.line,
       annotations: Parser.annotations,
@@ -194,12 +160,7 @@ defmodule Thrift.Parser.Models do
   end
 
   defmodule Struct do
-    @moduledoc """
-    A Thrift struct
-
-    The basic datastructure in Thrift, structs have aa name and a field list.
-    """
-
+    @moduledoc false
     @type t :: %Struct{
       line: Parser.line,
       annotations: Parser.annotations,
@@ -219,12 +180,7 @@ defmodule Thrift.Parser.Models do
   end
 
   defmodule Union do
-    @moduledoc """
-    A Thrift union
-
-    Unions can have one field set at a time.
-    """
-
+    @moduledoc false
     @type t :: %Union{
       line: Parser.line,
       annotations: Parser.annotations,
@@ -281,13 +237,7 @@ defmodule Thrift.Parser.Models do
   end
 
   defmodule TypeRef do
-    @moduledoc """
-    A reference to another type.
-
-    While not a Thrift type, this represents when a Thrift type refers to
-    another.
-    """
-
+    @moduledoc false
     @type t :: %TypeRef{line: Parser.line, referenced_type: atom}
 
     @enforce_keys [:referenced_type]
@@ -300,10 +250,7 @@ defmodule Thrift.Parser.Models do
   end
 
   defmodule ValueRef do
-    @moduledoc """
-    A reference to another value, such as an enum or const.
-    """
-
+    @moduledoc false
     @type t :: %ValueRef{line: Parser.line, referenced_value: atom}
 
     @enforce_keys [:referenced_value]
@@ -316,14 +263,7 @@ defmodule Thrift.Parser.Models do
   end
 
   defmodule Function do
-    @moduledoc """
-    A Thrift function
-
-    Functions are remote endpoints for Thrift services. They contain an argument list, exceptions and return a typed object.
-    They can also be `oneway`, which means that Thrift doesn't have to wait for
-    a reply from them.
-    """
-
+    @moduledoc false
     @type return :: :void | Types.t
     @type t :: %Function{
       line: Parser.line,
@@ -354,12 +294,7 @@ defmodule Thrift.Parser.Models do
   end
 
   defmodule Service do
-    @moduledoc """
-    A Thrift service
-
-    Services hold RPC functions and can extend other services.
-    """
-
+    @moduledoc false
     @type t :: %Service{
       line: Parser.line,
       annotations: Parser.annotations,

@@ -50,7 +50,7 @@ defmodule Thrift.Mixfile do
      name: "Thrift",
      docs: [
        main: "README",
-       extras: ["README.md": [group: "Documents", title: "README"]],
+       extras: ["README.md": [title: "README"]],
        source_ref: "thrift_tng",
        source_url: @project_url]]
   end

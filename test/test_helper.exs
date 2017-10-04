@@ -1,5 +1,4 @@
-ExUnit.configure(exclude: [pending: true])
-ExUnit.start()
+ExUnit.start(exclude: [pending: true], assert_receive_timeout: 500)
 
 defmodule ThriftTestHelpers do
 

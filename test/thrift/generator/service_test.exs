@@ -419,7 +419,7 @@ defmodule Thrift.Generator.ServiceTest do
 
     stop_server(ctx.server)
 
-    assert_receive {:EXIT, _, {:error, :econnrefused}}, 100
+    assert_receive {:EXIT, _, {:error, :econnrefused}}
 
     # this assertion is unusual, as it should exit, but the server
     # doesn't do reads during oneway functions, so it won't get the

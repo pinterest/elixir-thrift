@@ -51,6 +51,7 @@ defmodule Thrift.Mixfile do
      docs: [
        main: "README",
        extras: ["README.md": [title: "README"]],
+       source_url: @project_url
      ]]
   end
 

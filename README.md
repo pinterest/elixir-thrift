@@ -85,7 +85,7 @@ defmodule MyProject.Mixfile do
 
   def project do
     [
-      # other srettings...
+      # other settings...
       thrift: [
         files: Path.wildcard("thrift/**/*.thrift"),
         output_path: "lib/generated"

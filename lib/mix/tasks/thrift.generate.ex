@@ -39,7 +39,7 @@ defmodule Mix.Tasks.Thrift.Generate do
 
     def project do
       [
-        # other srettings...
+        # other settings...
         thrift: [
           include_paths: ["./extra_thrift"],
           output_path: "lib/generated"

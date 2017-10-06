@@ -32,6 +32,26 @@ defmodule Mix.Tasks.Compile.Thrift do
       `"Thrift.Generated"`.
     * `:output_path` - output directory into which the generated Elixir
       source files will be generated. Defaults to `"lib"`.
+
+  These should be set in you project config in the `:thrift` key as in the
+  example below.
+
+  ```
+  # example mix.exs
+  defmodule MyProject.Mixfile do
+    # ...
+
+    def project do
+      [
+        # other settings...
+        thrift: [
+          files: Path.wildcard("thrift/**/*.thrift"),
+          output_path: "lib/generated"
+        ]
+      ]
+    end
+  end
+  ```
   """
 
   @switches [force: :boolean, verbose: :boolean]

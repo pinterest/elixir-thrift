@@ -659,7 +659,7 @@ defmodule Thrift.Parser.ParserTest do
     end
   end
 
-  test "names can be reserved keywords if they have a difference case" do
+  test "names can be reserved keywords if they have a different case" do
     continue_struct = parse("""
     struct Continue {}
     """, [:structs, :Continue])

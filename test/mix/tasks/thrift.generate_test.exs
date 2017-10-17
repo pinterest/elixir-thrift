@@ -4,9 +4,14 @@ defmodule Mix.Tasks.Thrift.GenerateTest do
 
   @project_root Path.expand("../../../", __DIR__)
   @fixture_project Path.join(@project_root, "test/fixtures/app")
+  @temp_dir Path.join([@fixture_project, "tmp"])
 
   setup do
-    on_exit(fn -> File.rm_rf!(Path.join(@fixture_project, "lib")) end)
+    File.mkdir_p!(@temp_dir)
+    on_exit(fn ->
+      File.rm_rf!(Path.join(@fixture_project, "lib"))
+      File.rm_rf!(@temp_dir)
+    end)
     :ok
   end
 
@@ -38,8 +43,16 @@ defmodule Mix.Tasks.Thrift.GenerateTest do
 
   test "specifying an invalid Thrift file" do
     in_fixture fn ->
-      assert_raise Mix.Error, ~r/reserved language keyword/, fn ->
-        run([__ENV__.file])
+      bad_schema = """
+      struct InvalidTest {
+        1: i32 cannotDoArithmeticInThrift = 1 + 1,
+      }
+      """
+      bad_file = Path.join([@temp_dir, "invalid.thrift"])
+      File.write!(bad_file, bad_schema)
+
+      assert_raise Mix.Error, ~r/Error parsing/, fn ->
+        run([bad_file])
       end
     end
   end

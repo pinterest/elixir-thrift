@@ -25,6 +25,7 @@ defmodule Thrift.Generator.ServiceTest do
     list<i64> friend_ids_of(1: i64 user_id),
     map<string, i64> friend_nicknames(1: i64 user_id),
     set<string> tags(1: i64 user_id),
+    bool And(1: bool left, 2: bool right),
   }
   """
 
@@ -292,6 +293,13 @@ defmodule Thrift.Generator.ServiceTest do
 
     expected = MapSet.new(["sports", "debate", "motorcycles"])
     assert {:ok, expected} == Client.tags(ctx.client, 91_281)
+  end
+
+  thrift_test "it handles method names that conflict with Elixir keywords", ctx do
+    ServerSpy.set_reply(true)
+
+    expected = true
+    assert {:ok, expected} == Client.and(ctx.client, true, true)
   end
 
   thrift_test "it has a configurable gen_server timeout", ctx do

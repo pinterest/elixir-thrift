@@ -38,7 +38,7 @@ defmodule Mix.Tasks.Thrift.GenerateTest do
 
   test "specifying an invalid Thrift file" do
     in_fixture fn ->
-      assert_raise Mix.Error, ~r/Error parsing/, fn ->
+      assert_raise Mix.Error, ~r/reserved language keyword/, fn ->
         run([__ENV__.file])
       end
     end

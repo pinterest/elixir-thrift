@@ -648,6 +648,29 @@ defmodule Thrift.Parser.ParserTest do
     end
   end
 
+  test "names cannot override built-in keywords" do
+    thrift = """
+    struct continue {}
+    """
+
+    expected_error = "line 1: cannot use reserved language keyword \"continue\""
+    assert_raise RuntimeError, expected_error, fn ->
+      parse(thrift) |> IO.inspect
+    end
+  end
+
+  test "names can be reserved keywords if they have a difference case" do
+    continue_struct = parse("""
+    struct Continue {}
+    """, [:structs, :Continue])
+
+    assert continue_struct == %Struct{
+      line: 1,
+      name: :Continue,
+      fields: []
+    }
+  end
+
   describe "namespace option" do
     setup do
       path = Path.join(@test_file_dir, "namespace.thrift")

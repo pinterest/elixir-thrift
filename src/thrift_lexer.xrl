@@ -35,6 +35,21 @@ KEYWORDS3       = void|bool|byte|i8|i16|i32|i64|double|string|binary|list|map|se
 KEYWORDS4       = const|oneway|extends|throws|service|required|optional
 KEYWORD         = {KEYWORDS1}|{KEYWORDS2}|{KEYWORDS3}|{KEYWORDS4}
 
+RESERVED1       = BEGIN|END|__CLASS__|__DIR__|__FILE__|__FUNCTION__|__LINE__
+RESERVED2       = __METHOD__|__NAMESPACE__|abstract|alias|and|args|as|assert|begin
+RESERVED3       = break|case|catch|class|clone|continue|declare|def|default|del
+RESERVED4       = delete|do|dynamic|elif|else|elseif|elsif|end|enddeclare|endfor
+RESERVED5       = endforeach|endif|endswitch|endwhile|ensure|except|exec|finally
+RESERVED6       = float|for|foreach|from|function|global|goto|if|implements|import
+RESERVED7       = in|inline|instanceof|interface|is|lambda|module|native|new|next
+RESERVED8       = nil|not|or|package|pass|public|print|private|protected|raise|redo
+RESERVED9       = rescue|retry|register|return|self|sizeof|static|super|switch
+RESERVED10      = synchronized|then|this|throw|transient|try|undef|unless|unsigned
+RESERVED11      = until|use|var|virtual|volatile|when|while|with|xor|yield
+RESERVED12      = {RESERVED1}|{RESERVED2}|{RESERVED3}|{RESERVED4}|{RESERVED5}
+RESERVED13      = {RESERVED6}|{RESERVED7}|{RESERVED8}|{RESERVED9}|{RESERVED10}
+RESERVED        = {RESERVED11}|{RESERVED12}|{RESERVED13}
+
 Rules.
 
 {WHITESPACE}    : skip_token.
@@ -49,6 +64,8 @@ __file__        : {token, {file, TokenLine}}.
 {DOUBLE}        : {token, {double, TokenLine, list_to_float(TokenChars)}}.
 {STRING}        : {token, {string, TokenLine, process_string(TokenChars, TokenLen)}}.
 {BOOLEAN}       : {token, {list_to_atom(TokenChars), TokenLine}}.
+
+{RESERVED}      : reserved_keyword_error(TokenChars, TokenLine).
 
 {IDENTIFIER}    : {token, {ident, TokenLine, TokenChars}}.
 
@@ -73,3 +90,9 @@ process_chars([$\\,$t|Chars])   -> [$\t|process_chars(Chars)];
 process_chars([$\\,C|Chars])    -> [C|process_chars(Chars)];
 process_chars([C|Chars])        -> [C|process_chars(Chars)];
 process_chars([])               -> [].
+
+reserved_keyword_error(Keyword, Line) ->
+    Message = io_lib:format(
+      "line ~B: cannot use reserved language keyword \"~s\"", [Line, Keyword]),
+    Exception = 'Elixir.RuntimeError':exception(list_to_binary(Message)),
+    erlang:error(Exception).

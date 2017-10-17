@@ -8,7 +8,7 @@ defmodule Thrift.Parser.FileGroupTest do
   test "constant module uses suitable existing name" do
     with_thrift_files([
       "myservice.thrift": """
-      const float PI = 3.14
+      const double PI = 3.14
       service MyService {}
       """, as: :file_group, parse: "myservice.thrift"]) do
 

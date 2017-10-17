@@ -8,6 +8,9 @@ defmodule Thrift.Generator.ModelsTest do
     BANNED = 6,
     EVIL = 0x20,
   }
+  enum Operator {
+    AND = 0,
+  }
   struct StructWithEnum {
     1: Status status_field,
     12: Status status_field_with_default = Status.INACTIVE,
@@ -72,6 +75,18 @@ defmodule Thrift.Generator.ModelsTest do
     assert struct.status_map == nil
     assert struct.status_set == nil
     assert struct.status_list == nil
+  end
+
+  thrift_test "generated enums that conflict with Elixir keywords" do
+    assert Operator.and == 0
+    assert Operator.member?(0) == true
+    assert Operator.name?(:and) == true
+    assert Operator.value_to_name(0) == {:ok, :and}
+    assert Operator.value_to_name!(0) == :and
+    assert Operator.name_to_value(:and) == {:ok, 0}
+    assert Operator.name_to_value!(:and) == 0
+    assert Operator.meta(:names) == [:and]
+    assert Operator.meta(:values) == [0]
   end
 
   @thrift_file name: "exceptions.thrift", contents: """

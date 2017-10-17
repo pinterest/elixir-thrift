@@ -655,7 +655,7 @@ defmodule Thrift.Parser.ParserTest do
 
     expected_error = "line 1: cannot use reserved language keyword \"continue\""
     assert_raise RuntimeError, expected_error, fn ->
-      parse(thrift) |> IO.inspect
+      parse(thrift)
     end
   end
 

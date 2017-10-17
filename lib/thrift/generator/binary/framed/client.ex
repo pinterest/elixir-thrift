@@ -41,6 +41,9 @@ defmodule Thrift.Generator.Binary.Framed.Client do
     bang_name = :"#{underscored_name}!"
     options_bang_name = :"#{underscored_options_name}!"
 
+    underscored_name = Macro.pipe(underscored_name, quote do unquote end, 0)
+    bang_name = Macro.pipe(bang_name, quote do unquote end, 0)
+
     vars = Enum.map(function.params, &Macro.var(&1.name, nil))
 
     assignments = function.params

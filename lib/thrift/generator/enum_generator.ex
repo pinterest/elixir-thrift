@@ -2,9 +2,12 @@ defmodule Thrift.Generator.EnumGenerator do
 
   def generate(name, enum) do
     macro_defs = Enum.map(enum.values, fn {key, value} ->
-      macro_name = to_name(key)
+      macro_name = key
+      |> to_name
+      |> Macro.pipe(quote do unquote end, 0)
+
       quote do
-        defmacro unquote(Macro.var(macro_name, nil)), do: unquote(value)
+        defmacro unquote(macro_name)(), do: unquote(value)
       end
     end)
 

@@ -203,22 +203,32 @@ defmodule Thrift.Parser.FileGroup do
   end
 
   def dest_module(file_group, name) do
-    [thrift_module | struct_name] = name
-    |> Atom.to_string
-    |> String.split(".")
-    |> Enum.map(&String.to_atom/1)
+    name_parts =
+      name
+      |> Atom.to_string
+      |> String.split(".", parts: 2)
 
-    case file_group.ns_mappings[thrift_module] do
+    module_name = name_parts |> Enum.at(0) |> String.to_atom
+    struct_name = name_parts |> Enum.at(1) |> initialcase
+
+    case file_group.ns_mappings[module_name] do
       nil ->
-        Module.concat(List.flatten([Elixir, struct_name]))
+        Module.concat([struct_name])
       namespace = %Namespace{} ->
-        namespace_module = namespace.path
-        |> String.split(".")
-        |> Enum.map(&Macro.camelize/1)
-        |> Enum.join(".")
-        |> String.to_atom
-        Module.concat(List.flatten([namespace_module, struct_name]))
+        namespace_parts =
+          namespace.path
+          |> String.split(".")
+          |> Enum.map(&Macro.camelize/1)
+        Module.concat(namespace_parts ++ [struct_name])
     end
+  end
+
+  # Capitalize just the initial character of a string, leaving the rest of the
+  # string's characters intact.
+  @spec initialcase(String.t) :: String.t
+  defp initialcase(string) when is_binary(string) do
+    {char, rest} = String.Casing.titlecase_once(string)
+    char <> rest
   end
 
   # check if the given model is defined in the root file of the file group

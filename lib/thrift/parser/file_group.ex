@@ -213,14 +213,13 @@ defmodule Thrift.Parser.FileGroup do
 
     case file_group.ns_mappings[module_name] do
       nil ->
-        Module.concat(List.flatten([Elixir, struct_name]))
+        Module.concat([struct_name])
       namespace = %Namespace{} ->
-        namespace_module = namespace.path
-        |> String.split(".")
-        |> Enum.map(&Macro.camelize/1)
-        |> Enum.join(".")
-        |> String.to_atom
-        Module.concat(List.flatten([namespace_module, struct_name]))
+        namespace_parts =
+          namespace.path
+          |> String.split(".")
+          |> Enum.map(&Macro.camelize/1)
+        Module.concat(namespace_parts ++ [struct_name])
     end
   end
 

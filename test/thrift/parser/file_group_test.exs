@@ -15,4 +15,11 @@ defmodule Thrift.Parser.FileGroupTest do
       assert :"Elixir.MyService" == FileGroup.dest_module(file_group, Constant)
     end
   end
+
+  test "destination module supports input names in various casings" do
+    file_group = FileGroup.new("casing.thrift")
+    assert :"Elixir.UPPERCASE" == FileGroup.dest_module(file_group, :"module.UPPERCASE")
+    assert :"Elixir.Lowercase" == FileGroup.dest_module(file_group, :"module.lowercase")
+    assert :"Elixir.CamelCase" == FileGroup.dest_module(file_group, :"module.CamelCase")
+  end
 end

@@ -18,11 +18,6 @@ defmodule Thrift.Binary.Framed.Client do
 
   @type protocol_response :: success | error
 
-  @type retry_count :: integer
-  @type backoff_ms :: integer
-  @type backoff_fn :: ((retry_count) -> backoff_ms)
-
-  @type data :: iolist | binary
   @type tcp_opts :: [
     timeout: pos_integer,
     send_timeout: integer,
@@ -177,7 +172,7 @@ defmodule Thrift.Binary.Framed.Client do
     end
   end
 
-  @spec oneway(pid, String.t, data, options) :: :ok
+  @spec oneway(pid, String.t, iodata, options) :: :ok
   @doc """
   Execute a one way RPC. One way RPC calls do not generate a response,
   and as such, this implementation uses `GenServer.cast`.
@@ -188,7 +183,7 @@ defmodule Thrift.Binary.Framed.Client do
     :ok
   end
 
-  @spec call(pid, String.t, data, module, options) :: protocol_response
+  @spec call(pid, String.t, iodata, module, options) :: protocol_response
   @doc """
   Executes a Thrift RPC. The data argument must be a correctly formatted
   Thrift message.

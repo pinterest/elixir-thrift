@@ -390,7 +390,7 @@ defmodule Thrift.Generator.ServiceTest do
 
     client = ctx.client
     assert_receive {:DOWN, ^ref, _, _, _}
-    assert_receive {:EXIT, ^client, {:error, :econnrefused}}
+    assert_receive {:EXIT, ^client, {:error, :closed}}
   end
 
   thrift_test "it returns :ok on void oneway functions if the server dies", ctx do

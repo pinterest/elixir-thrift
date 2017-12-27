@@ -118,7 +118,7 @@ defmodule Thrift.Binary.Framed.Client do
   end
 
   @doc false
-  def disconnect(info, %{sock: sock} = s) do
+  def disconnect(info, %{sock: sock}) do
     :ok = :gen_tcp.close(sock)
 
     case info do
@@ -126,14 +126,14 @@ defmodule Thrift.Binary.Framed.Client do
         Connection.reply(from, :ok)
         {:stop, :normal, nil}
 
-      {:error, :closed} ->
+      {:error, :closed} = error ->
         Logger.error("Connection closed")
-        {:connect, info, %{s | sock: nil}}
+        {:stop, error, nil}
 
-      {:error, reason} ->
+      {:error, reason} = error ->
         reason = :inet.format_error(reason)
         Logger.error("Connection error: #{reason}")
-        {:connect, info, %{s | sock: nil}}
+        {:stop, error, nil}
     end
   end
 

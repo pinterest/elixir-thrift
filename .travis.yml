@@ -8,10 +8,10 @@ matrix:
   include:
     - elixir: 1.4.5
       otp_release: 19.3
-    - elixir: 1.5.2
+    - elixir: 1.5.3
       otp_release: 19.3
-    - elixir: 1.5.2
-      otp_release: 20.0
+    - elixir: 1.5.3
+      otp_release: 20.2
       env: COVERALLS=true
 
 sudo: required

@@ -350,9 +350,10 @@ defmodule Thrift.Generator.ServiceTest do
     {:ok, new_server} = start_server(new_server_port, 20)
 
     {:ok, client} = Client.start_link("127.0.0.1", new_server_port, [])
-
     :timer.sleep(50) # sleep beyond the server's recv_timeout
-    assert catch_exit(Client.friend_ids_of(client, 1234))
+
+    assert Client.friend_ids_of(client, 1234) == {:error, :closed}
+    assert_receive {:EXIT, ^client, {:error, :closed}}
 
     on_exit fn ->
       stop_server(new_server)

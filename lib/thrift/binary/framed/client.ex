@@ -40,18 +40,14 @@ defmodule Thrift.Binary.Framed.Client do
                       tcp_opts: Client.tcp_opts,
                       timeout: integer,
                       sock: pid,
-                      seq_id: integer,
-                      retry: boolean,
-                      last_message: any
+                      seq_id: integer
                      }
     defstruct host: nil,
               port: nil,
               tcp_opts: nil,
               timeout: 5000,
               sock: nil,
-              seq_id: 0,
-              retry: false,
-              last_message: nil
+              seq_id: 0
   end
 
   require Logger
@@ -61,13 +57,11 @@ defmodule Thrift.Binary.Framed.Client do
     tcp_opts = Keyword.get(opts, :tcp_opts, [])
 
     {timeout, tcp_opts} = Keyword.pop(tcp_opts, :timeout, 5000)
-    {should_retry, tcp_opts} = Keyword.pop(tcp_opts, :retry, false)
 
     s = %State{host: to_host(host),
                port: port,
                tcp_opts: tcp_opts,
-               timeout: timeout,
-               retry: should_retry}
+               timeout: timeout}
 
     {:connect, :init, s}
   end
@@ -87,8 +81,6 @@ defmodule Thrift.Binary.Framed.Client do
 
      - `send_timeout`: An integer that governs how long our connection waits when sending data.
 
-     - `retry`: A boolean that tells the client whether or not it should retry on failures.
-
     `gen_server_opts`: A keyword list of options that control the gen_server behaviour.
 
      - `timeout`:  The amount of time to wait (in milliseconds) for a reply from a `GenServer` call.
@@ -105,15 +97,14 @@ defmodule Thrift.Binary.Framed.Client do
   def close(conn), do: Connection.call(conn, :close)
 
   @doc false
-  def connect(info, %{sock: nil, host: host, port: port, tcp_opts: opts, timeout: timeout} = s) do
+  def connect(_info, %{sock: nil, host: host, port: port, tcp_opts: opts, timeout: timeout} = s) do
     opts = opts
     |> Keyword.merge(@immutable_tcp_opts)
     |> Keyword.put_new(:send_timeout, 1000)
 
     case :gen_tcp.connect(host, port, opts, timeout) do
       {:ok, sock} ->
-        new_state = %{s | sock: sock}
-        retry_failed_message(info, new_state)
+        {:ok, %{s | sock: sock}}
 
       {:error, _} = error ->
         Logger.error("Failed to connect to #{host}:#{port} due to #{inspect error}")
@@ -121,30 +112,8 @@ defmodule Thrift.Binary.Framed.Client do
     end
   end
 
-  defp retry_failed_message({:retry, _}, %{retry: true, last_message: {call_args, caller}} = state) do
-    case handle_call(call_args, caller, state) do
-      {:reply, response, state} ->
-        Connection.reply(caller, response)
-        {:ok, %{state | last_message: nil}}
-
-      other ->
-        :gen_tcp.close(state.sock)
-        {:close, {:error, other}, nil}
-    end
-  end
-
-  defp retry_failed_message({:retry, orig_error}, %{retry: false, sock: sock}) do
-    :gen_tcp.close(sock)
-
-    {:stop, orig_error, nil}
-  end
-
-  defp retry_failed_message(_, state) do
-    {:ok, state}
-  end
-
   @doc false
-  def disconnect(info, %{sock: sock} = s) do
+  def disconnect(info, %{sock: sock}) do
     :ok = :gen_tcp.close(sock)
 
     case info do
@@ -152,23 +121,14 @@ defmodule Thrift.Binary.Framed.Client do
         Connection.reply(from, :ok)
         {:stop, :normal, nil}
 
-      {:error, :closed} ->
+      {:error, :closed} = error ->
         Logger.error("Connection closed")
-        {:connect, info, %{s | sock: nil}}
+        {:stop, error, nil}
 
-      {:error, reason} ->
+      {:error, reason} = error ->
         reason = :inet.format_error(reason)
         Logger.error("Connection error: #{reason}")
-        {:connect, info, %{s | sock: nil}}
-
-      {:retry, _} ->
-        case s.last_message do
-          {type, rpc_name, _, _} ->
-            Logger.info("Retrying #{type} #{rpc_name}")
-          _ ->
-            Logger.info("Retrying failed call")
-        end
-        {:connect, info, %{s | sock: nil}}
+        {:stop, error, nil}
     end
   end
 
@@ -180,7 +140,6 @@ defmodule Thrift.Binary.Framed.Client do
   """
   def oneway(conn, rpc_name, serialized_args, _opts) do
     :ok = Connection.cast(conn, {:oneway, rpc_name, serialized_args})
-    :ok
   end
 
   @spec call(pid, String.t, iodata, module, options) :: protocol_response
@@ -232,7 +191,7 @@ defmodule Thrift.Binary.Framed.Client do
     {:reply, {:error, :closed}, s}
   end
 
-  def handle_call({:call, rpc_name, serialized_args, tcp_opts} = call_args, caller,
+  def handle_call({:call, rpc_name, serialized_args, tcp_opts}, _,
                   %{sock: sock, seq_id: seq_id, timeout: default_timeout} = s) do
 
     s = %{s | seq_id: seq_id + 1}
@@ -247,8 +206,8 @@ defmodule Thrift.Binary.Framed.Client do
       {:error, :timeout} = timeout ->
         {:reply, timeout, s}
 
-      {:error, :closed} = err ->
-        {:disconnect, {:retry, err}, %{s |last_message: {call_args, caller}}}
+      {:error, :closed} = error ->
+        {:disconnect, error, s}
 
       {:error, _} = error ->
         {:disconnect, error, error, s}

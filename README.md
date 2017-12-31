@@ -176,7 +176,6 @@ Name             | Type | Description
 -----------------|------|---------------
 `:timeout`       | positive integer | The default timeout for reading from, writing to, and connecting to sockets.
 `send_timeout`   | positive integer | The amount of time in milliseconds to wait before sending data fails.
-`retry` | boolean | Whether or not to retry if the server closes the connection (default false). If the client detects that the server has closed the connection, the last message will be retried. This is helpful when using the client in IEx, or in a situation where the client won't be used for a while, but can result in duplicate messages being sent to the server. Due to the subtleties of `gen_tcp`, oneway messages are not retried.
 
 ##### GenServer Opts
 Name             | Type | Description
@@ -189,11 +188,10 @@ Name             | Type | Description
 ```elixir
 alias Thrift.Test.UserService.Binary.Framed.Client
 {:ok, client} = Client.start_link("localhost", 2345,
-                tcp_opts: [retry: true], gen_server_opts: [timeout: 10_000])
+                tcp_opts: [], gen_server_opts: [timeout: 10_000])
 
 ```
-In the above example, the client will retry once if the remote server severs the connection.
-These options also set the GenServer timeout to be ten seconds, which means the remote
+These options set the GenServer timeout to be ten seconds, which means the remote
 side can take its time to reply.
 
 

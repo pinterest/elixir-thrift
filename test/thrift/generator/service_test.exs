@@ -343,7 +343,7 @@ defmodule Thrift.Generator.ServiceTest do
     refute Process.alive?(ctx.client)
   end
 
-  thrift_test "clients don't retry by default" do
+  thrift_test "clients exit on connection timeout" do
     Process.flag(:trap_exit, true)
 
     new_server_port = random_port()
@@ -359,41 +359,13 @@ defmodule Thrift.Generator.ServiceTest do
     end
   end
 
-  thrift_test "clients retry when making an RPC on a closed server when retry is true" do
-    new_server_port = random_port()
-    {:ok, server} = start_server(new_server_port, 20)
-    {:ok, client} = Client.start_link("127.0.0.1", new_server_port, [tcp_opts: [retry: true]])
-
-    :timer.sleep(50)
-
-    ServerSpy.set_reply([9, 8, 7, 6])
-
-    assert {:ok, [9, 8, 7, 6]} = Client.friend_ids_of(client, 1234)
-    on_exit fn ->
-      stop_server(server)
-    end
-  end
-
-  thrift_test "clients retry when making a oneway call on a closed server when retry is true" do
-    new_server_port = random_port()
-    {:ok, server} = start_server(new_server_port, 20)
-    {:ok, client} = Client.start_link("127.0.0.1", new_server_port, [tcp_opts: [retry: true]])
-    :timer.sleep(50)
-
-    assert {:ok, nil} = Client.do_some_work(client, "Do the work!")
-
-    on_exit fn ->
-      stop_server(server)
-    end
-  end
-
   thrift_test "clients exit if they try to use a closed client", ctx do
     Process.flag(:trap_exit, true)
     stop_server(ctx.server)
     assert {{:error, :econnrefused}, _} = catch_exit(Client.friend_ids_of(ctx.client, 1234))
   end
 
-  thrift_test "clients retry if the server dies handling a message", ctx do
+  thrift_test "clients exit if the server dies handling a message", ctx do
     ref = Process.monitor(ctx.server)
 
     ServerSpy.set_reply({:sleep, 5000, 1234})
@@ -418,7 +390,7 @@ defmodule Thrift.Generator.ServiceTest do
 
     client = ctx.client
     assert_receive {:DOWN, ^ref, _, _, _}
-    assert_receive {:EXIT, ^client, {:error, :econnrefused}}
+    assert_receive {:EXIT, ^client, {:error, :closed}}
   end
 
   thrift_test "it returns :ok on void oneway functions if the server dies", ctx do

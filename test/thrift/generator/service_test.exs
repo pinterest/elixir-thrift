@@ -92,10 +92,11 @@ defmodule Thrift.Generator.ServiceTest do
       handler: ServerSpy,
       socket_opts: [recv_timeout: recv_timeout],
       framed: true]
-    with {:ok, pid} <- :thrift_socket_server.start(opts),
-         port <- GenServer.call(pid, {:get, :port}) do
-      {:ok, pid, port}
-    else
+
+    case :thrift_socket_server.start(opts) do
+      {:ok, pid} ->
+        port = GenServer.call(pid, {:get, :port})
+        {:ok, pid, port}
       error ->
         error
     end

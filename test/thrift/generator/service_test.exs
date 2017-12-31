@@ -85,13 +85,21 @@ defmodule Thrift.Generator.ServiceTest do
   alias Thrift.Generator.ServiceTest.SimpleService.Binary.Framed.Client
   alias Thrift.Generator.ServiceTest.UsernameTakenException
 
-  defp start_server(port, recv_timeout \\ :infinity) do
-    :thrift_socket_server.start(
-      handler: ServerSpy,
-      port: port,
-      framed: true,
+  defp start_server(recv_timeout \\ :infinity) do
+    opts = [
+      port: 0,
       service: :simple_service_thrift,
-      socket_opts: [recv_timeout: recv_timeout])
+      handler: ServerSpy,
+      socket_opts: [recv_timeout: recv_timeout],
+      framed: true]
+
+    case :thrift_socket_server.start(opts) do
+      {:ok, pid} ->
+        port = GenServer.call(pid, {:get, :port})
+        {:ok, pid, port}
+      error ->
+        error
+    end
   end
 
   defp stop_server(server_pid) when is_pid(server_pid) do
@@ -105,14 +113,8 @@ defmodule Thrift.Generator.ServiceTest do
     assert_receive {:DOWN, ^ref, _, _, _}
   end
 
-  defp random_port do
-    :erlang.unique_integer([:positive, :monotonic]) + 10_000
-  end
-
   setup do
-    port = random_port()
-
-    {:ok, server} = start_server(port)
+    {:ok, server, port} = start_server()
     {:ok, client} = Client.start_link('127.0.0.1', port,
                                             [tcp_opts: [timeout: 5000]])
     {:ok, handler_pid} = ServerSpy.start_link
@@ -346,9 +348,7 @@ defmodule Thrift.Generator.ServiceTest do
   thrift_test "clients exit on connection timeout" do
     Process.flag(:trap_exit, true)
 
-    new_server_port = random_port()
-    {:ok, new_server} = start_server(new_server_port, 20)
-
+    {:ok, new_server, new_server_port} = start_server(20)
     {:ok, client} = Client.start_link("127.0.0.1", new_server_port, [])
     :timer.sleep(50) # sleep beyond the server's recv_timeout
 

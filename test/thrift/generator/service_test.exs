@@ -314,8 +314,10 @@ defmodule Thrift.Generator.ServiceTest do
     Process.flag(:trap_exit, true)
     ServerSpy.set_reply({:sleep, 1000, [1, 3, 4]})
 
-    assert {:error, :timeout} = Client.friend_ids_of_with_options(client, 12_914, [tcp_opts: [timeout: 1]])
-    assert_receive {:EXIT, ^client, {:error, :timeout}}
+    assert ExUnit.CaptureLog.capture_log(fn ->
+      assert {:error, :timeout} = Client.friend_ids_of_with_options(client, 12_914, [tcp_opts: [timeout: 1]])
+      assert_receive {:EXIT, ^client, {:error, :timeout}}
+    end) =~ "1ms"
   end
 
   thrift_test "oneway functions should not have an options version" do

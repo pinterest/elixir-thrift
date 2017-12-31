@@ -113,7 +113,7 @@ defmodule Thrift.Binary.Framed.Client do
   end
 
   @doc false
-  def disconnect(info, %{sock: sock}) do
+  def disconnect(info, %{sock: sock, timeout: timeout}) do
     :ok = :gen_tcp.close(sock)
 
     case info do
@@ -123,6 +123,10 @@ defmodule Thrift.Binary.Framed.Client do
 
       {:error, :closed} = error ->
         Logger.error("Connection closed")
+        {:stop, error, nil}
+
+      {:error, :timeout} = error ->
+        Logger.error("Connection timed out (#{timeout}ms)")
         {:stop, error, nil}
 
       {:error, reason} = error ->
@@ -203,9 +207,6 @@ defmodule Thrift.Binary.Framed.Client do
       reply = deserialize_message_reply(message, rpc_name, seq_id)
       {:reply, reply, s}
     else
-      {:error, :timeout} = timeout ->
-        {:reply, timeout, s}
-
       {:error, _} = error ->
         {:disconnect, error, error, s}
     end

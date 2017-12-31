@@ -206,9 +206,6 @@ defmodule Thrift.Binary.Framed.Client do
       {:error, :timeout} = timeout ->
         {:reply, timeout, s}
 
-      {:error, :closed} = error ->
-        {:disconnect, error, s}
-
       {:error, _} = error ->
         {:disconnect, error, error, s}
     end

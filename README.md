@@ -146,10 +146,8 @@ four functions.
 
 Function name  | Description
 ---------------|----------
-`get_user_by_id/2` | Makes a request to the remote `get_user_by_id` RPC. Returns `{:ok, response}` or `{:error, reason}` tuples.
-`get_user_by_id!/2`  | Same as above, but raises an exception if something goes wrong. The type of exception can be one of the exceptions defined in the service or `Thrift.TApplicationException`.
-`get_user_by_id_with_options/3` | Allows you to pass `gen_tcp` and `GenServer` options to your client. This is useful for setting the `GenServer` timeout if you expect your RPC to take longer than the default of 5 seconds. Like `get_user_by_id/2`, this function returns `{:ok, response}` or `{:error, reason}` tuples.
-`get_user_by_id_with_options!/3` | Allows you to pass `gen_tcp` and `GenServer` options and raises an exception if an error occurs.
+`get_user_by_id/3` | Makes a request to the remote `get_user_by_id` RPC. You can optionally pass `gen_tcp` and `GenServer` options (such as a timeout) to the client as the final `rpc_opts` argument. Returns `{:ok, response}` or `{:error, reason}` tuples.
+`get_user_by_id!/3`  | Same as above, but raises an exception if something goes wrong. The type of exception can be one of the exceptions defined in the service or `Thrift.TApplicationException`.
 
 **Note:** in the above example, the function `deleteUser` will be converted to `delete_user` to comply with Elixir's [naming conventions](http://elixir-lang.org/docs/stable/elixir/naming-conventions.html).
 

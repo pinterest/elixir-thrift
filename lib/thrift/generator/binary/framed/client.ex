@@ -29,19 +29,20 @@ defmodule Thrift.Generator.Binary.Framed.Client do
 
   defp generate_handler_function(service_module, function) do
     args_module = Module.concat(service_module, Service.module_name(function, :args))
-
     response_module = Service.module_name(function, :response)
+    rpc_name = Atom.to_string(function.name)
 
-    underscored_name = function.name
+    # Make two Elixir-friendly function names: an underscored version of the
+    # Thrift function name and a "bang!" exception-raising variant.
+    function_name = function.name
     |> Atom.to_string
     |> Macro.underscore
     |> String.to_atom
+    bang_name = :"#{function_name}!"
 
-    underscored_options_name = :"#{underscored_name}_with_options"
-    bang_name = :"#{underscored_name}!"
-    options_bang_name = :"#{underscored_options_name}!"
-
-    underscored_name = Macro.pipe(underscored_name, quote do unquote end, 0)
+    # Apply some macro magic to the names to avoid conflicts with Elixir
+    # reserved symbols like "and".
+    function_name = Macro.pipe(function_name, quote do unquote end, 0)
     bang_name = Macro.pipe(bang_name, quote do unquote end, 0)
 
     vars = Enum.map(function.params, &Macro.var(&1.name, nil))
@@ -54,28 +55,15 @@ defmodule Thrift.Generator.Binary.Framed.Client do
       end
     end)
 
-    rpc_name = Atom.to_string(function.name)
-
-    def_type = if function.oneway do
-      quote do: defp
-    else
-      quote do: def
-    end
-
     quote do
-      unquote(def_type)(unquote(underscored_options_name)(client, unquote_splicing(vars), opts)) do
+      def(unquote(function_name)(client, unquote_splicing(vars), rpc_opts \\ [])) do
         args = %unquote(args_module){unquote_splicing(assignments)}
         serialized_args = unquote(args_module).BinaryProtocol.serialize(args)
-
         unquote(build_response_handler(function, rpc_name, response_module))
       end
 
-      def unquote(underscored_name)(client, unquote_splicing(vars)) do
-        unquote(underscored_options_name)(client, unquote_splicing(vars), [])
-      end
-
-      unquote(def_type)(unquote(options_bang_name)(client, unquote_splicing(vars), opts)) do
-        case unquote(underscored_options_name)(client, unquote_splicing(vars), opts) do
+      def(unquote(bang_name)(client, unquote_splicing(vars), rpc_opts \\ [])) do
+        case unquote(function_name)(client, unquote_splicing(vars), rpc_opts) do
           {:ok, rsp} ->
             rsp
 
@@ -86,23 +74,19 @@ defmodule Thrift.Generator.Binary.Framed.Client do
             raise err
         end
       end
-
-      def unquote(bang_name)(client, unquote_splicing(vars)) do
-        unquote(options_bang_name)(client, unquote_splicing(vars), [])
-      end
     end
   end
 
-  defp build_response_handler(%Function{oneway: true}, rpc_name, _) do
+  defp build_response_handler(%Function{oneway: true}, rpc_name, _response_module) do
     quote bind_quoted: [rpc_name: rpc_name] do
-      :ok = ClientImpl.oneway(client, rpc_name, serialized_args, opts)
+      :ok = ClientImpl.oneway(client, rpc_name, serialized_args, rpc_opts)
       {:ok, nil}
     end
   end
   defp build_response_handler(%Function{oneway: false}, rpc_name, response_module) do
     deserialize_module = Module.concat(response_module, :BinaryProtocol)
     quote bind_quoted: [deserialize_module: deserialize_module, rpc_name: rpc_name] do
-      ClientImpl.call(client, rpc_name, serialized_args, deserialize_module, opts)
+      ClientImpl.call(client, rpc_name, serialized_args, deserialize_module, rpc_opts)
     end
   end
 end

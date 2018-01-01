@@ -308,7 +308,7 @@ defmodule Thrift.Generator.ServiceTest do
     ServerSpy.set_reply({:sleep, 1000, [1, 3, 4]})
 
     assert catch_exit(
-      Client.friend_ids_of_with_options(ctx.client, 1234, [gen_server_opts: [timeout: 200]])
+      Client.friend_ids_of(ctx.client, 1234, [gen_server_opts: [timeout: 200]])
     )
   end
 
@@ -317,26 +317,9 @@ defmodule Thrift.Generator.ServiceTest do
     ServerSpy.set_reply({:sleep, 1000, [1, 3, 4]})
 
     assert ExUnit.CaptureLog.capture_log(fn ->
-      assert {:error, :timeout} = Client.friend_ids_of_with_options(client, 12_914, [tcp_opts: [timeout: 1]])
+      assert {:error, :timeout} = Client.friend_ids_of(client, 12_914, [tcp_opts: [timeout: 1]])
       assert_receive {:EXIT, ^client, {:error, :timeout}}
     end) =~ "1ms"
-  end
-
-  thrift_test "oneway functions should not have an options version" do
-    refute {:do_some_work_with_options, 3} in Client.__info__(:functions)
-  end
-
-  thrift_test "functions that return values have an options version" do
-    defined_functions = Client.__info__(:functions)
-
-    assert {:ping_with_options, 2}              in defined_functions
-    assert {:update_username_with_options, 4}   in defined_functions
-    assert {:get_by_id_with_options, 3}         in defined_functions
-    assert {:are_friends_with_options, 4}       in defined_functions
-    assert {:mark_inactive_with_options, 3}     in defined_functions
-    assert {:friend_ids_of_with_options, 3}     in defined_functions
-    assert {:friend_nicknames_with_options, 3}  in defined_functions
-    assert {:tags_with_options, 3}              in defined_functions
   end
 
   # connection tests

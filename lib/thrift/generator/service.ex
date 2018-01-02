@@ -28,7 +28,7 @@ defmodule Thrift.Generator.Service do
       generate_response_struct(schema, function)
     end
 
-    framed_client = Generator.Binary.Framed.Client.generate(dest_module, service)
+    framed_client = Generator.Binary.Framed.Client.generate(service)
     framed_server = Generator.Binary.Framed.Server.generate(dest_module, service, file_group)
 
     service_module = quote do

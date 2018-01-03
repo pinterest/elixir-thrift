@@ -4,10 +4,10 @@ defmodule Thrift.Generator.Binary.Framed.Client do
   alias Thrift.Generator.{Service, Utils}
   alias Thrift.Parser.Models.Function
 
-  def generate(service_module, service) do
+  def generate(service) do
     functions = service.functions
     |> Map.values
-    |> Enum.map(&generate_handler_function(service_module, &1))
+    |> Enum.map(&generate_handler_function(&1))
     |> Utils.merge_blocks
 
     quote do
@@ -27,8 +27,9 @@ defmodule Thrift.Generator.Binary.Framed.Client do
     end
   end
 
-  defp generate_handler_function(service_module, function) do
-    args_module = Module.concat(service_module, Service.module_name(function, :args))
+  defp generate_handler_function(function) do
+    args_module = Service.module_name(function, :args)
+    args_binary_module = Module.concat(args_module, :BinaryProtocol)
     response_module = Service.module_name(function, :response)
     rpc_name = Atom.to_string(function.name)
 
@@ -58,7 +59,7 @@ defmodule Thrift.Generator.Binary.Framed.Client do
     quote do
       def(unquote(function_name)(client, unquote_splicing(vars), rpc_opts \\ [])) do
         args = %unquote(args_module){unquote_splicing(assignments)}
-        serialized_args = unquote(args_module).BinaryProtocol.serialize(args)
+        serialized_args = unquote(args_binary_module).serialize(args)
         unquote(build_response_handler(function, rpc_name, response_module))
       end
 
@@ -78,15 +79,15 @@ defmodule Thrift.Generator.Binary.Framed.Client do
   end
 
   defp build_response_handler(%Function{oneway: true}, rpc_name, _response_module) do
-    quote bind_quoted: [rpc_name: rpc_name] do
-      :ok = ClientImpl.oneway(client, rpc_name, serialized_args, rpc_opts)
+    quote do
+      :ok = ClientImpl.oneway(client, unquote(rpc_name), serialized_args, rpc_opts)
       {:ok, nil}
     end
   end
   defp build_response_handler(%Function{oneway: false}, rpc_name, response_module) do
-    deserialize_module = Module.concat(response_module, :BinaryProtocol)
-    quote bind_quoted: [deserialize_module: deserialize_module, rpc_name: rpc_name] do
-      ClientImpl.call(client, rpc_name, serialized_args, deserialize_module, rpc_opts)
+    module = Module.concat(response_module, :BinaryProtocol)
+    quote do
+      ClientImpl.call(client, unquote(rpc_name), serialized_args, unquote(module), rpc_opts)
     end
   end
 end

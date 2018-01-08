@@ -381,18 +381,17 @@ defmodule Thrift.Generator.ServiceTest do
     assert_receive {:EXIT, ^client, {:error, :closed}}
   end
 
-  thrift_test "it returns :ok on void oneway functions if the server dies", ctx do
+  thrift_test "oneway functions return :ok if the server dies", %{client: client, server: server} do
     Process.flag(:trap_exit, true)
     ServerSpy.set_reply(:noreply)
 
-    stop_server(ctx.server)
-
-    assert_receive {:EXIT, _, {:error, :econnrefused}}, 100
+    :sys.get_state(client)
+    stop_server(server)
 
     # this assertion is unusual, as it should exit, but the server
     # doesn't do reads during oneway functions, so it won't get the
     # error that the other side has been closed.
     # see: http://erlang.org/pipermail/erlang-questions/2014-April/078545.html
-    {:ok, nil} = Client.do_some_work(ctx.client, "work!")
+    {:ok, nil} = Client.do_some_work(client, "work!")
   end
 end

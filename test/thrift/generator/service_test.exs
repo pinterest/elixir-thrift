@@ -393,6 +393,5 @@ defmodule Thrift.Generator.ServiceTest do
     # error that the other side has been closed.
     # see: http://erlang.org/pipermail/erlang-questions/2014-April/078545.html
     {:ok, nil} = Client.do_some_work(client, "work!")
-    assert_receive {:EXIT, ^client, {:error, :closed}}
   end
 end

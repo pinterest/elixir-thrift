@@ -385,14 +385,14 @@ defmodule Thrift.Generator.ServiceTest do
     Process.flag(:trap_exit, true)
     ServerSpy.set_reply(:noreply)
 
+    :sys.get_state(client)
     stop_server(server)
-    assert_received {:EXIT, ^server, :normal}
 
     # this assertion is unusual, as it should exit, but the server
     # doesn't do reads during oneway functions, so it won't get the
     # error that the other side has been closed.
     # see: http://erlang.org/pipermail/erlang-questions/2014-April/078545.html
     {:ok, nil} = Client.do_some_work(client, "work!")
-    assert_receive {:EXIT, ^client, {:error, :econnrefused}}
+    assert_receive {:EXIT, ^client, {:error, :closed}}
   end
 end

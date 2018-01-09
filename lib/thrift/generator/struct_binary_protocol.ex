@@ -743,7 +743,7 @@ defmodule Thrift.Generator.StructBinaryProtocol do
           {key, _} -> [key]
         end)
 
-        raise %Thrift.Union.TooManyFieldsSetException{
+        raise %Thrift.Union.TooManyFieldsSetError{
           message: "Thrift union has more than one field set",
           set_fields: set_fields
         }
@@ -774,7 +774,7 @@ defmodule Thrift.Generator.StructBinaryProtocol do
         true ->
           <<unquote(Type.bool), unquote(id)::16-signed, 1>>
         _ ->
-          raise Thrift.InvalidValueException,
+          raise Thrift.InvalidValueError,
                 unquote("Required boolean field #{inspect name} on #{inspect struct_name} must be true or false")
       end
     end
@@ -789,7 +789,7 @@ defmodule Thrift.Generator.StructBinaryProtocol do
         true ->
           <<unquote(Type.bool), unquote(id)::16-signed, 1>>
         _ ->
-          raise Thrift.InvalidValueException,
+          raise Thrift.InvalidValueError,
                 unquote("Optional boolean field #{inspect name} on #{inspect struct_name} must be true, false, or nil")
       end
     end
@@ -798,7 +798,7 @@ defmodule Thrift.Generator.StructBinaryProtocol do
     quote do
       case unquote(Macro.var(name, nil)) do
         nil ->
-          raise Thrift.InvalidValueException,
+          raise Thrift.InvalidValueError,
                 unquote("Required field #{inspect name} on #{inspect struct_name} must not be nil")
         _ ->
           unquote(required_field_serializer(field, file_group))

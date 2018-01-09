@@ -16,7 +16,7 @@ defmodule Thrift.Parser.ParsedFile do
                     name: FileRef.include_name(file_ref.path)
                    }
       {:error, error} ->
-        raise Thrift.FileParseException, {file_ref, error}
+        raise Thrift.FileParseError, {file_ref, error}
     end
   end
 end

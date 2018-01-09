@@ -1,46 +1,37 @@
 defmodule Thrift.Generator.EnumGenerator do
 
   def generate(name, enum) do
-    macro_defs = Enum.map(enum.values, fn {key, value} ->
+    macro_defs = Enum.map(enum.values, fn {key, _value} ->
       macro_name = key
       |> to_name
       |> Macro.pipe(quote do unquote end, 0)
 
       quote do
-        defmacro unquote(macro_name)(), do: unquote(value)
+        defmacro unquote(macro_name)() do
+          IO.warn "Thrift enum macros are deprecated. " <>
+              "See https://github.com/pinterest/elixir-thrift/issues/312."
+          unquote(key)
+        end
       end
     end)
 
-    member_defs = Enum.map(enum.values, fn {_key, value} ->
+    member_defs = Enum.map(enum.values, fn {key, _value} ->
       quote do
-        def member?(unquote(value)), do: true
-      end
-    end)
-
-    name_member_defs = Enum.map(enum.values, fn {key, _value} ->
-      enum_name = to_name(key)
-      quote do
-        def name?(unquote(enum_name)), do: true
+        def member?(unquote(key)), do: true
       end
     end)
 
     value_to_name_defs = Enum.map(enum.values, fn {key, value} ->
-      enum_name = to_name(key)
       quote do
-        def value_to_name(unquote(value)), do: {:ok, unquote(enum_name)}
+        def value_to_name(unquote(value)), do: {:ok, unquote(key)}
       end
     end)
 
     name_to_value_defs = Enum.map(enum.values, fn {key, value} ->
-      enum_name = to_name(key)
       quote do
-        def name_to_value(unquote(enum_name)), do: {:ok, unquote(value)}
+        def name_to_value(unquote(key)), do: {:ok, unquote(value)}
       end
     end)
-
-    names = enum.values
-    |> Keyword.keys
-    |> Enum.map(&to_name/1)
 
     quote do
       defmodule unquote(name) do
@@ -63,14 +54,11 @@ defmodule Thrift.Generator.EnumGenerator do
           value
         end
 
-        def meta(:names), do: unquote(names)
+        def meta(:names), do: unquote(Keyword.keys(enum.values))
         def meta(:values), do: unquote(Keyword.values(enum.values))
 
         unquote_splicing(member_defs)
         def member?(_), do: false
-
-        unquote_splicing(name_member_defs)
-        def name?(_), do: false
       end
     end
   end

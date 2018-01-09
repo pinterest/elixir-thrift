@@ -21,71 +21,60 @@ defmodule Thrift.Generator.ModelsTest do
   """
 
   thrift_test "generating enum" do
-    assert Status.active == 1
-    assert Status.inactive == 2
-    assert Status.banned == 6
-    assert Status.evil == 32
+    assert Status.active == :ACTIVE
+    assert Status.inactive == :INACTIVE
+    assert Status.banned == :BANNED
+    assert Status.evil == :EVIL
 
-    assert Status.member?(0) == false
-    assert Status.member?(1) == true
-    assert Status.member?(2) == true
-    assert Status.member?(3) == false
-    assert Status.member?(4) == false
-    assert Status.member?(5) == false
-    assert Status.member?(6) == true
-    assert Status.member?(7) == false
+    assert Status.member?(:ACTIVE) == true
+    assert Status.member?(:INACTIVE) == true
+    assert Status.member?(:BANNED) == true
+    assert Status.member?(:EVIL) == true
+    assert Status.member?(:BAMBOOZLED) == false
 
-    assert Status.name?(:active) == true
-    assert Status.name?(:inactive) == true
-    assert Status.name?(:banned) == true
-    assert Status.name?(:evil) == true
-    assert Status.name?(:bamboozled) == false
-
-    assert Status.value_to_name(1) == {:ok, :active}
-    assert Status.value_to_name(2) == {:ok, :inactive}
-    assert Status.value_to_name(6) == {:ok, :banned}
-    assert Status.value_to_name(32) == {:ok, :evil}
+    assert Status.value_to_name(1) == {:ok, :ACTIVE}
+    assert Status.value_to_name(2) == {:ok, :INACTIVE}
+    assert Status.value_to_name(6) == {:ok, :BANNED}
+    assert Status.value_to_name(32) == {:ok, :EVIL}
     assert Status.value_to_name(65536) == {:error, {:invalid_enum_value, 65536}}
 
-    assert Status.value_to_name!(1) == :active
-    assert Status.value_to_name!(2) == :inactive
-    assert Status.value_to_name!(6) == :banned
-    assert Status.value_to_name!(32) == :evil
+    assert Status.value_to_name!(1) == :ACTIVE
+    assert Status.value_to_name!(2) == :INACTIVE
+    assert Status.value_to_name!(6) == :BANNED
+    assert Status.value_to_name!(32) == :EVIL
     assert_raise MatchError, fn -> Status.value_to_name!(38210) end
 
-    assert Status.name_to_value(:active) == {:ok, 1}
-    assert Status.name_to_value(:inactive) == {:ok, 2}
-    assert Status.name_to_value(:banned) == {:ok, 6}
-    assert Status.name_to_value(:evil) == {:ok, 32}
+    assert Status.name_to_value(:ACTIVE) == {:ok, 1}
+    assert Status.name_to_value(:INACTIVE) == {:ok, 2}
+    assert Status.name_to_value(:BANNED) == {:ok, 6}
+    assert Status.name_to_value(:EVIL) == {:ok, 32}
     assert Status.name_to_value(:just_weird) ==
       {:error, {:invalid_enum_name, :just_weird}}
 
-    assert Status.name_to_value!(:active) == 1
-    assert Status.name_to_value!(:inactive) == 2
-    assert Status.name_to_value!(:banned) == 6
-    assert Status.name_to_value!(:evil) == 32
+    assert Status.name_to_value!(:ACTIVE) == 1
+    assert Status.name_to_value!(:INACTIVE) == 2
+    assert Status.name_to_value!(:BANNED) == 6
+    assert Status.name_to_value!(:EVIL) == 32
     assert_raise MatchError, fn -> Status.name_to_value!(:just_weird) end
 
-    assert Status.meta(:names) == [:active, :inactive, :banned, :evil]
+    assert Status.meta(:names) == [:ACTIVE, :INACTIVE, :BANNED, :EVIL]
     assert Status.meta(:values) == [1, 2, 6, 32]
 
     struct = %StructWithEnum{}
     assert struct.status_field == nil
-    assert struct.status_field_with_default == Status.inactive
+    assert struct.status_field_with_default == :INACTIVE
     assert struct.status_map == nil
     assert struct.status_set == nil
     assert struct.status_list == nil
   end
 
   thrift_test "generated enums that conflict with Elixir keywords" do
-    assert Operator.and == 0
-    assert Operator.member?(0) == true
-    assert Operator.name?(:and) == true
-    assert Operator.value_to_name(0) == {:ok, :and}
-    assert Operator.value_to_name!(0) == :and
-    assert Operator.name_to_value(:and) == {:ok, 0}
-    assert Operator.name_to_value!(:and) == 0
-    assert Operator.meta(:names) == [:and]
+    assert Operator.member?(:AND) == true
+    assert Operator.value_to_name(0) == {:ok, :AND}
+    assert Operator.value_to_name!(0) == :AND
+    assert Operator.name_to_value(:AND) == {:ok, 0}
+    assert Operator.name_to_value!(:AND) == 0
+    assert Operator.meta(:names) == [:AND]
     assert Operator.meta(:values) == [0]
   end
 

@@ -582,16 +582,16 @@ defmodule Thrift.Generator.BinaryProtocolTest do
 
   thrift_test "constants and structs defined in the same file" do
     assert %XMan{
-      handle: "Wolverine", name: "Logan", power_level: PowerLevel.beta, universe: XMan.earth_616
+      handle: "Wolverine", name: "Logan", power_level: :BETA, universe: XMan.earth_616
     } == XMan.wolverine
     assert %XMan{
-      handle: "Cyclops", name: "Scott Summers", power_level: PowerLevel.beta, universe: XMan.earth_616
+      handle: "Cyclops", name: "Scott Summers", power_level: :BETA, universe: XMan.earth_616
     } == XMan.cyclops
     assert %XMan{
-      handle: "Storm", name: "Ororo Monroe", power_level: PowerLevel.alpha, universe: XMan.earth_616
+      handle: "Storm", name: "Ororo Monroe", power_level: :ALPHA, universe: XMan.earth_616
     } == XMan.storm
     assert %XMan{
-      handle: "Phoenix", name: "Jean Grey", power_level: PowerLevel.omega, universe: XMan.earth_616
+      handle: "Phoenix", name: "Jean Grey", power_level: :OMEGA, universe: XMan.earth_616
     } == XMan.phoenix
   end
 
@@ -680,17 +680,17 @@ defmodule Thrift.Generator.BinaryProtocolTest do
   """
 
   thrift_test "including a file with typedefs and defaults" do
-    choco = %Chocolate{extra_stuff: MapSet.new([1, 2])}
+    choco = %Chocolate{extra_stuff: MapSet.new([:ALMONDS, :NOUGAT])}
 
-    assert choco.secret_ingredient == ChocolateAdditionsType.hair
+    assert choco.secret_ingredient == :HAIR
 
-    assert %Allergies{}.may_contain == [ChocolateAdditionsType.almonds]
-    assert %OddSnackIngredients{}.other_things == MapSet.new([ChocolateAdditionsType.nougat])
-    assert %ChocoMappings{}.common_name == %{ChocolateAdditionsType.hair => "love"}
-    assert %AdditionalMappings{}.mapping == %{ChocolateAdditionsType.almonds => "almonds",
-                                              ChocolateAdditionsType.nougat => "nougat"}
+    assert %Allergies{}.may_contain == [:ALMONDS]
+    assert %OddSnackIngredients{}.other_things == MapSet.new([:NOUGAT])
+    assert %ChocoMappings{}.common_name == %{:HAIR => "love"}
+    assert %AdditionalMappings{}.mapping == %{:ALMONDS => "almonds",
+                                              :NOUGAT => "nougat"}
 
-    assert %AlreadyNamespaced{}.namespaced == ChocolateAdditionsType.almonds
+    assert %AlreadyNamespaced{}.namespaced == :ALMONDS
 
     actual = choco
     |> Chocolate.serialize

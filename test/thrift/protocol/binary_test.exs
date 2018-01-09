@@ -32,8 +32,8 @@ defmodule BinaryProtocolTest do
     decoder = {Erlang.Enums, :deserialize_struct_with_enum}
 
     assert {:StructWithEnum, :undefined} == round_trip_struct(StructWithEnum.new, encoder, decoder)
-    assert {:StructWithEnum, 32} == round_trip_struct(%StructWithEnum{status: Status.evil}, encoder, decoder)
-    assert {:StructWithEnum, 6} == round_trip_struct(%StructWithEnum{status: Status.banned}, encoder, decoder)
+    assert {:StructWithEnum, 32} == round_trip_struct(%StructWithEnum{status: :EVIL}, encoder, decoder)
+    assert {:StructWithEnum, 6} == round_trip_struct(%StructWithEnum{status: :BANNED}, encoder, decoder)
   end
 
   @thrift_file name: "scalars.thrift", contents: """
@@ -117,16 +117,12 @@ defmodule BinaryProtocolTest do
     assert Erlang.Containers.new_containers(users: []) == round_trip_struct(%Containers{users: []}, encoder, decoder)
 
     # containers can contain enums
-    forecast = [Weather.sunny,
-                Weather.sunny,
-                Weather.sunny,
-                Weather.sunny,
-                Weather.cloudy,
-                Weather.sunny,
-                Weather.sunny]
-    assert Erlang.Containers.new_containers(weekly_forecast: [1, 1, 1, 1, 2, 1, 1]) == round_trip_struct(%Containers{weekly_forecast: forecast}, encoder, decoder)
+    forecast = [:SUNNY, :SUNNY, :SUNNY, :SUNNY, :CLOUDY, :SUNNY, :SUNNY]
+    assert Erlang.Containers.new_containers(weekly_forecast: [1, 1, 1, 1, 2, 1, 1]) ==
+        round_trip_struct(%Containers{weekly_forecast: forecast}, encoder, decoder)
     taken_usernames = ["scohen", "pguillory"]
-    assert Erlang.Containers.new_containers(taken_usernames: :sets.from_list(taken_usernames)) == round_trip_struct(%Containers{taken_usernames: MapSet.new(taken_usernames)}, encoder, decoder)
+    assert Erlang.Containers.new_containers(taken_usernames: :sets.from_list(taken_usernames)) ==
+        round_trip_struct(%Containers{taken_usernames: MapSet.new(taken_usernames)}, encoder, decoder)
 
     # # containers can contain structs
     # erlang_friends = [

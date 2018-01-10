@@ -2,7 +2,7 @@ defmodule Thrift.Generator.BinaryProtocolTest do
   use ThriftTestCase
 
   alias Thrift.Protocol.Binary
-  alias Thrift.Union.TooManyFieldsSetException
+  alias Thrift.Union.TooManyFieldsSetError
 
   def assert_serializes(%{__struct__: mod} = struct, binary) do
     assert binary == IO.iodata_to_binary(Binary.serialize(:struct, struct))
@@ -281,7 +281,7 @@ defmodule Thrift.Generator.BinaryProtocolTest do
     assert_serializes %Union{string_field: "hello"},                  <<11, 0, 3, 0, 0, 0, 5, "hello", 0>>
     assert_serializes %Union{list_field: [5, 9, 7]},                  <<15, 0, 4, 6, 0, 0, 0, 3, 0, 5, 0, 9, 0, 7, 0>>
 
-    assert_raise TooManyFieldsSetException, fn ->
+    assert_raise TooManyFieldsSetError, fn ->
       Binary.serialize(:union, %Union{int_field: 205, list_field: [1, 2]})
     end
   end
@@ -296,7 +296,7 @@ defmodule Thrift.Generator.BinaryProtocolTest do
                                                                       <<14, 0, 3, 12, 0, 0, 0, 1, 10, 0, 1, 0, 0, 0, 0, 0, 0, 8, 191, 0, 0>>
     assert_serializes %UStruct{u_list: [%Union{int_field: 1291}]},    <<15, 0, 4, 12, 0, 0, 0, 1, 10, 0, 1, 0, 0, 0, 0, 0, 0, 5, 11, 0, 0>>
 
-    assert_raise TooManyFieldsSetException, fn ->
+    assert_raise TooManyFieldsSetError, fn ->
       Binary.serialize(:struct,  %UStruct{my_union: %Union{int_field: 123, string_field: "oops"}})
     end
   end
@@ -408,7 +408,7 @@ defmodule Thrift.Generator.BinaryProtocolTest do
 
   thrift_test "required boolean fields must not be nil during serialization" do
     message = "Required boolean field :val on Thrift.Generator.BinaryProtocolTest.RequiredBool must be true or false"
-    assert_raise Thrift.InvalidValueException, message, fn ->
+    assert_raise Thrift.InvalidValueError, message, fn ->
       RequiredBool.serialize(%RequiredBool{})
     end
   end
@@ -425,7 +425,7 @@ defmodule Thrift.Generator.BinaryProtocolTest do
 
   thrift_test "required fields must not be nil during serialization" do
     message = "Required field :val on Thrift.Generator.BinaryProtocolTest.RequiredField must not be nil"
-    assert_raise Thrift.InvalidValueException, message, fn ->
+    assert_raise Thrift.InvalidValueError, message, fn ->
       RequiredField.serialize(%RequiredField{})
     end
   end

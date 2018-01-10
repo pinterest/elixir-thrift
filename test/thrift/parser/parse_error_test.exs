@@ -25,7 +25,7 @@ defmodule Thrift.Parser.ParseErrorTest do
     File.write!(path, contents)
 
     assert_raise(
-      Thrift.FileParseException,
+      Thrift.FileParseError,
       ~r/#{path} on line 1:/,
       fn -> parse_file(path) end
     )
@@ -42,7 +42,7 @@ defmodule Thrift.Parser.ParseErrorTest do
     # should raise an error on the included file,
     # since that is where the syntax error is
     assert_raise(
-      Thrift.FileParseException,
+      Thrift.FileParseError,
       ~r/#{path} on line 1:/,
       fn -> parse_file(other_path) end
     )
@@ -60,7 +60,7 @@ defmodule Thrift.Parser.ParseErrorTest do
     File.write!(path, contents)
 
     assert_raise(
-      Thrift.FileParseException,
+      Thrift.FileParseError,
       ~r/#{path} on line 2:/,
       fn -> parse_file(path) end
     )
@@ -77,7 +77,7 @@ defmodule Thrift.Parser.ParseErrorTest do
     # should raise an error on the included file,
     # since that is where the syntax error is
     assert_raise(
-      Thrift.FileParseException,
+      Thrift.FileParseError,
       ~r/#{path} on line 2:/,
       fn -> parse_file(other_path) end
     )

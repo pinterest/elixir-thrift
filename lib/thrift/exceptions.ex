@@ -1,3 +1,4 @@
+# credo:disable-for-next-line
 defmodule Thrift.TApplicationException do
   @moduledoc """
   Application-level exception
@@ -46,7 +47,7 @@ defmodule Thrift.TApplicationException do
   defp normalize_type(type) when is_integer(type), do: :unknown
 end
 
-defmodule Thrift.Union.TooManyFieldsSetException do
+defmodule Thrift.Union.TooManyFieldsSetError do
   @moduledoc """
   This exception occurs when a Union is serialized and more than one
   field is set.
@@ -55,7 +56,7 @@ defmodule Thrift.Union.TooManyFieldsSetException do
   defexception message: nil, set_fields: nil
 end
 
-defmodule Thrift.FileParseException do
+defmodule Thrift.FileParseError do
   @moduledoc """
   This exception occurs when a thrift file fails to parse
   """
@@ -67,7 +68,7 @@ defmodule Thrift.FileParseException do
   @spec exception({Thrift.Parser.FileRef.t, term}) :: Exception.t
   def exception({file_ref, error}) do
     msg = "Error parsing thrift file #{file_ref.path} #{format_error(error)}"
-    %Thrift.FileParseException{message: msg}
+    %__MODULE__{message: msg}
   end
 
   # display the line number if we get it
@@ -82,7 +83,7 @@ defmodule Thrift.FileParseException do
   end
 end
 
-defmodule Thrift.InvalidValueException do
+defmodule Thrift.InvalidValueError do
   @enforce_keys [:message]
   defexception message: nil
 end

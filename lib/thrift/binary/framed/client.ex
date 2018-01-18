@@ -6,7 +6,7 @@ defmodule Thrift.Binary.Framed.Client do
   implements framing on top of the Connection behaviour.
 
   This module ony adds two functions to the connection behaviour,
- `oneway` and `request`.
+  `oneway` and `request`.
   """
   alias Thrift.Protocol.Binary
   alias Thrift.TApplicationException

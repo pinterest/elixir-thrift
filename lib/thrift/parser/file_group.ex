@@ -224,11 +224,12 @@ defmodule Thrift.Parser.FileGroup do
   end
 
   # Capitalize just the initial character of a string, leaving the rest of the
-  # string's characters intact.
+  # string's characters intact. Note that this currently assumes ASCII string
+  # characters.
   @spec initialcase(String.t) :: String.t
-  defp initialcase(string) when is_binary(string) do
-    {char, rest} = String.Casing.titlecase_once(string)
-    char <> rest
+  defp initialcase(<<char, rest::binary>>) do
+    char = if char >= ?a and char <= ?z, do: char - 32, else: char
+    <<char>> <> rest
   end
 
   # check if the given model is defined in the root file of the file group

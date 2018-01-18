@@ -227,8 +227,8 @@ defmodule Thrift.Parser.FileGroup do
   # string's characters intact.
   @spec initialcase(String.t) :: String.t
   defp initialcase(string) when is_binary(string) do
-    {char, rest} = String.Casing.titlecase_once(string)
-    char <> rest
+    {first, rest} = String.next_grapheme(string)
+    String.upcase(first) <> rest
   end
 
   # check if the given model is defined in the root file of the file group

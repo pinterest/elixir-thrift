@@ -15,8 +15,6 @@ matrix:
     - elixir: 1.6
       otp_release: 20.2
       env: COVERALLS=true
-  allow_failures:
-    - elixir: 1.6
 
 sudo: required
 dist: trusty

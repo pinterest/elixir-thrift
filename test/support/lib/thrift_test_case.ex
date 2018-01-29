@@ -115,7 +115,8 @@ defmodule ThriftTestCase do
     end
   end
 
-  setup_all %{case: module} do
+  setup_all context do
+    module = context[:module] || context[:case]
     attributes = module.__info__(:attributes)
     opts = attributes[:thrift_test_opts]
     [dir] = attributes[:thrift_test_dir]

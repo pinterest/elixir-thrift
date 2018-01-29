@@ -119,6 +119,9 @@ defmodule Thrift.Generator.ServiceTest do
                                             [tcp_opts: [timeout: 5000]])
     {:ok, handler_pid} = ServerSpy.start_link
 
+    # Ensure we have a completed client-server connection.
+    :sys.get_state(client)
+
     on_exit fn ->
       wait_for_exit(handler_pid)
       wait_for_exit(client)
@@ -350,7 +353,7 @@ defmodule Thrift.Generator.ServiceTest do
   thrift_test "clients exit if they try to use a closed client", ctx do
     Process.flag(:trap_exit, true)
     stop_server(ctx.server)
-    assert {{:error, :econnrefused}, _} = catch_exit(Client.friend_ids_of(ctx.client, 1234))
+    assert {:error, :closed} == Client.friend_ids_of(ctx.client, 1234)
   end
 
   thrift_test "clients exit if the server dies handling a message", ctx do
@@ -385,7 +388,6 @@ defmodule Thrift.Generator.ServiceTest do
     Process.flag(:trap_exit, true)
     ServerSpy.set_reply(:noreply)
 
-    :sys.get_state(client)
     stop_server(server)
 
     # this assertion is unusual, as it should exit, but the server

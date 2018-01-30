@@ -237,7 +237,7 @@ defmodule Thrift.Generator.ServiceTest do
 
   thrift_test "it raises a ConnectionError with the bang function", ctx do
     Process.flag(:trap_exit, true)
-    ServerSpy.set_reply(:noreply)
+    ServerSpy.set_reply(true)
     :sys.get_state(ctx.client)
     stop_server(ctx.server)
 

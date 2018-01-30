@@ -103,9 +103,23 @@ defmodule Thrift.Generator.ServiceTest do
   end
 
   defp stop_server(server_pid) when is_pid(server_pid) do
-    ref = Process.monitor(server_pid)
+    refs = monitor_server_pids(server_pid)
     :thrift_socket_server.stop(server_pid)
-    assert_receive {:DOWN, ^ref, _, _, _}
+    for ref <- refs do
+      assert_receive {:DOWN, ^ref, _, _, _}
+    end
+    :ok
+  end
+
+  defp monitor_server_pids(server_pid) do
+    ref = Process.monitor(server_pid)
+    # server_pid does not wait for its children to exit, so monitor those and wait on them
+    case Process.info(server_pid, :links) do
+      {:links, pids} ->
+        for pid <- pids, is_pid(pid), pid != self(), do: Process.monitor(pid), into: [ref]
+      nil ->
+        [ref]
+    end
   end
 
   defp wait_for_exit(pid) when is_pid(pid) do

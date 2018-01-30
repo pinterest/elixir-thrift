@@ -46,8 +46,15 @@ defmodule Thrift.Binary.Framed.ProtocolHandler do
         :ok = transport.send(socket, thrift_data)
         exit({:shutdown, :server_error})
 
-      {:error, _} = err ->
-        Logger.info(inspect err)
+      {:error, {:protocol_error, reason}} ->
+        Logger.warn(fn -> "#{inspect handler_module} (#{inspect self()}) decode error: #{inspect reason}" end)
+        :ok = transport.close(socket)
+
+      {:error, closed} when closed in [:closed, :econnreset, :timeout] ->
+        :ok = transport.close(socket)
+
+      {:error, reason} ->
+        Logger.info(fn -> "#{inspect handler_module} (#{inspect self()}) connection error: #{:inet.format_error(reason)} (#{reason})" end)
         :ok = transport.close(socket)
     end
   end
@@ -78,8 +85,7 @@ defmodule Thrift.Binary.Framed.ProtocolHandler do
     {:ok, :reply, <<0>>}
   end
 
-  defp handle_thrift_message({:error, msg} = err, _, _) do
-    Logger.warn("Could not decode Thrift message: #{inspect msg}")
-    err
+  defp handle_thrift_message({:error, msg}, _, _) do
+    {:error, {:protocol_error, msg}}
   end
 end

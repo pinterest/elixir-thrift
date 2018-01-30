@@ -1,4 +1,4 @@
-ExUnit.configure(exclude: [pending: true])
+ExUnit.configure(exclude: [pending: true], capture_log: true)
 ExUnit.start()
 
 defmodule ThriftTestHelpers do

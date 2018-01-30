@@ -47,6 +47,15 @@ defmodule Thrift.TApplicationException do
   defp normalize_type(type) when is_integer(type), do: :unknown
 end
 
+defmodule Thrift.ConnectionError do
+  @enforce_keys [:reason]
+  defexception [:reason]
+
+  def message(%{reason: reason}) do
+    "Connection error: #{:inet.format_error(reason)} (#{reason})"
+  end
+end
+
 defmodule Thrift.Union.TooManyFieldsSetError do
   @moduledoc """
   This exception occurs when a Union is serialized and more than one

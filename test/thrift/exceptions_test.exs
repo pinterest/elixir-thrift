@@ -1,6 +1,15 @@
 defmodule Thrift.ExceptionsTest do
   use ExUnit.Case, async: true
 
+  describe "ConnectionError" do
+    alias Thrift.ConnectionError
+
+    test "formats POSIX errors" do
+      exception = ConnectionError.exception(reason: :econnrefused)
+      assert Exception.message(exception) == "Connection error: connection refused (econnrefused)"
+    end
+  end
+
   describe "TApplicationException" do
     alias Thrift.TApplicationException
 

@@ -108,7 +108,7 @@ defmodule Servers.Binary.Framed.IntegrationTest do
       end
     end
 
-    {:ok, client} = Client.start_link("localhost", ctx.port, [gen_server_opts: [name: TestClientName]])
+    {:ok, client} = Client.start_link("localhost", ctx.port, name: TestClientName)
 
     {:ok, client: client}
   end
@@ -176,7 +176,7 @@ defmodule Servers.Binary.Framed.IntegrationTest do
     assert ctx.client == Process.whereis(TestClientName)
   end
 
-  thrift_test "client methods can be called by name instead of pid", ctx do
+  thrift_test "client methods can be called by name instead of pid", _ctx do
     assert {:ok, true} == Client.ping(TestClientName)
   end
 end

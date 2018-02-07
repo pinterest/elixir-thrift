@@ -81,15 +81,13 @@ defmodule Thrift.Binary.Framed.Client do
 
      - `send_timeout`: An integer that governs how long our connection waits when sending data.
 
-     - `gen_server_opts`: A keyword list of options that control the gen_server behaviour.
-
-     - `timeout`:  The amount of time to wait (in milliseconds) for a reply from a `GenServer` call.
-
+  Additionally, the options `:name`, `:debug`, and `:spawn_opt`, if specified, will be passed to
+  the underlying `GenServer`. See `GenServer.start_link/3` for details on these options.
   """
   @spec start_link(String.t, (0..65_535), options) :: GenServer.on_start
   def start_link(host, port, opts) do
-    {gen_server_opts, opts} = Keyword.pop(opts, :gen_server_opts, [])
-    Connection.start_link(__MODULE__, {host, port, opts}, gen_server_opts)
+    {gen_server_opts, client_opts} = Keyword.split(opts, [:debug, :name, :spawn_opt])
+    Connection.start_link(__MODULE__, {host, port, client_opts}, gen_server_opts)
   end
 
   @doc """

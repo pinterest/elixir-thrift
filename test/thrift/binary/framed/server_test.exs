@@ -108,7 +108,7 @@ defmodule Servers.Binary.Framed.IntegrationTest do
       end
     end
 
-    {:ok, client} = Client.start_link("localhost", ctx.port, [])
+    {:ok, client} = Client.start_link("localhost", ctx.port, name: TestClientName)
 
     {:ok, client: client}
   end
@@ -170,5 +170,13 @@ defmodule Servers.Binary.Framed.IntegrationTest do
 
     :timer.sleep 100
     assert "username" == Agent.get(:server_args, &(&1))
+  end
+
+  thrift_test "client can be found by name", ctx do
+    assert ctx.client == Process.whereis(TestClientName)
+  end
+
+  thrift_test "client methods can be called by name instead of pid", _ctx do
+    assert {:ok, true} == Client.ping(TestClientName)
   end
 end

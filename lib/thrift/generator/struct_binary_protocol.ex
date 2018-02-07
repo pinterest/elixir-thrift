@@ -124,8 +124,13 @@ defmodule Thrift.Generator.StructBinaryProtocol do
       end
     end
   end
-  defp field_deserializer(%TEnum{}, field, name, file_group) do
-    field_deserializer(:i32, field, name, file_group)
+  defp field_deserializer(%TEnum{} = enum, field, name, _file_group) do
+    quote do
+      defp unquote(name)(<<unquote(Type.i32), unquote(field.id)::16-signed, value::32-signed, rest::binary>>, acc) do
+        enum_name = unquote(enum_value_to_name(enum, Macro.var(:value, nil)))
+        unquote(name)(rest, %{acc | unquote(field.name) => enum_name})
+      end
+    end
   end
   defp field_deserializer(:i64, field, name, _file_group) do
     quote do
@@ -289,8 +294,13 @@ defmodule Thrift.Generator.StructBinaryProtocol do
       end
     end
   end
-  defp map_key_deserializer(%TEnum{}, key_name, value_name, file_group) do
-    map_key_deserializer(:i32, key_name, value_name, file_group)
+  defp map_key_deserializer(%TEnum{} = enum, key_name, value_name, _file_group) do
+    quote do
+      defp unquote(key_name)(<<key::32-signed, rest::binary>>, stack) do
+        enum_name = unquote(enum_value_to_name(enum, Macro.var(:key, nil)))
+        unquote(value_name)(rest, enum_name, stack)
+      end
+    end
   end
   defp map_key_deserializer(:i64, key_name, value_name, _file_group) do
     quote do
@@ -438,8 +448,13 @@ defmodule Thrift.Generator.StructBinaryProtocol do
       end
     end
   end
-  defp map_value_deserializer(%TEnum{}, key_name, value_name, file_group) do
-    map_value_deserializer(:i32, key_name, value_name, file_group)
+  defp map_value_deserializer(%TEnum{} = enum, key_name, value_name, _file_group) do
+    quote do
+      defp unquote(value_name)(<<value::32-signed, rest::binary>>, key, [map, remaining | stack]) do
+        enum_name = unquote(enum_value_to_name(enum, Macro.var(:value, nil)))
+        unquote(key_name)(rest, [Map.put(map, key, enum_name), remaining - 1 | stack])
+      end
+    end
   end
   defp map_value_deserializer(:i64, key_name, value_name, _file_group) do
     quote do
@@ -590,8 +605,12 @@ defmodule Thrift.Generator.StructBinaryProtocol do
       end
     end
   end
-  defp list_deserializer(%TEnum{}, name, file_group) do
-    list_deserializer(:i32, name, file_group)
+  defp list_deserializer(%TEnum{} = enum, name, _file_group) do
+    quote do
+      defp unquote(name)(<<element::32-signed, rest::binary>>, [list, remaining | stack]) do
+        unquote(name)(rest, [[unquote(enum_value_to_name(enum, Macro.var(:element, nil))) | list], remaining - 1 | stack])
+      end
+    end
   end
   defp list_deserializer(:i64, name, _file_group) do
     quote do
@@ -838,7 +857,11 @@ defmodule Thrift.Generator.StructBinaryProtocol do
   defp value_serializer(:double,  var, _file_group), do: quote do: <<unquote(var)::float-signed>>
   defp value_serializer(:i16,     var, _file_group), do: quote do: <<unquote(var)::16-signed>>
   defp value_serializer(:i32,     var, _file_group), do: quote do: <<unquote(var)::32-signed>>
-  defp value_serializer(%TEnum{}, var, _file_group), do: quote do: <<unquote(var)::32-signed>>
+  defp value_serializer(%TEnum{} = enum, var, _file_group) do
+    quote do
+      <<unquote(enum_name_to_value(enum, var))::32-signed>>
+    end
+  end
   defp value_serializer(:i64,     var, _file_group), do: quote do: <<unquote(var)::64-signed>>
   defp value_serializer(:binary,  var, _file_group), do: quote do: [<<byte_size(unquote(var))::32-signed>>, unquote(var)]
   defp value_serializer(:string,  var, _file_group), do: quote do: [<<byte_size(unquote(var))::32-signed>>, unquote(var)]
@@ -909,4 +932,18 @@ defmodule Thrift.Generator.StructBinaryProtocol do
   defp type_id(%Exception{}, _),  do: Type.struct
   defp type_id(%Union{}, _),      do: Type.struct
   defp type_id(type, _),          do: Type.of(type)
+
+  defp enum_name_to_value(%TEnum{} = enum, var) do
+    cases = Enum.map(enum.values, fn {key, value} ->
+      {:->, [], [[key], value]}
+    end)
+    {:case, [], [var, [do: cases]]}
+  end
+
+  defp enum_value_to_name(%TEnum{} = enum, var) do
+    cases = Enum.map(enum.values, fn {key, value} ->
+      {:->, [], [[value], key]}
+    end)
+    {:case, [], [var, [do: cases]]}
+  end
 end

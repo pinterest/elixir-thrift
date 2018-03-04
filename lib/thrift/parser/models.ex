@@ -61,17 +61,15 @@ defmodule Thrift.Parser.Models do
 
     @spec new(charlist, %{charlist => enum_value}) :: t
     def new(name, values) do
-      values = values
-      |> Enum.with_index
-      |> Enum.map(fn
-        {{name, value}, _index} ->
-          {atomify(name), value}
-
-        {name, index} ->
-          {atomify(name), index + 1}
+      {_, values} = values
+      |> Enum.reduce({1, []}, fn
+        {name, value}, {_index, acc} ->
+          {value + 1, [{atomify(name), value} | acc]}
+        name, {index, acc} ->
+          {index + 1, [{atomify(name), index} | acc]}
       end)
 
-      %TEnum{name: atomify(name), values: values}
+      %TEnum{name: atomify(name), values: Enum.reverse(values)}
     end
   end
 

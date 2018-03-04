@@ -281,6 +281,23 @@ defmodule Thrift.Parser.ParserTest do
                                  values: [ACTIVE: 1, INACTIVE: 2, BANNED: 6, EVIL: 32]}
   end
 
+  test "parsing an enum with awkward numbering" do
+    user_status = parse("""
+    enum Numberz {
+      ONE = 1,
+      TWO,
+      THREE,
+      FIVE = 5,
+      SIX,
+      EIGHT = 8
+    }
+    """, [:enums, :Numberz])
+
+    assert user_status == %TEnum{line: 1,
+                                 name: :Numberz,
+                                 values: [ONE: 1, TWO: 2, THREE: 3, FIVE: 5, SIX: 6, EIGHT: 8]}
+  end
+
   test "parsing an exception" do
     program = """
     exception ApplicationException {

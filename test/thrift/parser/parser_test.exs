@@ -278,7 +278,7 @@ defmodule Thrift.Parser.ParserTest do
 
     assert user_status == %TEnum{line: 1,
                                  name: :UserStatus,
-                                 values: [ACTIVE: 1, INACTIVE: 2, BANNED: 6, EVIL: 32]}
+                                 values: [ACTIVE: 0, INACTIVE: 1, BANNED: 6, EVIL: 32]}
   end
 
   test "parsing an enum with awkward numbering" do

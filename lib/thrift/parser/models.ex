@@ -61,7 +61,7 @@ defmodule Thrift.Parser.Models do
 
     @spec new(charlist, %{charlist => enum_value}) :: t
     def new(name, values) do
-      {_, values} = Enum.reduce(values, {1, []}, fn
+      {_, values} = Enum.reduce(values, {0, []}, fn
         {name, value}, {_index, acc} ->
           {value + 1, [{atomify(name), value} | acc]}
         name, {index, acc} ->

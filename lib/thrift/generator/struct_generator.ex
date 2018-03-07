@@ -8,14 +8,13 @@ defmodule Thrift.Generator.StructGenerator do
     Union
   }
 
-  alias Thrift.Generator.{StructBinaryProtocol, Utils}
+  alias Thrift.Generator.{StructBinaryProtocol, StructCompactProtocol, Utils}
   alias Thrift.Parser.FileGroup
 
   def generate(label, schema, name, struct) when label in [:struct, :union, :exception] do
     struct_parts =
-      Enum.map(struct.fields, fn
-        %Field{name: name, type: type, default: default} ->
-          {name, Utils.quote_value(default, type, schema)}
+      Enum.map(struct.fields, fn %Field{name: name, type: type, default: default} ->
+        {name, Utils.quote_value(default, type, schema)}
       end)
 
     binary_protocol_defs =
@@ -25,6 +24,23 @@ defmodule Thrift.Generator.StructGenerator do
       ]
       |> Utils.merge_blocks()
       |> Utils.sort_defs()
+
+    compact_protocol_defs =
+      [
+        StructCompactProtocol.struct_serializer(struct, name, schema.file_group),
+        StructCompactProtocol.struct_deserializer(struct, name, schema.file_group)
+      ]
+      |> Utils.merge_blocks()
+      |> Utils.sort_defs()
+
+    define_block =
+      case label do
+        :exception ->
+          quote do: defexception(unquote(struct_parts))
+
+        _ ->
+          quote do: defstruct(unquote(struct_parts))
+      end
 
     define_block =
       case label do
@@ -66,6 +82,11 @@ defmodule Thrift.Generator.StructGenerator do
           unquote_splicing(binary_protocol_defs)
         end
 
+        defmodule CompactProtocol do
+          @moduledoc false
+          unquote_splicing(compact_protocol_defs)
+        end
+
         def serialize(struct) do
           BinaryProtocol.serialize(struct)
         end
@@ -74,8 +95,20 @@ defmodule Thrift.Generator.StructGenerator do
           BinaryProtocol.serialize(struct)
         end
 
+        def serialize(struct, :compact) do
+          CompactProtocol.serialize(struct)
+        end
+
         def deserialize(binary) do
           BinaryProtocol.deserialize(binary)
+        end
+
+        def deserialize(binary, :binary) do
+          BinaryProtocol.deserialize(binary)
+        end
+
+        def deserialize(binary, :compact) do
+          CompactProtocol.deserialize(binary)
         end
       end
     end

@@ -273,6 +273,7 @@ defmodule Thrift.Generator.StructBinaryProtocol do
   end
 
   defp field_deserializer({:map, {key_type, value_type}}, field, name, file_group) do
+
     key_name = :"#{name}__#{field.name}__key"
     value_name = :"#{name}__#{field.name}__value"
 

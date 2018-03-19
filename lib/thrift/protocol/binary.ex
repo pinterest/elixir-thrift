@@ -39,15 +39,18 @@ defmodule Thrift.Protocol.Binary do
   Serializes a value as an IO list using Thrift's type-specific encoding rules.
   """
   @spec serialize(serializable, any) :: iolist
-  def serialize(:bool, false),   do: <<0::8-signed>>
-  def serialize(:bool, true),    do: <<1::8-signed>>
-  def serialize(:i8, value),     do: <<value::8-signed>>
-  def serialize(:i16, value),    do: <<value::16-signed>>
-  def serialize(:i32, value),    do: <<value::32-signed>>
-  def serialize(:i64, value),    do: <<value::64-signed>>
-  def serialize(:double, value), do: <<value::float-signed>>
-  def serialize(:string, value), do: [<<byte_size(value)::32-signed>>, value]
-  def serialize(:binary, value), do: [<<byte_size(value)::32-signed>>, value]
+  def serialize(:bool, false),     do: <<0::8-signed>>
+  def serialize(:bool, true),      do: <<1::8-signed>>
+  def serialize(:i8, value),       do: <<value::8-signed>>
+  def serialize(:i16, value),      do: <<value::16-signed>>
+  def serialize(:i32, value),      do: <<value::32-signed>>
+  def serialize(:i64, value),      do: <<value::64-signed>>
+  def serialize(:double, :inf),    do: <<0::1, 2047::11, 0::52>>
+  def serialize(:double, :"-inf"), do: <<1::1, 2047::11, 0::52>>
+  def serialize(:double, :NaN),    do: <<0::1, 2047::11, 1::1, 0::51>>
+  def serialize(:double, value),   do: <<value::float-signed>>
+  def serialize(:string, value),   do: [<<byte_size(value)::32-signed>>, value]
+  def serialize(:binary, value),   do: [<<byte_size(value)::32-signed>>, value]
 
   def serialize({:list, elem_type}, elems) when is_list(elems) do
     rest = Enum.map(elems, &serialize(elem_type, &1))

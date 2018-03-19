@@ -86,16 +86,27 @@ defmodule Thrift.Generator.BinaryProtocolTest do
   """
 
   thrift_test "double serialization" do
-    assert_serializes %Double{},                            <<0>>
-    assert_serializes %Double{val: 0.0},                    <<4, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0>>
-    assert_serializes %Double{val: 1.0},                    <<4, 0, 1, 1::signed-float, 0>>
-    assert_serializes %Double{val: 255.0},                  <<4, 0, 1, 255::signed-float, 0>>
-    assert_serializes %Double{val_map: %{}},                <<13, 0, 2, 4, 4, 0, 0, 0, 0, 0>>
-    assert_serializes %Double{val_map: %{91.0 => 92.0}},    <<13, 0, 2, 4, 4, 0, 0, 0, 1, 91::signed-float, 92::signed-float, 0>>
-    assert_serializes %Double{val_set: MapSet.new},         <<14, 0, 3, 4, 0, 0, 0, 0, 0>>
-    assert_serializes %Double{val_set: MapSet.new([91.0])}, <<14, 0, 3, 4, 0, 0, 0, 1, 91::signed-float, 0>>
-    assert_serializes %Double{val_list: []},                <<15, 0, 4, 4, 0, 0, 0, 0, 0>>
-    assert_serializes %Double{val_list: [91.0]},            <<15, 0, 4, 4, 0, 0, 0, 1, 91::signed-float, 0>>
+    assert_serializes %Double{},                               <<0>>
+    assert_serializes %Double{val: 0.0},                       <<4, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0>>
+    assert_serializes %Double{val: 1.0},                       <<4, 0, 1, 1::signed-float, 0>>
+    assert_serializes %Double{val: 255.0},                     <<4, 0, 1, 255::signed-float, 0>>
+    assert_serializes %Double{val: :NaN},                      <<4, 0, 1, 0::1, 2047::11, 1::1, 0::51, 0>>
+    assert_serializes %Double{val: :inf},                      <<4, 0, 1, 0::1, 2047::11, 0::52, 0>>
+    assert_serializes %Double{val: :"-inf"},                   <<4, 0, 1, 1::1, 2047::11, 0::52, 0>>
+    assert_serializes %Double{val_map: %{}},                   <<13, 0, 2, 4, 4, 0, 0, 0, 0, 0>>
+    assert_serializes %Double{val_map: %{91.0 => 92.0}},       <<13, 0, 2, 4, 4, 0, 0, 0, 1, 91::signed-float, 92::signed-float, 0>>
+    assert_serializes %Double{val_map: %{:NaN => :inf}},       <<13, 0, 2, 4, 4, 0, 0, 0, 1, 0::1, 2047::11, 1::1, 0::51, 0::1, 2047::11, 0::52, 0>>
+    assert_serializes %Double{val_map: %{:NaN => :"-inf"}},    <<13, 0, 2, 4, 4, 0, 0, 0, 1, 0::1, 2047::11, 1::1, 0::51, 1::1, 2047::11, 0::52, 0>>
+    assert_serializes %Double{val_set: MapSet.new},            <<14, 0, 3, 4, 0, 0, 0, 0, 0>>
+    assert_serializes %Double{val_set: MapSet.new([91.0])},    <<14, 0, 3, 4, 0, 0, 0, 1, 91::signed-float, 0>>
+    assert_serializes %Double{val_set: MapSet.new([:NaN])},    <<14, 0, 3, 4, 0, 0, 0, 1, 0::1, 2047::11, 1::1, 0::51, 0>>
+    assert_serializes %Double{val_set: MapSet.new([:inf])},    <<14, 0, 3, 4, 0, 0, 0, 1, 0::1, 2047::11, 0::52, 0>>
+    assert_serializes %Double{val_set: MapSet.new([:"-inf"])}, <<14, 0, 3, 4, 0, 0, 0, 1, 1::1, 2047::11, 0::52, 0>>
+    assert_serializes %Double{val_list: []},                   <<15, 0, 4, 4, 0, 0, 0, 0, 0>>
+    assert_serializes %Double{val_list: [91.0]},               <<15, 0, 4, 4, 0, 0, 0, 1, 91::signed-float, 0>>
+    assert_serializes %Double{val_list: [:NaN]},               <<15, 0, 4, 4, 0, 0, 0, 1, 0::1, 2047::11, 1::1, 0::51, 0>>
+    assert_serializes %Double{val_list: [:inf]},               <<15, 0, 4, 4, 0, 0, 0, 1, 0::1, 2047::11, 0::52, 0>>
+    assert_serializes %Double{val_list: [:"-inf"]},            <<15, 0, 4, 4, 0, 0, 0, 1, 1::1, 2047::11, 0::52, 0>>
   end
 
   @thrift_file name: "i16.thrift", contents: """

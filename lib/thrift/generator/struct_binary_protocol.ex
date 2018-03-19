@@ -105,6 +105,15 @@ defmodule Thrift.Generator.StructBinaryProtocol do
   end
   defp field_deserializer(:double, field, name, _file_group) do
     quote do
+      defp unquote(name)(<<unquote(Type.double), unquote(field.id)::16-signed, 0::1, 2047::11, 0::52, rest::binary>>, acc) do
+        unquote(name)(rest, %{acc | unquote(field.name) => :inf})
+      end
+      defp unquote(name)(<<unquote(Type.double), unquote(field.id)::16-signed, 1::1, 2047::11, 0::52, rest::binary>>, acc) do
+        unquote(name)(rest, %{acc | unquote(field.name) => :"-inf"})
+      end
+      defp unquote(name)(<<unquote(Type.double), unquote(field.id)::16-signed, _::1, 2047::11, _::52, rest::binary>>, acc) do
+        unquote(name)(rest, %{acc | unquote(field.name) => :NaN})
+      end
       defp unquote(name)(<<unquote(Type.double), unquote(field.id)::16-signed, value::float-signed, rest::binary>>, acc) do
         unquote(name)(rest, %{acc | unquote(field.name) => value})
       end
@@ -263,6 +272,15 @@ defmodule Thrift.Generator.StructBinaryProtocol do
   end
   defp map_key_deserializer(:double, key_name, value_name, _file_group) do
     quote do
+      defp unquote(key_name)(<<0::1, 2047::11, 0::52, rest::binary>>, stack) do
+        unquote(value_name)(rest, :inf, stack)
+      end
+      defp unquote(key_name)(<<1::1, 2047::11, 0::52, rest::binary>>, stack) do
+        unquote(value_name)(rest, :"-inf", stack)
+      end
+      defp unquote(key_name)(<<_::1, 2047::11, _::52, rest::binary>>, stack) do
+        unquote(value_name)(rest, :NaN, stack)
+      end
       defp unquote(key_name)(<<key::float-signed, rest::binary>>, stack) do
         unquote(value_name)(rest, key, stack)
       end
@@ -412,6 +430,15 @@ defmodule Thrift.Generator.StructBinaryProtocol do
   end
   defp map_value_deserializer(:double, key_name, value_name, _file_group) do
     quote do
+      defp unquote(value_name)(<<0::1, 2047::11, 0::52, rest::binary>>, key, [map, remaining | stack]) do
+        unquote(key_name)(rest, [Map.put(map, key, :inf), remaining - 1 | stack])
+      end
+      defp unquote(value_name)(<<1::1, 2047::11, 0::52, rest::binary>>, key, [map, remaining | stack]) do
+        unquote(key_name)(rest, [Map.put(map, key, :"-inf"), remaining - 1 | stack])
+      end
+      defp unquote(value_name)(<<_::1, 2047::11, _::52, rest::binary>>, key, [map, remaining | stack]) do
+        unquote(key_name)(rest, [Map.put(map, key, :NaN), remaining - 1 | stack])
+      end
       defp unquote(value_name)(<<value::float-signed, rest::binary>>, key, [map, remaining | stack]) do
         unquote(key_name)(rest, [Map.put(map, key, value), remaining - 1 | stack])
       end
@@ -564,6 +591,15 @@ defmodule Thrift.Generator.StructBinaryProtocol do
   end
   defp list_deserializer(:double, name, _file_group) do
     quote do
+      defp unquote(name)(<<0::1, 2047::11, 0::52, rest::binary>>, [list, remaining | stack]) do
+        unquote(name)(rest, [[:inf | list], remaining - 1 | stack])
+      end
+      defp unquote(name)(<<1::1, 2047::11, 0::52, rest::binary>>, [list, remaining | stack]) do
+        unquote(name)(rest, [[:"-inf" | list], remaining - 1 | stack])
+      end
+      defp unquote(name)(<<_::1, 2047::11, _::52, rest::binary>>, [list, remaining | stack]) do
+        unquote(name)(rest, [[:NaN | list], remaining - 1 | stack])
+      end
       defp unquote(name)(<<element::signed-float, rest::binary>>, [list, remaining | stack]) do
         unquote(name)(rest, [[element | list], remaining - 1 | stack])
       end
@@ -835,7 +871,16 @@ defmodule Thrift.Generator.StructBinaryProtocol do
   end
   defp value_serializer(:byte,    var, _file_group), do: quote do: <<unquote(var)::8-signed>>
   defp value_serializer(:i8,      var, _file_group), do: quote do: <<unquote(var)::8-signed>>
-  defp value_serializer(:double,  var, _file_group), do: quote do: <<unquote(var)::float-signed>>
+  defp value_serializer(:double,  var, _file_group) do
+    quote do
+      case unquote(var) do
+        :inf    -> <<0::1, 2047::11, 0::52>>
+        :"-inf" -> <<1::1, 2047::11, 0::52>>
+        :NaN    -> <<0::1, 2047::11, 1::1, 0::51>>
+        _       -> <<unquote(var)::float-signed>>
+      end
+    end
+  end
   defp value_serializer(:i16,     var, _file_group), do: quote do: <<unquote(var)::16-signed>>
   defp value_serializer(:i32,     var, _file_group), do: quote do: <<unquote(var)::32-signed>>
   defp value_serializer(%TEnum{}, var, _file_group), do: quote do: <<unquote(var)::32-signed>>

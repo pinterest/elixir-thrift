@@ -213,6 +213,7 @@ defmodule Thrift.Generator.Utils do
   end
   def quote_value(value, :bool, _schema) when is_boolean(value), do: value
   def quote_value(value, :byte, _schema) when is_integer(value), do: value
+  def quote_value(value, :double, _schema) when is_atom(value), do: value
   def quote_value(value, :double, _schema) when is_number(value), do: value
   def quote_value(value, :i8, _schema) when is_integer(value), do: value
   def quote_value(value, :i16, _schema) when is_integer(value), do: value

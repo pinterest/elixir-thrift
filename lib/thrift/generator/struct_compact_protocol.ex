@@ -43,8 +43,8 @@ defmodule Thrift.Generator.StructCompactProtocol do
 
       # No tests so far to skip over unknown fields
 
-      defp deserialize(rest, previous, struct) do
-        {:error, {rest, previous, struct}}
+      defp deserialize(_, _, _) do
+        :error
       end
     end
   end
@@ -103,9 +103,8 @@ defmodule Thrift.Generator.StructCompactProtocol do
                <<unquote(key_type_id)::4, unquote(value_type_id)::4, rest::binary>> <- rest do
             unquote(fun_name)(rest, {%{}, size})
           else
-            err ->
-              # todo - just :error
-              {:error, err}
+            _ ->
+              :error
           end
         end
 
@@ -571,6 +570,7 @@ defmodule Thrift.Generator.StructCompactProtocol do
       end
     end
   end
+
 
   defp do_struct_serializer(fields, _, name, file_group) do
     [%Field{name: first_field_name} | _] = fields

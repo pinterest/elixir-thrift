@@ -11,18 +11,18 @@ defmodule Thrift.Generator.CompactProtocolTest do
     # struct of the proper type, or it may return :error. But it should never
     # raise.
 
-    # for i <- 1..byte_size(binary) do
-    #   mutated_binary =
-    #     binary
-    #     |> :binary.bin_to_list()
-    #     |> List.replace_at(i - 1, :rand.uniform(256) - 1)
-    #     |> :binary.list_to_bin()
+    for i <- 1..byte_size(binary) do
+      mutated_binary =
+        binary
+        |> :binary.bin_to_list()
+        |> List.replace_at(i - 1, :rand.uniform(256) - 1)
+        |> :binary.list_to_bin()
 
-    #   case mod.deserialize(mutated_binary, :compact) do
-    #     {%{__struct__: ^mod}, _} -> :ok
-    #     :error -> :ok
-    #   end
-    # end
+      case mod.deserialize(mutated_binary, :compact) do
+        {%{__struct__: ^mod}, _} -> :ok
+        :error -> :ok
+      end
+    end
   end
 
   def assert_serializes(

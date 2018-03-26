@@ -4,14 +4,20 @@ defmodule Thrift.Protocol.Compact.IntegerEncoding do
   https://developers.google.com/protocol-buffers/docs/encoding and
   https://github.com/apache/thrift/blob/master/doc/specs/thrift-compact-protocol.md
 
-  For now this is a wrapper around https://github.com/whatyouhide/small_ints to make it
-  easier to replace that library if warranted.
-
-  Todo: it definitely does want replacing to fail more gracefully with invalid binaries, eg <<255>>
+  Copied shamelessly from https://github.com/whatyouhide/small_ints to avoid an extra dependency,
+  but also to fail gracefully when decoding invalid binaries, eg <<255>>
   """
 
   @spec encode_zigzag_varint(integer()) :: binary()
-  defdelegate encode_zigzag_varint(integer), to: :small_ints
+  def encode_zigzag_varint(i) when i < 0 do
+    encode_varint(-i * 2 - 1)
+  end
+
+  def encode_zigzag_varint(i) do
+    encode_varint(i * 2)
+  end
+
+  import Bitwise, only: [band: 2, bsr: 2, bsl: 2]
 
   @doc """
   Encode the signed integer, but as if it was being encoded in
@@ -28,17 +34,51 @@ defmodule Thrift.Protocol.Compact.IntegerEncoding do
   def encode_zigzag_varint(integer, max_pseudo_bits) do
     integer
     |> constrain_to_bits(max_pseudo_bits)
-    |> :small_ints.encode_zigzag_varint()
+    |> encode_zigzag_varint()
   end
 
   @spec encode_varint(non_neg_integer()) :: binary()
-  defdelegate encode_varint(integer), to: :small_ints
+  def encode_varint(i) when i >= 0 and i <= 127, do: <<i>>
+
+  def encode_varint(i) when i > 127 do
+    <<1::1, band(i, 127)::7, encode_varint(bsr(i, 7))::binary>>
+  end
+
+  def encode_varint(i), do: raise(ArgumentError, "argument error: #{inspect(i)}")
 
   @spec decode_varint(binary()) :: non_neg_integer()
-  defdelegate decode_varint(binary), to: :small_ints
+  def decode_varint(binary) do
+    decode_varint(binary, {0, 0}, binary)
+  end
 
   @spec decode_zigzag_varint(binary()) :: non_neg_integer()
-  defdelegate decode_zigzag_varint(binary), to: :small_ints
+  def decode_zigzag_varint(binary) do
+    case decode_varint(binary) do
+      :error -> :error
+
+      {varint_val, rest} ->
+        {decode_zigzag(varint_val), rest}
+    end
+  end
+
+  defp decode_zigzag(i) do
+    case rem(i, 2) do
+      0 -> div(i, 2)
+      1 -> div(-i, 2) - 1
+    end
+  end
+
+  defp decode_varint(<<0::1, i::7, rest::binary>>, {pos, acc}, _original) do
+    {acc + bsl(i, pos), rest}
+  end
+
+  defp decode_varint(<<1::1, i::7, rest::binary>>, {pos, acc}, original) do
+    decode_varint(rest, {pos + 7, acc + bsl(i, pos)}, original)
+  end
+
+  defp decode_varint(_, _, original) do
+    :error
+  end
 
   defp constrain_to_bits(integer, bits) do
     <<i::size(bits)-signed>> = <<integer::size(bits)-signed>>

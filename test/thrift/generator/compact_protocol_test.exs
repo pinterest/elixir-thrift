@@ -3,6 +3,8 @@ defmodule Thrift.Generator.CompactProtocolTest do
 
   alias Thrift.Union.TooManyFieldsSetError
 
+  @thrift_test_opts [cleanup: false]
+
   def assert_serializes(%{__struct__: mod} = struct, binary) do
     assert binary == IO.iodata_to_binary(mod.serialize(struct, :compact))
     assert {^struct, ""} = mod.deserialize(binary, :compact)
@@ -993,5 +995,29 @@ defmodule Thrift.Generator.CompactProtocolTest do
 
     expected = <<26, 37, 2, 4, 21, 6, 0>>
     assert actual == expected
+  end
+
+  @thrift_file name: "missingfields.thrift",
+               contents: """
+               struct ManyFields {
+               1: optional byte val1;
+               25: optional byte val2;
+               26: optional byte val3;
+               27: optional byte val4;
+               }
+
+               struct FewerFields {
+               26: optional byte val3;
+               }
+               """
+  thrift_test "struct with missing field" do
+    serialised =
+      %ManyFields{val1: 1, val2: 2, val3: 3, val4: 4}
+      |> ManyFields.serialize(:compact)
+      |> IO.iodata_to_binary()
+
+    assert {%FewerFields{} = deserialised, ""} = FewerFields.deserialize(serialised, :compact)
+
+    assert deserialised.val3 == 3
   end
 end

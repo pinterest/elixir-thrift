@@ -41,10 +41,37 @@ defmodule Thrift.Generator.StructCompactProtocol do
       unquote_splicing(field_deserializers)
       unquote_splicing(container_deserializers)
 
-      # No tests so far to skip over unknown fields
+      defp deserialize(<<0::4, _type::4, contains_field_id::binary>> = rest, _previous_id, struct) do
+        case Thrift.Protocol.Compact.IntegerEncoding.decode_zigzag_varint(contains_field_id) do
+          {field_id, _} ->
+            skip_field(rest, field_id, struct)
+
+          _ ->
+            :error
+        end
+      end
+
+      defp deserialize(
+             <<delta::4-unsigned, _::4-unsigned, _::binary>> = rest,
+             previous_id,
+             struct
+           ) do
+        skip_field(rest, delta + previous_id, struct)
+      end
+
 
       defp deserialize(_, _, _) do
         :error
+      end
+
+      defp skip_field(rest, field_id, struct) do
+        case Thrift.Protocol.Compact.skip_field(rest) do
+          :error ->
+            :error
+
+          rest ->
+            deserialize(rest, field_id, struct)
+        end
       end
     end
   end
@@ -570,7 +597,6 @@ defmodule Thrift.Generator.StructCompactProtocol do
       end
     end
   end
-
 
   defp do_struct_serializer(fields, _, name, file_group) do
     [%Field{name: first_field_name} | _] = fields

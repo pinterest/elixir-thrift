@@ -48,7 +48,7 @@ defmodule Thrift.Protocol.Compact.IntegerEncoding do
 
   @spec decode_varint(binary()) :: non_neg_integer()
   def decode_varint(binary) do
-    decode_varint(binary, {0, 0}, binary)
+    decode_varint(binary, {0, 0})
   end
 
   @spec decode_zigzag_varint(binary()) :: non_neg_integer()
@@ -68,15 +68,15 @@ defmodule Thrift.Protocol.Compact.IntegerEncoding do
     end
   end
 
-  defp decode_varint(<<0::1, i::7, rest::binary>>, {pos, acc}, _original) do
+  defp decode_varint(<<0::1, i::7, rest::binary>>, {pos, acc}) do
     {acc + bsl(i, pos), rest}
   end
 
-  defp decode_varint(<<1::1, i::7, rest::binary>>, {pos, acc}, original) do
-    decode_varint(rest, {pos + 7, acc + bsl(i, pos)}, original)
+  defp decode_varint(<<1::1, i::7, rest::binary>>, {pos, acc}) do
+    decode_varint(rest, {pos + 7, acc + bsl(i, pos)})
   end
 
-  defp decode_varint(_, _, original) do
+  defp decode_varint(_, _) do
     :error
   end
 

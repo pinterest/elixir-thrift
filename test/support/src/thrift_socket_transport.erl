@@ -53,7 +53,8 @@ write(This = #data{socket = Socket}, Data) ->
 read(This = #data{socket=Socket, recv_timeout=Timeout}, Len)
   when is_integer(Len), Len >= 0 ->
     case gen_tcp:recv(Socket, Len, Timeout) of
-        Err = {error, timeout} ->
+        Err = {error, _} ->
+            error_logger:error_msg("recv error ~p", [Err]),
             gen_tcp:close(Socket),
             {This, Err};
         Data ->

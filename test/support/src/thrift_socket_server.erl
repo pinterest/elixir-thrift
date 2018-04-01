@@ -149,7 +149,7 @@ init(State=#thrift_socket_server{ip=Ip, port=Port}) ->
                     {stop, eacces}
             end;
         Other ->
-            error_logger:info_msg("thrift service listening on port ~p, opts ~p, state ~p", [Port, Opts, State]),
+            error_logger:info_msg("thrift service listening on port ~p", [Port]),
             Other
     end.
 

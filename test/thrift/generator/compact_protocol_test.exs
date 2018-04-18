@@ -72,6 +72,7 @@ defmodule Thrift.Generator.CompactProtocolTest do
     )
 
     assert_serializes(%Bool{val_list: [true, false]}, <<73, 33, 1, 2, 0>>)
+
   end
 
   @thrift_file name: "multifield.thrift",

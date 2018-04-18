@@ -1,4 +1,13 @@
 defmodule Thrift.Protocol.Compact do
+  @moduledoc """
+  Provides a set of high-level functions for working with the Thrift compact
+  protocol.
+
+  The Thrift compact protocol is comparable with the binary protocol but uses
+  various tricks and optimisations to decrease the size of the serialised form.
+
+  These make the compact protocol a little more complicated.
+  """
   alias Thrift.Protocol.Compact.IntegerEncoding
   require Thrift.Protocol.Compact.Type, as: Type
 

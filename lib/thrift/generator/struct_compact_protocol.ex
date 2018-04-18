@@ -1,4 +1,39 @@
 defmodule Thrift.Generator.StructCompactProtocol do
+  @moduledoc """
+  Generates a code for Thrift Compact Protocol serialisation and deserialisation.
+
+  This is based somewhat on `Thrift.Generator.StructBinaryProtocol`, but implemented
+  for the compact protocol.
+
+  https://github.com/apache/thrift/blob/master/doc/specs/thrift-compact-protocol.md has been
+  used as the description of the binary protocol, verified by testing with the Thrift
+  Ruby and Python implementations. There are a few discrepancies between the document and
+  the discovered implementation; where these were found the discovered implementation
+  was used. These are:
+
+  * Doubles appear to be actually encodes as little endian
+  * The document states different codes to indicate types contained in maps, lists, and sets to
+  those for Structs; in fact the same codes are used and 1 is used to indicate a Bool.
+  * For element boolean types, false is encoded as 2 rather than 0
+
+  The compact protocol introduces some complications which necessitate a divergence from
+  the approach taken for the binary protocol.
+
+  Field headers may be of two forms, depending on whether the type and field id information
+  can fit into a single byte; this means that two deserialisation matches must be created for each
+  field.
+
+  In the short form field header, the field id is not used directly; rather the difference
+  between the previously encoded field id and the field id is used, termed the _delta_. This means
+  that we must maintain information about previous fields while serialising and deserialising.
+
+  List and Set header information may also be in two forms, depending on whether the size and
+  element-type information can fit into a single byte, complicating deserialisation.
+
+  Use of varint encoding for size in various places reduces the scope for using binary matching in
+  many places.
+
+  """
   alias Thrift.Generator.Utils
   alias Thrift.Parser.FileGroup
 
@@ -16,19 +51,12 @@ defmodule Thrift.Generator.StructCompactProtocol do
   require Thrift.Protocol.Compact.Type, as: Type
 
   def struct_deserializer(%{fields: fields}, name, file_group) do
-    fields = Enum.reject(fields, &(&1.type == :void))
+    fields
+    |> reject_void_fields()
+    |> do_struct_deserialize(name, file_group)
+  end
 
-    container_deserializers =
-      fields
-      |> container_deserializers(file_group)
-      |> Map.values()
-      |> Utils.merge_blocks()
-
-    field_deserializers =
-      fields
-      |> Enum.map(&field_deserializer(&1.type, &1, file_group))
-      |> Utils.merge_blocks()
-
+  defp do_struct_deserialize(fields, name, file_group) do
     quote do
       def deserialize(binary) do
         deserialize(binary, 0, %unquote(name){})
@@ -38,9 +66,14 @@ defmodule Thrift.Generator.StructCompactProtocol do
         {acc, rest}
       end
 
-      unquote_splicing(field_deserializers)
-      unquote_splicing(container_deserializers)
+      unquote_splicing(field_deserializers(fields, file_group))
+      unquote_splicing(container_deserializers(fields, file_group))
+      unquote(field_skipping())
+    end
+  end
 
+  defp field_skipping() do
+    quote do
       defp deserialize(<<0::4, _type::4, contains_field_id::binary>> = rest, _previous_id, struct) do
         case Thrift.Protocol.Compact.IntegerEncoding.decode_zigzag_varint(contains_field_id) do
           {field_id, _} ->
@@ -58,7 +91,6 @@ defmodule Thrift.Generator.StructCompactProtocol do
            ) do
         skip_field(rest, delta + previous_id, struct)
       end
-
 
       defp deserialize(_, _, _) do
         :error
@@ -78,39 +110,43 @@ defmodule Thrift.Generator.StructCompactProtocol do
 
   defp container_deserializers(fields, file_group) do
     types = for %Field{type: type} <- fields, do: type
-    container_deserializers(%{}, types, file_group)
+
+    %{}
+    |> do_container_deserializers(types, file_group)
+    |> Map.values()
+    |> Utils.merge_blocks()
   end
 
-  defp container_deserializers(acc, [], _), do: acc
+  defp do_container_deserializers(acc, [], _), do: acc
 
-  defp container_deserializers(
+  defp do_container_deserializers(
          acc,
          [%TypeRef{referenced_type: referenced_type} | rest],
          file_group
        ) do
     type = FileGroup.resolve(file_group, referenced_type)
-    container_deserializers(acc, [type | rest], file_group)
+    do_container_deserializers(acc, [type | rest], file_group)
   end
 
-  defp container_deserializers(acc, [{:map, {key_type, value_type}} = type | rest], file_group) do
+  defp do_container_deserializers(acc, [{:map, {key_type, value_type}} = type | rest], file_group) do
     acc
     |> add_container_deserializer(type, file_group)
-    |> container_deserializers([key_type], file_group)
-    |> container_deserializers([value_type], file_group)
-    |> container_deserializers(rest, file_group)
+    |> do_container_deserializers([key_type], file_group)
+    |> do_container_deserializers([value_type], file_group)
+    |> do_container_deserializers(rest, file_group)
   end
 
-  defp container_deserializers(acc, [{t, element_type} = type | rest], file_group)
+  defp do_container_deserializers(acc, [{t, element_type} = type | rest], file_group)
        when t in [:list, :set] do
     acc
-    |> container_deserializers([element_type], file_group)
+    |> do_container_deserializers([element_type], file_group)
     |> add_container_deserializer({type, file_group})
-    |> container_deserializers(rest, file_group)
+    |> do_container_deserializers(rest, file_group)
   end
 
-  defp container_deserializers(acc, [_ | rest], file_group) do
+  defp do_container_deserializers(acc, [_ | rest], file_group) do
     quote do
-      unquote(container_deserializers(acc, rest, file_group))
+      unquote(do_container_deserializers(acc, rest, file_group))
     end
   end
 
@@ -191,6 +227,12 @@ defmodule Thrift.Generator.StructCompactProtocol do
     end)
   end
 
+  defp field_deserializers(fields, file_group) do
+    fields
+    |> Enum.map(&field_deserializer(&1.type, &1, file_group))
+    |> Utils.merge_blocks()
+  end
+
   defp list_or_set_deserializer_fun_name(item_type, file_group) do
     container_deserializer_fun_name({:list_or_set, item_type}, file_group)
   end
@@ -225,7 +267,7 @@ defmodule Thrift.Generator.StructCompactProtocol do
 
   defp do_deserialize_fun_name(type, _file_group), do: "#{type}"
 
-  defp short_header_field_deserializer(type, field = %Field{id: id}, file_group) do
+  defp short_header_field_deserializer(type,  %Field{id: id} = field, file_group) do
     quote do
       defp deserialize(
              <<delta::4-unsigned, unquote(type_id(type, file_group))::4-unsigned, rest::binary>>,
@@ -238,7 +280,7 @@ defmodule Thrift.Generator.StructCompactProtocol do
     end
   end
 
-  defp long_header_field_deserializer(type, field = %Field{id: id}, file_group) do
+  defp long_header_field_deserializer(type, %Field{id: id} = field, file_group) do
     header_match =
       Utils.optimize_iolist([
         <<0::4, type_id(type, file_group)::4-unsigned>>,
@@ -346,8 +388,6 @@ defmodule Thrift.Generator.StructCompactProtocol do
   defp body_deserializer(:double, %Field{id: id, name: name}, binary_var, _file_group) do
     quote do
       case unquote(binary_var) do
-        # Todo: why is this little endian. It specifies big-endian in the document but
-        # the ruby serialisation comes out as little.
         <<val::64-float-little, rest::binary>> ->
           deserialize(rest, unquote(id), %{struct | unquote(name) => val})
 
@@ -619,7 +659,7 @@ defmodule Thrift.Generator.StructCompactProtocol do
 
   defp union_field_serializer(
          nil_fields,
-         field = %Field{name: name},
+         %Field{name: name} = field,
          struct,
          file_group
        ) do
@@ -816,7 +856,7 @@ defmodule Thrift.Generator.StructCompactProtocol do
     end
   end
 
-  defp do_field_serializer(field = %Field{name: name}, {_struct_name, nil_val}, file_group) do
+  defp do_field_serializer(%Field{name: name} = field, {_struct_name, nil_val}, file_group) do
     quote do
       case unquote(Macro.var(name, nil)) do
         nil ->
@@ -876,8 +916,6 @@ defmodule Thrift.Generator.StructCompactProtocol do
 
   defp value_serializer(:double, var, _file_group) do
     quote do
-      # Todo: why is this little endian. It specifies big-endian in the document but
-      # the ruby serialisation comes out as little.
       <<unquote(var)::64-float-little>>
     end
   end

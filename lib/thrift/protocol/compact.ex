@@ -17,11 +17,9 @@ defmodule Thrift.Protocol.Compact do
     do_field_header(id, id - previous_id, type)
   end
 
-  def type_id(type) do
-    Type.of(type)
-  end
+  def type_id(type), do: Type.of(type)
 
-  defp do_field_header(_id, delta, type) when delta < 16 do
+  defp do_field_header(_id, delta, type) when delta > 0 and delta < 16 do
     <<delta::4-unsigned, type::4-unsigned>>
   end
 

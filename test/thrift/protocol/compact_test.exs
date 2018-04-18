@@ -8,6 +8,10 @@ defmodule Thrift.Protocol.CompactTest do
       assert Compact.field_header({0, 15}, 3) == <<15::size(4), 3::size(4)>>
     end
 
+    test "negative delta" do
+      assert Compact.field_header({0, -1}, 3) == <<3, 1>>
+    end
+
     test "long form when id delta is over 15" do
       assert Compact.field_header({0, 16}, 3) == <<3, 32>>
       assert Compact.field_header({0, 64}, 3) == <<3, 128, 1>>

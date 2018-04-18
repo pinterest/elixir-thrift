@@ -72,7 +72,6 @@ defmodule Thrift.Generator.CompactProtocolTest do
     )
 
     assert_serializes(%Bool{val_list: [true, false]}, <<73, 33, 1, 2, 0>>)
-
   end
 
   @thrift_file name: "multifield.thrift",
@@ -109,8 +108,6 @@ defmodule Thrift.Generator.CompactProtocolTest do
 
     assert_serializes(%Multifield{bool_three: true, list_five: []}, <<49, 41, 1, 0>>)
     assert_serializes(%Multifield{bool_three: true, list_five: [true]}, <<49, 41, 17, 1, 0>>)
-
-    # todo - test negative field ids
   end
 
   @thrift_file name: "byte.thrift",
@@ -1020,5 +1017,57 @@ defmodule Thrift.Generator.CompactProtocolTest do
     assert {%FewerFields{} = deserialised, ""} = FewerFields.deserialize(serialised, :compact)
 
     assert deserialised.val3 == 3
+  end
+
+  @thrift_file name: "out_of_order.thrift",
+               contents: """
+               struct OutOfOrder {
+               5: optional byte byte_five;
+               4: optional byte byte_four;
+               3: optional bool bool_three;
+               2: optional bool bool_two;
+               1: optional bool bool_one;
+               }
+               """
+  thrift_test "fields defined out of order" do
+    assert_serializes(%OutOfOrder{bool_one: false, bool_three: false}, <<18, 34, 0>>)
+    assert_serializes(%OutOfOrder{byte_four: 4, byte_five: 5}, <<67, 4, 19, 5, 0>>)
+  end
+
+  @thrift_file name: "default_field_ids.thrift",
+               contents: """
+               struct DefaultFieldIds {
+               optional byte minus_one;
+               optional byte minus_two;
+               optional byte minus_three;
+               1: optional byte one;
+               2: optional byte two;
+               14: optional byte fourteen;
+               }
+               """
+
+  thrift_test "with negative field ids" do
+    assert_serializes(%DefaultFieldIds{}, <<0>>)
+    assert_serializes(%DefaultFieldIds{minus_one: -1}, <<3, 1, 255, 0>>)
+    assert_serializes(%DefaultFieldIds{minus_two: -2}, <<3, 3, 254, 0>>)
+    assert_serializes(%DefaultFieldIds{minus_one: -1, minus_two: -2}, <<3, 3, 254, 19, 255, 0>>)
+    assert_serializes(%DefaultFieldIds{minus_one: -1, fourteen: 14}, <<3, 1, 255, 243, 14, 0>>)
+    assert_serializes(%DefaultFieldIds{minus_two: -2, fourteen: 14}, <<3, 3, 254, 3, 28, 14, 0>>)
+
+    assert_serializes(
+      %DefaultFieldIds{minus_three: 120, fourteen: 14},
+      <<3, 5, 120, 3, 28, 14, 0>>
+    )
+  end
+
+  @thrift_file name: "long_headers.thrift",
+               contents: """
+               struct LongHeaders {
+               16: optional byte sixteen;
+               35: optional byte thirty_five;
+               }
+               """
+  thrift_test "long headers" do
+    assert_serializes(%LongHeaders{sixteen: 10, thirty_five: 20}, <<3, 32, 10, 3, 70, 20, 0>>)
   end
 end

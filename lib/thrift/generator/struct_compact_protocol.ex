@@ -52,7 +52,7 @@ defmodule Thrift.Generator.StructCompactProtocol do
 
   def struct_deserializer(%{fields: fields}, name, file_group) do
     fields
-    |> reject_void_fields()
+    |> reject_void_and_sort_fields()
     |> do_struct_deserialize(name, file_group)
   end
 
@@ -208,7 +208,7 @@ defmodule Thrift.Generator.StructCompactProtocol do
 
         defp unquote(fun_name)(
                <<size::4-unsigned, unquote(element_type_id)::4-unsigned, rest::binary>>
-             ) do
+             ) when size != 15 do
           unquote(fun_name)(rest, {[], size})
         end
 
@@ -274,7 +274,7 @@ defmodule Thrift.Generator.StructCompactProtocol do
              previous_id,
              struct
            )
-           when delta + previous_id == unquote(id) do
+           when delta > 0 and delta + previous_id == unquote(id) do
         unquote(body_deserializer(type, field, :rest, file_group))
       end
     end
@@ -590,13 +590,15 @@ defmodule Thrift.Generator.StructCompactProtocol do
     end
   end
 
-  defp reject_void_fields(fields) do
-    Enum.reject(fields, &(&1.type == :void))
+  defp reject_void_and_sort_fields(fields) do
+    fields
+    |> Enum.reject(&(&1.type == :void))
+    |> Enum.sort_by(& &1.id)
   end
 
   def struct_serializer(%{fields: fields} = struct_def, name, file_group) do
     fields
-    |> reject_void_fields()
+    |> reject_void_and_sort_fields()
     |> do_struct_serializer(struct_def, name, file_group)
   end
 

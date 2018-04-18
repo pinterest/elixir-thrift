@@ -3,7 +3,7 @@ defmodule Thrift.Generator.CompactProtocolTest do
 
   alias Thrift.Union.TooManyFieldsSetError
 
-  @thrift_test_opts [cleanup: false]
+  # @thrift_test_opts [cleanup: false]
 
   def assert_serializes(%{__struct__: mod} = struct, binary) do
     assert binary == IO.iodata_to_binary(mod.serialize(struct, :compact))
@@ -250,8 +250,6 @@ defmodule Thrift.Generator.CompactProtocolTest do
     assert_serializes(%I32{val_list: [91]}, <<73, 21, 182, 1, 0>>)
 
     assert_serializes(%I32{val_list: [91, 92]}, <<73, 37, 182, 1, 184, 1, 0>>)
-
-    # todo some big list and map items?
   end
 
   @thrift_file name: "i64.thrift",
@@ -736,93 +734,6 @@ defmodule Thrift.Generator.CompactProtocolTest do
                  15: list<string> list_val = ConstList,
                }
                """
-
-  # todo - how is this relevant to the protocol?
-  thrift_test "default values can be constants" do
-    assert true == Const.const_bool()
-    assert 5 == Const.const_byte()
-    assert 5.0 == Const.const_double()
-    assert 5 == Const.const_i16()
-    assert 5 == Const.const_i32()
-    assert 5 == Const.const_i64()
-    assert "abc123" == Const.const_string()
-    assert "abc123" == Const.const_binary()
-    assert %ConstStructVal{num: 5} == Const.const_struct()
-    assert %{"a" => 1, "b" => 2} == Const.const_map()
-    assert MapSet.new(["a", "b"]) == Const.const_set()
-    assert ["a", "b"] == Const.const_list()
-
-    struct = %ConstFieldsStruct{}
-    assert struct.bool_val == true
-    assert struct.byte_val == 5
-    assert struct.double_val == 5.0
-    assert struct.i16_val == 5
-    assert struct.i32_val == 5
-    assert struct.i64_val == 5
-    assert struct.string_val == "abc123"
-    assert struct.binary_val == "abc123"
-    assert struct.struct_val == %ConstStructVal{num: 5}
-    assert struct.map_val == %{"a" => 1, "b" => 2}
-    assert struct.set_val == MapSet.new(["a", "b"])
-    assert struct.list_val == ["a", "b"]
-    :ok
-  end
-
-  @thrift_file name: "defaults.thrift",
-               contents: """
-               struct DefaultStructVal {
-                 1: byte num
-               }
-
-               struct Defaults {
-                 1: bool bool_from_true = true
-                 2: bool bool_from_false = false
-                 3: bool bool_from_one = 1
-                 4: bool bool_from_zero = 0
-                 5: byte byte_val = 5
-                 6: double double_from_float = 0.0
-                 7: double double_from_int = 0
-                 8: i16 i16_val = 5
-                 9: i32 i32_val = 5
-                 10: i64 i64_val = 5
-                 11: string string_val = "abc123"
-                 12: DefaultStructVal struct_val = {"num": 5}
-                 13: map<string, byte> map_val = {"a": 1, "b": 2}
-                 14: set<string> set_val = ["a", "b"]
-                 15: list<string> list_val = ["a", "b"]
-                 120: DefaultStructVal empty_struct = {}
-                 130: map<string, byte> empty_map = {}
-                 140: set<string> empty_set = []
-                 150: list<string> empty_list = []
-               }
-               """
-
-  # todo - how is this relevant to the protocol?
-  thrift_test "default values" do
-    struct = %Defaults{}
-    assert struct.bool_from_true == true
-    assert struct.bool_from_false == false
-    assert struct.bool_from_one == true
-    assert struct.bool_from_zero == false
-    assert struct.byte_val == 5
-    assert struct.double_from_float == 0
-    assert is_float(struct.double_from_float)
-    assert struct.double_from_int == 0
-    assert is_integer(struct.double_from_int)
-    assert struct.i16_val == 5
-    assert struct.i32_val == 5
-    assert struct.i64_val == 5
-    assert struct.string_val == "abc123"
-    assert struct.struct_val == %DefaultStructVal{num: 5}
-    assert struct.map_val == %{"a" => 1, "b" => 2}
-    assert struct.set_val == MapSet.new(["a", "b"])
-    assert struct.list_val == ["a", "b"]
-    assert struct.empty_struct == %DefaultStructVal{}
-    assert struct.empty_map == %{}
-    assert struct.empty_set == MapSet.new()
-    assert struct.empty_list == []
-    :ok
-  end
 
   @thrift_file name: "x_man.thrift",
                contents: """

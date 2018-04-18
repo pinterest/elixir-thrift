@@ -11,12 +11,29 @@ defmodule Thrift.Protocol.Compact do
   alias Thrift.Protocol.Compact.IntegerEncoding
   require Thrift.Protocol.Compact.Type, as: Type
 
+  @type remainder :: binary()
+
   @fixed_length_contained_types [Type.contained_bool(), Type.byte(), Type.double()]
 
+  @doc """
+  Creates a Struct field header. Short form if `id` - `previous_id` is between
+  1 and 15 (inclusive), else long form. Type is a type code.
+  eg
+  iex> Compact.field_header({0, 15}, 3)
+  <<15::4, 3::4>>
+
+  iex> Compact.field_header({0, 16}, 3)
+  <<0::4, 3::4, 32>>
+  """
+  @spec field_header({integer(), integer()}, Type.t) :: binary()
   def field_header({previous_id, id}, type) when is_integer(type) do
     do_field_header(id, id - previous_id, type)
   end
 
+  @doc """
+  Type definition to type id.
+  """
+  @spec type_id(Type.data_type) :: Type.t
   def type_id(type), do: Type.of(type)
 
   defp do_field_header(_id, delta, type) when delta > 0 and delta < 16 do
@@ -24,9 +41,14 @@ defmodule Thrift.Protocol.Compact do
   end
 
   defp do_field_header(id, _delta, type) do
-    :erlang.iolist_to_binary([<<type::8-unsigned>>, IntegerEncoding.encode_zigzag_varint(id)])
+    :erlang.iolist_to_binary([<<type::unsigned>>, IntegerEncoding.encode_zigzag_varint(id)])
   end
 
+  @doc """
+  Deserialise a compact binary. Takes binary of the appropriate size out of the binary
+  and returns a tuple with the result, and any remainder.
+  """
+  @spec deserialize_binary(binary()) :: :error | {binary(), remainder()}
   def deserialize_binary(binary) do
     with {size, rest} <- IntegerEncoding.decode_varint(binary),
          <<result::binary-size(size), rest::binary>> <- rest do
@@ -37,6 +59,10 @@ defmodule Thrift.Protocol.Compact do
     end
   end
 
+  @doc """
+  Skip the next field encoded in the binary, returning the remainder.
+  """
+  @spec skip_field(binary()) :: :error | remainder()
   def skip_field(<<0::4, type_id::4-unsigned, rest::binary>>) do
     case IntegerEncoding.decode_zigzag_varint(rest) do
       {_field_delta, rest} -> skip_value(type_id, rest)
@@ -96,10 +122,10 @@ defmodule Thrift.Protocol.Compact do
 
   defp skip_n_elements(type, number_of_elements, rest)
        when type in @fixed_length_contained_types do
-    bits = element_byte_size(type) * number_of_elements * 8
+    size = element_byte_size(type) * number_of_elements
 
     case rest do
-      <<_::size(bits), rest::binary>> -> rest
+      <<_::binary-size(size), rest::binary>> -> rest
       _ -> :error
     end
   end
@@ -133,10 +159,10 @@ defmodule Thrift.Protocol.Compact do
   defp skip_map(size, {key_type, value_type}, rest)
        when key_type in @fixed_length_contained_types and
               value_type in @fixed_length_contained_types do
-    bits = (element_byte_size(key_type) + element_byte_size(value_type)) * size * 8
+    skip_size = (element_byte_size(key_type) + element_byte_size(value_type)) * size
 
     case rest do
-      <<_::size(bits), rest::binary>> -> rest
+      <<_::binary-size(skip_size), rest::binary>> -> rest
       _ -> :error
     end
   end

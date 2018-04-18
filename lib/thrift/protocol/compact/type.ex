@@ -18,7 +18,9 @@ defmodule Thrift.Protocol.Compact.Type do
   defmacro map, do: 11
   defmacro struct, do: 12
 
-  @spec of(Thrift.data_type() | {:bool, true} | {:bool, false} | :contained_bool) :: t
+  @type data_type :: Thrift.data_type() | {:bool, true} | {:bool, false} | :contained_bool
+
+  @spec of(data_type()) :: t
   def of({:bool, true}), do: true_bool()
   def of({:bool, false}), do: false_bool()
   def of(:contained_bool), do: contained_bool()

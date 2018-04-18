@@ -1,6 +1,7 @@
 defmodule Thrift.Protocol.CompactTest do
   use ExUnit.Case
   alias Thrift.Protocol.Compact
+  doctest Compact
 
   describe "field_header" do
     test "short form when id delta is under 16" do

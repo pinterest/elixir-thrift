@@ -46,12 +46,12 @@ defmodule Thrift.Protocol.Compact.IntegerEncoding do
 
   def encode_varint(i), do: raise(ArgumentError, "argument error: #{inspect(i)}")
 
-  @spec decode_varint(binary()) :: non_neg_integer()
+  @spec decode_varint(binary()) :: :error | {non_neg_integer(), binary()}
   def decode_varint(binary) do
     decode_varint(binary, {0, 0})
   end
 
-  @spec decode_zigzag_varint(binary()) :: non_neg_integer()
+  @spec decode_zigzag_varint(binary()) :: :error | {integer(), binary()}
   def decode_zigzag_varint(binary) do
     case decode_varint(binary) do
       :error -> :error

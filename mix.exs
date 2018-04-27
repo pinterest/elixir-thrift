@@ -57,7 +57,7 @@ defmodule Thrift.Mixfile do
 
   def application do
     [
-      applications: [:logger, :connection, :ranch],
+      applications: [:logger, :connection, :ranch, :ssl],
     ]
   end
 

@@ -81,6 +81,7 @@ defmodule Thrift.Generator.ServiceTest do
   end
 
   alias Thrift.TApplicationException
+  alias Thrift.ConnectionError
   alias Thrift.Generator.ServiceTest.User
   alias Thrift.Generator.ServiceTest.SimpleService.Binary.Framed.Client
   alias Thrift.Generator.ServiceTest.UsernameTakenException
@@ -232,6 +233,15 @@ defmodule Thrift.Generator.ServiceTest do
     ServerSpy.set_reply({:User, 2, 'stinky'})
 
     assert %User{id: 2, username: "stinky"} == Client.get_by_id!(ctx.client, 1234)
+  end
+
+  thrift_test "it raises ConnectionError with the bang function", %{client: client} do
+    Process.flag(:trap_exit, true)
+    ServerSpy.set_reply({:sleep, 1000, [1, 3, 4]})
+
+    assert_raise ConnectionError, "Connection error: timeout", fn ->
+      Client.friend_ids_of!(client, 12_914, [tcp_opts: [timeout: 1]])
+    end
   end
 
   thrift_test "it raises a server exception with the bang function", ctx do

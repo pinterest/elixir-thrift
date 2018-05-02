@@ -51,6 +51,9 @@ defmodule Thrift.ConnectionError do
   @enforce_keys [:reason]
   defexception [:reason]
 
+  def message(%{reason: reason}) when reason in [:closed, :timeout] do
+    "Connection error: #{reason}"
+  end
   def message(%{reason: reason}) do
     "Connection error: #{:inet.format_error(reason)} (#{reason})"
   end

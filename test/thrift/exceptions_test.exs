@@ -4,6 +4,16 @@ defmodule Thrift.ExceptionsTest do
   describe "ConnectionError" do
     alias Thrift.ConnectionError
 
+    test "formats :closed" do
+      exception = ConnectionError.exception(reason: :closed)
+      assert Exception.message(exception) == "Connection error: closed"
+    end
+
+    test "formats :timeout" do
+      exception = ConnectionError.exception(reason: :timeout)
+      assert Exception.message(exception) == "Connection error: timeout"
+    end
+
     test "formats POSIX errors" do
       exception = ConnectionError.exception(reason: :econnrefused)
       assert Exception.message(exception) == "Connection error: connection refused (econnrefused)"

@@ -235,14 +235,12 @@ defmodule Thrift.Generator.ServiceTest do
     assert %User{id: 2, username: "stinky"} == Client.get_by_id!(ctx.client, 1234)
   end
 
-  thrift_test "it raises a ConnectionError with the bang function", ctx do
+  thrift_test "it raises ConnectionError with the bang function", %{client: client} do
     Process.flag(:trap_exit, true)
-    ServerSpy.set_reply(true)
-    :sys.get_state(ctx.client)
-    stop_server(ctx.server)
+    ServerSpy.set_reply({:sleep, 1000, [1, 3, 4]})
 
-    assert_raise ConnectionError, fn ->
-      Client.update_username!(ctx.client, 88, "blow up")
+    assert_raise ConnectionError, "Connection error: timeout", fn ->
+      Client.friend_ids_of!(client, 12_914, [tcp_opts: [timeout: 1]])
     end
   end
 

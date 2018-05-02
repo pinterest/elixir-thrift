@@ -2,8 +2,8 @@ defmodule Thrift.Transport.SSL do
   @moduledoc """
   SSL configuration helpers.
 
-  Clients and servers support SSL with the `:ssl_opts` start_link option. There are additional options from `:ssl` but
-  otherwise configuration is the same:
+  Clients and servers support SSL with the `:ssl_opts` start_link option. There are additional options from
+  the [:`ssl` module](http://erlang.org/doc/man/ssl.html) but otherwise configuration is the same:
 
   ## Options
       * :enabled - Whether ssl is enabled (default: `false`)

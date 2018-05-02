@@ -171,6 +171,9 @@ defmodule ThriftTestCase do
       {:file, ^source_file} ->
         true
       {:file, :in_memory} ->
+        # TODO: remove clause when Elixir ~> 1.6 as replaced by [] (atom broke spec)
+        true
+      {:file, []} ->
         true
       _ ->
         false

@@ -123,7 +123,7 @@ defmodule ResolverTest do
 
       user_state = FileGroup.resolve(file_group, :"states.UserState")
 
-      assert %TEnum{values: [ACTIVE: 1, LAPSED: 2, DISABLED: 3]} = user_state
+      assert %TEnum{values: [ACTIVE: 0, LAPSED: 1, DISABLED: 2]} = user_state
       assert user_state.name == :"states.UserState"
     end
 
@@ -216,14 +216,14 @@ defmodule ResolverTest do
 
       sort1 = FileGroup.resolve(file_group, :"local.SORT1")
       assert %TEnum{name: :"local.SortType"} = FileGroup.resolve(file_group, sort1.type)
-      assert 2 == FileGroup.resolve(file_group, sort1.value)
+      assert 1 == FileGroup.resolve(file_group, sort1.value)
 
       sort2 = FileGroup.resolve(file_group, :"local.SORT2")
       assert %TEnum{name: :"included.SortType"} = FileGroup.resolve(file_group, sort2.type)
       assert 110 == FileGroup.resolve(file_group, sort2.value)
 
       local_sort = FileGroup.resolve(file_group, :SortType)
-      assert %TEnum{name: :"local.SortType", values: [DESC: 1, ASC: 2], line: 2} == local_sort
+      assert %TEnum{name: :"local.SortType", values: [DESC: 0, ASC: 1], line: 2} == local_sort
     end
   end
 end

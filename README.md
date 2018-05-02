@@ -113,9 +113,9 @@ struct User {
 }
 
 service UserService {
-  1: bool ping(),
-  2: User get_user_by_id(1: i64 user_id) throws (1: UserNotFound unf),
-  3: boolean deleteUser(1: i64 userId),
+  bool ping(),
+  User get_user_by_id(1: i64 user_id) throws (1: UserNotFound unf),
+  bool deleteUser(1: i64 userId),
 }
 ```
 

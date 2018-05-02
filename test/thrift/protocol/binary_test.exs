@@ -124,7 +124,7 @@ defmodule BinaryProtocolTest do
                 Weather.cloudy,
                 Weather.sunny,
                 Weather.sunny]
-    assert Erlang.Containers.new_containers(weekly_forecast: [1, 1, 1, 1, 2, 1, 1]) == round_trip_struct(%Containers{weekly_forecast: forecast}, encoder, decoder)
+    assert Erlang.Containers.new_containers(weekly_forecast: [0, 0, 0, 0, 1, 0, 0]) == round_trip_struct(%Containers{weekly_forecast: forecast}, encoder, decoder)
     taken_usernames = ["scohen", "pguillory"]
     assert Erlang.Containers.new_containers(taken_usernames: :sets.from_list(taken_usernames)) == round_trip_struct(%Containers{taken_usernames: MapSet.new(taken_usernames)}, encoder, decoder)
 

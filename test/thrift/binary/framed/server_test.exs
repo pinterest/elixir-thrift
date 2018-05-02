@@ -73,22 +73,10 @@ defmodule Servers.Binary.Framed.IntegrationTest do
   alias Servers.Binary.Framed.IntegrationTest.ServerTest.Binary.Framed.{Client, Server}
   alias Thrift.TApplicationException
 
-  def stop_server(server_pid) do
-    Server.stop(server_pid)
-  catch :exit, _ ->
-    :ok
-  end
-
   setup_all do
-    :rand.seed(:exs64)
     {:module, mod_name, _, _} = define_handler()
-    server_port = :rand.uniform(10000) + 12000
-
-    {:ok, server_pid} = Server.start_link(mod_name, server_port, [])
-
-    on_exit fn ->
-      stop_server(server_pid)
-    end
+    {:ok, _} = Server.start_link(mod_name, 0, [])
+    server_port = :ranch.get_port(mod_name)
 
     {:ok, handler_name: mod_name, port: server_port}
   end

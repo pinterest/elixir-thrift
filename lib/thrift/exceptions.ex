@@ -55,7 +55,8 @@ defmodule Thrift.ConnectionError do
     "Connection error: #{reason}"
   end
   def message(%{reason: reason}) do
-    "Connection error: #{:inet.format_error(reason)} (#{reason})"
+    # :ssl can format both ssl and tcp (posix) errors
+    "Connection error: #{:ssl.format_error(reason)} (#{reason})"
   end
 end
 

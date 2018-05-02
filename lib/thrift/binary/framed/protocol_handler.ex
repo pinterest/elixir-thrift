@@ -13,18 +13,19 @@ defmodule Thrift.Binary.Framed.ProtocolHandler do
 
   alias Thrift.{
     Protocol,
+    Transport.SSL,
     TApplicationException
   }
   require Logger
 
-  @spec start_link(reference, port, transport, {module, module, transport_opts}) :: GenServer.on_start
-  def start_link(ref, socket, transport, {server_module, handler_module, transport_opts}) do
-    pid = spawn_link(__MODULE__, :init, [ref, socket, transport, server_module, handler_module, transport_opts])
+  @spec start_link(reference, port, transport, {module, module, transport_opts, [SSL.option]}) :: GenServer.on_start
+  def start_link(ref, socket, transport, {server_module, handler_module, transport_opts, ssl_opts}) do
+    pid = spawn_link(__MODULE__, :init, [ref, socket, transport, server_module, handler_module, transport_opts, ssl_opts])
     {:ok, pid}
   end
 
-  @spec init(reference, port, :ranch_tcp, module, module, :ranch_tcp.opts) :: :ok | no_return
-  def init(ref, socket, :ranch_tcp = transport, server_module, handler_module, tcp_opts) do
+  @spec init(reference, port, :ranch_tcp, module, module, :ranch_tcp.opts, [SSL.option]) :: :ok | no_return
+  def init(ref, socket, :ranch_tcp = transport, server_module, handler_module, tcp_opts, ssl_opts) do
     :ok = :ranch.accept_ack(ref)
 
     {recv_timeout, tcp_opts} = Keyword.pop(tcp_opts, :recv_timeout, @default_timeout)
@@ -32,7 +33,21 @@ defmodule Thrift.Binary.Framed.ProtocolHandler do
     transport_options = Keyword.put(tcp_opts, :packet, 4)
     transport.setopts(socket, transport_options)
 
-    do_thrift_call({transport, socket, server_module, handler_module, recv_timeout})
+    maybe_ssl_handshake(socket, ssl_opts, server_module, handler_module, recv_timeout)
+  end
+
+  defp maybe_ssl_handshake(socket, ssl_opts, server_module, handler_module, timeout) do
+    with {:ok, ssl_opts} <- SSL.configuration(ssl_opts),
+         {:ok, ssl_sock} <- :ssl.ssl_accept(socket, ssl_opts, timeout) do
+        do_thrift_call({:ssl, ssl_sock, server_module, handler_module, timeout})
+    else
+      nil ->
+        do_thrift_call({:gen_tcp, socket, server_module, handler_module, timeout})
+      {:error, %_exception{} = err} ->
+        Logger.error(fn -> "#{inspect handler_module} (#{inspect self()}) configuration error: " <> Exception.format(:error, err, []) end)
+      {:error, reason} ->
+        Logger.info(fn -> "#{inspect handler_module} (#{inspect self()}) handshake error: #{:ssl.format_error(reason)} (#{inspect reason})" end)
+    end
   end
 
   defp do_thrift_call({transport, socket, server_module, handler_module, recv_timeout} = args) do
@@ -54,7 +69,8 @@ defmodule Thrift.Binary.Framed.ProtocolHandler do
         :ok = transport.close(socket)
 
       {:error, reason} ->
-        Logger.info(fn -> "#{inspect handler_module} (#{inspect self()}) connection error: #{:inet.format_error(reason)} (#{reason})" end)
+        # :ssl.format_error handles posix error as well as ssl
+        Logger.info(fn -> "#{inspect handler_module} (#{inspect self()}) connection error: #{:ssl.format_error(reason)} (#{inspect reason})" end)
         :ok = transport.close(socket)
     end
   end

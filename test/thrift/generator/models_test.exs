@@ -21,14 +21,14 @@ defmodule Thrift.Generator.ModelsTest do
   """
 
   thrift_test "generating enum" do
-    assert Status.active == 1
-    assert Status.inactive == 2
+    assert Status.active == 0
+    assert Status.inactive == 1
     assert Status.banned == 6
     assert Status.evil == 32
 
-    assert Status.member?(0) == false
+    assert Status.member?(0) == true
     assert Status.member?(1) == true
-    assert Status.member?(2) == true
+    assert Status.member?(2) == false
     assert Status.member?(3) == false
     assert Status.member?(4) == false
     assert Status.member?(5) == false
@@ -41,33 +41,33 @@ defmodule Thrift.Generator.ModelsTest do
     assert Status.name?(:evil) == true
     assert Status.name?(:bamboozled) == false
 
-    assert Status.value_to_name(1) == {:ok, :active}
-    assert Status.value_to_name(2) == {:ok, :inactive}
+    assert Status.value_to_name(0) == {:ok, :active}
+    assert Status.value_to_name(1) == {:ok, :inactive}
     assert Status.value_to_name(6) == {:ok, :banned}
     assert Status.value_to_name(32) == {:ok, :evil}
     assert Status.value_to_name(65536) == {:error, {:invalid_enum_value, 65536}}
 
-    assert Status.value_to_name!(1) == :active
-    assert Status.value_to_name!(2) == :inactive
+    assert Status.value_to_name!(0) == :active
+    assert Status.value_to_name!(1) == :inactive
     assert Status.value_to_name!(6) == :banned
     assert Status.value_to_name!(32) == :evil
     assert_raise MatchError, fn -> Status.value_to_name!(38210) end
 
-    assert Status.name_to_value(:active) == {:ok, 1}
-    assert Status.name_to_value(:inactive) == {:ok, 2}
+    assert Status.name_to_value(:active) == {:ok, 0}
+    assert Status.name_to_value(:inactive) == {:ok, 1}
     assert Status.name_to_value(:banned) == {:ok, 6}
     assert Status.name_to_value(:evil) == {:ok, 32}
     assert Status.name_to_value(:just_weird) ==
       {:error, {:invalid_enum_name, :just_weird}}
 
-    assert Status.name_to_value!(:active) == 1
-    assert Status.name_to_value!(:inactive) == 2
+    assert Status.name_to_value!(:active) == 0
+    assert Status.name_to_value!(:inactive) == 1
     assert Status.name_to_value!(:banned) == 6
     assert Status.name_to_value!(:evil) == 32
     assert_raise MatchError, fn -> Status.name_to_value!(:just_weird) end
 
     assert Status.meta(:names) == [:active, :inactive, :banned, :evil]
-    assert Status.meta(:values) == [1, 2, 6, 32]
+    assert Status.meta(:values) == [0, 1, 6, 32]
 
     struct = %StructWithEnum{}
     assert struct.status_field == nil

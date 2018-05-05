@@ -65,12 +65,10 @@ defmodule Thrift.Generator.Binary.Framed.Client do
         case unquote(function_name)(client, unquote_splicing(vars), rpc_opts) do
           {:ok, rsp} ->
             rsp
-
           {:error, {:exception, ex}} ->
             raise ex
-
-          {:error, _} = err ->
-            raise err
+          {:error, reason} ->
+            raise Thrift.ConnectionError, reason: reason
         end
       end
     end

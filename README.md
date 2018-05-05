@@ -113,9 +113,9 @@ struct User {
 }
 
 service UserService {
-  1: bool ping(),
-  2: User get_user_by_id(1: i64 user_id) throws (1: UserNotFound unf),
-  3: boolean deleteUser(1: i64 userId),
+  bool ping(),
+  User get_user_by_id(1: i64 user_id) throws (1: UserNotFound unf),
+  bool deleteUser(1: i64 userId),
 }
 ```
 
@@ -166,19 +166,30 @@ third argument to `start_link`:
 Option name      |  Type | Description
 -----------------|-------|-------------
 `:tcp_opts` | keyword | A keyword list of tcp options (see below)
+`:ssl_opts` | keyword | A list of options for SSL/TLS (see below)
 `:gen_server_opts` | keyword | A keyword list of options for the gen server (see below)
 
-##### TCP Opts
 
+##### TCP Opts
 Name             | Type | Description
 -----------------|------|---------------
 `:timeout`       | positive integer | The default timeout for reading from, writing to, and connecting to sockets.
-`send_timeout`   | positive integer | The amount of time in milliseconds to wait before sending data fails.
+`:send_timeout`  | positive integer | The amount of time in milliseconds to wait before sending data fails.
+
+
+##### SSL/TLS Opts
+
+Name             | Type | Description
+-----------------|------|---------------
+`:enabled`       | boolean | Whether to upgrade the connection to the SSL protocol.
+`:configure`     | 0-arity fun | A function to provide additional SSL options at run time.
+`ssloption`      | :ssl.ssloption | Other standard [`:ssl` options](http://erlang.org/doc/man/ssl.html).
+
 
 ##### GenServer Opts
 Name             | Type | Description
 -----------------|------|---------------
-`timeout`        | A positive integer | The amount of time in milliseconds the Client's GenServer waits for a reply. After this, the GenServer will exit with `{:error, :timeout}`.
+`:timeout`       | A positive integer | The amount of time in milliseconds the Client's GenServer waits for a reply. After this, the GenServer will exit with `{:error, :timeout}`.
 
 
 ### Example of using options
@@ -186,7 +197,9 @@ Name             | Type | Description
 ```elixir
 alias Thrift.Test.UserService.Binary.Framed.Client
 {:ok, client} = Client.start_link("localhost", 2345,
-                tcp_opts: [], gen_server_opts: [timeout: 10_000])
+                tcp_opts: [],
+                ssl_opts: [enabled: true, cacertfile: "cacerts.pem", certfile: "cert.pem", keyfile: "key.pem"],
+                gen_server_opts: [timeout: 10_000])
 
 ```
 These options set the GenServer timeout to be ten seconds, which means the remote

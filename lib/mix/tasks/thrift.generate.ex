@@ -1,7 +1,7 @@
 defmodule Mix.Tasks.Thrift.Generate do
   use Mix.Task
 
-  @shortdoc "Generate Elixir source files from Thrift schema files"
+  @shortdoc "Generates Elixir source files from Thrift schema files"
 
   @moduledoc """
   Generate Elixir source files from Thrift schema files (`.thrift`).

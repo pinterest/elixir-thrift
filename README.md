@@ -131,6 +131,29 @@ UserService Framed Binary Client | lib/thrift/test/user_service.ex |`Thrift.Test
 UserService Framed Binary Server | lib/thrift/test/user_service.ex | `Thrift.Test.UserService.Binary.Framed.Server`
 UserService Handler Behviour (Used for writing servers) | lib/thrift/test_user_service/handler.ex  | `Thrift.Test.UserService.Handler`
 
+### Namespaces
+
+Thrift uses the `namespace` keyword to define a language's namespace. From the
+previous example:
+
+```thrift
+namespace elixir Thrift.Test
+```
+
+Unfortunately, the Apache Thrift compiler will produce a warning on this line
+because it doesn't recognize `elixir` as a supported language. While that
+warning is benign, it can be annoying. For that reason, you can also specify
+your Elixir namespace as a "magic" namespace comment:
+
+```thrift
+#@namespace elixir Thrift.Test
+```
+
+This alternate syntax is borrowed from [Scrooge][], which uses the same trick
+for defining `scala` namespaces.
+
+[Scrooge]: https://twitter.github.io/scrooge/Namespaces.html
+
 
 ## Using the Client
 The client includes a static module that does most of the work, and a generated

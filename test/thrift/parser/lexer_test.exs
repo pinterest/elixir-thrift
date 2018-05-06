@@ -78,6 +78,10 @@ defmodule Thrift.Parser.LexerTest do
     end
   end
 
+  test "namespace comment" do
+    assert tokenize("#@namespace") == [namespace: 1]
+  end
+
   test "boolean literals" do
     assert tokenize("true") == [true: 1]
     assert tokenize("false") == [false: 1]
@@ -247,11 +251,13 @@ defmodule Thrift.Parser.LexerTest do
       namespace py foo.bar.baz
       namespace java com.pinterest.foo.bar.baz
       namespace * foo.bar
+      #@namespace elixir Bar
     """) == [
       {:namespace, 1}, {:ident, 1, 'elixir'}, {:ident, 1, 'Foo'},
       {:namespace, 2}, {:ident, 2, 'py'}, {:ident, 2, 'foo.bar.baz'},
       {:namespace, 3}, {:ident, 3, 'java'}, {:ident, 3, 'com.pinterest.foo.bar.baz'},
-      {:namespace, 4}, {:*, 4}, {:ident, 4, 'foo.bar'}]
+      {:namespace, 4}, {:*, 4}, {:ident, 4, 'foo.bar'},
+      {:namespace, 5}, {:ident, 5, 'elixir'}, {:ident, 5, 'Bar'}]
   end
 
   test "a const definition" do

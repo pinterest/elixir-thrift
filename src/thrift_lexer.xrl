@@ -17,7 +17,8 @@ Definitions.
 WHITESPACE      = [\s\t\r\n]+
 COMMENT         = //[^\n]*
 CCOMMENT        = /\*/*([^*/]|[^*]/|\*[^/])*\**\*/
-UNIXCOMMENT     = #[^\n]*
+NSCOMMENT       = #@namespace
+UNIXCOMMENT     = #[^@][^\n]*
 COMMENTS        = {COMMENT}|{CCOMMENT}|{UNIXCOMMENT}
 
 INT             = [+-]?[0-9]+
@@ -56,6 +57,7 @@ Rules.
 {COMMENTS}      : skip_token.
 
 __file__        : {token, {file, TokenLine}}.
+{NSCOMMENT}     : {token, {namespace, TokenLine}}.
 {PUNCTUATOR}    : {token, {list_to_atom(TokenChars), TokenLine}}.
 {KEYWORD}       : {token, {list_to_atom(TokenChars), TokenLine}}.
 

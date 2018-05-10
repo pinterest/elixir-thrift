@@ -61,11 +61,13 @@ defmodule Thrift.Parser.ParserTest do
     namespace py foo.bar.baz
     namespace erl foo_bar
     namespace * bar.baz
+    #@namespace elixir Foo
     """, [:namespaces])
 
     assert namespaces[:py] == %Namespace{line: 1, name: :py, path: "foo.bar.baz"}
     assert namespaces[:erl] == %Namespace{line: 2, name: :erl, path: "foo_bar"}
     assert namespaces[:*] == %Namespace{line: 3, name: :*, path: "bar.baz"}
+    assert namespaces[:elixir] == %Namespace{line: 4, name: :elixir, path: "Foo"}
   end
 
   test "parsing include headers" do

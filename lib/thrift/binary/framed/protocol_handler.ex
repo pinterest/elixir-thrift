@@ -4,6 +4,7 @@ defmodule Thrift.Binary.Framed.ProtocolHandler do
   """
 
   @default_timeout 20_000
+  @ssl_header_byte 0x16
 
   @typedoc "A module that implements the :ranch_transport behaviour"
   @type transport :: :ranch_tcp
@@ -30,16 +31,29 @@ defmodule Thrift.Binary.Framed.ProtocolHandler do
 
     {recv_timeout, tcp_opts} = Keyword.pop(tcp_opts, :recv_timeout, @default_timeout)
 
-    transport_options = Keyword.put(tcp_opts, :packet, 4)
-    transport.setopts(socket, transport_options)
+    with {:ok, first_bytes} <- :gen_tcp.recv(socket, 4, recv_timeout),
+         :ok <- :gen_tcp.unrecv(socket, first_bytes) do
+      <<first_byte :: 8-unsigned, _ :: binary>> = first_bytes
 
-    maybe_ssl_handshake(socket, ssl_opts, server_module, handler_module, recv_timeout)
+      transport_options = Keyword.put(tcp_opts, :packet, 4)
+      transport.setopts(socket, transport_options)
+
+      maybe_ssl_handshake(socket, first_byte, ssl_opts, server_module, handler_module, recv_timeout)
+    else
+      {:error, closed} when closed in [:closed, :econnreset, :timeout] ->
+        :ok = transport.close(socket)
+
+      {:error, reason} ->
+        # :ssl.format_error handles posix errors as well as ssl errors
+        Logger.info(fn -> "#{inspect handler_module} (#{inspect self()}) connection error: #{:ssl.format_error(reason)} (#{inspect reason})" end)
+        :ok = transport.close(socket)
+    end
   end
 
-  defp maybe_ssl_handshake(socket, ssl_opts, server_module, handler_module, timeout) do
-    with {:ok, ssl_opts} <- SSL.configuration(ssl_opts),
-         {:ok, ssl_sock} <- :ssl.ssl_accept(socket, ssl_opts, timeout) do
-        do_thrift_call({:ssl, ssl_sock, server_module, handler_module, timeout})
+  defp maybe_ssl_handshake(socket, first_byte, ssl_opts, server_module, handler_module, timeout) do
+    with {optional, ssl_opts} when optional in [:required, :optional] <- SSL.configuration(ssl_opts),
+         {:ok, transport, socket} <- maybe_ssl_accept(socket, first_byte, optional, ssl_opts, timeout) do
+      do_thrift_call({transport, socket, server_module, handler_module, timeout})
     else
       nil ->
         do_thrift_call({:gen_tcp, socket, server_module, handler_module, timeout})
@@ -48,6 +62,23 @@ defmodule Thrift.Binary.Framed.ProtocolHandler do
       {:error, reason} ->
         Logger.info(fn -> "#{inspect handler_module} (#{inspect self()}) handshake error: #{:ssl.format_error(reason)} (#{inspect reason})" end)
     end
+  end
+
+  defp maybe_ssl_accept(socket, @ssl_header_byte, _optional, ssl_opts, timeout) do
+    case :ssl.ssl_accept(socket, ssl_opts, timeout) do
+      {:ok, ssl_sock} ->
+        {:ok, :ssl, ssl_sock}
+      error ->
+        error
+    end
+  end
+
+  defp maybe_ssl_accept(socket, _first_byte, :optional, _ssl_opts, _timeout) do
+    {:ok, :gen_tcp, socket}
+  end
+
+  defp maybe_ssl_accept(_socket, _first_byte, :required, _ssl_opts, _timeout) do
+    {:error, :closed}
   end
 
   defp do_thrift_call({transport, socket, server_module, handler_module, recv_timeout} = args) do

@@ -205,6 +205,7 @@ Name             | Type | Description
 Name             | Type | Description
 -----------------|------|---------------
 `:enabled`       | boolean | Whether to upgrade the connection to the SSL protocol.
+`:optional`      | boolean | Whether to accept both SSL and plain connections.
 `:configure`     | 0-arity fun | A function to provide additional SSL options at run time.
 `ssloption`      | :ssl.ssloption | Other standard [`:ssl` options](http://erlang.org/doc/man/ssl.html).
 

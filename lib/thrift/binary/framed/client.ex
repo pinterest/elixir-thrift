@@ -285,7 +285,7 @@ defmodule Thrift.Binary.Framed.Client do
   defp to_host(host) when is_list(host), do: host
 
   defp maybe_ssl_handshake(sock, host, port, %{ssl_opts: ssl_opts, timeout: timeout} = s) do
-    with {:ok, ssl_opts} <- SSL.configuration(ssl_opts),
+    with {optional, ssl_opts} when optional in [:required, :optional] <- SSL.configuration(ssl_opts),
          {:ok, ssl_sock} <- :ssl.connect(sock, ssl_opts, timeout) do
         {:ok, %{s | sock: {:ssl, ssl_sock}}}
     else

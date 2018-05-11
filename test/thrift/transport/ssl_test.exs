@@ -8,12 +8,10 @@ defmodule Thrift.Transport.SSLTest do
       error = RuntimeError.exception("test")
       assert {:error, error} == SSL.configuration([enabled: true, configure: fn -> {:error, error} end])
     end
-  end
 
-  describe "optional?/1" do
-    test "does the right thing" do
-      assert {true, [certfile: "/some/path"]} = SSL.optional?([certfile: "/some/path", optional: true])
-      assert {false, [certfile: "/some/path"]} = SSL.optional?([certfile: "/some/path", optional: false])
+    test "it properly handles the :optional flag" do
+      assert {:optional, []} == SSL.configuration([enabled: true, optional: true])
+      assert {:required, []} == SSL.configuration([enabled: true, optional: false])
     end
   end
 end

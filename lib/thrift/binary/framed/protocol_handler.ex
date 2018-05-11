@@ -4,6 +4,7 @@ defmodule Thrift.Binary.Framed.ProtocolHandler do
   """
 
   @default_timeout 20_000
+  @ssl_header_byte 0x16
 
   @typedoc "A module that implements the :ranch_transport behaviour"
   @type transport :: :ranch_tcp
@@ -50,8 +51,7 @@ defmodule Thrift.Binary.Framed.ProtocolHandler do
   end
 
   defp maybe_ssl_handshake(socket, first_byte, ssl_opts, server_module, handler_module, timeout) do
-    with {:ok, ssl_opts} <- SSL.configuration(ssl_opts),
-         {optional, ssl_opts} <- SSL.optional?(ssl_opts),
+    with {optional, ssl_opts} when optional in [:required, :optional] <- SSL.configuration(ssl_opts),
          {:ok, transport, socket} <- maybe_ssl_accept(socket, first_byte, optional, ssl_opts, timeout) do
       do_thrift_call({transport, socket, server_module, handler_module, timeout})
     else
@@ -64,20 +64,20 @@ defmodule Thrift.Binary.Framed.ProtocolHandler do
     end
   end
 
-  defp maybe_ssl_accept(socket, 0x16, _optional, ssl_opts, timeout) do
-    with {:ok, ssl_sock} <- :ssl.ssl_accept(socket, ssl_opts, timeout) do
-      {:ok, :ssl, ssl_sock}
-    else
+  defp maybe_ssl_accept(socket, @ssl_header_byte, _optional, ssl_opts, timeout) do
+    case :ssl.ssl_accept(socket, ssl_opts, timeout) do
+      {:ok, ssl_sock} ->
+        {:ok, :ssl, ssl_sock}
       error ->
         error
     end
   end
 
-  defp maybe_ssl_accept(socket, _first_byte, true, _ssl_opts, _timeout) do
+  defp maybe_ssl_accept(socket, _first_byte, :optional, _ssl_opts, _timeout) do
     {:ok, :gen_tcp, socket}
   end
 
-  defp maybe_ssl_accept(_socket, _first_byte, false, _ssl_opts, _timeout) do
+  defp maybe_ssl_accept(_socket, _first_byte, :required, _ssl_opts, _timeout) do
     {:error, :closed}
   end
 

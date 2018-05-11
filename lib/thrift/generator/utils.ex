@@ -3,6 +3,7 @@ defmodule Thrift.Generator.Utils do
   Collection of utilities for working with generated code.
   """
 
+  alias Thrift.NaN
   alias Thrift.Parser.FileGroup
   alias Thrift.Parser.Models.{
     Constant,
@@ -215,6 +216,7 @@ defmodule Thrift.Generator.Utils do
   def quote_value(value, :byte, _schema) when is_integer(value), do: value
   def quote_value(value, :double, _schema) when is_atom(value), do: value
   def quote_value(value, :double, _schema) when is_number(value), do: value
+  def quote_value(%NaN{} = value, :double, _schema), do: value
   def quote_value(value, :i8, _schema) when is_integer(value), do: value
   def quote_value(value, :i16, _schema) when is_integer(value), do: value
   def quote_value(value, :i32, _schema) when is_integer(value), do: value

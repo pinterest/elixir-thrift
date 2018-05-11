@@ -111,8 +111,8 @@ defmodule Thrift.Generator.StructBinaryProtocol do
       defp unquote(name)(<<unquote(Type.double), unquote(field.id)::16-signed, 1::1, 2047::11, 0::52, rest::binary>>, acc) do
         unquote(name)(rest, %{acc | unquote(field.name) => :"-inf"})
       end
-      defp unquote(name)(<<unquote(Type.double), unquote(field.id)::16-signed, _::1, 2047::11, _::52, rest::binary>>, acc) do
-        unquote(name)(rest, %{acc | unquote(field.name) => :NaN})
+      defp unquote(name)(<<unquote(Type.double), unquote(field.id)::16-signed, sign::1, 2047::11, frac::52, rest::binary>>, acc) do
+        unquote(name)(rest, %{acc | unquote(field.name) => %Thrift.NaN{sign: sign, fraction: frac}})
       end
       defp unquote(name)(<<unquote(Type.double), unquote(field.id)::16-signed, value::float-signed, rest::binary>>, acc) do
         unquote(name)(rest, %{acc | unquote(field.name) => value})
@@ -278,8 +278,8 @@ defmodule Thrift.Generator.StructBinaryProtocol do
       defp unquote(key_name)(<<1::1, 2047::11, 0::52, rest::binary>>, stack) do
         unquote(value_name)(rest, :"-inf", stack)
       end
-      defp unquote(key_name)(<<_::1, 2047::11, _::52, rest::binary>>, stack) do
-        unquote(value_name)(rest, :NaN, stack)
+      defp unquote(key_name)(<<sign::1, 2047::11, frac::52, rest::binary>>, stack) do
+        unquote(value_name)(rest, %Thrift.NaN{sign: sign, fraction: frac}, stack)
       end
       defp unquote(key_name)(<<key::float-signed, rest::binary>>, stack) do
         unquote(value_name)(rest, key, stack)
@@ -436,8 +436,8 @@ defmodule Thrift.Generator.StructBinaryProtocol do
       defp unquote(value_name)(<<1::1, 2047::11, 0::52, rest::binary>>, key, [map, remaining | stack]) do
         unquote(key_name)(rest, [Map.put(map, key, :"-inf"), remaining - 1 | stack])
       end
-      defp unquote(value_name)(<<_::1, 2047::11, _::52, rest::binary>>, key, [map, remaining | stack]) do
-        unquote(key_name)(rest, [Map.put(map, key, :NaN), remaining - 1 | stack])
+      defp unquote(value_name)(<<sign::1, 2047::11, frac::52, rest::binary>>, key, [map, remaining | stack]) do
+        unquote(key_name)(rest, [Map.put(map, key, %Thrift.NaN{sign: sign, fraction: frac}), remaining - 1 | stack])
       end
       defp unquote(value_name)(<<value::float-signed, rest::binary>>, key, [map, remaining | stack]) do
         unquote(key_name)(rest, [Map.put(map, key, value), remaining - 1 | stack])
@@ -597,8 +597,8 @@ defmodule Thrift.Generator.StructBinaryProtocol do
       defp unquote(name)(<<1::1, 2047::11, 0::52, rest::binary>>, [list, remaining | stack]) do
         unquote(name)(rest, [[:"-inf" | list], remaining - 1 | stack])
       end
-      defp unquote(name)(<<_::1, 2047::11, _::52, rest::binary>>, [list, remaining | stack]) do
-        unquote(name)(rest, [[:NaN | list], remaining - 1 | stack])
+      defp unquote(name)(<<sign::1, 2047::11, frac::52, rest::binary>>, [list, remaining | stack]) do
+        unquote(name)(rest, [[%Thrift.NaN{sign: sign, fraction: frac} | list], remaining - 1 | stack])
       end
       defp unquote(name)(<<element::signed-float, rest::binary>>, [list, remaining | stack]) do
         unquote(name)(rest, [[element | list], remaining - 1 | stack])
@@ -874,10 +874,10 @@ defmodule Thrift.Generator.StructBinaryProtocol do
   defp value_serializer(:double,  var, _file_group) do
     quote do
       case unquote(var) do
-        :inf    -> <<0::1, 2047::11, 0::52>>
-        :"-inf" -> <<1::1, 2047::11, 0::52>>
-        :NaN    -> <<0::1, 2047::11, 1::1, 0::51>>
-        _       -> <<unquote(var)::float-signed>>
+        :inf                                    -> <<0::1, 2047::11, 0::52>>
+        :"-inf"                                 -> <<1::1, 2047::11, 0::52>>
+        %Thrift.NaN{sign: sign, fraction: frac} -> <<sign::1, 2047::11, frac::52>>
+        _                                       -> <<unquote(var)::float-signed>>
       end
     end
   end

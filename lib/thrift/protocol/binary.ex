@@ -8,6 +8,7 @@ defmodule Thrift.Protocol.Binary do
   actual value of the field.
   """
 
+  alias Thrift.NaN
   alias Thrift.TApplicationException
 
   require Thrift.Protocol.Binary.Type, as: Type
@@ -47,6 +48,7 @@ defmodule Thrift.Protocol.Binary do
   def serialize(:i64, value),      do: <<value::64-signed>>
   def serialize(:double, :inf),    do: <<0::1, 2047::11, 0::52>>
   def serialize(:double, :"-inf"), do: <<1::1, 2047::11, 0::52>>
+  def serialize(:double, %NaN{sign: sign, fraction: frac}), do: <<sign::1, 2047::11, frac::52>>
   def serialize(:double, :NaN),    do: <<0::1, 2047::11, 1::1, 0::51>>
   def serialize(:double, value),   do: <<value::float-signed>>
   def serialize(:string, value),   do: [<<byte_size(value)::32-signed>>, value]

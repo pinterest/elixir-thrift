@@ -356,8 +356,9 @@ defmodule BinaryProtocolTest do
     assert <<^max_64::signed-64>> = Binary.serialize(:i64, max_64)
     assert <<^negative_max_64::signed-64>> = Binary.serialize(:i64, -max_64)
 
+    nan = %Thrift.NaN{sign: 1, fraction: 456}
     assert <<332.2178::signed-float>> == Binary.serialize(:double, 332.2178)
-    assert <<0::1, 2047::11, 1::1, 0::51>> == Binary.serialize(:double, :NaN)
+    assert <<1::1, 2047::11, 456::52>> == Binary.serialize(:double, nan)
     assert <<0::1, 2047::11, 0::52>> == Binary.serialize(:double, :inf)
     assert <<1::1, 2047::11, 0::52>> == Binary.serialize(:double, :"-inf")
 

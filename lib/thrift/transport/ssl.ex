@@ -7,6 +7,7 @@ defmodule Thrift.Transport.SSL do
 
   ## Options
       * :enabled - Whether ssl is enabled (default: `false`)
+      * :optional - Whether to accept both SSL and plain connections (default: `false`)
       * :configure - Get extra configuration at handshake time (default: `nil`)
 
   ## Delayed configure option
@@ -18,9 +19,9 @@ defmodule Thrift.Transport.SSL do
   """
 
   @type configure :: {module, function, list} | (() -> ({:ok, [option]} | {:error, Exception.t}))
-  @type option :: :ssl.ssloption | {:enabled, boolean} | {:configure, configure}
+  @type option :: :ssl.ssloption | {:enabled, boolean} | {:optional, boolean} | {:configure, configure}
 
-  @spec configuration([option]) :: {:ok, [:ssl.ssloption]} | nil | {:error, Exceptiont.t}
+  @spec configuration([option]) :: {:ok, [:ssl.ssloption | {:optional, boolean}]} | nil | {:error, Exception.t}
   def configuration(opts) do
     case Keyword.pop(opts, :enabled, false) do
       {true, opts} ->
@@ -28,6 +29,11 @@ defmodule Thrift.Transport.SSL do
       {false, _} ->
         nil
     end
+  end
+
+  @spec optional?([option]) :: {boolean, [:ssl.ssloption]} | {:error, Exception.t}
+  def optional?(opts) do
+    Keyword.pop(opts, :optional, false)
   end
 
   defp update_configuration(opts) do

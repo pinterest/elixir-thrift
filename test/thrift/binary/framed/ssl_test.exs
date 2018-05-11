@@ -19,27 +19,68 @@ defmodule Servers.Binary.Framed.SSLTest do
 
   setup_all do
     {:module, mod_name, _, _} = define_handler()
-    {:ok, _} = Server.start_link(mod_name, 0, [ssl_opts: [enabled: true, configure: &get_certs/0]])
-    server_port = :ranch.get_port(mod_name)
 
-    {:ok, handler_name: mod_name, port: server_port}
+    {:ok, handler_name: mod_name}
   end
 
-  setup(ctx) do
-    {:ok, client} = Client.start_link("localhost", ctx.port, ssl_opts: ctx[:ssl_opts] ++ [enabled: true])
+  def build_ssl_required_server(ctx) do
+    {:ok, _} = Server.start_link(ctx[:handler_name], 0, [ssl_opts: [enabled: true, configure: &get_certs/0]])
+    server_port = :ranch.get_port(ctx[:handler_name])
 
-    {:ok, client: client}
+    {:ok, port: server_port}
   end
 
-  @tag ssl_opts: []
-  thrift_test "it can return a simple boolean value", ctx do
-    assert {:ok, true} == Client.ping(ctx.client)
+  def build_ssl_optional_server(ctx) do
+    {:ok, _} = Server.start_link(ctx[:handler_name], 0, [ssl_opts: [enabled: true, configure: &get_certs/0, optional: true]])
+    server_port = :ranch.get_port(ctx[:handler_name])
+
+    {:ok, port: server_port}
   end
 
-  @tag ssl_opts: [configure: {__MODULE__, :test_configure, []}]
-  thrift_test "it can handle live configuration", ctx do
-    assert {:ok, true} == Client.ping(ctx.client)
-    assert_received :configured
+  def build_ssl_client(ctx) do
+    {:ok, ssl_client} = Client.start_link("localhost", ctx.port, ssl_opts: ctx[:ssl_opts] ++ [enabled: true])
+
+    {:ok, ssl_client: ssl_client}
+  end
+
+  def build_plain_client(ctx) do
+    {:ok, plain_client} = Client.start_link("localhost", ctx.port)
+
+    {:ok, plain_client: plain_client}
+  end
+
+  describe "Required-SSL communication" do
+    setup [:build_ssl_required_server, :build_ssl_client, :build_plain_client]
+
+    @tag ssl_opts: []
+    thrift_test "it can return a simple boolean value", ctx do
+      assert {:ok, true} == Client.ping(ctx.ssl_client)
+    end
+
+    @tag ssl_opts: [configure: {__MODULE__, :test_configure, []}]
+    thrift_test "it can handle live configuration", ctx do
+      assert {:ok, true} == Client.ping(ctx.ssl_client)
+      assert_received :configured
+    end
+
+    @tag ssl_opts: []
+    thrift_test "plain client will be rejected", ctx do
+      assert {:error, :closed} == Client.ping(ctx.plain_client)
+    end
+  end
+
+  describe "Optional-SSL communication" do
+    setup [:build_ssl_optional_server, :build_ssl_client, :build_plain_client]
+
+    @tag ssl_opts: []
+    thrift_test "ssl client can receive a simple boolean value", ctx do
+      assert {:ok, true} == Client.ping(ctx.ssl_client)
+    end
+
+    @tag ssl_opts: []
+    thrift_test "plain client can receive a simple boolean value", ctx do
+      assert {:ok, true} == Client.ping(ctx.plain_client)
+    end
   end
 
   ## Helpers

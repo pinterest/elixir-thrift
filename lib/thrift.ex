@@ -29,4 +29,16 @@ defmodule Thrift do
   def primitive_names do
     [:bool, :i8, :i16, :i32, :i64, :binary, :double, :byte, :string]
   end
+
+  defmodule NaN do
+    @moduledoc """
+    A struct for handling IEEE-754 NaN values.
+    """
+
+    @type t :: %NaN{sign: 0 | 1,
+                    fraction: (1..4_503_599_627_370_495)  # 2^52 - 1
+                   }
+    defstruct sign: nil,
+              fraction: nil
+  end
 end

@@ -8,8 +8,7 @@ defmodule Thrift.Protocol.Binary do
   actual value of the field.
   """
 
-  alias Thrift.NaN
-  alias Thrift.TApplicationException
+  alias Thrift.{NaN, TApplicationException}
 
   require Thrift.Protocol.Binary.Type, as: Type
 

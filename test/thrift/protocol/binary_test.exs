@@ -71,6 +71,7 @@ defmodule BinaryProtocolTest do
     assert Erlang.Scalars.new_scalars(sixty_four_bits: 8_872_372) == round_trip_struct(%Scalars{sixty_four_bits: 8_872_372}, encoder, decoder)
 
     assert Erlang.Scalars.new_scalars(double_value: 2.37219) == round_trip_struct(%Scalars{double_value: 2.37219}, encoder, decoder)
+    # Note: The Erlang decoder will crash on NaN, inf, and -inf, so we won't test those here
 
     assert Erlang.Scalars.new_scalars(string_value: "I am a string") == round_trip_struct(%Scalars{string_value: "I am a string"}, encoder, decoder)
 
@@ -355,7 +356,11 @@ defmodule BinaryProtocolTest do
     assert <<^max_64::signed-64>> = Binary.serialize(:i64, max_64)
     assert <<^negative_max_64::signed-64>> = Binary.serialize(:i64, -max_64)
 
+    nan = %Thrift.NaN{sign: 1, fraction: 456}
     assert <<332.2178::signed-float>> == Binary.serialize(:double, 332.2178)
+    assert <<1::1, 2047::11, 456::52>> == Binary.serialize(:double, nan)
+    assert <<0::1, 2047::11, 0::52>> == Binary.serialize(:double, :inf)
+    assert <<1::1, 2047::11, 0::52>> == Binary.serialize(:double, :"-inf")
 
     assert [<<5::size(32)>>, "Hello"] == Binary.serialize(:string, "Hello")
   end

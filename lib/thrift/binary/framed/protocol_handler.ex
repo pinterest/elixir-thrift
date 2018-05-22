@@ -90,6 +90,7 @@ defmodule Thrift.Binary.Framed.ProtocolHandler do
     else
       {:error, {:server_error, thrift_data}} ->
         :ok = transport.send(socket, thrift_data)
+        :ok = transport.close(socket)
         exit({:shutdown, :server_error})
 
       {:error, {:protocol_error, reason}} ->

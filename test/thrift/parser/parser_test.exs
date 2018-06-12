@@ -6,19 +6,21 @@ defmodule Thrift.Parser.ParserTest do
 
   import Thrift.Parser, only: [parse: 1, parse: 2, parse_file: 2]
 
-  alias Thrift.Parser.Models.Constant
-  alias Thrift.Parser.Models.Exception
-  alias Thrift.Parser.Models.Field
-  alias Thrift.Parser.Models.Function
-  alias Thrift.Parser.Models.Include
-  alias Thrift.Parser.Models.Namespace
-  alias Thrift.Parser.Models.Schema
-  alias Thrift.Parser.Models.Service
-  alias Thrift.Parser.Models.Struct
-  alias Thrift.Parser.Models.TypeRef
-  alias Thrift.Parser.Models.TEnum
-  alias Thrift.Parser.Models.Union
-  alias Thrift.Parser.Models.ValueRef
+  alias Thrift.AST.{
+    Constant,
+    Exception,
+    Field,
+    Function,
+    Include,
+    Namespace,
+    Schema,
+    Service,
+    Struct,
+    TypeRef,
+    TEnum,
+    Union,
+    ValueRef,
+  }
 
   import ExUnit.CaptureIO
 

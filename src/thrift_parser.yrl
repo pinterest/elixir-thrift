@@ -219,7 +219,7 @@ Erlang code.
 % `new` function and, if provided, line number information is assigned to the
 % resulting model.
 build_model(Type, Args) when is_list(Args) ->
-    Module = list_to_atom("Elixir.Thrift.Parser.Models." ++ atom_to_list(Type)),
+    Module = list_to_atom("Elixir.Thrift.AST." ++ atom_to_list(Type)),
     apply(Module, 'new', Args).
 build_model(Type, Line, Args) when is_integer(Line) and is_list(Args) ->
     Model = build_model(Type, Args),

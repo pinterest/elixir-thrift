@@ -1,7 +1,7 @@
 defmodule Thrift.Parser.ParsedFile do
   @moduledoc false
 
-  alias Thrift.Parser.Models.Schema
+  alias Thrift.AST.Schema
   alias Thrift.Parser
   alias Thrift.Parser.FileRef
 

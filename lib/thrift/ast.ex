@@ -1,8 +1,9 @@
-defmodule Thrift.Parser.Models do
+defmodule Thrift.AST do
   @moduledoc """
-  Models used by the Thrift parser that represent different Thrift components.
-  The models defined here are returned by the parse functions in the
-  `Thrift.Parser` module.
+  Thrift Abstract Syntax Tree
+
+  Parsed Thrift files are repesented as a tree of these structures, starting
+  with a `Thrift.AST.Schema` node.
   """
 
   import Thrift.Parser.Conversions
@@ -352,15 +353,6 @@ defmodule Thrift.Parser.Models do
     exceptions: %{},
     typedefs: %{},
     file_group: nil
-
-    alias Thrift.Parser.Models.{Constant,
-                                Exception,
-                                Include,
-                                Namespace,
-                                Struct,
-                                TEnum,
-                                Union
-                               }
 
     @doc """
     Constructs a schema with both headers and definitions.

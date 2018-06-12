@@ -16,7 +16,7 @@ defmodule Thrift.Parser.FileGroup do
     ParsedFile
   }
 
-  alias Thrift.Parser.Models.{
+  alias Thrift.AST.{
     TEnum,
     Constant,
     Exception,

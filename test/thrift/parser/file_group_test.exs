@@ -2,8 +2,8 @@ defmodule Thrift.Parser.FileGroupTest do
   use ExUnit.Case
   use ThriftTestHelpers
 
+  alias Thrift.AST.Constant
   alias Thrift.Parser.FileGroup
-  alias Thrift.Parser.Models.Constant
 
   test "constant module uses suitable existing name" do
     with_thrift_files([

@@ -6,9 +6,7 @@ defmodule Thrift.Generator.Behaviour do
   to implement. Thrift types are converted into Elixir typespecs that are
   equivalent to their thrift counterparts.
   """
-  alias Thrift.Generator.Utils
-  alias Thrift.Parser.FileGroup
-  alias Thrift.Parser.Models.{
+  alias Thrift.AST.{
     Exception,
     Field,
     Struct,
@@ -16,6 +14,8 @@ defmodule Thrift.Generator.Behaviour do
     TEnum,
     Union,
   }
+  alias Thrift.Generator.Utils
+  alias Thrift.Parser.FileGroup
 
   require Logger
 

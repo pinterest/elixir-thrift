@@ -1,8 +1,8 @@
 defmodule Thrift.Generator.Binary.Framed.Client do
   @moduledoc false
 
+  alias Thrift.AST.Function
   alias Thrift.Generator.{Service, Utils}
-  alias Thrift.Parser.Models.Function
 
   def generate(service) do
     functions = service.functions

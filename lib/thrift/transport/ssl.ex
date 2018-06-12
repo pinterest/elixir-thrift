@@ -13,7 +13,7 @@ defmodule Thrift.Transport.SSL do
   ## Delayed configure option
 
   The value can be of the form `{module, function, args}` or a zero arity fun. The function should return
-  `{:ok, opts}` to *add* options or `{:error, Exception.t} to abort the handshake with an exception. This
+  `{:ok, opts}` to *add* options or `{:error, Exception.t}` to abort the handshake with an exception. This
   option should be used when it is beneficial to delay configuring the client or server, perhaps to protect
   credentials or to change the configuration during run time.
   """

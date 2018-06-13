@@ -29,9 +29,9 @@ defmodule FramedServerBenchmark do
 
     Application.start(:ranch)
 
-    {:ok, server_pid} = SimpleService.Binary.Framed.Server.start_link(Simple.Handler, 12345, [])
+    {:ok, _} = SimpleService.Binary.Framed.Server.start_link(Simple.Handler, 12345, [])
 
-    {:ok, erlang_server_pid} =
+    {:ok, _} =
       :thrift_socket_server.start(
         handler: ErlangHandlers,
         port: 56789,
@@ -78,23 +78,21 @@ defmodule FramedServerBenchmark do
   bench "Echoing a struct in Elixir" do
     user = bench_context[:elixir_user]
     client = bench_context[:client]
-    {:ok, user} = SimpleService.Binary.Framed.Client.echo_user(client, user)
+    {:ok, _} = SimpleService.Binary.Framed.Client.echo_user(client, user)
   end
 
   bench "Returning a boolean in Elixir" do
     client = bench_context[:client]
-    {:ok, user} = SimpleService.Binary.Framed.Client.ping(client)
+    {:ok, _} = SimpleService.Binary.Framed.Client.ping(client)
   end
 
   bench "Echoing a struct in Erlang" do
     {_client, {:ok, _u}} =
-      bench_context[:erlang_client]
-      |> :thrift_client.call(:echo_user, [bench_context[:erlang_user]])
+      :thrift_client.call(bench_context[:erlang_client], :echo_user, [bench_context[:erlang_user]])
   end
 
   bench "Returning a boolean in Erlang" do
     {_client, {:ok, true}} =
-      bench_context[:erlang_client]
-      |> :thrift_client.call(:ping, [])
+      :thrift_client.call(bench_context[:erlang_client], :ping, [])
   end
 end

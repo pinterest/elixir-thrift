@@ -68,9 +68,9 @@ defmodule Thrift.Mixfile do
   defp elixirc_paths(_),     do: ["lib"]
 
   defp deps do
-     [{:ex_doc, "~> 0.17", only: :dev},
-      {:excoveralls, "~> 0.8", only: [:dev, :test]},
-      {:credo, "~> 0.0", only: [:dev, :test]},
+     [{:ex_doc, "~> 0.18", only: :dev},
+      {:excoveralls, "~> 0.9", only: [:dev, :test]},
+      {:credo, "~> 0.9", only: [:dev, :test]},
       {:dialyxir, "~> 0.5", only: :dev, runtime: false},
       {:benchfella, "~> 0.3", only: [:dev, :test]},
       {:connection, "~> 1.0"},

@@ -327,7 +327,6 @@ defmodule Thrift.AST do
     @type t :: %Schema{
       path: Path.t | nil,
       module: String.t,
-      thrift_namespace: String.t,
       namespaces: %{String.t => Namespace.t},
       structs: %{String.t => Struct.t},
       services: %{String.t => Service.t},
@@ -341,7 +340,6 @@ defmodule Thrift.AST do
     }
     defstruct path: nil,
     module: nil,
-    thrift_namespace: nil,
     namespaces: %{},
     structs: %{},
     services: %{},

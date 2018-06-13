@@ -3,9 +3,7 @@ defmodule Thrift.Generator.Utils do
   Collection of utilities for working with generated code.
   """
 
-  alias Thrift.NaN
-  alias Thrift.Parser.FileGroup
-  alias Thrift.Parser.Models.{
+  alias Thrift.AST.{
     Constant,
     Field,
     Struct,
@@ -14,6 +12,8 @@ defmodule Thrift.Generator.Utils do
     TEnum,
     ValueRef,
   }
+  alias Thrift.NaN
+  alias Thrift.Parser.FileGroup
 
   @doc """
   When nesting a quote with multiple defs into another quote, the defs end up

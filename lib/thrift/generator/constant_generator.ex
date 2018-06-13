@@ -1,11 +1,8 @@
 defmodule Thrift.Generator.ConstantGenerator do
   @moduledoc false
 
+  alias Thrift.AST.{Constant, Schema}
   alias Thrift.Generator.Utils
-  alias Thrift.Parser.Models.{
-    Constant,
-    Schema,
-  }
 
   @spec generate(atom, [Constant.t], Schema.t) :: Macro.t
   def generate(full_name, constants, schema) do

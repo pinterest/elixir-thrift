@@ -38,9 +38,7 @@ defmodule Thrift.Generator.StructBinaryProtocol do
   been generated for that struct.
   """
 
-  alias Thrift.Generator.Utils
-  alias Thrift.Parser.FileGroup
-  alias Thrift.Parser.Models.{
+  alias Thrift.AST.{
     Exception,
     Field,
     Struct,
@@ -48,6 +46,8 @@ defmodule Thrift.Generator.StructBinaryProtocol do
     TEnum,
     Union,
   }
+  alias Thrift.Generator.Utils
+  alias Thrift.Parser.FileGroup
 
   require Thrift.Protocol.Binary.Type, as: Type
 

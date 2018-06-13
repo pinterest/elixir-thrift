@@ -1,14 +1,14 @@
 defmodule ResolverTest do
   use ExUnit.Case
 
-  alias Thrift.Parser.FileGroup
-  alias Thrift.Parser.Models.{
+  alias Thrift.AST.{
     Field,
     TEnum,
     Service,
     Struct,
     Union
   }
+  alias Thrift.Parser.FileGroup
 
   use ThriftTestHelpers
 

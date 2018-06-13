@@ -4,11 +4,8 @@ defmodule Thrift.Generator do
   IDL files (`.thrift`).
   """
 
-  alias Thrift.Parser.{
-    FileGroup,
-    Models.Schema,
-    Models.Constant
-  }
+  alias Thrift.AST.{Constant, Schema}
+  alias Thrift.Parser.FileGroup
   alias Thrift.{
     Generator,
     Generator.ConstantGenerator,

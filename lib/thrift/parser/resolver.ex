@@ -6,8 +6,8 @@ defmodule Thrift.Parser.Resolver do
   # of names. At the end, the database is dumped into the FileGroup so it can
   # resolve references.
 
+  alias Thrift.AST.TEnum
   alias Thrift.Parser.ParsedFile
-  alias Thrift.Parser.Models.TEnum
 
   def add(state, %ParsedFile{} = f) do
     state

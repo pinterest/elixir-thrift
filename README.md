@@ -312,8 +312,8 @@ files. It is built on a low-level Erlang lexer and parser:
 
 {:ok, schema} = :thrift_parser.parse(tokens)
 {:ok,
- %Thrift.Parser.Models.Schema{constants: %{},
-  enums: %{Colors: %Thrift.Parser.Models.TEnum{name: :Colors,
+ %Thrift.AST.Schema{constants: %{},
+  enums: %{Colors: %Thrift.AST.TEnum{name: :Colors,
      values: [RED: 1, GREEN: 2, BLUE: 3]}}, exceptions: %{}, includes: [],
   namespaces: %{}, services: %{}, structs: %{}, thrift_namespace: nil,
   typedefs: %{}, unions: %{}}}
@@ -323,8 +323,8 @@ But also provides a high-level Elixir parsing interface:
 
 ```elixir
 Thrift.Parser.parse("enum Colors { RED, GREEN, BLUE }")
-%Thrift.Parser.Models.Schema{constants: %{},
- enums: %{Colors: %Thrift.Parser.Models.TEnum{name: :Colors,
+%Thrift.AST.Schema{constants: %{},
+ enums: %{Colors: %Thrift.AST.TEnum{name: :Colors,
     values: [RED: 1, GREEN: 2, BLUE: 3]}}, exceptions: %{}, includes: [],
  namespaces: %{}, services: %{}, structs: %{}, thrift_namespace: nil,
  typedefs: %{}, unions: %{}}

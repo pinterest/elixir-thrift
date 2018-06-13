@@ -3,8 +3,7 @@ defmodule Thrift.Parser do
   This module provides functions for parsing Thrift IDL files (`.thrift`).
   """
 
-  alias Thrift.Parser.{FileGroup, FileRef, Models, ParsedFile}
-  alias Thrift.Parser.Models.Schema
+  alias Thrift.Parser.{FileGroup, FileRef, ParsedFile}
 
   @typedoc "A Thrift IDL line number"
   @type line :: pos_integer | nil
@@ -24,7 +23,7 @@ defmodule Thrift.Parser do
   @doc """
   Parses a Thrift document and returns the schema that it represents.
   """
-  @spec parse(String.t) :: {:ok, Schema.t} | {:error, term}
+  @spec parse(String.t) :: {:ok, Thrift.AST.Schema.t} | {:error, term}
   def parse(doc) do
     doc = String.to_charlist(doc)
 
@@ -48,7 +47,7 @@ defmodule Thrift.Parser do
 
   Will return the "MyService" service.
   """
-  @spec parse(String.t, [path_element, ...]) :: Models.all
+  @spec parse(String.t, [path_element, ...]) :: Thrift.AST.all
   def parse(doc, path) do
     {:ok, schema} = parse(doc)
 

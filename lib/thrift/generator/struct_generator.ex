@@ -1,7 +1,5 @@
 defmodule Thrift.Generator.StructGenerator do
-  alias Thrift.Generator.{StructBinaryProtocol, Utils}
-  alias Thrift.Parser.FileGroup
-  alias Thrift.Parser.Models.{
+  alias Thrift.AST.{
     Exception,
     Field,
     Struct,
@@ -9,6 +7,8 @@ defmodule Thrift.Generator.StructGenerator do
     TEnum,
     Union,
   }
+  alias Thrift.Generator.{StructBinaryProtocol, Utils}
+  alias Thrift.Parser.FileGroup
 
   def generate(label, schema, name, struct) when label in [:struct, :union, :exception] do
     struct_parts = Enum.map(struct.fields, fn

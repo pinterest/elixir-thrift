@@ -1,7 +1,7 @@
 defmodule Thrift.Parser.AnnotationTest do
   use ExUnit.Case, async: true
   import Thrift.Parser, only: [parse: 1]
-  alias Thrift.Parser.Models.Field
+  alias Thrift.AST.Field
 
   setup_all do
     {:ok, schema} =

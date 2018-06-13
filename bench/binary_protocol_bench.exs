@@ -5,8 +5,7 @@ defmodule BinaryProtocolBenchmark do
   import ParserUtils
 
   setup_all do
-    parse_thrift(@thrift_file_path)
-    |> compile_module
+    compile_module(parse_thrift(@thrift_file_path))
 
     {:ok, :ok}
   end
@@ -36,9 +35,7 @@ defmodule BinaryProtocolBenchmark do
         user(:elixir, user_options)
       end
 
-    user_binary =
-      user(:elixir, user_options)
-      |> serialize_user_elixir(convert_to_binary: true)
+    user_binary = serialize_user_elixir(user(:elixir, user_options), convert_to_binary: true)
 
     context = [
       elixir_users: elixir_users,
@@ -67,8 +64,7 @@ defmodule BinaryProtocolBenchmark do
 
   bench "elixir serialization (iolist_size)" do
     for user <- bench_context[:elixir_users] do
-      serialize_user_elixir(user, convert_to_binary: false)
-      |> :erlang.iolist_size()
+      :erlang.iolist_size(serialize_user_elixir(user, convert_to_binary: false))
     end
 
     :ok

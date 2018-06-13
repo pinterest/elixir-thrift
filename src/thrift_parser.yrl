@@ -43,7 +43,7 @@ Rootsymbol Schema.
 % Schema
 
 Schema -> Headers Definitions File:
-    build_model('Schema', ['$3', '$1', '$2']).
+    build_node('Schema', ['$3', '$1', '$2']).
 
 File -> '$empty': nil.
 File -> file string: 'Elixir.List':to_string(unwrap('$2')).
@@ -57,12 +57,12 @@ Header -> Include: '$1'.
 Header -> Namespace: '$1'.
 
 Include -> include string:
-    build_model('Include', line('$1'), [unwrap('$2')]).
+    build_node('Include', line('$1'), [unwrap('$2')]).
 
 Namespace -> namespace '*' ident:
-    build_model('Namespace', line('$1'), ["*", unwrap('$3')]).
+    build_node('Namespace', line('$1'), ["*", unwrap('$3')]).
 Namespace -> namespace ident ident:
-    build_model('Namespace', line('$1'), [unwrap('$2'), unwrap('$3')]).
+    build_node('Namespace', line('$1'), [unwrap('$2'), unwrap('$3')]).
 
 % Definitions
 
@@ -80,9 +80,9 @@ Definition -> Service: '$1'.
 % Constants
 
 Const -> const FieldType ident '=' ConstValue Separator:
-    build_model('Constant', line('$1'), [unwrap('$3'), '$5', '$2']).
+    build_node('Constant', line('$1'), [unwrap('$3'), '$5', '$2']).
 
-ConstValue -> ident: build_model('ValueRef', line('$1'), [unwrap('$1')]).
+ConstValue -> ident: build_node('ValueRef', line('$1'), [unwrap('$1')]).
 ConstValue -> true: unwrap('$1').
 ConstValue -> false: unwrap('$1').
 ConstValue -> int: unwrap('$1').
@@ -106,7 +106,7 @@ Typedef -> typedef FieldType Annotations ident Annotations Separator:
 % Enum
 
 Enum -> enum ident '{' EnumList '}' Annotations:
-    build_model('TEnum', line('$1'), '$6', [unwrap('$2'), '$4']).
+    build_node('TEnum', line('$1'), '$6', [unwrap('$2'), '$4']).
 
 EnumList -> EnumValue Separator: ['$1'].
 EnumList -> EnumValue Separator EnumList: ['$1'|'$3'].
@@ -117,22 +117,22 @@ EnumValue -> ident Annotations: unwrap('$1').
 % Struct
 
 Struct -> struct ident '{' FieldList '}' Annotations:
-    build_model('Struct', line('$1'), '$6', [unwrap('$2'), '$4']).
+    build_node('Struct', line('$1'), '$6', [unwrap('$2'), '$4']).
 
 % Union
 
 Union -> union ident '{' FieldList '}' Annotations:
-    build_model('Union', line('$1'), '$6', [unwrap('$2'), '$4']).
+    build_node('Union', line('$1'), '$6', [unwrap('$2'), '$4']).
 
 % Exception
 
 Exception -> exception ident '{' FieldList '}' Annotations:
-    build_model('Exception', line('$1'), '$6', [unwrap('$2'), '$4']).
+    build_node('Exception', line('$1'), '$6', [unwrap('$2'), '$4']).
 
 % Service
 
 Service -> service ident Extends '{' FunctionList '}' Annotations:
-    build_model('Service', line('$1'), '$7', [unwrap('$2'), '$5', '$3']).
+    build_node('Service', line('$1'), '$7', [unwrap('$2'), '$5', '$3']).
 
 Extends -> extends ident: unwrap('$2').
 Extends -> '$empty': nil.
@@ -143,7 +143,7 @@ FunctionList -> '$empty': [].
 FunctionList -> Function FunctionList: ['$1'|'$2'].
 
 Function -> Oneway ReturnType ident '(' FieldList ')' Throws Annotations Separator:
-    build_model('Function', line('$3'), '$8', ['$1', '$2', unwrap('$3'), '$5', '$7']).
+    build_node('Function', line('$3'), '$8', ['$1', '$2', unwrap('$3'), '$5', '$7']).
 
 Oneway -> '$empty': false.
 Oneway -> oneway: true.
@@ -160,7 +160,7 @@ FieldList -> '$empty': [].
 FieldList -> Field FieldList: ['$1'|'$2'].
 
 Field -> FieldIdentifier FieldRequired FieldType ident FieldDefault Annotations Separator:
-    build_model('Field', line('$4'), '$6', ['$1', '$2', '$3', unwrap('$4'), '$5']).
+    build_node('Field', line('$4'), '$6', ['$1', '$2', '$3', unwrap('$4'), '$5']).
 
 FieldIdentifier -> int ':': unwrap('$1').
 FieldIdentifier -> '$empty': nil.
@@ -174,7 +174,7 @@ FieldDefault -> '=' ConstValue: '$2'.
 
 % Types
 
-FieldType -> ident: build_model('TypeRef', line('$1'), [unwrap('$1')]).
+FieldType -> ident: build_node('TypeRef', line('$1'), [unwrap('$1')]).
 FieldType -> BaseType: '$1'.
 FieldType -> MapType: {map, '$1'}.
 FieldType -> SetType: {set, '$1'}.
@@ -215,18 +215,18 @@ Separator -> '$empty'.
 
 Erlang code.
 
-% Construct a new model of the requested Type. Args are passed to the model's
+% Construct a new AST nodeof the requested Type. Args are passed to the node's
 % `new` function and, if provided, line number information is assigned to the
-% resulting model.
-build_model(Type, Args) when is_list(Args) ->
+% resulting node.
+build_node(Type, Args) when is_list(Args) ->
     Module = list_to_atom("Elixir.Thrift.AST." ++ atom_to_list(Type)),
     apply(Module, 'new', Args).
-build_model(Type, Line, Args) when is_integer(Line) and is_list(Args) ->
-    Model = build_model(Type, Args),
+build_node(Type, Line, Args) when is_integer(Line) and is_list(Args) ->
+    Model = build_node(Type, Args),
     maps:put(line, Line, Model).
-build_model(Type, Line, Annotations, Args)
+build_node(Type, Line, Annotations, Args)
   when is_integer(Line) and is_map(Annotations) and is_list(Args) ->
-    Model = build_model(Type, Line, Args),
+    Model = build_node(Type, Line, Args),
     maps:put(annotations, Annotations, Model).
 
 % Extract the line number from the lexer's expression tuple.

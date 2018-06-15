@@ -20,11 +20,15 @@ defmodule Thrift.Binary.Framed.Server
     worker_count = Keyword.get(opts, :worker_count, 1)
     tcp_opts = Keyword.get(opts, :tcp_opts, [])
     ssl_opts = Keyword.get(opts, :ssl_opts, [])
+    transport_opts =
+      opts
+      |> Keyword.get(:transport_opts, [])
+      |> Keyword.put(:port, port)
 
     listener = :ranch.child_spec(name,
                                  worker_count,
                                  :ranch_tcp,
-                                 [port: port],
+                                 transport_opts,
                                  Thrift.Binary.Framed.ProtocolHandler,
                                  {server_module, handler_module, tcp_opts, ssl_opts})
     Supervisor.start_link([listener], strategy: :one_for_one,

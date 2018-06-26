@@ -324,11 +324,9 @@ defmodule Thrift.AST do
     @type header :: Include.t | Namespace.t
     @type typedef :: {:typedef, Types.t, atom}
     @type definition :: Service.t | TEnum.t | Exception.t | Union.t | Struct.t | Constant.t | typedef
-    @type model :: header | definition
     @type t :: %Schema{
-      absolute_path: Path.t,
+      path: Path.t | nil,
       module: String.t,
-      thrift_namespace: String.t,
       namespaces: %{String.t => Namespace.t},
       structs: %{String.t => Struct.t},
       services: %{String.t => Service.t},
@@ -340,9 +338,8 @@ defmodule Thrift.AST do
       typedefs: %{String.t => Types.t},
       file_group: FileGroup.t
     }
-    defstruct absolute_path: nil,
+    defstruct path: nil,
     module: nil,
-    thrift_namespace: nil,
     namespaces: %{},
     structs: %{},
     services: %{},
@@ -355,32 +352,27 @@ defmodule Thrift.AST do
     file_group: nil
 
     @doc """
-    Constructs a schema with both headers and definitions.
+    Constructs a schema from header and definition lists.
     """
-    @spec new(Path.t, [header], [definition]) :: t
-    def new(file_absolute_path, headers, defs) do
-      orig_schema = %Schema{absolute_path: file_absolute_path,
-                            module: module_name(file_absolute_path)}
+    @spec new(Path.t | nil, [header], [definition]) :: t
+    def new(path, headers, defs) do
+      schema = %Schema{path: path, module: module_name(path)}
 
-      schema = headers
-      |> Enum.reverse
-      |> Enum.reduce(orig_schema, &merge(&2, &1))
-
-      defs
+      (headers ++ defs)
       |> Enum.reverse
       |> Enum.reduce(schema, &merge(&2, &1))
     end
 
     defp module_name(nil), do: nil
 
-    defp module_name(path_name) when is_bitstring(path_name) do
-      path_name
+    defp module_name(path) when is_bitstring(path) do
+      path
       |> Path.basename
       |> Path.rootname
       |> String.to_atom
     end
 
-    @spec merge(t, model) :: t
+    @spec merge(t, header | definition) :: t
     defp merge(schema, %Include{} = inc) do
       %Schema{schema | includes: [inc | schema.includes]}
     end

@@ -5,8 +5,7 @@ defmodule BinaryProtocolBenchmark do
   import ParserUtils
 
   setup_all do
-    parse_thrift(@thrift_file_path)
-    |> compile_module
+    compile_module(parse_thrift(@thrift_file_path))
 
     {:ok, :ok}
   end
@@ -14,7 +13,7 @@ defmodule BinaryProtocolBenchmark do
   before_each_bench _ do
     user_options = [
       is_evil: true,
-      user_id: 1234567,
+      user_id: 1_234_567,
       number_of_hairs_on_head: 26482,
       amount_of_red: 182,
       nineties_era_color: 24345,
@@ -23,25 +22,27 @@ defmodule BinaryProtocolBenchmark do
       friends: [],
       # my_map: %{1 => "abc", 2 => "def", 3 => "asldfkjlasdkjf"},
       # blocked_user_ids: [2234, 2345, 654365, 4356, 3456, 1234, 234, 2345, 3456, 4567],
-      optional_integers: [2234, 2345, 654365, 4356, 3456, 1234, 234, 2345, 3456, 4567],
+      optional_integers: [2234, 2345, 654_365, 4356, 3456, 1234, 234, 2345, 3456, 4567]
     ]
 
-    erlang_users = for _ <- 1..1000 do
-      user(:erlang, user_options)
-    end
+    erlang_users =
+      for _ <- 1..1000 do
+        user(:erlang, user_options)
+      end
 
-    elixir_users = for _ <- 1..1000 do
-      user(:elixir, user_options)
-    end
+    elixir_users =
+      for _ <- 1..1000 do
+        user(:elixir, user_options)
+      end
 
-    user_binary = user(:elixir, user_options)
-    |> serialize_user_elixir(convert_to_binary: true)
+    user_binary = serialize_user_elixir(user(:elixir, user_options), convert_to_binary: true)
 
     context = [
       elixir_users: elixir_users,
       erlang_users: erlang_users,
-      user_binary: user_binary,
+      user_binary: user_binary
     ]
+
     {:ok, context}
   end
 
@@ -49,6 +50,7 @@ defmodule BinaryProtocolBenchmark do
     for user <- bench_context[:erlang_users] do
       serialize_user_erlang(user, convert_to_binary: true)
     end
+
     :ok
   end
 
@@ -56,14 +58,15 @@ defmodule BinaryProtocolBenchmark do
     for user <- bench_context[:erlang_users] do
       serialize_user_erlang(user, convert_to_binary: false)
     end
+
     :ok
   end
 
   bench "elixir serialization (iolist_size)" do
     for user <- bench_context[:elixir_users] do
-      serialize_user_elixir(user, convert_to_binary: false)
-      |> :erlang.iolist_size
+      :erlang.iolist_size(serialize_user_elixir(user, convert_to_binary: false))
     end
+
     :ok
   end
 
@@ -71,6 +74,7 @@ defmodule BinaryProtocolBenchmark do
     for user <- bench_context[:elixir_users] do
       serialize_user_elixir(user, convert_to_binary: true)
     end
+
     :ok
   end
 
@@ -78,6 +82,7 @@ defmodule BinaryProtocolBenchmark do
     for user <- bench_context[:elixir_users] do
       serialize_user_elixir(user, convert_to_binary: false)
     end
+
     :ok
   end
 
@@ -85,6 +90,7 @@ defmodule BinaryProtocolBenchmark do
     for _ <- 1..1000 do
       deserialize_user_erlang(bench_context[:user_binary])
     end
+
     :ok
   end
 
@@ -92,6 +98,7 @@ defmodule BinaryProtocolBenchmark do
     for _ <- 1..1000 do
       deserialize_user_elixir(bench_context[:user_binary])
     end
+
     :ok
   end
 end

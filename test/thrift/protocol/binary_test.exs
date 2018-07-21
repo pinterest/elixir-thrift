@@ -3,30 +3,18 @@ defmodule BinaryProtocolTest do
 
   alias Thrift.Protocol.Binary
 
-  @moduletag :integration
-
-  def round_trip_struct(data, serializer_mf, deserializer_mf) do
-    {serializer_mod, serializer_fn} = serializer_mf
-    {deserializer_mod, deserializer_fn} = deserializer_mf
-
-    data = :erlang.apply(serializer_mod, serializer_fn, [data, :binary])
-    serialized = IO.iodata_to_binary(data)
-
-    :erlang.apply(deserializer_mod, deserializer_fn, [serialized])
-  end
-
-  def serialize(module, struct) do
+  defp serialize(module, struct) do
     struct
     |> module.serialize
     |> IO.iodata_to_binary
   end
 
-  def deserialize(module, binary_data) do
+  defp deserialize(module, binary_data) do
     {struct, ""} = module.deserialize(binary_data)
     struct
   end
 
-  def assert_serde(%module{} = struct, thrift_binary_file) do
+  defp assert_serde(%module{} = struct, thrift_binary_file) do
     thrift_binary_file = Path.join("test/static/binary", thrift_binary_file)
     binary_protocol_module = Module.safe_concat(module, BinaryProtocol)
     thrift_binary = File.read!(thrift_binary_file)

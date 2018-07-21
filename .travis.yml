@@ -16,7 +16,6 @@ matrix:
 
 sudo: required
 dist: trusty
-services: docker
 
 env:
   - COVERALLS=false

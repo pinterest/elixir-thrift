@@ -1,5 +1,5 @@
 defmodule BinaryProtocolTest do
-  use ThriftTestCase, gen_erl: true, async: true
+  use ThriftTestCase, async: true
 
   alias Thrift.Protocol.Binary
 
@@ -15,6 +15,26 @@ defmodule BinaryProtocolTest do
     :erlang.apply(deserializer_mod, deserializer_fn, [serialized])
   end
 
+  def serialize(module, struct) do
+    struct
+    |> module.serialize
+    |> IO.iodata_to_binary
+  end
+
+  def deserialize(module, binary_data) do
+    {struct, ""} = module.deserialize(binary_data)
+    struct
+  end
+
+  def assert_serde(%module{} = struct, thrift_binary_file) do
+    thrift_binary_file = Path.join("test/static/binary", thrift_binary_file)
+    binary_protocol_module = Module.safe_concat(module, BinaryProtocol)
+    thrift_binary = File.read!(thrift_binary_file)
+
+    assert serialize(binary_protocol_module, struct) == thrift_binary
+    assert deserialize(binary_protocol_module, thrift_binary) == struct
+  end
+
   @thrift_file name: "enums.thrift", contents: """
   enum Status {
     ACTIVE,
@@ -28,12 +48,8 @@ defmodule BinaryProtocolTest do
   }
   """
   thrift_test "encoding enums" do
-    encoder = {StructWithEnum, :serialize}
-    decoder = {Erlang.Enums, :deserialize_struct_with_enum}
-
-    assert {:StructWithEnum, :undefined} == round_trip_struct(StructWithEnum.new, encoder, decoder)
-    assert {:StructWithEnum, 32} == round_trip_struct(%StructWithEnum{status: Status.evil}, encoder, decoder)
-    assert {:StructWithEnum, 6} == round_trip_struct(%StructWithEnum{status: Status.banned}, encoder, decoder)
+    assert_serde %StructWithEnum{status: Status.banned}, "enums/banned.thriftbin"
+    assert_serde %StructWithEnum{status: Status.evil}, "enums/evil.thriftbin"
   end
 
   @thrift_file name: "scalars.thrift", contents: """
@@ -57,25 +73,14 @@ defmodule BinaryProtocolTest do
   """
 
   thrift_test "it should be able to encode scalar values" do
-    encoder = {Scalars, :serialize}
-    decoder = {Erlang.Scalars, :deserialize_scalars}
-
-    assert Erlang.Scalars.new_scalars(is_true: true) == round_trip_struct(%Scalars{is_true: true}, encoder, decoder)
-
-    assert Erlang.Scalars.new_scalars(byte_value: 127) == round_trip_struct(%Scalars{byte_value: 127}, encoder, decoder)
-
-    assert Erlang.Scalars.new_scalars(sixteen_bits: 12723) == round_trip_struct(%Scalars{sixteen_bits: 12723}, encoder, decoder)
-
-    assert Erlang.Scalars.new_scalars(thirty_two_bits: 18_362_832) == round_trip_struct(%Scalars{thirty_two_bits: 18_362_832}, encoder, decoder)
-
-    assert Erlang.Scalars.new_scalars(sixty_four_bits: 8_872_372) == round_trip_struct(%Scalars{sixty_four_bits: 8_872_372}, encoder, decoder)
-
-    assert Erlang.Scalars.new_scalars(double_value: 2.37219) == round_trip_struct(%Scalars{double_value: 2.37219}, encoder, decoder)
-    # Note: The Erlang decoder will crash on NaN, inf, and -inf, so we won't test those here
-
-    assert Erlang.Scalars.new_scalars(string_value: "I am a string") == round_trip_struct(%Scalars{string_value: "I am a string"}, encoder, decoder)
-
-    assert Erlang.Scalars.new_scalars(raw_binary: <<224, 186, 2, 1, 0>>) == round_trip_struct(%Scalars{raw_binary: <<224, 186, 2, 1, 0>>}, encoder, decoder)
+    assert_serde %Scalars{is_true: true}, "scalars/bool.thriftbin"
+    assert_serde %Scalars{byte_value: 127}, "scalars/byte.thriftbin"
+    assert_serde %Scalars{sixteen_bits: 12723}, "scalars/i16.thriftbin"
+    assert_serde %Scalars{thirty_two_bits: 18_362_832}, "scalars/i32.thriftbin"
+    assert_serde %Scalars{sixty_four_bits: 8_872_372}, "scalars/i64.thriftbin"
+    assert_serde %Scalars{double_value: 2.37219}, "scalars/double.thriftbin"
+    assert_serde %Scalars{string_value: "I am a string"}, "scalars/string.thriftbin"
+    assert_serde %Scalars{raw_binary: <<224, 186, 2, 1, 0>>}, "scalars/binary.thriftbin"
   end
 
   thrift_test "it should not encode unset fields" do
@@ -99,23 +104,18 @@ defmodule BinaryProtocolTest do
    1: optional list<i64> users,
    2: optional list<Weather> weekly_forecast,
    3: optional set<string> taken_usernames,
-   // Lists of structs are broken
-   //  4: list<Friend> friends,
-   // Deserializers for maps break the build
-   // 3: map<i64, Weather> user_forecasts,
-   //  4: map<string, User> users_by_username
+   4: list<Friend> friends,
+   5: map<i64, Weather> user_forecasts,
+   6: map<string, Friend> friends_by_username
   }
   """
 
   thrift_test "containers serialize properly" do
-    encoder = {Containers, :serialize}
-    decoder = {Erlang.Containers, :deserialize_containers}
-
-    # unset containers become undefined
-    assert Erlang.Containers.new_containers() == round_trip_struct(%Containers{}, encoder, decoder)
+    # containers can have no fields set
+    assert_serde %Containers{}, "containers/unset.thriftbin"
 
     # empty containers are sent
-    assert Erlang.Containers.new_containers(users: []) == round_trip_struct(%Containers{users: []}, encoder, decoder)
+    assert_serde %Containers{users: []}, "containers/empty_list.thriftbin"
 
     # containers can contain enums
     forecast = [Weather.sunny,
@@ -125,22 +125,31 @@ defmodule BinaryProtocolTest do
                 Weather.cloudy,
                 Weather.sunny,
                 Weather.sunny]
-    assert Erlang.Containers.new_containers(weekly_forecast: [0, 0, 0, 0, 1, 0, 0]) == round_trip_struct(%Containers{weekly_forecast: forecast}, encoder, decoder)
-    taken_usernames = ["scohen", "pguillory"]
-    assert Erlang.Containers.new_containers(taken_usernames: :sets.from_list(taken_usernames)) == round_trip_struct(%Containers{taken_usernames: MapSet.new(taken_usernames)}, encoder, decoder)
+    assert_serde %Containers{weekly_forecast: forecast}, "containers/enums_list.thriftbin"
 
-    # # containers can contain structs
-    # erlang_friends = [
-    #   Erlang.Containers.new_friend(id: 1, username: "scohen"),
-    #   Erlang.Containers.new_friend(id: 2, username: "pguillory"),
-    #   Erlang.Containers.new_friend(id: 3, username: "dantswain"),
-    # ]
-    # assert Erlang.Containers.new_containers(friends: erlang_friends) == round_trip_struct(%Containers{
-    #       friends:
-    #       [%Friend{id: 1, username: "scohen"},
-    #        %Friend{id: 2, username: "pguillory"},
-    #        %Friend{id: 3, username: "dantswain"}
-    #       ]}, encoder, decoder)
+    taken_usernames = ["scohen", "pguillory"]
+    assert_serde %Containers{taken_usernames: MapSet.new(taken_usernames)}, "containers/strings_set.thriftbin"
+
+    structs_list = %Containers{friends: [
+      %Friend{id: 1, username: "scohen"},
+      %Friend{id: 2, username: "pguillory"},
+      %Friend{id: 3, username: "dantswain"}
+    ]}
+    assert_serde structs_list, "containers/structs_list.thriftbin"
+
+    enums_map = %Containers{user_forecasts: %{
+      1 => Weather.sunny,
+      -1 => Weather.sunny,
+      12345 => Weather.cloudy
+    }}
+    assert_serde enums_map, "containers/enums_map.thriftbin"
+
+    structs_map = %Containers{friends_by_username: %{
+      "scohen" => %Friend{id: 1, username: "scohen"},
+      "pguillory" => %Friend{id: 2, username: "pguillory"},
+      "dantswain" => %Friend{id: 3, username: "dantswain"}
+    }}
+    assert_serde structs_map, "containers/structs_map.thriftbin"
   end
 
   @thrift_file name: "across.thrift", contents: """
@@ -153,16 +162,11 @@ defmodule BinaryProtocolTest do
   """
 
   thrift_test "serializing structs across modules" do
-    encoder = {User, :serialize}
-    decoder = {Erlang.Across, :deserialize_user}
-
-    erl_user = Erlang.Across.new_user(
+    erl_user = %User{
       id: 1234,
-      best_friend: Erlang.Containers.new_friend(id: 3282, username: "stinkypants"))
-
-    assert erl_user == round_trip_struct(%User{
-          id: 1234,
-          best_friend: %Friend{id: 3282, username: "stinkypants"}}, encoder, decoder)
+      best_friend: %Friend{id: 3282, username: "stinkypants"}
+    }
+    assert_serde erl_user, "across/across.thriftbin"
   end
 
   @thrift_file name: "old.thrift", contents: """
@@ -207,96 +211,91 @@ defmodule BinaryProtocolTest do
 
   """
   thrift_test "deserializing scalar fields you don't know about" do
-    changey = Erlang.New.new_changey_struct(
+    changey = %ChangeyStruct{
       id: 12345,
       username: "stinkypants",
-      my_bool: false,
+      new_bool: false,
       new_byte: 3,
       new_double: 19.3,
       new_i16: 4821,
       new_i32: 1_284_291,
       new_i64: 128_382_100_315,
       new_string: "suprise! an unexpected field!",
-      grooviness: 1
-    )
-    {deserialized, ""} = changey
-    |> Erlang.New.serialize_changey_struct
-    |> OldChangeyStruct.BinaryProtocol.deserialize
+      new_enum: Grooviness.partially_good
+    }
+    serialized = serialize(ChangeyStruct.BinaryProtocol, changey)
+    {deserialized, ""} = OldChangeyStruct.BinaryProtocol.deserialize(serialized)
 
     assert %OldChangeyStruct{id: 12345, username: "stinkypants"} == deserialized
   end
 
   thrift_test "deserializing a substruct you don't know about" do
-    sub_struct = Erlang.New.new_sub_struct(password: "letmein")
+    sub_struct = %SubStruct{password: "letmein"}
 
-    changey = Erlang.New.new_changey_struct(
+    changey = %ChangeyStruct{
       id: 12345,
       username: "stinkypants",
       new_substruct: sub_struct
-    )
-    {deserialized, ""} = changey
-    |> Erlang.New.serialize_changey_struct
-    |> OldChangeyStruct.BinaryProtocol.deserialize
+    }
+
+    serialized = serialize(ChangeyStruct.BinaryProtocol, changey)
+    {deserialized, ""} = OldChangeyStruct.BinaryProtocol.deserialize(serialized)
 
     assert %OldChangeyStruct{id: 12345, username: "stinkypants"} == deserialized
   end
 
   thrift_test "deserializing nested structs you don't know about" do
-    sub_sub = Erlang.New.new_sub_sub_struct(is_this_excessive: true)
-    sub = Erlang.New.new_sub_struct(password: "1234", sub_sub: sub_sub)
-    changey = Erlang.New.new_changey_struct(id: 12345,
-                                            username: "stinkypants",
-                                            new_substruct: sub)
+    sub_sub = %SubSubStruct{is_this_excessive: true}
+    sub = %SubStruct{password: "1234", sub_sub: sub_sub}
+    changey = %ChangeyStruct{id: 12345,
+                             username: "stinkypants",
+                             new_substruct: sub}
 
-    {deserialized, ""} = changey
-    |> Erlang.New.serialize_changey_struct
-    |> OldChangeyStruct.BinaryProtocol.deserialize
+    serialized = serialize(ChangeyStruct.BinaryProtocol, changey)
+    {deserialized, ""} = OldChangeyStruct.BinaryProtocol.deserialize(serialized)
 
     assert %OldChangeyStruct{id: 12345, username: "stinkypants"} == deserialized
   end
 
   thrift_test "deserializing a list of structs you don't know about" do
-    sub = Erlang.New.new_sub_struct(password: "1234")
-    changey = Erlang.New.new_changey_struct(id: 12345,
-                                            username: "stinkypants",
-                                            new_list: [sub])
+    sub = %SubStruct{password: "1234"}
+    changey = %ChangeyStruct{id: 12345,
+                             username: "stinkypants",
+                             new_list: [sub]}
 
-    {deserialized, ""} = changey
-    |> Erlang.New.serialize_changey_struct
-    |> OldChangeyStruct.BinaryProtocol.deserialize
+    serialized = serialize(ChangeyStruct.BinaryProtocol, changey)
+    {deserialized, ""} = OldChangeyStruct.BinaryProtocol.deserialize(serialized)
 
     assert %OldChangeyStruct{id: 12345, username: "stinkypants"} == deserialized
   end
 
   thrift_test "deserializing a set of structs you don't know about" do
-    sub = Erlang.New.new_sub_struct(password: "1234")
-    changey = Erlang.New.new_changey_struct(id: 12345,
-                                            username: "stinkypants",
-                                            new_set: :sets.from_list([sub, sub]))
+    sub = %SubStruct{password: "1234"}
+    changey = %ChangeyStruct{id: 12345,
+                             username: "stinkypants",
+                             new_set: MapSet.new([sub, sub])}
 
-    {deserialized, ""} = changey
-    |> Erlang.New.serialize_changey_struct
-    |> OldChangeyStruct.BinaryProtocol.deserialize
+    serialized = serialize(ChangeyStruct.BinaryProtocol, changey)
+    {deserialized, ""} = OldChangeyStruct.BinaryProtocol.deserialize(serialized)
 
     assert %OldChangeyStruct{id: 12345, username: "stinkypants"} == deserialized
   end
 
   thrift_test "deserializing a map of structs you don't know about" do
-    sub = Erlang.New.new_sub_struct(password: "1234")
-    changey = Erlang.New.new_changey_struct(id: 12345,
-                                            username: "stinkypants",
-                                            new_map: :dict.from_list([{1, sub}, {2, sub}]))
+    sub = %SubStruct{password: "1234"}
+    changey = %ChangeyStruct{id: 12345,
+                             username: "stinkypants",
+                             new_map: %{1 => sub, 2 => sub}}
 
-    {deserialized, ""} = changey
-    |> Erlang.New.serialize_changey_struct
-    |> OldChangeyStruct.BinaryProtocol.deserialize
+    serialized = serialize(ChangeyStruct.BinaryProtocol, changey)
+    {deserialized, ""} = OldChangeyStruct.BinaryProtocol.deserialize(serialized)
 
     assert %OldChangeyStruct{id: 12345, username: "stinkypants"} == deserialized
   end
 
   thrift_test "deserializing a recursive sub struct with all types" do
-    sub = Erlang.New.new_sub_struct(password: "1234")
-    twin = Erlang.New.new_changey_struct(
+    sub = %SubStruct{password: "1234"}
+    twin = %ChangeyStruct{
       id: 6789,
       new_bool: false,
       new_byte: 4,
@@ -306,18 +305,17 @@ defmodule BinaryProtocolTest do
       new_double: 22.4,
       new_list: [sub],
       new_string: "This is in the sub struct",
-      new_set: :sets.from_list([sub, sub, sub]),
-      new_map: :dict.from_list([{16, sub}, {32, sub}]),
-      username: "mr. stinky")
+      new_set: MapSet.new([sub, sub, sub]),
+      new_map: %{16 => sub, 32 => sub},
+      username: "mr. stinky"}
 
-    changey = Erlang.New.new_changey_struct(
+    changey = %ChangeyStruct{
       id: 12345,
       username: "stinkypants",
-      my_twin: twin)
+      my_twin: twin}
 
-    {deserialized, ""} = changey
-    |> Erlang.New.serialize_changey_struct
-    |> OldChangeyStruct.BinaryProtocol.deserialize
+    serialized = serialize(ChangeyStruct.BinaryProtocol, changey)
+    {deserialized, ""} = OldChangeyStruct.BinaryProtocol.deserialize(serialized)
 
     assert %OldChangeyStruct{id: 12345, username: "stinkypants"} == deserialized
   end

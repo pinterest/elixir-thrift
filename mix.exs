@@ -19,7 +19,6 @@ defmodule Thrift.Mixfile do
      deps: deps(),
 
      # Build Environment
-     erlc_paths: erlc_paths(Mix.env),
      elixirc_paths: elixirc_paths(Mix.env),
      compilers: [:leex, :yecc, :erlang, :elixir, :app],
 
@@ -59,9 +58,6 @@ defmodule Thrift.Mixfile do
       applications: [:logger, :connection, :ranch, :ssl],
     ]
   end
-
-  defp erlc_paths(:test), do: ["src", "test/support/src"]
-  defp erlc_paths(_),     do: ["src"]
 
   defp elixirc_paths(:test), do: ["lib", "test/support/lib"]
   defp elixirc_paths(_),     do: ["lib"]

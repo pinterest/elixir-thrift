@@ -1,5 +1,5 @@
 defmodule Thrift.Generator.ServiceTest do
-  use ThriftTestCase, gen_erl: true
+  use ThriftTestCase
 
   @thrift_file name: "simple_service.thrift", contents: """
   namespace elixir Services.Simple
@@ -35,6 +35,30 @@ defmodule Thrift.Generator.ServiceTest do
       {:ok, {nil, nil}}
     end
 
+    def ping(), do: handle_function(:ping, [])
+
+    def check_username(username), do: handle_function(:check_username, [username])
+
+    def update_username(id, new_username), do: handle_function(:update_username, [id, new_username])
+
+    def get_by_id(user_id), do: handle_function(:get_by_id, [user_id])
+
+    def are_friends(user_a, user_b), do: handle_function(:are_friends, [user_a, user_b])
+
+    def mark_inactive(user_id), do: handle_function(:mark_inactive, [user_id])
+
+    def do_some_work(work), do: handle_function(:do_some_work, [work])
+
+    def friend_ids_of(user_id), do: handle_function(:friend_ids_of, [user_id])
+
+    def friend_nicknames(user_id), do: handle_function(:friend_nicknames, [user_id])
+
+    def tags(user_id), do: handle_function(:tags, [user_id])
+
+    def(unquote(:and)(left, right)) do
+      handle_function(:and, [left, right])
+    end
+
     def start_link do
       GenServer.start_link(__MODULE__, [], name: __MODULE__)
     end
@@ -66,8 +90,8 @@ defmodule Thrift.Generator.ServiceTest do
 
     defp parse_reply(reply) do
       case reply do
-        {:exception, e} ->
-          throw e
+        {:exception, module, attributes} ->
+          raise(module, attributes)
 
         :noreply ->
           :ok
@@ -75,7 +99,7 @@ defmodule Thrift.Generator.ServiceTest do
           :timer.sleep(amount)
           parse_reply(reply)
         reply ->
-          {:reply, reply}
+          reply
       end
     end
   end
@@ -83,29 +107,19 @@ defmodule Thrift.Generator.ServiceTest do
   alias Thrift.TApplicationException
   alias Thrift.ConnectionError
   alias Thrift.Generator.ServiceTest.User
-  alias Thrift.Generator.ServiceTest.SimpleService.Binary.Framed.Client
+  alias Thrift.Generator.ServiceTest.SimpleService.Binary.Framed.{Client, Server}
   alias Thrift.Generator.ServiceTest.UsernameTakenException
 
-  defp start_server(recv_timeout \\ :infinity) do
-    opts = [
-      port: 0,
-      service: :simple_service_thrift,
-      handler: ServerSpy,
-      socket_opts: [recv_timeout: recv_timeout],
-      framed: true]
-
-    case :thrift_socket_server.start(opts) do
-      {:ok, pid} ->
-        port = GenServer.call(pid, {:get, :port})
-        {:ok, pid, port}
-      error ->
-        error
-    end
+  defp start_server(opts \\ []) do
+    {:ok, pid} = Server.start_link(ServerSpy, 0, opts)
+    name = Keyword.get(opts, :name, ServerSpy)
+    port = :ranch.get_port(name)
+    {:ok, pid, port}
   end
 
   defp stop_server(server_pid) when is_pid(server_pid) do
     ref = Process.monitor(server_pid)
-    :thrift_socket_server.stop(server_pid)
+    :ok = Server.stop(server_pid)
     assert_receive {:DOWN, ^ref, _, _, _}
   end
 
@@ -116,8 +130,8 @@ defmodule Thrift.Generator.ServiceTest do
 
   setup do
     {:ok, server, port} = start_server()
-    {:ok, client} = Client.start_link('127.0.0.1', port,
-                                            [tcp_opts: [timeout: 5000]])
+    {:ok, client} = Client.start_link("127.0.0.1", port,
+                                      [tcp_opts: [timeout: 5000]])
     {:ok, handler_pid} = ServerSpy.start_link
 
     on_exit fn ->
@@ -182,14 +196,14 @@ defmodule Thrift.Generator.ServiceTest do
 
     {:ok, true} = Client.ping(ctx.client)
 
-    assert {:ping, {}} == ServerSpy.get_args
+    assert {:ping, []} == ServerSpy.get_args
   end
 
   thrift_test "it should be able to update the username", ctx do
     ServerSpy.set_reply(true)
 
     assert {:ok, true} = Client.update_username(ctx.client, 1234, "stinkypants")
-    assert {:update_username, {1234, "stinkypants"}} == ServerSpy.get_args
+    assert {:update_username, [1234, "stinkypants"]} == ServerSpy.get_args
 
   end
 
@@ -200,12 +214,13 @@ defmodule Thrift.Generator.ServiceTest do
                                                   %User{id: 1, username: "stinky"},
                                                   %User{id: 28, username: "less_stinky"})
 
-    expected_args = {:are_friends, {{:User, 1, "stinky"}, {:User, 28, "less_stinky"}}}
+    expected_args = {:are_friends, [%User{id: 1, username: "stinky"},
+                                    %User{id: 28, username: "less_stinky"}]}
     assert expected_args == ServerSpy.get_args
   end
 
   thrift_test "it should be able to return structs", ctx do
-    ServerSpy.set_reply({:User, 28_392, 'stinky'})
+    ServerSpy.set_reply(%User{id: 28_392, username: "stinky"})
 
     {:ok, user} = Client.get_by_id(ctx.client, 12_345)
 
@@ -213,7 +228,7 @@ defmodule Thrift.Generator.ServiceTest do
   end
 
   thrift_test "it should handle expected exceptions", ctx do
-    ServerSpy.set_reply({:exception, {:UsernameTakenException, 'oh noes'}})
+    ServerSpy.set_reply({:exception, UsernameTakenException, [message: "oh noes"]})
 
     {:error, {:exception, exc}} = Client.update_username(ctx.client, 8382, "dude")
 
@@ -224,13 +239,12 @@ defmodule Thrift.Generator.ServiceTest do
     ServerSpy.set_reply(:this_isnt_a_valid_reply)
 
     {:error, {:exception, ex}} = Client.update_username(ctx.client, 1234, "user")
-    assert %TApplicationException{
-      message: "An unknown handler error occurred.",
-      type: :unknown} = ex
+    assert %TApplicationException{message: message, type: :internal_error} = ex
+    assert message =~ "Thrift.InvalidValueError"
   end
 
   thrift_test "bang functions return only the value", ctx do
-    ServerSpy.set_reply({:User, 2, 'stinky'})
+    ServerSpy.set_reply(%User{id: 2, username: "stinky"})
 
     assert %User{id: 2, username: "stinky"} == Client.get_by_id!(ctx.client, 1234)
   end
@@ -253,7 +267,7 @@ defmodule Thrift.Generator.ServiceTest do
   end
 
   thrift_test "it raises an exception with a bang function", ctx do
-    ServerSpy.set_reply({:exception, {:UsernameTakenException, 'blowie up'}})
+    ServerSpy.set_reply({:exception, UsernameTakenException, [message: "blowie up"]})
 
     assert_raise UsernameTakenException, fn ->
       Client.update_username!(ctx.client, 821, "foo")
@@ -272,7 +286,7 @@ defmodule Thrift.Generator.ServiceTest do
   end
 
   thrift_test "it handles void functions that do throw exceptions", ctx do
-    ServerSpy.set_reply({:exception, {:UsernameTakenException, 'blowie up'}})
+    ServerSpy.set_reply({:exception,  UsernameTakenException, [message: "blowie up"]})
     assert_raise UsernameTakenException, fn ->
       Client.check_username!(ctx.client, "foo")
     end
@@ -294,14 +308,14 @@ defmodule Thrift.Generator.ServiceTest do
   end
 
   thrift_test "it handles returning a map", ctx do
-    ServerSpy.set_reply(:dict.from_list([{'bernie', 281}, {'brownie', 9924}]))
+    ServerSpy.set_reply(%{"bernie" => 281, "brownie" => 9924})
 
     expected = %{"bernie" => 281, "brownie" => 9924}
     assert {:ok, expected} == Client.friend_nicknames(ctx.client, 4810)
   end
 
   thrift_test "it handles returning a set", ctx do
-    ServerSpy.set_reply(:sets.from_list(['sports', 'debate', 'motorcycles']))
+    ServerSpy.set_reply(MapSet.new(["sports", "debate", "motorcycles"]))
 
     expected = MapSet.new(["sports", "debate", "motorcycles"])
     assert {:ok, expected} == Client.tags(ctx.client, 91_281)
@@ -345,17 +359,14 @@ defmodule Thrift.Generator.ServiceTest do
   thrift_test "clients exit on connection timeout" do
     Process.flag(:trap_exit, true)
 
-    {:ok, new_server, new_server_port} = start_server(20)
+    opts = [tcp_opts: [recv_timeout: 20], name: :connection_timeout_test]
+    {:ok, _new_server, new_server_port} = start_server(opts)
     {:ok, client} = Client.start_link("127.0.0.1", new_server_port, [])
     :timer.sleep(50) # sleep beyond the server's recv_timeout
 
     assert {:error, closed} = Client.friend_ids_of(client, 1234)
     assert closed in [:closed, :econnaborted]
     assert_receive {:EXIT, ^client, {:error, ^closed}}
-
-    on_exit fn ->
-      stop_server(new_server)
-    end
   end
 
   thrift_test "clients exit if they try to use a closed client", ctx do

@@ -44,8 +44,7 @@ defmodule ThriftTestCase do
   defp compile_and_build_helpers(module) do
     files = get_thrift_files(module)
     dir = Module.get_attribute(module, :thrift_test_dir)
-    opts = Module.get_attribute(module, :thrift_test_opts)
-    generate_files(files, module, dir, opts)
+    generate_files(files, module, dir)
   end
 
   defp get_thrift_files(module) do
@@ -83,17 +82,7 @@ defmodule ThriftTestCase do
     not Enum.any?(modules, &(:lists.prefix(&1, module) and &1 != module))
   end
 
-  defp generate_files(files, namespace, dir, opts) do
-    generate_elixir_files(files, namespace, dir)
-
-    if opts[:gen_erl] do
-      generate_erlang_files(files, namespace, dir)
-    else
-      :ok
-    end
-  end
-
-  defp generate_elixir_files(files, namespace, dir) do
+  defp generate_files(files, namespace, dir) do
     files
     |> Enum.map(&write_thrift_file(&1, namespace, dir))
     |> Enum.flat_map(&Thrift.Generator.generate!(&1, dir))
@@ -129,166 +118,6 @@ defmodule ThriftTestCase do
       end
     end
     :ok
-  end
-
-  defp generate_erlang_files(list_of_files, namespace, dir) do
-    erlang_source_dir = Path.join(dir, "src")
-
-    File.mkdir(erlang_source_dir)
-
-    outdir = Path.relative_to(erlang_source_dir, @project_root)
-    reldir = Path.relative_to(dir, @project_root)
-
-    for file <- list_of_files do
-      filename = Path.join(reldir, file[:name])
-      {_, 0} = System.cmd(System.get_env("THRIFT") || "thrift",
-                          ["-out", outdir,
-                          "--gen", "erl", "-r", filename],
-                          cd: @project_root)
-    end
-
-    for source_file <- Path.wildcard("#{erlang_source_dir}/*.erl") do
-      ensure_erlang_compiled(source_file)
-    end
-
-    Path.wildcard("#{erlang_source_dir}/*_types.hrl")
-    |> Enum.map(&ensure_record_compiled/1)
-    |> Enum.each(&Module.put_attribute(namespace, :thrift_record_modules, &1))
-  end
-
-  defp ensure_erlang_compiled(source_file) do
-    module = erlang_module(source_file)
-    if loaded?(source_file, module) do
-      module
-    else
-      erlang_compile(source_file)
-    end
-  end
-
-  defp loaded?(source_file \\ nil, mod) do
-    source_file = source_file && String.to_charlist(source_file)
-    case :code.is_loaded(mod) do
-      {:file, ^source_file} ->
-        true
-      {:file, :in_memory} ->
-        # TODO: remove clause when Elixir ~> 1.6 as replaced by [] (atom broke spec)
-        true
-      {:file, []} ->
-        true
-      _ ->
-        false
-    end
-  end
-
-  defp erlang_compile(source_file) do
-    source_file = String.to_charlist(source_file)
-    {:ok, mod_name, code} = :compile.file(source_file, [:binary])
-
-    {:module, ^mod_name} = :code.load_binary(mod_name, source_file, code)
-    mod_name
-  end
-
-  defp erlang_module(filepath) do
-    filepath
-    |> Path.basename
-    |> Path.rootname
-    |> String.to_atom
-  end
-
-  defp ensure_record_compiled(file_path) do
-    erlang_module = erlang_module(file_path)
-
-    record_module_name = erlang_module
-    |> Atom.to_string
-    |> String.replace("_types", "")
-    |> Macro.camelize
-    |> String.to_atom
-
-    module_name = Module.concat(Erlang, record_module_name)
-
-    if loaded?(module_name) do
-      module_name
-    else
-      record_compile(file_path, erlang_module, module_name)
-    end
-  end
-
-  defp record_compile(file_path, erlang_module, module_name) do
-    records = Enum.map(Record.extract_all(from: file_path), fn {record_name, fields} ->
-      underscored_record_name = record_name
-      |> Atom.to_string
-      |> Macro.underscore
-      |> String.to_atom
-
-      new_fn_name = :"new_#{underscored_record_name}"
-      serialize_fn_name = :"serialize_#{underscored_record_name}"
-      deserialize_fn_name = :"deserialize_#{underscored_record_name}"
-
-      match = Enum.map(fields, fn _ -> Macro.var(:_, nil) end)
-      kw_match = Enum.map(fields, fn {name, _} -> {name, Macro.var(name, nil)} end)
-      variable_assigns = Enum.map(fields, fn {name, default} ->
-        field_var = Macro.var(name, nil)
-        quote do
-          unquote(field_var) = Keyword.get(opts, unquote(name), unquote(default))
-        end
-      end)
-
-      quote do
-        Record.defrecord unquote(underscored_record_name), unquote(fields)
-        def unquote(new_fn_name)(opts \\ []) do
-          unquote_splicing(variable_assigns)
-          record = unquote(underscored_record_name)(unquote(kw_match))
-          :erlang.setelement(1, record, unquote(record_name))
-        end
-
-        def unquote(serialize_fn_name)(record, opts \\ [])
-        def unquote(serialize_fn_name)({unquote(record_name), unquote_splicing(match)} = record, opts) do
-          record = :erlang.setelement(1, record, unquote(underscored_record_name))
-          unquote(serialize_fn_name)(record, opts)
-        end
-        def unquote(serialize_fn_name)({unquote(underscored_record_name), unquote_splicing(match)} = record, opts) do
-          record = :erlang.setelement(1, record, unquote(record_name))
-          struct_info = {:struct, {unquote(erlang_module), unquote(record_name)}}
-          iolist_struct = with({:ok, tf} <- :thrift_memory_buffer.new_transport_factory(),
-                               {:ok, pf} <- :thrift_binary_protocol.new_protocol_factory(tf, []),
-                               {:ok, binary_protocol} <- pf.()) do
-
-            {proto, :ok} = :thrift_protocol.write(binary_protocol, {struct_info, record})
-            {_, data} = :thrift_protocol.flush_transport(proto)
-            data
-          end
-
-          if Keyword.get(opts, :convert_to_binary, true) do
-            :erlang.iolist_to_binary(iolist_struct)
-          else
-            iolist_struct
-          end
-        end
-
-        def unquote(deserialize_fn_name)(binary_data) do
-          struct_info = {:struct, {unquote(erlang_module), unquote(record_name)}}
-          try do
-            with({:ok, memory_buffer_transport} <- :thrift_memory_buffer.new(binary_data),
-                 {:ok, binary_protocol} <- :thrift_binary_protocol.new(memory_buffer_transport),
-                 {_, {:ok, record}} <- :thrift_protocol.read(binary_protocol, struct_info)) do
-
-              record
-            end
-          rescue _ ->
-              {:error, :cant_decode}
-          end
-        end
-      end
-    end)
-
-    Code.compile_quoted(quote do
-      defmodule unquote(module_name) do
-        require Record
-        unquote_splicing(records)
-      end
-    end)
-
-    module_name
   end
 
   defmacro thrift_test(message, var \\ quote(do: _), do: block) do

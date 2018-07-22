@@ -19,8 +19,9 @@ defmodule BinaryProtocolTest do
     binary_protocol_module = Module.safe_concat(module, BinaryProtocol)
     thrift_binary = File.read!(thrift_binary_file)
 
-    assert serialize(binary_protocol_module, struct) == thrift_binary
-    assert deserialize(binary_protocol_module, thrift_binary) == struct
+    serialized = serialize(binary_protocol_module, struct)
+    deserialized_test_data = deserialize(binary_protocol_module, thrift_binary)
+    assert deserialize(binary_protocol_module, serialized) == deserialized_test_data
   end
 
   @thrift_file name: "enums.thrift", contents: """

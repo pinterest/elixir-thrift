@@ -26,7 +26,6 @@ defmodule Thrift.Mixfile do
      # Testing
      test_coverage: [tool: ExCoveralls],
      preferred_cli_env: [
-       "bench": :test,
        "coveralls": :test,
        "coveralls.detail": :test,
        "coveralls.html": :test,
@@ -72,7 +71,6 @@ defmodule Thrift.Mixfile do
       {:excoveralls, "~> 0.9", only: [:dev, :test]},
       {:credo, "~> 0.9", only: [:dev, :test]},
       {:dialyxir, "~> 0.5", only: :dev, runtime: false},
-      {:benchfella, "~> 0.3", only: [:dev, :test]},
       {:connection, "~> 1.0"},
       {:ranch, "~> 1.4"},
      ]

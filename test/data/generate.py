@@ -21,7 +21,6 @@ def mkdir(dir):
 def find_thrift_definitions():
     thrift_definitions = []
     for filename in iglob('../**/*.exs', recursive=True):
-        file_contents = ''
         with open(filename, 'r') as f:
             file_contents = f.read()
         results = re.findall(r'@thrift_file name: "(.+?)", contents: """(.*?)"""', file_contents, re.DOTALL)
@@ -36,14 +35,14 @@ def write_thrift_files(thrift_definitions):
         full_path = os.path.join('thrift', filename)
         with open(full_path, 'w') as f:
             f.write(definition)
-            thrift_files.append(full_path)
+        thrift_files.append(full_path)
     return thrift_files
 
 
 def generate_python_files(thrift_files):
     mkdir('generated')
     for thrift_file in thrift_files:
-        command = 'thrift -I thrift --gen py --out generated'.split(' ') + [thrift_file]
+        command = 'thrift -I thrift --gen py --out generated'.split() + [thrift_file]
         subprocess.run(command)
     sys.path.append('generated')
 

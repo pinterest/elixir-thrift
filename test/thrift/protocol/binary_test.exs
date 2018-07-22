@@ -15,7 +15,7 @@ defmodule BinaryProtocolTest do
   end
 
   defp assert_serde(%module{} = struct, thrift_binary_file) do
-    thrift_binary_file = Path.join("test/static/binary", thrift_binary_file)
+    thrift_binary_file = Path.join("test/data/binary", thrift_binary_file)
     binary_protocol_module = Module.safe_concat(module, BinaryProtocol)
     thrift_binary = File.read!(thrift_binary_file)
 

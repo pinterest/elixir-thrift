@@ -1,3 +1,0 @@
-#!/bin/bash
-rootdir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && cd .. && pwd )"
-docker run -v ${rootdir}:/thrift-elixir -w /thrift-elixir/${DOCKER_THRIFT_OUT_ROOT} --rm thrift:0.10.0 thrift $*

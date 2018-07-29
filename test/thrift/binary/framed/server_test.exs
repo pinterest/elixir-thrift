@@ -38,8 +38,8 @@ defmodule Servers.Binary.Framed.IntegrationTest do
       alias Servers.Binary.Framed.IntegrationTest, as: T
       alias Servers.Binary.Framed.IntegrationTest.OtherException
       alias Servers.Binary.Framed.IntegrationTest.ServerTest
-      alias Servers.Binary.Frames.IntegrationTest.TestException
-      alias Servers.Binary.Frames.IntegrationTest.UserNotFound
+      alias Servers.Binary.Framed.IntegrationTest.TestException
+      alias Servers.Binary.Framed.IntegrationTest.UserNotFound
       @behaviour ServerTest.Handler
 
       def do_async(message) do

@@ -85,14 +85,11 @@ defmodule Servers.Binary.Framed.IntegrationTest do
     {:ok, agent} = Agent.start_link(fn -> nil end, name: :server_args)
 
     on_exit fn ->
-      if Process.alive?(agent) do
-        ref = Process.monitor(agent)
-        Agent.stop(agent)
+      ref = Process.monitor(agent)
 
-        receive do
-          {:DOWN, ^ref, _, _, _} ->
-            :ok
-        end
+      receive do
+        {:DOWN, ^ref, _, _, _} ->
+          :ok
       end
     end
 

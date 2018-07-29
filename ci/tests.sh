@@ -2,26 +2,19 @@
 
 # Runs the test suite for the travis build
 #
-# If CHECK_FORMAT is true, then we run the mix formatter to ensure that
-# all files are correctly formatted.
-# If COVERALLS is true, then we report test coverage to coveralls.
+# If EXTRA_CI_CHECKS is true, then we report test coverage to coveralls, and run
+# the mix formatter to ensure all files are formatted.
 #
-# This script could be used for local testing as long as COVERALLS is not set.
+# This script could be used for local testing as long as EXTRA_CI_CHECKS is not set.
 
 export MIX_ENV=test
 
-if [ "$CHECK_FORMAT" = true ]
+if [ "$EXTRA_CI_CHECKS" = true  ]
 then
-  echo "Checking that files are formatted"
+  echo "Checking that all code is formatted"
   mix format --check-formatted
-fi
-
-if [ "$COVERALLS" = true ]
-then
   echo "Coveralls will be reported"
-  TEST_COMMAND=coveralls.travis
+  mix coveralls.travis
 else
-  TEST_COMMAND=test
+  mix test
 fi
-
-mix "$TEST_COMMAND"

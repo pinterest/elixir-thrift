@@ -14,13 +14,10 @@ matrix:
       otp_release: 19.3
     - elixir: 1.7
       otp_release: 21.0
-      env:
-        - CHECK_FORMAT=true
-        - COVERALLS=true
+      env: EXTRA_CI_CHECKS=true
 
 env:
-  - CHECK_FORMAT=false
-  - COVERALLS=false
+  - EXTRA_CI_CHECKS=false
 
 script:
   - MIX_ENV=test mix deps.compile

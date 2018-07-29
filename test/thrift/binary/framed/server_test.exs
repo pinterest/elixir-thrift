@@ -81,24 +81,21 @@ defmodule Servers.Binary.Framed.IntegrationTest do
     {:ok, handler_name: mod_name, port: server_port}
   end
 
-  setup(ctx) do
+  setup(%{port: port, test: client_name}) do
     {:ok, agent} = Agent.start_link(fn -> nil end, name: :server_args)
 
     on_exit fn ->
-      if Process.alive?(agent) do
-        ref = Process.monitor(agent)
-        Agent.stop(agent)
+      ref = Process.monitor(agent)
 
-        receive do
-          {:DOWN, ^ref, _, _, _} ->
-            :ok
-        end
+      receive do
+        {:DOWN, ^ref, _, _, _} ->
+          :ok
       end
     end
 
-    {:ok, client} = Client.start_link("localhost", ctx.port, name: TestClientName)
+    {:ok, client} = Client.start_link("localhost", port, name: client_name)
 
-    {:ok, client: client}
+    {:ok, client: client, client_name: client_name}
   end
 
   thrift_test "it can return a simple boolean value", ctx do
@@ -160,11 +157,11 @@ defmodule Servers.Binary.Framed.IntegrationTest do
     assert "username" == Agent.get(:server_args, &(&1))
   end
 
-  thrift_test "client can be found by name", ctx do
-    assert ctx.client == Process.whereis(TestClientName)
+  thrift_test "client can be found by name", %{client: client, client_name: name} do
+    assert client == Process.whereis(name)
   end
 
-  thrift_test "client methods can be called by name instead of pid", _ctx do
-    assert {:ok, true} == Client.ping(TestClientName)
+  thrift_test "client methods can be called by name instead of pid", %{client_name: name} do
+    assert {:ok, true} == Client.ping(name)
   end
 end

@@ -6,10 +6,10 @@ defmodule Thrift.Generator.Utils do
   alias Thrift.AST.{
     Constant,
     Field,
-    Struct,
     Schema,
-    TypeRef,
+    Struct,
     TEnum,
+    TypeRef,
     ValueRef,
   }
   alias Thrift.NaN

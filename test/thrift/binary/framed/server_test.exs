@@ -35,10 +35,12 @@ defmodule Servers.Binary.Framed.IntegrationTest do
 
   def define_handler do
     defmodule ServerTestHandler do
-      alias Servers.Binary.Framed.IntegrationTest.ServerTest.Handler
-      alias Servers.Binary.Framed.IntegrationTest.{TestException, UserNotFound, OtherException}
       alias Servers.Binary.Framed.IntegrationTest, as: T
-      @behaviour Handler
+      alias Servers.Binary.Framed.IntegrationTest.OtherException
+      alias Servers.Binary.Framed.IntegrationTest.ServerTest
+      alias Servers.Binary.Frames.IntegrationTest.TestException
+      alias Servers.Binary.Frames.IntegrationTest.UserNotFound
+      @behaviour ServerTest.Handler
 
       def do_async(message) do
         Agent.update(:server_args, fn(_) -> message end)
@@ -70,7 +72,8 @@ defmodule Servers.Binary.Framed.IntegrationTest do
     end
   end
 
-  alias Servers.Binary.Framed.IntegrationTest.ServerTest.Binary.Framed.{Client, Server}
+  alias Servers.Binary.Framed.IntegrationTest.ServerTest.Binary.Framed.Client
+  alias Servers.Binary.Framed.IntegrationTest.ServerTest.Binary.Framed.Server
   alias Thrift.TApplicationException
 
   setup_all do

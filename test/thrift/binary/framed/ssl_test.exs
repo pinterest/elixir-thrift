@@ -102,4 +102,3 @@ defmodule Servers.Binary.Framed.SSLTest do
     get_certs()
   end
 end
-

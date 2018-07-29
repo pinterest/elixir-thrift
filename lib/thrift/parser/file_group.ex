@@ -12,20 +12,19 @@ defmodule Thrift.Parser.FileGroup do
   alias Thrift.Parser.{
     FileGroup,
     FileRef,
+    ParsedFile,
     Resolver,
-    ParsedFile
   }
-
   alias Thrift.AST.{
-    TEnum,
     Constant,
     Exception,
     Field,
     Namespace,
-    TypeRef,
     Schema,
     Service,
     Struct,
+    TEnum,
+    TypeRef,
     Union,
     ValueRef,
   }

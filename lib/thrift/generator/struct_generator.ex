@@ -3,8 +3,8 @@ defmodule Thrift.Generator.StructGenerator do
     Exception,
     Field,
     Struct,
-    TypeRef,
     TEnum,
+    TypeRef,
     Union,
   }
   alias Thrift.Generator.{StructBinaryProtocol, Utils}

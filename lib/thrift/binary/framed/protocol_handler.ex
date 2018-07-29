@@ -14,8 +14,8 @@ defmodule Thrift.Binary.Framed.ProtocolHandler do
 
   alias Thrift.{
     Protocol,
+    TApplicationException,
     Transport.SSL,
-    TApplicationException
   }
   require Logger
 

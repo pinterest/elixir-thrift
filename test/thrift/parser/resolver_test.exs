@@ -3,9 +3,9 @@ defmodule ResolverTest do
 
   alias Thrift.AST.{
     Field,
-    TEnum,
     Service,
     Struct,
+    TEnum,
     Union
   }
   alias Thrift.Parser.FileGroup

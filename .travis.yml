@@ -14,9 +14,12 @@ matrix:
       otp_release: 19.3
     - elixir: 1.7
       otp_release: 21.0
-      env: COVERALLS=true
+      env:
+        - CHECK_FORMAT=true
+        - COVERALLS=true
 
 env:
+  - CHECK_FORMAT=false
   - COVERALLS=false
 
 script:

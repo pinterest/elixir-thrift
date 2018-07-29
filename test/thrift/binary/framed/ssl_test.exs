@@ -64,9 +64,8 @@ defmodule Servers.Binary.Framed.SSLTest do
     end
 
     @tag ssl_opts: []
-    thrift_test "plain client will be rejected", ctx do
+    thrift_test "plain client will be rejected", %{plain_client: client} do
       Process.flag(:trap_exit, true)
-      client = ctx.plain_client
       assert {:error, :closed} == Client.ping(client)
       assert_receive {:EXIT, ^client, {:error, :closed}}
     end

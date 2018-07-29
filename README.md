@@ -1,8 +1,5 @@
 # A Pure Elixir Thrift Library
 
-[![Build Status](https://travis-ci.org/pinterest/elixir-thrift.svg?branch=master)](https://travis-ci.org/pinterest/elixir-thrift)
-[![Coverage Status](https://coveralls.io/repos/pinterest/elixir-thrift/badge.svg?branch=master&service=github)](https://coveralls.io/github/pinterest/elixir-thrift?branch=master)
-
 This package contains an implementation of [Thrift](https://thrift.apache.org/) for Elixir.
 It includes a Thrift IDL parser, a code generator, a binary framed client and a binary framed server.
 

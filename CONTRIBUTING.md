@@ -1,8 +1,10 @@
 # Contributing
 
-First off, thanks for taking the time to contribute! We welcome contributions
-from everyone, and this guide will answer some common questions about how this
-project works.
+First off, thanks for taking the time to contribute! This guide will answer
+some common questions about how this project works.
+
+While this is a Pinterest open source project, we welcome contributions from
+everyone. Several regular outside contributors are also project maintainers.
 
 ## Making Changes
 
@@ -10,8 +12,12 @@ project works.
 2. Make your changes and verify that `mix test` passes
 3. Commit your work and push to a topic branch on your fork
 4. Submit a [pull request](https://github.com/pinterest/elixir-thrift/compare/)
+5. Participate in the code review process by responding to feedback
 
-To increase changes that your pull request will be accepted:
+Once there is agreement that the code is in good shape, one of the project's
+maintainers will merge your contribution.
+
+To increase the chances that your pull request will be accepted:
 
 - Follow our [style guide](#Style)
 - Write tests for your changes

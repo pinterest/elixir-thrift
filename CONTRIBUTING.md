@@ -25,9 +25,9 @@ To increase the chances that your pull request will be accepted:
 
 ## Style
 
-We plan to adopt [`mix format`][]-based code formatting soon. The format will
-be enforced by Travis CI, so please make sure your code is well formatted
-*before* you push your branch so those checks will pass.
+We use [`mix format`][]-based code formatting. The format will be enforced by
+Travis CI, so please make sure your code is well formatted *before* you push
+your branch so those checks will pass.
 
 We also use [Credo][] for static analysis and code consistency. You can run it
 locally via `mix credo`. [Ebert][] will also comment on any issues it finds in
@@ -42,7 +42,7 @@ pull requests.
 ### Static Test Data
 
 Some serialization tests use static test data to verify their correctness.
-These data files live under `test/data/` and have `.thriftdata` extensions.
+These data files live under `test/data/` and have `.thriftbin` extensions.
 
 If you're changing any of the serialization routines, or adding some new code
 paths, you may need to (re)generate some of these data files. If that's the

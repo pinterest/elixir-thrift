@@ -24,15 +24,15 @@ defmodule Servers.Binary.Framed.SSLTest do
   end
 
   def build_ssl_required_server(ctx) do
-    {:ok, _} = Server.start_link(ctx[:handler_name], 0, [ssl_opts: [enabled: true, configure: &get_certs/0]])
-    server_port = :ranch.get_port(ctx[:handler_name])
+    {:ok, _} = Server.start_link(ctx[:handler_name], 0, [name: ctx.test, ssl_opts: [enabled: true, configure: &get_certs/0]])
+    server_port = :ranch.get_port(ctx.test)
 
     {:ok, port: server_port}
   end
 
   def build_ssl_optional_server(ctx) do
-    {:ok, _} = Server.start_link(ctx[:handler_name], 0, [ssl_opts: [enabled: true, configure: &get_certs/0, optional: true]])
-    server_port = :ranch.get_port(ctx[:handler_name])
+    {:ok, _} = Server.start_link(ctx[:handler_name], 0, [name: ctx.test, ssl_opts: [enabled: true, configure: &get_certs/0, optional: true]])
+    server_port = :ranch.get_port(ctx.test)
 
     {:ok, port: server_port}
   end
@@ -64,8 +64,10 @@ defmodule Servers.Binary.Framed.SSLTest do
     end
 
     @tag ssl_opts: []
-    thrift_test "plain client will be rejected", ctx do
-      assert {:error, :closed} == Client.ping(ctx.plain_client)
+    thrift_test "plain client will be rejected", %{plain_client: client} do
+      Process.flag(:trap_exit, true)
+      assert {:error, :closed} == Client.ping(client)
+      assert_receive {:EXIT, ^client, {:error, :closed}}
     end
   end
 

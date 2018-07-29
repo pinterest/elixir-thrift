@@ -42,8 +42,8 @@ defmodule Thrift.Generator.StructBinaryProtocol do
     Exception,
     Field,
     Struct,
-    TypeRef,
     TEnum,
+    TypeRef,
     Union,
   }
   alias Thrift.Generator.Utils

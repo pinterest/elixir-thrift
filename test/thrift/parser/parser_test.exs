@@ -16,8 +16,8 @@ defmodule Thrift.Parser.ParserTest do
     Schema,
     Service,
     Struct,
-    TypeRef,
     TEnum,
+    TypeRef,
     Union,
     ValueRef,
   }

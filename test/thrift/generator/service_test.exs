@@ -104,11 +104,12 @@ defmodule Thrift.Generator.ServiceTest do
     end
   end
 
-  alias Thrift.TApplicationException
   alias Thrift.ConnectionError
+  alias Thrift.Generator.ServiceTest.SimpleService.Binary.Framed.Client
+  alias Thrift.Generator.ServiceTest.SimpleService.Binary.Framed.Server
   alias Thrift.Generator.ServiceTest.User
-  alias Thrift.Generator.ServiceTest.SimpleService.Binary.Framed.{Client, Server}
   alias Thrift.Generator.ServiceTest.UsernameTakenException
+  alias Thrift.TApplicationException
 
   defp start_server(opts \\ []) do
     {:ok, pid} = Server.start_link(ServerSpy, 0, opts)

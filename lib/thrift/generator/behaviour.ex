@@ -10,8 +10,8 @@ defmodule Thrift.Generator.Behaviour do
     Exception,
     Field,
     Struct,
-    TypeRef,
     TEnum,
+    TypeRef,
     Union,
   }
   alias Thrift.Generator.Utils

@@ -2,12 +2,9 @@ defmodule Thrift.Generator.Service do
   @moduledoc false
 
   alias Thrift.AST.{Field, Function, Struct}
+  alias Thrift.Generator
+  alias Thrift.Generator.StructGenerator
   alias Thrift.Parser.FileGroup
-  alias Thrift.{
-    Generator,
-    Generator.StructGenerator,
-  }
-
 
   # The response struct uses a %Field{} to represent the service function's
   # return value. Functions can return :void while fields cannot. Until we can

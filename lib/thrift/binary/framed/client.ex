@@ -9,8 +9,8 @@ defmodule Thrift.Binary.Framed.Client do
   `oneway` and `request`.
   """
   alias Thrift.Protocol.Binary
-  alias Thrift.Transport.SSL
   alias Thrift.TApplicationException
+  alias Thrift.Transport.SSL
 
   @immutable_tcp_opts [active: false, packet: 4, mode: :binary]
 

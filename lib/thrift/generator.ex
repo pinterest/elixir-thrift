@@ -5,13 +5,13 @@ defmodule Thrift.Generator do
   """
 
   alias Thrift.AST.{Constant, Schema}
-  alias Thrift.Parser.FileGroup
   alias Thrift.{
     Generator,
     Generator.ConstantGenerator,
     Generator.EnumGenerator,
     Generator.StructGenerator
   }
+  alias Thrift.Parser.FileGroup
 
   @doc """
   Returns the list of target paths that would be generated from a Thrift file.

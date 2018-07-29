@@ -68,7 +68,7 @@ defmodule Thrift.Mixfile do
       {:credo, "~> 0.10", only: [:dev, :test]},
       {:dialyxir, "~> 0.5", only: :dev, runtime: false},
       {:connection, "~> 1.0"},
-      {:ranch, "~> 1.4"},
+      {:ranch, "~> 1.5"},
      ]
   end
 

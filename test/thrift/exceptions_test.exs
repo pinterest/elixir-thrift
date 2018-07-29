@@ -25,17 +25,16 @@ defmodule Thrift.ExceptionsTest do
 
     test "accepts integer type values" do
       assert %TApplicationException{type: :invalid_protocol} =
-        TApplicationException.exception(type: 9)
+               TApplicationException.exception(type: 9)
     end
 
     test "accepts atom type values" do
       assert %TApplicationException{type: :unknown_method} =
-        TApplicationException.exception(type: :unknown_method)
+               TApplicationException.exception(type: :unknown_method)
     end
 
     test "defaults to :unknown for unknown integer type values" do
-      assert %TApplicationException{type: :unknown} =
-        TApplicationException.exception(type: 1000)
+      assert %TApplicationException{type: :unknown} = TApplicationException.exception(type: 1000)
     end
 
     test "raises for unknown atom type values" do
@@ -64,6 +63,7 @@ defmodule Thrift.ExceptionsTest do
 
     test "can convert valid atom type values to integer type values" do
       assert 9 == TApplicationException.type_id(:invalid_protocol)
+
       assert_raise FunctionClauseError, fn ->
         TApplicationException.type_id(:bogus)
       end

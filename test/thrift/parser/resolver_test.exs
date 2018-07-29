@@ -8,12 +8,13 @@ defmodule ResolverTest do
     TEnum,
     Union
   }
+
   alias Thrift.Parser.FileGroup
 
   use ThriftTestHelpers
 
   test "it should be able resolve Struct Refs and fields" do
-    with_thrift_files([
+    with_thrift_files(
       "core/shared.thrift": """
       struct User {
         1: i64 id,
@@ -22,14 +23,16 @@ defmodule ResolverTest do
       }
       """,
       "utils.thrift": """
-       include "core/shared.thrift"
-       service Users {
-         shared.User find_by_id(1: i64 user_id);
-         void delete_user(1: shared.User user);
-       }
-       """, as: :file_group, parse: "utils.thrift"]) do
-
-      service = file_group.schemas["utils"].services[:"Users"]
+      include "core/shared.thrift"
+      service Users {
+        shared.User find_by_id(1: i64 user_id);
+        void delete_user(1: shared.User user);
+      }
+      """,
+      as: :file_group,
+      parse: "utils.thrift"
+    ) do
+      service = file_group.schemas["utils"].services[:Users]
       return_ref = service.functions[:find_by_id].return_type
 
       refute is_nil(return_ref)
@@ -47,34 +50,35 @@ defmodule ResolverTest do
   end
 
   test "resolving non-resolvable types is a no-op" do
-    with_thrift_files([
+    with_thrift_files(
       "utils.thrift": """
-       service NoOp {
-       }
-       """, as: :file_group, parse: "utils.thrift"]) do
-
+      service NoOp {
+      }
+      """,
+      as: :file_group,
+      parse: "utils.thrift"
+    ) do
       assert 43 == FileGroup.resolve(file_group, 43)
       assert [1, 2, 3] == FileGroup.resolve(file_group, [1, 2, 3])
     end
   end
 
   test "it should be able to resolve services" do
-
     with_thrift_files(
       "core/shared.thrift": """
       service Shared {
         bool get_shared(1: i64 id);
       }
       """,
-
       "extendo.thrift": """
       include "core/shared.thrift"
 
       service Extend extends shared.Shared {
         i64 get_extendo_value();
       }
-      """, parse: "extendo.thrift") do
-
+      """,
+      parse: "extendo.thrift"
+    ) do
       shared = FileGroup.resolve(file_group, :"shared.Shared")
 
       assert %Service{} = shared
@@ -84,7 +88,6 @@ defmodule ResolverTest do
       assert %Service{} = extendo
       assert :get_extendo_value in Map.keys(extendo.functions)
     end
-
   end
 
   test "it should handle following includes through several files" do
@@ -96,7 +99,6 @@ defmodule ResolverTest do
         DISABLED
       }
       """,
-
       "core/models.thrift": """
       include "states.thrift"
 
@@ -112,21 +114,20 @@ defmodule ResolverTest do
         5: states.UserState state;
       }
       """,
-
       "user_service/user_service.thrift": """
       include "../core/models.thrift"
       service UserService {
         models.User get_by_id(1: i64 user_id) throws (1: models.UserNotFound unf),
         void set_username(1: models.User user, 2: string username);
       }
-      """, parse: "user_service/user_service.thrift") do
-
+      """,
+      parse: "user_service/user_service.thrift"
+    ) do
       user_state = FileGroup.resolve(file_group, :"states.UserState")
 
       assert %TEnum{values: [ACTIVE: 0, LAPSED: 1, DISABLED: 2]} = user_state
       assert user_state.name == :"states.UserState"
     end
-
   end
 
   test "it should be able to resolve complex includes" do
@@ -138,7 +139,6 @@ defmodule ResolverTest do
         FAILED
       }
       """,
-
       "includes/unions.thrift": """
       include "structs.thrift"
 
@@ -147,10 +147,8 @@ defmodule ResolverTest do
         2: structs.System sys;
       }
       """,
-
       "includes/exceptions.thrift": """
       """,
-
       "includes/structs.thrift": """
       struct User {
         1: i64 id,
@@ -164,7 +162,6 @@ defmodule ResolverTest do
         2: string hostname
       }
       """,
-
       "job_service.thrift": """
       include "includes/unions.thrift"
       include "includes/enums.thrift"
@@ -182,8 +179,9 @@ defmodule ResolverTest do
         boolean cancel(1: i64 job_id);
       }
 
-      """, parse: "job_service.thrift") do
-
+      """,
+      parse: "job_service.thrift"
+    ) do
       job = FileGroup.resolve(file_group, :"job_service.Job")
 
       assert %Struct{name: :"job_service.Job"} = job
@@ -194,7 +192,7 @@ defmodule ResolverTest do
   end
 
   test "it should be able resolve qualified and non-qualified names" do
-    with_thrift_files([
+    with_thrift_files(
       "included.thrift": """
       enum SortType {
         DESC = 100,
@@ -210,8 +208,10 @@ defmodule ResolverTest do
 
       const SortType SORT1 = SortType.ASC;
       const included.SortType SORT2 = included.SortType.ASC;
-      """, as: :file_group, parse: "local.thrift"]) do
-
+      """,
+      as: :file_group,
+      parse: "local.thrift"
+    ) do
       file_group = FileGroup.set_current_module(file_group, :local)
 
       sort1 = FileGroup.resolve(file_group, :"local.SORT1")

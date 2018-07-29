@@ -5,18 +5,20 @@ defmodule Thrift.Generator do
   """
 
   alias Thrift.AST.{Constant, Schema}
+
   alias Thrift.{
     Generator,
     Generator.ConstantGenerator,
     Generator.EnumGenerator,
     Generator.StructGenerator
   }
+
   alias Thrift.Parser.FileGroup
 
   @doc """
   Returns the list of target paths that would be generated from a Thrift file.
   """
-  @spec targets(FileGroup.t) :: [Path.t]
+  @spec targets(FileGroup.t()) :: [Path.t()]
   def targets(%FileGroup{} = file_group) do
     Enum.flat_map(file_group.schemas, fn {_, schema} ->
       schema
@@ -26,19 +28,19 @@ defmodule Thrift.Generator do
     end)
   end
 
-  @spec target_path(String.t) :: Path.t
+  @spec target_path(String.t()) :: Path.t()
   defp target_path(module_name) do
     module_name
     |> inspect
     |> String.split(".")
     |> Enum.map(&Macro.underscore/1)
-    |> Path.join
+    |> Path.join()
     |> Kernel.<>(".ex")
   end
 
   def generate!(thrift_filename, output_dir) when is_bitstring(thrift_filename) do
     thrift_filename
-    |> Thrift.Parser.parse_file
+    |> Thrift.Parser.parse_file()
     |> generate!(output_dir)
   end
 
@@ -55,7 +57,7 @@ defmodule Thrift.Generator do
     Enum.flat_map(file_group.schemas, fn {_, schema} ->
       generate_schema(%Schema{schema | file_group: file_group})
     end)
-    |> Enum.reverse
+    |> Enum.reverse()
     |> Enum.map(fn {_, code} ->
       Macro.to_string(code)
     end)
@@ -65,6 +67,7 @@ defmodule Thrift.Generator do
   def generate_schema(schema) do
     current_module_file_group = FileGroup.set_current_module(schema.file_group, schema.module)
     schema = %Schema{schema | file_group: current_module_file_group}
+
     List.flatten([
       generate_enum_modules(schema),
       generate_const_modules(schema),
@@ -84,7 +87,7 @@ defmodule Thrift.Generator do
       source = Macro.to_string(quoted)
 
       path = Path.join(output_dir, filename)
-      path |> Path.dirname |> File.mkdir_p!
+      path |> Path.dirname() |> File.mkdir_p!()
       File.write!(path, source)
 
       filename
@@ -92,7 +95,7 @@ defmodule Thrift.Generator do
   end
 
   defp resolve_name_collisions(generated_modules) do
-    Enum.reduce(generated_modules, [], fn({name, quoted}, acc) ->
+    Enum.reduce(generated_modules, [], fn {name, quoted}, acc ->
       Keyword.update(
         acc,
         name,
@@ -122,8 +125,10 @@ defmodule Thrift.Generator do
     cond do
       context1 == Thrift.Generator.ConstantGenerator ->
         combine_module_defs(name, meta2, ast1, ast2)
+
       context2 == Thrift.Generator.ConstantGenerator ->
         combine_module_defs(name, meta1, ast1, ast2)
+
       true ->
         raise "Name collision: #{name}"
     end
@@ -146,19 +151,21 @@ defmodule Thrift.Generator do
   end
 
   defp generate_const_modules(%Schema{constants: constants})
-  when constants == %{} do
+       when constants == %{} do
     # no constants => nothing to generate
     []
   end
+
   defp generate_const_modules(schema) do
     # schema.constants is a map %{name: constant} but constant includes the
     # name and all we really need is the values
     #
     # we also only want constants that are defined in the main file from this
     # file group
-    constants = schema.constants
-    |> Map.values
-    |> Enum.filter(&FileGroup.own_constant?(schema.file_group, &1))
+    constants =
+      schema.constants
+      |> Map.values()
+      |> Enum.filter(&FileGroup.own_constant?(schema.file_group, &1))
 
     if Enum.empty?(constants) do
       # if we filtered out all of the constants, we don't need to write
@@ -203,5 +210,4 @@ defmodule Thrift.Generator do
       Generator.Behaviour.generate(schema, service)
     end
   end
-
 end

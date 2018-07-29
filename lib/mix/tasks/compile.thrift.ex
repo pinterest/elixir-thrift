@@ -56,13 +56,14 @@ defmodule Mix.Tasks.Compile.Thrift do
 
   @switches [force: :boolean, verbose: :boolean]
 
-  @spec run(OptionParser.argv) :: :ok
+  @spec run(OptionParser.argv()) :: :ok
   def run(args) do
     {opts, _, _} = OptionParser.parse(args, switches: @switches)
 
-    config      = Keyword.get(Mix.Project.config, :thrift, [])
+    config = Keyword.get(Mix.Project.config(), :thrift, [])
     input_files = Keyword.get(config, :files, [])
     output_path = Keyword.get(config, :output_path, "lib")
+
     parser_opts =
       config
       |> Keyword.take([:include_paths, :namespace])
@@ -78,36 +79,36 @@ defmodule Mix.Tasks.Compile.Thrift do
   end
 
   @doc "Returns the Thrift compiler's manifests."
-  @spec manifests :: [Path.t]
+  @spec manifests :: [Path.t()]
   def manifests, do: [manifest()]
-  defp manifest, do: Path.join(Mix.Project.manifest_path, @manifest)
+  defp manifest, do: Path.join(Mix.Project.manifest_path(), @manifest)
 
   @doc "Cleans up generated files."
-  @spec clean :: :ok | {:error, File.posix}
+  @spec clean :: :ok | {:error, File.posix()}
   def clean, do: clean(manifest())
+
   defp clean(manifest) do
     Enum.each(read_manifest(manifest), &File.rm/1)
     File.rm(manifest)
   end
 
-  @spec parse(Path.t, OptionParser.parsed) :: FileGroup.t
+  @spec parse(Path.t(), OptionParser.parsed()) :: FileGroup.t()
   defp parse(file, opts) do
     Thrift.Parser.parse_file(file, opts)
   rescue
     e ->
-      Mix.shell.error "Failed to parse #{file}: #{Exception.message(e)}"
+      Mix.shell().error("Failed to parse #{file}: #{Exception.message(e)}")
       nil
   end
 
-  @typep mappings ::
-    [{:stale, FileGroup.t, [Path.t]} | {:ok, FileGroup.t, [Path.t]}]
+  @typep mappings :: [{:stale, FileGroup.t(), [Path.t()]} | {:ok, FileGroup.t(), [Path.t()]}]
 
-  @spec extract_targets([FileGroup.t], Path.t, boolean) :: mappings
+  @spec extract_targets([FileGroup.t()], Path.t(), boolean) :: mappings
   defp extract_targets(groups, output_path, force) when is_list(groups) do
     for %FileGroup{initial_file: file} = group <- groups do
       targets =
         group
-        |> Thrift.Generator.targets
+        |> Thrift.Generator.targets()
         |> Enum.map(&Path.join(output_path, &1))
 
       if force || Mix.Utils.stale?([file], targets) do
@@ -118,7 +119,7 @@ defmodule Mix.Tasks.Compile.Thrift do
     end
   end
 
-  @spec generate(Path.t, mappings, Path.t, OptionParser.parsed) :: :ok | :noop
+  @spec generate(Path.t(), mappings, Path.t(), OptionParser.parsed()) :: :ok | :noop
   defp generate(manifest, mappings, output_path, opts) do
     timestamp = :calendar.universal_time()
     verbose = opts[:verbose]
@@ -131,9 +132,10 @@ defmodule Mix.Tasks.Compile.Thrift do
 
     # Determine if there are any files that appear in our existing manifest
     # that are no longer relevant based on our current target mappings.
-    removed = Enum.filter(previous, fn file ->
-      not Enum.any?(mappings, fn {_, _, targets} -> file in targets end)
-    end)
+    removed =
+      Enum.filter(previous, fn file ->
+        not Enum.any?(mappings, fn {_, _, targets} -> file in targets end)
+      end)
 
     if stale == [] && removed == [] do
       :noop
@@ -144,9 +146,10 @@ defmodule Mix.Tasks.Compile.Thrift do
 
       unless Enum.empty?(stale) do
         Mix.Utils.compiling_n(length(stale), :thrift)
+
         Enum.each(stale, fn {group, _targets} ->
           Thrift.Generator.generate!(group, output_path)
-          verbose && Mix.shell.info "Compiled #{group.initial_file}"
+          verbose && Mix.shell().info("Compiled #{group.initial_file}")
         end)
       end
 
@@ -158,14 +161,15 @@ defmodule Mix.Tasks.Compile.Thrift do
   end
 
   defp package_vsn do
-    Keyword.get(Mix.Project.config, :version)
+    Keyword.get(Mix.Project.config(), :version)
   end
 
-  @spec read_manifest(Path.t) :: [Path.t]
+  @spec read_manifest(Path.t()) :: [Path.t()]
   defp read_manifest(manifest) do
     header = {@manifest_vsn, package_vsn()}
+
     try do
-      manifest |> File.read! |> :erlang.binary_to_term
+      manifest |> File.read!() |> :erlang.binary_to_term()
     rescue
       _ -> []
     else
@@ -174,11 +178,13 @@ defmodule Mix.Tasks.Compile.Thrift do
     end
   end
 
-  @spec write_manifest(Path.t, [Path.t], :calendar.datetime) :: :ok
+  @spec write_manifest(Path.t(), [Path.t()], :calendar.datetime()) :: :ok
   defp write_manifest(manifest, paths, timestamp) do
-    data = :erlang.term_to_binary(
-      [{@manifest_vsn, package_vsn()} | paths],
-      compressed: 9)
+    data =
+      :erlang.term_to_binary(
+        [{@manifest_vsn, package_vsn()} | paths],
+        compressed: 9
+      )
 
     File.mkdir_p!(Path.dirname(manifest))
     File.write!(manifest, data)

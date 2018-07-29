@@ -1,36 +1,38 @@
 defmodule Thrift.Generator.ServiceTest do
   use ThriftTestCase
 
-  @thrift_file name: "simple_service.thrift", contents: """
-  namespace elixir Services.Simple
-  struct User {
-    1: optional i64 id,
-    2: optional string username
-  }
+  @thrift_file name: "simple_service.thrift",
+               contents: """
+               namespace elixir Services.Simple
+               struct User {
+                 1: optional i64 id,
+                 2: optional string username
+               }
 
-  exception UsernameTakenException {
-    1: string message
-  }
+               exception UsernameTakenException {
+                 1: string message
+               }
 
-  service SimpleService {
-    bool ping(),
-    void check_username(1: string username)
-      throws(1: UsernameTakenException taken),
-    bool update_username(1: i64 id, 2: string new_username)
-      throws(1: UsernameTakenException taken),
-    User get_by_id(1: i64 user_id),
-    bool are_friends(1: User user_a, 2: User user_b),
-    void mark_inactive(1: i64 user_id),
-    oneway void do_some_work(1: string work),
-    list<i64> friend_ids_of(1: i64 user_id),
-    map<string, i64> friend_nicknames(1: i64 user_id),
-    set<string> tags(1: i64 user_id),
-    bool And(1: bool left, 2: bool right),
-  }
-  """
+               service SimpleService {
+                 bool ping(),
+                 void check_username(1: string username)
+                   throws(1: UsernameTakenException taken),
+                 bool update_username(1: i64 id, 2: string new_username)
+                   throws(1: UsernameTakenException taken),
+                 User get_by_id(1: i64 user_id),
+                 bool are_friends(1: User user_a, 2: User user_b),
+                 void mark_inactive(1: i64 user_id),
+                 oneway void do_some_work(1: string work),
+                 list<i64> friend_ids_of(1: i64 user_id),
+                 map<string, i64> friend_nicknames(1: i64 user_id),
+                 set<string> tags(1: i64 user_id),
+                 bool And(1: bool left, 2: bool right),
+               }
+               """
 
   defmodule ServerSpy do
     use GenServer
+
     def init([]) do
       {:ok, {nil, nil}}
     end
@@ -39,7 +41,8 @@ defmodule Thrift.Generator.ServiceTest do
 
     def check_username(username), do: handle_function(:check_username, [username])
 
-    def update_username(id, new_username), do: handle_function(:update_username, [id, new_username])
+    def update_username(id, new_username),
+      do: handle_function(:update_username, [id, new_username])
 
     def get_by_id(user_id), do: handle_function(:get_by_id, [user_id])
 
@@ -82,7 +85,7 @@ defmodule Thrift.Generator.ServiceTest do
     def handle_call(:get_args, _, {_, args} = state), do: {:reply, args, state}
 
     def handle_function(name, args) do
-      reply = ServerSpy.get_reply
+      reply = ServerSpy.get_reply()
       ServerSpy.set_args({name, args})
 
       parse_reply(reply)
@@ -95,9 +98,11 @@ defmodule Thrift.Generator.ServiceTest do
 
         :noreply ->
           :ok
+
         {:sleep, amount, reply} ->
           :timer.sleep(amount)
           parse_reply(reply)
+
         reply ->
           reply
       end
@@ -131,15 +136,14 @@ defmodule Thrift.Generator.ServiceTest do
 
   setup do
     {:ok, server, port} = start_server()
-    {:ok, client} = Client.start_link("127.0.0.1", port,
-                                      [tcp_opts: [timeout: 5000]])
-    {:ok, handler_pid} = ServerSpy.start_link
+    {:ok, client} = Client.start_link("127.0.0.1", port, tcp_opts: [timeout: 5000])
+    {:ok, handler_pid} = ServerSpy.start_link()
 
-    on_exit fn ->
+    on_exit(fn ->
       wait_for_exit(handler_pid)
       wait_for_exit(client)
       wait_for_exit(server)
-    end
+    end)
 
     {:ok, port: port, client: client, server: server}
   end
@@ -162,18 +166,22 @@ defmodule Thrift.Generator.ServiceTest do
   thrift_test "it should be able to serialize the request struct" do
     alias SimpleService.UpdateUsernameArgs
 
-    serialized = %UpdateUsernameArgs{id: 1234, new_username: "stinkypants"}
-    |> UpdateUsernameArgs.BinaryProtocol.serialize
-    |> IO.iodata_to_binary
+    serialized =
+      %UpdateUsernameArgs{id: 1234, new_username: "stinkypants"}
+      |> UpdateUsernameArgs.BinaryProtocol.serialize()
+      |> IO.iodata_to_binary()
 
-    assert <<10, 0, 1, 0, 0, 0, 0, 0, 0, 4, 210, 11, 0, 2, 0, 0, 0, 11, "stinkypants", 0>> == serialized
+    assert <<10, 0, 1, 0, 0, 0, 0, 0, 0, 4, 210, 11, 0, 2, 0, 0, 0, 11, "stinkypants", 0>> ==
+             serialized
   end
 
   thrift_test "it should be able to serialize the response struct" do
     alias SimpleService.UpdateUsernameResponse
-    serialized = %UpdateUsernameResponse{success: true}
-    |> UpdateUsernameResponse.BinaryProtocol.serialize
-    |> IO.iodata_to_binary
+
+    serialized =
+      %UpdateUsernameResponse{success: true}
+      |> UpdateUsernameResponse.BinaryProtocol.serialize()
+      |> IO.iodata_to_binary()
 
     assert <<2, 0, 0, 1, 0>> == serialized
   end
@@ -184,9 +192,10 @@ defmodule Thrift.Generator.ServiceTest do
 
     alias SimpleService.UpdateUsernameResponse
 
-    serialized = %UpdateUsernameResponse{taken: %UsernameTakenException{message: "That username is taken"}}
-    |> UpdateUsernameResponse.BinaryProtocol.serialize
-    |> IO.iodata_to_binary
+    serialized =
+      %UpdateUsernameResponse{taken: %UsernameTakenException{message: "That username is taken"}}
+      |> UpdateUsernameResponse.BinaryProtocol.serialize()
+      |> IO.iodata_to_binary()
 
     assert <<12, 0, 1, 11, 0, 1, 0, 0, 0, 22, rest::binary>> = serialized
     assert <<"That username is taken", 0, 0>> = rest
@@ -197,27 +206,30 @@ defmodule Thrift.Generator.ServiceTest do
 
     {:ok, true} = Client.ping(ctx.client)
 
-    assert {:ping, []} == ServerSpy.get_args
+    assert {:ping, []} == ServerSpy.get_args()
   end
 
   thrift_test "it should be able to update the username", ctx do
     ServerSpy.set_reply(true)
 
     assert {:ok, true} = Client.update_username(ctx.client, 1234, "stinkypants")
-    assert {:update_username, [1234, "stinkypants"]} == ServerSpy.get_args
-
+    assert {:update_username, [1234, "stinkypants"]} == ServerSpy.get_args()
   end
 
   thrift_test "it should be able to handle structs as function arguments", ctx do
     ServerSpy.set_reply(true)
 
-    assert {:ok, true} = Client.are_friends(ctx.client,
-                                                  %User{id: 1, username: "stinky"},
-                                                  %User{id: 28, username: "less_stinky"})
+    assert {:ok, true} =
+             Client.are_friends(
+               ctx.client,
+               %User{id: 1, username: "stinky"},
+               %User{id: 28, username: "less_stinky"}
+             )
 
-    expected_args = {:are_friends, [%User{id: 1, username: "stinky"},
-                                    %User{id: 28, username: "less_stinky"}]}
-    assert expected_args == ServerSpy.get_args
+    expected_args =
+      {:are_friends, [%User{id: 1, username: "stinky"}, %User{id: 28, username: "less_stinky"}]}
+
+    assert expected_args == ServerSpy.get_args()
   end
 
   thrift_test "it should be able to return structs", ctx do
@@ -255,7 +267,7 @@ defmodule Thrift.Generator.ServiceTest do
     ServerSpy.set_reply({:sleep, 1000, [1, 3, 4]})
 
     assert_raise ConnectionError, "Connection error: timeout", fn ->
-      Client.friend_ids_of!(client, 12_914, [tcp_opts: [timeout: 1]])
+      Client.friend_ids_of!(client, 12_914, tcp_opts: [timeout: 1])
     end
   end
 
@@ -287,7 +299,8 @@ defmodule Thrift.Generator.ServiceTest do
   end
 
   thrift_test "it handles void functions that do throw exceptions", ctx do
-    ServerSpy.set_reply({:exception,  UsernameTakenException, [message: "blowie up"]})
+    ServerSpy.set_reply({:exception, UsernameTakenException, [message: "blowie up"]})
+
     assert_raise UsernameTakenException, fn ->
       Client.check_username!(ctx.client, "foo")
     end
@@ -332,9 +345,7 @@ defmodule Thrift.Generator.ServiceTest do
   thrift_test "it has a configurable gen_server timeout", ctx do
     ServerSpy.set_reply({:sleep, 1000, [1, 3, 4]})
 
-    assert catch_exit(
-      Client.friend_ids_of(ctx.client, 1234, [gen_server_opts: [timeout: 200]])
-    )
+    assert catch_exit(Client.friend_ids_of(ctx.client, 1234, gen_server_opts: [timeout: 200]))
   end
 
   thrift_test "it has a configurable socket timeout", %{client: client} do
@@ -342,9 +353,11 @@ defmodule Thrift.Generator.ServiceTest do
     ServerSpy.set_reply({:sleep, 1000, [1, 3, 4]})
 
     assert ExUnit.CaptureLog.capture_log(fn ->
-      assert {:error, :timeout} = Client.friend_ids_of(client, 12_914, [tcp_opts: [timeout: 1]])
-      assert_receive {:EXIT, ^client, {:error, :timeout}}
-    end) =~ "1ms"
+             assert {:error, :timeout} =
+                      Client.friend_ids_of(client, 12_914, tcp_opts: [timeout: 1])
+
+             assert_receive {:EXIT, ^client, {:error, :timeout}}
+           end) =~ "1ms"
   end
 
   # connection tests
@@ -363,7 +376,8 @@ defmodule Thrift.Generator.ServiceTest do
     opts = [tcp_opts: [recv_timeout: 20], name: :connection_timeout_test]
     {:ok, _new_server, new_server_port} = start_server(opts)
     {:ok, client} = Client.start_link("127.0.0.1", new_server_port, [])
-    :timer.sleep(50) # sleep beyond the server's recv_timeout
+    # sleep beyond the server's recv_timeout
+    :timer.sleep(50)
 
     assert {:error, closed} = Client.friend_ids_of(client, 1234)
     assert closed in [:closed, :econnaborted]
@@ -389,16 +403,18 @@ defmodule Thrift.Generator.ServiceTest do
     # from under that process. It will trigger the generic
     # error handler in the server
     me = self()
-    spawn fn ->
+
+    spawn(fn ->
       Process.flag(:trap_exit, true)
       Process.send_after(me, :ok, 20)
       Client.friend_ids_of(ctx.client, 14_821)
-    end
+    end)
 
     receive do
       :ok ->
         :ok
     end
+
     Process.flag(:trap_exit, true)
     Process.exit(ctx.server, :kill)
 

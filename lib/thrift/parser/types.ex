@@ -8,33 +8,33 @@ defmodule Thrift.Parser.Types do
 
   defmodule Ident do
     @moduledoc false
-    @type t :: String.t
+    @type t :: String.t()
   end
 
   defmodule Standalone do
     @moduledoc false
-    @type t :: Ident.t | Primitive.t
+    @type t :: Ident.t() | Primitive.t()
   end
 
   defmodule List do
     @moduledoc false
-    @type t :: {:list, Thrift.Parser.Types.t}
+    @type t :: {:list, Thrift.Parser.Types.t()}
   end
 
   defmodule Map do
     @moduledoc false
-    @type t :: {:map, {Thrift.Parser.Types.t, Thrift.Parser.Types.t}}
+    @type t :: {:map, {Thrift.Parser.Types.t(), Thrift.Parser.Types.t()}}
   end
 
   defmodule Set do
     @moduledoc false
-    @type t :: {:set, Thrift.Parser.Types.t}
+    @type t :: {:set, Thrift.Parser.Types.t()}
   end
 
   defmodule Container do
     @moduledoc false
-    @type t :: List.t | Map.t | Set.t
+    @type t :: List.t() | Map.t() | Set.t()
   end
 
-  @type t :: Container.t | Standalone.t
+  @type t :: Container.t() | Standalone.t()
 end

@@ -1,46 +1,60 @@
 defmodule Thrift.Generator.EnumGenerator do
-
   def generate(name, enum) do
-    macro_defs = Enum.map(enum.values, fn {key, value} ->
-      macro_name = key
-      |> to_name
-      |> Macro.pipe(quote do unquote end, 0)
+    macro_defs =
+      Enum.map(enum.values, fn {key, value} ->
+        macro_name =
+          key
+          |> to_name
+          |> Macro.pipe(
+            quote do
+              unquote
+            end,
+            0
+          )
 
-      quote do
-        defmacro unquote(macro_name)(), do: unquote(value)
-      end
-    end)
+        quote do
+          defmacro unquote(macro_name)(), do: unquote(value)
+        end
+      end)
 
-    member_defs = Enum.map(enum.values, fn {_key, value} ->
-      quote do
-        def member?(unquote(value)), do: true
-      end
-    end)
+    member_defs =
+      Enum.map(enum.values, fn {_key, value} ->
+        quote do
+          def member?(unquote(value)), do: true
+        end
+      end)
 
-    name_member_defs = Enum.map(enum.values, fn {key, _value} ->
-      enum_name = to_name(key)
-      quote do
-        def name?(unquote(enum_name)), do: true
-      end
-    end)
+    name_member_defs =
+      Enum.map(enum.values, fn {key, _value} ->
+        enum_name = to_name(key)
 
-    value_to_name_defs = Enum.map(enum.values, fn {key, value} ->
-      enum_name = to_name(key)
-      quote do
-        def value_to_name(unquote(value)), do: {:ok, unquote(enum_name)}
-      end
-    end)
+        quote do
+          def name?(unquote(enum_name)), do: true
+        end
+      end)
 
-    name_to_value_defs = Enum.map(enum.values, fn {key, value} ->
-      enum_name = to_name(key)
-      quote do
-        def name_to_value(unquote(enum_name)), do: {:ok, unquote(value)}
-      end
-    end)
+    value_to_name_defs =
+      Enum.map(enum.values, fn {key, value} ->
+        enum_name = to_name(key)
 
-    names = enum.values
-    |> Keyword.keys
-    |> Enum.map(&to_name/1)
+        quote do
+          def value_to_name(unquote(value)), do: {:ok, unquote(enum_name)}
+        end
+      end)
+
+    name_to_value_defs =
+      Enum.map(enum.values, fn {key, value} ->
+        enum_name = to_name(key)
+
+        quote do
+          def name_to_value(unquote(enum_name)), do: {:ok, unquote(value)}
+        end
+      end)
+
+    names =
+      enum.values
+      |> Keyword.keys()
+      |> Enum.map(&to_name/1)
 
     quote do
       defmodule unquote(name) do
@@ -76,6 +90,6 @@ defmodule Thrift.Generator.EnumGenerator do
   end
 
   defp to_name(key) do
-    key |> to_string |> String.downcase |> String.to_atom
+    key |> to_string |> String.downcase() |> String.to_atom()
   end
 end

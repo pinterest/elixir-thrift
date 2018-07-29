@@ -1,6 +1,16 @@
 defmodule User do
   @moduledoc false
-  defstruct is_evil: false, user_id: 0, number_of_hairs_on_head: 0, amount_of_red: 0, nineties_era_color: 0, mint_gum: 0.0, username: "", friends: [], my_map: %{}, blocked_user_ids: MapSet.new(), optional_integers: []
+  defstruct is_evil: false,
+            user_id: 0,
+            number_of_hairs_on_head: 0,
+            amount_of_red: 0,
+            nineties_era_color: 0,
+            mint_gum: 0.0,
+            username: "",
+            friends: [],
+            my_map: %{},
+            blocked_user_ids: MapSet.new(),
+            optional_integers: []
 end
 
 defmodule Nesting do
@@ -23,23 +33,24 @@ defmodule ParserUtils do
 
   def compile_module(file_group) do
     file_group
-    |> Thrift.Generator.generate_to_string!
-    |> Code.compile_string
+    |> Thrift.Generator.generate_to_string!()
+    |> Code.compile_string()
   end
 
   # Debugging aid. Non-private in order to mute "function is unused" warning.
   def print_compiled_code(code_string) do
     code_string
     |> String.split("\n")
-    |> Enum.with_index
+    |> Enum.with_index()
     |> Enum.each(fn {line, idx} ->
-      IO.puts "#{idx + 1}   #{line}"
+      IO.puts("#{idx + 1}   #{line}")
     end)
 
     code_string
   end
 
   def user(type, opts \\ [])
+
   def user(:erlang, opts) do
     is_evil = Keyword.get(opts, :is_evil, :undefined)
     user_id = Keyword.get(opts, :user_id, :undefined)
@@ -50,18 +61,22 @@ defmodule ParserUtils do
     username = Keyword.get(opts, :username, :undefined)
     friends = Keyword.get(opts, :friends, :undefined)
     my_map = to_erlang_dict(Keyword.get(opts, :my_map, :undefined))
-    blocked_user_ids = case Keyword.get(opts, :blocked_user_ids) do
-      nil -> :undefined
-      list when is_list(list) -> :sets.from_list(list)
-    end
+
+    blocked_user_ids =
+      case Keyword.get(opts, :blocked_user_ids) do
+        nil -> :undefined
+        list when is_list(list) -> :sets.from_list(list)
+      end
+
     optional_integers = Keyword.get(opts, :optional_integers, :undefined)
 
-    {:User, is_evil, user_id, number_of_hairs_on_head,
-     amount_of_red, nineties_era_color, mint_gum, username,
-     friends, my_map, blocked_user_ids, optional_integers}
+    {:User, is_evil, user_id, number_of_hairs_on_head, amount_of_red, nineties_era_color,
+     mint_gum, username, friends, my_map, blocked_user_ids, optional_integers}
   end
+
   def user(:elixir, opts) do
-    %{__struct__: User,
+    %{
+      __struct__: User,
       is_evil: Keyword.get(opts, :is_evil),
       user_id: Keyword.get(opts, :user_id),
       number_of_hairs_on_head: Keyword.get(opts, :number_of_hairs_on_head),
@@ -70,19 +85,21 @@ defmodule ParserUtils do
       mint_gum: Keyword.get(opts, :mint_gum),
       friends: Keyword.get(opts, :friends),
       my_map: Keyword.get(opts, :my_map),
-      blocked_user_ids: case Keyword.get(opts, :blocked_user_ids) do
-        nil -> nil
-        list when is_list(list) -> MapSet.new(list)
-      end,
+      blocked_user_ids:
+        case Keyword.get(opts, :blocked_user_ids) do
+          nil -> nil
+          list when is_list(list) -> MapSet.new(list)
+        end,
       username: Keyword.get(opts, :username),
       optional_integers: Keyword.get(opts, :optional_integers)
-     }
+    }
   end
 
   def serialize_user_erlang(user, opts \\ []) do
     struct_info = {:struct, {:simple_types, :User}}
     serialize_to_erlang(user, struct_info, opts)
   end
+
   def serialize_user_elixir(user, opts \\ []) do
     serialized = User.BinaryProtocol.serialize(user)
 
@@ -112,7 +129,8 @@ defmodule ParserUtils do
   def nesting(:elixir, opts) do
     %Nesting{
       user: Keyword.get(opts, :user, user(:elixir)),
-      nested: Keyword.get(opts, :nested, shared_struct(:elixir))}
+      nested: Keyword.get(opts, :nested, shared_struct(:elixir))
+    }
   end
 
   def serialize_nesting_to_erlang(opts) do
@@ -122,9 +140,11 @@ defmodule ParserUtils do
   end
 
   def serialize_nesting(nesting, opts \\ [])
+
   def serialize_nesting(nesting, opts) when is_map(nesting) do
     alias Nesting.BinaryProtocol
     serialized = BinaryProtocol.serialize(:struct, nesting)
+
     if Keyword.get(opts, :convert_to_binary, true) do
       IO.iodata_to_binary(serialized)
     else
@@ -143,14 +163,16 @@ defmodule ParserUtils do
   end
 
   defp serialize_to_erlang(thrift_structure, struct_info, opts) do
-    iolist_struct = with({:ok, tf} <- :thrift_memory_buffer.new_transport_factory(),
-                         {:ok, pf} <- :thrift_binary_protocol.new_protocol_factory(tf, []),
-                         {:ok, binary_protocol} <- pf.()) do
-
-      {proto, :ok} = :thrift_protocol.write(binary_protocol, {struct_info, thrift_structure})
-      {_, data} = :thrift_protocol.flush_transport(proto)
-      data
-    end
+    iolist_struct =
+      with(
+        {:ok, tf} <- :thrift_memory_buffer.new_transport_factory(),
+        {:ok, pf} <- :thrift_binary_protocol.new_protocol_factory(tf, []),
+        {:ok, binary_protocol} <- pf.()
+      ) do
+        {proto, :ok} = :thrift_protocol.write(binary_protocol, {struct_info, thrift_structure})
+        {_, data} = :thrift_protocol.flush_transport(proto)
+        data
+      end
 
     if Keyword.get(opts, :convert_to_binary, true) do
       :erlang.iolist_to_binary(iolist_struct)
@@ -160,19 +182,23 @@ defmodule ParserUtils do
   end
 
   def deserialize_to_erlang(binary_data, struct_definition) do
-    with({:ok, memory_buffer_transport} <- :thrift_memory_buffer.new(binary_data),
-          {:ok, binary_protocol} <- :thrift_binary_protocol.new(memory_buffer_transport),
-          {_, {:ok, record}} <- :thrift_protocol.read(binary_protocol, struct_definition)) do
+    with(
+      {:ok, memory_buffer_transport} <- :thrift_memory_buffer.new(binary_data),
+      {:ok, binary_protocol} <- :thrift_binary_protocol.new(memory_buffer_transport),
+      {_, {:ok, record}} <- :thrift_protocol.read(binary_protocol, struct_definition)
+    ) do
       record
     end
-  rescue _ ->
+  rescue
+    _ ->
       {:error, :cant_decode}
   end
 
   defp to_erlang_dict(:undefined), do: :undefined
+
   defp to_erlang_dict(map) when is_map(map) do
     map
-    |> Enum.to_list
-    |> :dict.from_list
+    |> Enum.to_list()
+    |> :dict.from_list()
   end
 end

@@ -3,6 +3,7 @@ defmodule Thrift.Parser.Conversions do
 
   @spec atomify(charlist | nil) :: atom
   def atomify(nil), do: nil
+
   def atomify(l) when is_list(l) do
     List.to_atom(l)
   end
@@ -12,16 +13,17 @@ defmodule Thrift.Parser.Conversions do
   #   should all produce :foo_bar
   @spec atomic_snake(charlist | nil) :: atom
   def atomic_snake(nil), do: nil
+
   def atomic_snake(l) when is_list(l) do
     l
-    |> List.to_string
+    |> List.to_string()
     |> String.split("_")
     |> Enum.map(&Macro.underscore/1)
     |> Enum.join("_")
-    |> String.to_atom
+    |> String.to_atom()
   end
 
-  @spec cast(Thrift.data_type, any) :: any
+  @spec cast(Thrift.data_type(), any) :: any
   def cast(_, nil) do
     nil
   end

@@ -1,11 +1,12 @@
 defmodule Servers.Binary.Framed.SSLTest do
   use ThriftTestCase
 
-  @thrift_file name: "ssl_test.thrift", contents: """
-    service SSLTest {
-      bool ping()
-    }
-  """
+  @thrift_file name: "ssl_test.thrift",
+               contents: """
+                 service SSLTest {
+                   bool ping()
+                 }
+               """
 
   alias Servers.Binary.Framed.SSLTest.SSLTest.Binary.Framed.{Client, Server}
 
@@ -24,21 +25,36 @@ defmodule Servers.Binary.Framed.SSLTest do
   end
 
   def build_ssl_required_server(ctx) do
-    {:ok, _} = Server.start_link(ctx[:handler_name], 0, [name: ctx.test, ssl_opts: [enabled: true, configure: &get_certs/0]])
+    {:ok, _} =
+      Server.start_link(
+        ctx[:handler_name],
+        0,
+        name: ctx.test,
+        ssl_opts: [enabled: true, configure: &get_certs/0]
+      )
+
     server_port = :ranch.get_port(ctx.test)
 
     {:ok, port: server_port}
   end
 
   def build_ssl_optional_server(ctx) do
-    {:ok, _} = Server.start_link(ctx[:handler_name], 0, [name: ctx.test, ssl_opts: [enabled: true, configure: &get_certs/0, optional: true]])
+    {:ok, _} =
+      Server.start_link(
+        ctx[:handler_name],
+        0,
+        name: ctx.test,
+        ssl_opts: [enabled: true, configure: &get_certs/0, optional: true]
+      )
+
     server_port = :ranch.get_port(ctx.test)
 
     {:ok, port: server_port}
   end
 
   def build_ssl_client(ctx) do
-    {:ok, ssl_client} = Client.start_link("localhost", ctx.port, ssl_opts: ctx[:ssl_opts] ++ [enabled: true])
+    {:ok, ssl_client} =
+      Client.start_link("localhost", ctx.port, ssl_opts: ctx[:ssl_opts] ++ [enabled: true])
 
     {:ok, ssl_client: ssl_client}
   end

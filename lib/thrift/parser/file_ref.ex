@@ -1,8 +1,8 @@
 defmodule Thrift.Parser.FileRef do
   @moduledoc false
 
-  @type thrift_include :: String.t
-  @type t :: %__MODULE__{path: String.t, include_name: String.t, contents: String.t}
+  @type thrift_include :: String.t()
+  @type t :: %__MODULE__{path: String.t(), include_name: String.t(), contents: String.t()}
   defstruct path: nil, include_name: nil, contents: nil
 
   def new(path) do

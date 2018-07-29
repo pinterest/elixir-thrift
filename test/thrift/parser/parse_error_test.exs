@@ -9,7 +9,7 @@ defmodule Thrift.Parser.ParseErrorTest do
   setup do
     File.rm_rf!(@test_file_dir)
     File.mkdir_p!(@test_file_dir)
-    on_exit fn -> File.rm_rf!(@test_file_dir) end
+    on_exit(fn -> File.rm_rf!(@test_file_dir) end)
   end
 
   test "a file that throws parser errors raises an exception" do
@@ -31,6 +31,7 @@ defmodule Thrift.Parser.ParseErrorTest do
     )
 
     other_path = Path.join(@test_file_dir, "includes_syntax_error.thrift")
+
     File.write!(other_path, """
     include "syntax_error.thrift"
 
@@ -66,6 +67,7 @@ defmodule Thrift.Parser.ParseErrorTest do
     )
 
     other_path = Path.join(@test_file_dir, "includes_syntax_error.thrift")
+
     File.write!(other_path, """
     include "lexer_error.thrift"
 

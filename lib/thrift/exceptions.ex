@@ -11,20 +11,20 @@ defmodule Thrift.TApplicationException do
   # We primarily use their atom names, but we also need their standardized
   # integer values for representing these values in their serialized form.
   @exception_types [
-    unknown:                  0,
-    unknown_method:           1,
-    invalid_message_type:     2,
-    wrong_method_name:        3,
-    bad_sequence_id:          4,
-    missing_result:           5,
-    internal_error:           6,
-    protocol_error:           7,
-    invalid_transform:        8,
-    invalid_protocol:         9,
-    unsupported_client_type:  10,
-    loadshedding:             11,
-    timeout:                  12,
-    injected_failure:         13,
+    unknown: 0,
+    unknown_method: 1,
+    invalid_message_type: 2,
+    wrong_method_name: 3,
+    bad_sequence_id: 4,
+    missing_result: 5,
+    internal_error: 6,
+    protocol_error: 7,
+    invalid_transform: 8,
+    invalid_protocol: 9,
+    unsupported_client_type: 10,
+    loadshedding: 11,
+    timeout: 12,
+    injected_failure: 13
   ]
 
   def exception(args) when is_list(args) do
@@ -44,6 +44,7 @@ defmodule Thrift.TApplicationException do
     defp normalize_type(unquote(id)), do: unquote(type)
     defp normalize_type(unquote(type)), do: unquote(type)
   end
+
   defp normalize_type(type) when is_integer(type), do: :unknown
 end
 
@@ -54,6 +55,7 @@ defmodule Thrift.ConnectionError do
   def message(%{reason: reason}) when reason in [:closed, :timeout] do
     "Connection error: #{reason}"
   end
+
   def message(%{reason: reason}) do
     # :ssl can format both ssl and tcp (posix) errors
     "Connection error: #{:ssl.format_error(reason)} (#{reason})"
@@ -77,8 +79,9 @@ defmodule Thrift.FileParseError do
   @enforce_keys [:message]
   defexception message: nil
 
-  @doc false  # Exception callback, should not be called by end user
-  @spec exception({Thrift.Parser.FileRef.t, term}) :: Exception.t
+  # Exception callback, should not be called by end user
+  @doc false
+  @spec exception({Thrift.Parser.FileRef.t(), term}) :: Exception.t()
   def exception({file_ref, error}) do
     msg = "Error parsing thrift file #{file_ref.path} #{format_error(error)}"
     %__MODULE__{message: msg}
@@ -88,11 +91,13 @@ defmodule Thrift.FileParseError do
   defp format_error({line_no, :thrift_parser, errors}) do
     "on line #{line_no}: #{errors}"
   end
+
   defp format_error({{line_no, :thrift_lexer, errors}, _}) do
-    "on line #{line_no}: #{inspect errors}"
+    "on line #{line_no}: #{inspect(errors)}"
   end
+
   defp format_error(error) do
-    ": #{inspect error}"
+    ": #{inspect(error)}"
   end
 end
 

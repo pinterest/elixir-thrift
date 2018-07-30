@@ -51,7 +51,7 @@ defmodule Thrift.Mixfile do
       name: "Thrift",
       docs: [
         main: "README",
-        extras: ["README.md": [title: "README"]],
+        extras: ["README.md": [title: "README"], "CONTRIBUTING.md": [title: "Contributing"]],
         source_url: @project_url
       ]
     ]
@@ -85,7 +85,9 @@ defmodule Thrift.Mixfile do
       maintainers: ["Jon Parise", "Steve Cohen", "Preston Guillory"],
       licenses: ["Apache 2.0"],
       links: %{"GitHub" => @project_url},
-      files: ~w(README.md LICENSE mix.exs lib) ++ ~w(src/thrift_lexer.xrl src/thrift_parser.yrl)
+      files:
+        ~w(README.md CONTRIBUTING.md LICENSE mix.exs lib) ++
+          ~w(src/thrift_lexer.xrl src/thrift_parser.yrl)
     ]
   end
 end

@@ -18,16 +18,19 @@ defmodule Thrift.Transport.SSL do
   credentials or to change the configuration during run time.
   """
 
-  @type configure :: {module, function, list} | (() -> ({:ok, [option]} | {:error, Exception.t}))
-  @type option :: :ssl.ssloption | {:enabled, boolean} | {:optional, boolean} | {:configure, configure}
+  @type configure :: {module, function, list} | (() -> {:ok, [option]} | {:error, Exception.t()})
+  @type option ::
+          :ssl.ssloption() | {:enabled, boolean} | {:optional, boolean} | {:configure, configure}
 
-  @spec configuration([option]) :: {:required | :optional, [:ssl.ssloption]} | nil | {:error, Exception.t}
+  @spec configuration([option]) ::
+          {:required | :optional, [:ssl.ssloption()]} | nil | {:error, Exception.t()}
   def configuration(opts) do
     case Keyword.pop(opts, :enabled, false) do
       {true, opts} ->
         opts
         |> handle_configure()
         |> handle_optional()
+
       {false, _} ->
         nil
     end
@@ -35,9 +38,11 @@ defmodule Thrift.Transport.SSL do
 
   defp handle_configure(opts) do
     {configure, opts} = Keyword.pop(opts, :configure)
+
     case apply_configure(configure) do
       {:ok, extra_opts} ->
         {:ok, extra_opts ++ opts}
+
       {:error, _} = error ->
         error
     end
@@ -47,12 +52,15 @@ defmodule Thrift.Transport.SSL do
     case Keyword.pop(opts, :optional, false) do
       {true, new_opts} ->
         {:optional, new_opts}
+
       {false, new_opts} ->
         {:required, new_opts}
+
       {other, _new_opts} ->
-        raise "ssl_opts :optional flag must be a boolean, #{inspect other} was found instead."
+        raise "ssl_opts :optional flag must be a boolean, #{inspect(other)} was found instead."
     end
   end
+
   defp handle_optional({:error, _} = error), do: error
 
   defp apply_configure({module, fun, args}), do: apply(module, fun, args)

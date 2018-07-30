@@ -9,8 +9,7 @@ defmodule Thrift.Generator.Service do
   # The response struct uses a %Field{} to represent the service function's
   # return value. Functions can return :void while fields cannot. Until we can
   # sort out that mismatch, disable dialyzer warnings for those functions.
-  @dialyzer [{:nowarn_function, generate: 2},
-             {:nowarn_function, generate_response_struct: 2}]
+  @dialyzer [{:nowarn_function, generate: 2}, {:nowarn_function, generate_response_struct: 2}]
 
   def generate(schema, service) do
     file_group = schema.file_group
@@ -18,23 +17,26 @@ defmodule Thrift.Generator.Service do
 
     functions = Map.values(service.functions)
     arg_structs = Enum.map(functions, &generate_args_struct(schema, &1))
-    response_structs = for function <- functions, !function.oneway do
-      generate_response_struct(schema, function)
-    end
+
+    response_structs =
+      for function <- functions, !function.oneway do
+        generate_response_struct(schema, function)
+      end
 
     framed_client = Generator.Binary.Framed.Client.generate(service)
     framed_server = Generator.Binary.Framed.Server.generate(dest_module, service, file_group)
 
-    service_module = quote do
-      defmodule unquote(dest_module) do
-        unquote_splicing(arg_structs)
-        unquote_splicing(response_structs)
+    service_module =
+      quote do
+        defmodule unquote(dest_module) do
+          unquote_splicing(arg_structs)
+          unquote_splicing(response_structs)
 
-        unquote(framed_client)
+          unquote(framed_client)
 
-        unquote(framed_server)
+          unquote(framed_server)
+        end
       end
-    end
 
     {dest_module, service_module}
   end
@@ -48,10 +50,7 @@ defmodule Thrift.Generator.Service do
   end
 
   defp generate_response_struct(schema, function) do
-    success = %Field{id: 0,
-                     name: :success,
-                     required: false,
-                     type: function.return_type}
+    success = %Field{id: 0, name: :success, required: false, type: function.return_type}
 
     exceptions = Enum.map(function.exceptions, &Map.put(&1, :required, false))
 
@@ -64,9 +63,10 @@ defmodule Thrift.Generator.Service do
   end
 
   def module_name(%Function{} = function, suffix) do
-    struct_name = "#{function.name}_#{suffix}"
-    |> Macro.camelize
-    |> String.to_atom
+    struct_name =
+      "#{function.name}_#{suffix}"
+      |> Macro.camelize()
+      |> String.to_atom()
 
     Module.concat(Elixir, struct_name)
   end

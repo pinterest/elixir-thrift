@@ -6,6 +6,7 @@ defmodule ThriftTestCase do
 
   using(opts) do
     dir_prefix = Path.join([@project_root, "tmp", inspect(__MODULE__)])
+
     quote do
       Module.register_attribute(__MODULE__, :thrift_test_opts, persist: true)
       @thrift_test_opts unquote(opts)
@@ -26,10 +27,12 @@ defmodule ThriftTestCase do
       |> Module.get_attribute(:moduletag)
       |> Map.new(fn tag -> {tag, true} end)
 
-    config = ExUnit.configuration
+    config = ExUnit.configuration()
+
     case ExUnit.Filters.eval(config[:include], config[:exclude], tag, []) do
       :ok ->
         true
+
       {:error, _} ->
         false
     end
@@ -50,19 +53,20 @@ defmodule ThriftTestCase do
   defp get_thrift_files(module) do
     files = Module.get_attribute(module, :thrift_file)
     Module.delete_attribute(module, :thrift_file)
-    Module.register_attribute(module, :thrift_file, [accumulate: true])
+    Module.register_attribute(module, :thrift_file, accumulate: true)
 
     Enum.reverse(files)
   end
 
   defp write_thrift_file(config, namespace, dir) do
-    filename = config
+    filename =
+      config
       |> Keyword.fetch!(:name)
       |> Path.expand(dir)
 
     contents = Keyword.fetch!(config, :contents)
 
-    File.write!(filename, "namespace elixir #{inspect namespace}\n" <> contents)
+    File.write!(filename, "namespace elixir #{inspect(namespace)}\n" <> contents)
 
     filename
   end
@@ -71,10 +75,11 @@ defmodule ThriftTestCase do
     case Code.require_file(file, dir) do
       nil ->
         []
+
       modules ->
-        parts = Enum.map(modules, fn({module, _}) -> Module.split(module) end)
+        parts = Enum.map(modules, fn {module, _} -> Module.split(module) end)
         for part <- parts, alias?(part, parts), do: Module.concat(part)
-      end
+    end
   end
 
   defp alias?(module, modules) do
@@ -95,12 +100,17 @@ defmodule ThriftTestCase do
     record_modules = Module.get_attribute(namespace, :thrift_record_modules)
 
     quote do
-      unquote_splicing(Enum.map(elixir_modules, fn module ->
-        quote do: alias unquote(module)
-      end))
-      unquote_splicing(Enum.map(elixir_modules ++ record_modules, fn module ->
-        quote do: require unquote(module)
-      end))
+      unquote_splicing(
+        Enum.map(elixir_modules, fn module ->
+          quote do: alias(unquote(module))
+        end)
+      )
+
+      unquote_splicing(
+        Enum.map(elixir_modules ++ record_modules, fn module ->
+          quote do: require(unquote(module))
+        end)
+      )
     end
   end
 
@@ -110,13 +120,14 @@ defmodule ThriftTestCase do
     opts = attributes[:thrift_test_opts]
     [dir] = attributes[:thrift_test_dir]
 
-    on_exit fn ->
+    on_exit(fn ->
       if Keyword.get(opts, :cleanup, true) do
         File.rm_rf!(dir)
       else
-        IO.puts IO.ANSI.format([:yellow, "Leaving files in #{inspect dir}"])
+        IO.puts(IO.ANSI.format([:yellow, "Leaving files in #{inspect(dir)}"]))
       end
-    end
+    end)
+
     :ok
   end
 
@@ -131,14 +142,14 @@ defmodule ThriftTestCase do
         def unquote(name)(unquote(var)), do: unquote(contents)
       else
         ExUnit.Case.test message do
-          flunk "not implemented"
+          flunk("not implemented")
         end
       end
     end
   end
 
   def inspect_quoted(block) do
-    block |> Macro.to_string |> IO.puts
+    block |> Macro.to_string() |> IO.puts()
     block
   end
 end

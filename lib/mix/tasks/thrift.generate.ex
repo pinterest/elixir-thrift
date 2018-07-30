@@ -50,22 +50,25 @@ defmodule Mix.Tasks.Thrift.Generate do
   ```
   """
 
-  @spec run(OptionParser.argv) :: :ok
+  @spec run(OptionParser.argv()) :: :ok
   def run(args) do
-    {opts, files} = OptionParser.parse!(args,
-      switches: [include: :keep, namespace: :string, out: :string,
-                 verbose: :boolean],
-      aliases: [I: :include, o: :out, v: :verbose])
+    {opts, files} =
+      OptionParser.parse!(
+        args,
+        switches: [include: :keep, namespace: :string, out: :string, verbose: :boolean],
+        aliases: [I: :include, o: :out, v: :verbose]
+      )
 
-    config        = Keyword.get(Mix.Project.config, :thrift, [])
-    output_path   = opts[:out] || Keyword.get(config, :output_path, "lib")
-    namespace     = opts[:namespace] || Keyword.get(config, :namespace)
+    config = Keyword.get(Mix.Project.config(), :thrift, [])
+    output_path = opts[:out] || Keyword.get(config, :output_path, "lib")
+    namespace = opts[:namespace] || Keyword.get(config, :namespace)
+
     include_paths =
-      (opts[:include] && Keyword.get_values(opts, :include))
-      || Keyword.get(config, :include_paths, [])
+      (opts[:include] && Keyword.get_values(opts, :include)) ||
+        Keyword.get(config, :include_paths, [])
 
     parser_opts =
-      Keyword.new
+      Keyword.new()
       |> Keyword.put(:include_paths, include_paths)
       |> Keyword.put(:namespace, namespace)
 
@@ -78,11 +81,11 @@ defmodule Mix.Tasks.Thrift.Generate do
   defp parse!(thrift_file, opts) do
     Thrift.Parser.parse_file(thrift_file, opts)
   rescue
-    e -> Mix.raise "#{thrift_file}: #{Exception.message(e)}"
+    e -> Mix.raise("#{thrift_file}: #{Exception.message(e)}")
   end
 
   defp generate!(thrift_file, output_path, parser_opts, opts) do
-    Mix.shell.info "Parsing #{thrift_file}"
+    Mix.shell().info("Parsing #{thrift_file}")
 
     generated_files =
       thrift_file
@@ -91,10 +94,10 @@ defmodule Mix.Tasks.Thrift.Generate do
 
     if opts[:verbose] do
       generated_files
-      |> Enum.uniq
-      |> Enum.sort
+      |> Enum.uniq()
+      |> Enum.sort()
       |> Enum.each(fn file ->
-        Mix.shell.info "Wrote #{Path.join(output_path, file)}"
+        Mix.shell().info("Wrote #{Path.join(output_path, file)}")
       end)
     end
   end

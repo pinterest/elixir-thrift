@@ -21,22 +21,26 @@ defmodule Thrift.Parser.Resolver do
   end
 
   defp update(%{} = resolutions, include_name, %{} = local_mappings) do
-    new_type_mappings = Map.new(local_mappings, fn
-      {name, val} when is_atom(val) or is_tuple(val) ->
-        {:"#{include_name}.#{name}", val}
-      {name, val} when is_map(val) ->
-        {:"#{include_name}.#{name}", Map.put(val, :name, :"#{include_name}.#{name}")}
-    end)
+    new_type_mappings =
+      Map.new(local_mappings, fn
+        {name, val} when is_atom(val) or is_tuple(val) ->
+          {:"#{include_name}.#{name}", val}
 
-    new_value_mappings = Enum.reduce(local_mappings, %{}, fn
-      {_, %TEnum{name: enum_name, values: values}}, acc ->
-        Enum.reduce(values, acc, fn
-          {value_name, value}, acc ->
-            Map.put(acc, :"#{enum_name}.#{value_name}", value)
-        end)
-      _, acc ->
-        acc
-    end)
+        {name, val} when is_map(val) ->
+          {:"#{include_name}.#{name}", Map.put(val, :name, :"#{include_name}.#{name}")}
+      end)
+
+    new_value_mappings =
+      Enum.reduce(local_mappings, %{}, fn
+        {_, %TEnum{name: enum_name, values: values}}, acc ->
+          Enum.reduce(values, acc, fn
+            {value_name, value}, acc ->
+              Map.put(acc, :"#{enum_name}.#{value_name}", value)
+          end)
+
+        _, acc ->
+          acc
+      end)
 
     resolutions
     |> Map.merge(new_type_mappings)

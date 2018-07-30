@@ -20,8 +20,8 @@ defmodule Thrift.Binary.Framed.Client do
   @type protocol_response :: success | error
 
   @type tcp_option ::
-    {:timeout, pos_integer} |
-    {:send_timeout, integer}
+          {:timeout, pos_integer}
+          | {:send_timeout, integer}
 
   @type tcp_opts :: [tcp_option]
 
@@ -29,21 +29,25 @@ defmodule Thrift.Binary.Framed.Client do
 
   @type genserver_call_options :: [genserver_call_option]
 
-  @type option :: {:tcp_opts, [tcp_option]} | {:ssl_opts, [SSL.option]} | {:gen_server_opts, [genserver_call_option]}
+  @type option ::
+          {:tcp_opts, [tcp_option]}
+          | {:ssl_opts, [SSL.option()]}
+          | {:gen_server_opts, [genserver_call_option]}
 
   @type options :: [option]
 
   defmodule State do
     @moduledoc false
 
-    @type t :: %State{host: String.t,
-                      port: (1..65_535),
-                      tcp_opts: [Client.tcp_option],
-                      ssl_opts: [Client.ssl_option],
-                      timeout: integer,
-                      sock: {:gen_tcp, :gen_tcp.socket} | {:ssl, :ssl.sslsocket},
-                      seq_id: integer
-                     }
+    @type t :: %State{
+            host: String.t(),
+            port: 1..65_535,
+            tcp_opts: [Client.tcp_option()],
+            ssl_opts: [Client.ssl_option()],
+            timeout: integer,
+            sock: {:gen_tcp, :gen_tcp.socket()} | {:ssl, :ssl.sslsocket()},
+            seq_id: integer
+          }
     defstruct host: nil,
               port: nil,
               tcp_opts: nil,
@@ -63,11 +67,13 @@ defmodule Thrift.Binary.Framed.Client do
 
     {timeout, tcp_opts} = Keyword.pop(tcp_opts, :timeout, 5000)
 
-    s = %State{host: to_host(host),
-               port: port,
-               tcp_opts: tcp_opts,
-               ssl_opts: ssl_opts,
-               timeout: timeout}
+    s = %State{
+      host: to_host(host),
+      port: port,
+      tcp_opts: tcp_opts,
+      ssl_opts: ssl_opts,
+      timeout: timeout
+    }
 
     {:connect, :init, s}
   end
@@ -90,7 +96,7 @@ defmodule Thrift.Binary.Framed.Client do
   Additionally, the options `:name`, `:debug`, and `:spawn_opt`, if specified, will be passed to
   the underlying `GenServer`. See `GenServer.start_link/3` for details on these options.
   """
-  @spec start_link(String.t, (0..65_535), options) :: GenServer.on_start
+  @spec start_link(String.t(), 0..65_535, options) :: GenServer.on_start()
   def start_link(host, port, opts) do
     {gen_server_opts, client_opts} = Keyword.split(opts, [:debug, :name, :spawn_opt])
     Connection.start_link(__MODULE__, {host, port, client_opts}, gen_server_opts)
@@ -103,16 +109,19 @@ defmodule Thrift.Binary.Framed.Client do
 
   @doc false
   def connect(_info, %{sock: nil, host: host, port: port, tcp_opts: opts, timeout: timeout} = s) do
-    opts = opts
-    |> Keyword.merge(@immutable_tcp_opts)
-    |> Keyword.put_new(:send_timeout, 1000)
+    opts =
+      opts
+      |> Keyword.merge(@immutable_tcp_opts)
+      |> Keyword.put_new(:send_timeout, 1000)
 
     case :gen_tcp.connect(host, port, opts, timeout) do
       {:ok, sock} ->
         maybe_ssl_handshake(sock, host, port, s)
+
       {:error, :timeout} = error ->
         Logger.error("Failed to connect to #{host}:#{port} due to timeout after #{timeout}ms")
         {:stop, error, s}
+
       {:error, reason} = error ->
         Logger.error("Failed to connect to #{host}:#{port} due to #{:inet.format_error(reason)}")
         {:stop, error, s}
@@ -144,7 +153,7 @@ defmodule Thrift.Binary.Framed.Client do
     end
   end
 
-  @spec oneway(pid, String.t, iodata, options) :: :ok
+  @spec oneway(pid, String.t(), iodata, options) :: :ok
   @doc """
   Execute a one way RPC. One way RPC calls do not generate a response,
   and as such, this implementation uses `GenServer.cast`.
@@ -154,7 +163,7 @@ defmodule Thrift.Binary.Framed.Client do
     :ok = Connection.cast(conn, {:oneway, rpc_name, serialized_args})
   end
 
-  @spec call(pid, String.t, iodata, module, options) :: protocol_response
+  @spec call(pid, String.t(), iodata, module, options) :: protocol_response
   @doc """
   Executes a Thrift RPC. The data argument must be a correctly formatted
   Thrift message.
@@ -187,15 +196,17 @@ defmodule Thrift.Binary.Framed.Client do
   defp unpack_response({%{success: nil} = response, ""}) when map_size(response) > 2 do
     exception =
       response
-      |> Map.from_struct
+      |> Map.from_struct()
       |> Enum.find_value(fn {_, value} -> value end)
 
     if exception do
       {:error, {:exception, exception}}
     else
-      {:ok, nil}  # "void" function result
+      # "void" function result
+      {:ok, nil}
     end
   end
+
   defp unpack_response({%{success: result}, ""}), do: {:ok, result}
   defp unpack_response({:error, _} = error), do: error
 
@@ -203,9 +214,11 @@ defmodule Thrift.Binary.Framed.Client do
     {:reply, {:error, :closed}, s}
   end
 
-  def handle_call({:call, rpc_name, serialized_args, tcp_opts}, _,
-                  %{sock: {transport, sock}, seq_id: seq_id, timeout: default_timeout} = s) do
-
+  def handle_call(
+        {:call, rpc_name, serialized_args, tcp_opts},
+        _,
+        %{sock: {transport, sock}, seq_id: seq_id, timeout: default_timeout} = s
+      ) do
     s = %{s | seq_id: seq_id + 1}
     message = Binary.serialize(:message_begin, {:call, seq_id, rpc_name})
     timeout = Keyword.get(tcp_opts, :timeout, default_timeout)
@@ -231,9 +244,10 @@ defmodule Thrift.Binary.Framed.Client do
     {:noreply, s}
   end
 
-  def handle_cast({:oneway, rpc_name, serialized_args},
-                  %{sock: {transport, sock}, seq_id: seq_id} = s) do
-
+  def handle_cast(
+        {:oneway, rpc_name, serialized_args},
+        %{sock: {transport, sock}, seq_id: seq_id} = s
+      ) do
     s = %{s | seq_id: seq_id + 1}
     message = Binary.serialize(:message_begin, {:oneway, seq_id, rpc_name})
 
@@ -248,33 +262,54 @@ defmodule Thrift.Binary.Framed.Client do
 
   def deserialize_message_reply(message, rpc_name, seq_id) do
     handle_message(Binary.deserialize(:message_begin, message), seq_id, rpc_name)
-   end
+  end
 
   defp handle_message({:ok, {:reply, seq_id, rpc_name, serialized_response}}, seq_id, rpc_name) do
     {:ok, serialized_response}
   end
-  defp handle_message({:ok, {:exception, seq_id, rpc_name, serialized_response}}, seq_id, rpc_name) do
+
+  defp handle_message(
+         {:ok, {:exception, seq_id, rpc_name, serialized_response}},
+         seq_id,
+         rpc_name
+       ) do
     exception = Binary.deserialize(:application_exception, serialized_response)
     {:error, {:exception, exception}}
   end
+
   defp handle_message({:ok, {message_type, seq_id, rpc_name, _}}, seq_id, rpc_name) do
-    exception = TApplicationException.exception(
-      type: :invalid_message_type,
-      message: "The server replied with invalid message type (#{message_type})")
+    exception =
+      TApplicationException.exception(
+        type: :invalid_message_type,
+        message: "The server replied with invalid message type (#{message_type})"
+      )
+
     {:error, {:exception, exception}}
   end
+
   defp handle_message({:ok, {_, seq_id, mismatched_rpc_name, _}}, seq_id, rpc_name) do
-    exception = TApplicationException.exception(
-      type: :wrong_method_name,
-      message: "The server replied to #{mismatched_rpc_name}, but we sent #{rpc_name}")
+    exception =
+      TApplicationException.exception(
+        type: :wrong_method_name,
+        message: "The server replied to #{mismatched_rpc_name}, but we sent #{rpc_name}"
+      )
+
     {:error, {:exception, exception}}
   end
+
   defp handle_message({:ok, {_, mismatched_seq_id, _, _}}, seq_id, _) do
-    exception = TApplicationException.exception(
-      type: :bad_sequence_id,
-      message: "Invalid sequence id. The client sent #{seq_id}, but the server replied with #{mismatched_seq_id}")
+    exception =
+      TApplicationException.exception(
+        type: :bad_sequence_id,
+        message:
+          "Invalid sequence id. The client sent #{seq_id}, but the server replied with #{
+            mismatched_seq_id
+          }"
+      )
+
     {:error, {:exception, exception}}
   end
+
   defp handle_message({:error, _} = err, _, _) do
     err
   end
@@ -282,20 +317,27 @@ defmodule Thrift.Binary.Framed.Client do
   defp to_host(host) when is_bitstring(host) do
     String.to_charlist(host)
   end
+
   defp to_host(host) when is_list(host), do: host
 
   defp maybe_ssl_handshake(sock, host, port, %{ssl_opts: ssl_opts, timeout: timeout} = s) do
-    with {optional, ssl_opts} when optional in [:required, :optional] <- SSL.configuration(ssl_opts),
+    with {optional, ssl_opts} when optional in [:required, :optional] <-
+           SSL.configuration(ssl_opts),
          {:ok, ssl_sock} <- :ssl.connect(sock, ssl_opts, timeout) do
-        {:ok, %{s | sock: {:ssl, ssl_sock}}}
+      {:ok, %{s | sock: {:ssl, ssl_sock}}}
     else
       nil ->
         {:ok, %{s | sock: {:gen_tcp, sock}}}
+
       {:error, %_exception{} = err} ->
         Logger.error("Failed SSL configuration due to: " <> Exception.format(:error, err, []))
         {:stop, err, s}
+
       {:error, reason} = error ->
-        Logger.error("Failed SSL handshake to #{host}:#{port} due to #{:ssl.format_error(reason)}")
+        Logger.error(
+          "Failed SSL handshake to #{host}:#{port} due to #{:ssl.format_error(reason)}"
+        )
+
         {:stop, error, s}
     end
   end

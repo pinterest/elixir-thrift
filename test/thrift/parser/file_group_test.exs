@@ -6,12 +6,14 @@ defmodule Thrift.Parser.FileGroupTest do
   alias Thrift.Parser.FileGroup
 
   test "constant module uses suitable existing name" do
-    with_thrift_files([
+    with_thrift_files(
       "myservice.thrift": """
       const double PI = 3.14
       service MyService {}
-      """, as: :file_group, parse: "myservice.thrift"]) do
-
+      """,
+      as: :file_group,
+      parse: "myservice.thrift"
+    ) do
       assert :"Elixir.MyService" == FileGroup.dest_module(file_group, Constant)
     end
   end

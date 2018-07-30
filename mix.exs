@@ -13,71 +13,76 @@ defmodule Thrift.Mixfile do
   @project_url "https://github.com/pinterest/elixir-thrift"
 
   def project do
-    [app: :thrift,
-     version: @version,
-     elixir: "~> 1.3",
-     deps: deps(),
+    [
+      app: :thrift,
+      version: @version,
+      elixir: "~> 1.3",
+      deps: deps(),
 
-     # Build Environment
-     elixirc_paths: elixirc_paths(Mix.env),
-     compilers: [:leex, :yecc, :erlang, :elixir, :app],
+      # Build Environment
+      elixirc_paths: elixirc_paths(Mix.env()),
+      compilers: [:leex, :yecc, :erlang, :elixir, :app],
 
-     # Testing
-     test_coverage: [tool: ExCoveralls],
-     preferred_cli_env: [
-       coveralls: :test,
-       "coveralls.detail": :test,
-       "coveralls.html": :test,
-       "coveralls.post": :test],
+      # Testing
+      test_coverage: [tool: ExCoveralls],
+      preferred_cli_env: [
+        coveralls: :test,
+        "coveralls.detail": :test,
+        "coveralls.html": :test,
+        "coveralls.post": :test
+      ],
 
-     # URLs
-     source_url: @project_url,
-     homepage_url: @project_url,
+      # URLs
+      source_url: @project_url,
+      homepage_url: @project_url,
 
-     # Hex
-     description: @description,
-     package: package(),
+      # Hex
+      description: @description,
+      package: package(),
 
-     # Dialyzer
-     dialyzer: [
-       plt_add_deps: :transitive,
-       plt_add_apps: [:mix],
-       ignore_warnings: ".dialyzerignore"],
+      # Dialyzer
+      dialyzer: [
+        plt_add_deps: :transitive,
+        plt_add_apps: [:mix],
+        ignore_warnings: ".dialyzerignore"
+      ],
 
-     # Docs
-     name: "Thrift",
-     docs: [
-       main: "README",
-       extras: ["README.md": [title: "README"]],
-       source_url: @project_url
-     ]]
+      # Docs
+      name: "Thrift",
+      docs: [
+        main: "README",
+        extras: ["README.md": [title: "README"]],
+        source_url: @project_url
+      ]
+    ]
   end
 
   def application do
     [
-      applications: [:logger, :connection, :ranch, :ssl],
+      applications: [:logger, :connection, :ranch, :ssl]
     ]
   end
 
   defp elixirc_paths(:test), do: ["lib", "test/support/lib"]
-  defp elixirc_paths(_),     do: ["lib"]
+  defp elixirc_paths(_), do: ["lib"]
 
   defp deps do
-     [{:ex_doc, "~> 0.19", only: :dev},
+    [
+      {:ex_doc, "~> 0.19", only: :dev},
       {:excoveralls, "~> 0.9", only: [:dev, :test]},
       {:credo, "~> 0.10", only: [:dev, :test]},
       {:dialyxir, "~> 0.5", only: :dev, runtime: false},
       {:connection, "~> 1.0"},
-      {:ranch, "~> 1.5"},
-     ]
+      {:ranch, "~> 1.5"}
+    ]
   end
 
   defp package do
-     [maintainers: ["Jon Parise", "Steve Cohen", "Preston Guillory"],
+    [
+      maintainers: ["Jon Parise", "Steve Cohen", "Preston Guillory"],
       licenses: ["Apache 2.0"],
       links: %{"GitHub" => @project_url},
-      files: ~w(README.md LICENSE mix.exs lib) ++
-             ~w(src/thrift_lexer.xrl src/thrift_parser.yrl)
-     ]
+      files: ~w(README.md LICENSE mix.exs lib) ++ ~w(src/thrift_lexer.xrl src/thrift_parser.yrl)
+    ]
   end
 end

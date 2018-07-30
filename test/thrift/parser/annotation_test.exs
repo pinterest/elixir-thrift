@@ -6,8 +6,9 @@ defmodule Thrift.Parser.AnnotationTest do
   setup_all do
     {:ok, schema} =
       "test/fixtures/app/thrift/AnnotationTest.thrift"
-      |> File.read!
+      |> File.read!()
       |> parse
+
     {:ok, [schema: schema]}
   end
 
@@ -22,11 +23,13 @@ defmodule Thrift.Parser.AnnotationTest do
 
   test "struct annotations", context do
     assert %{structs: %{foo: struct}} = context[:schema]
+
     assert struct.annotations == %{
-      :"cpp.type" => "DenseFoo",
-      :"python.type" => "DenseFoo",
-      :"java.final" => "",
-      :"annotation.without.value" => "1"}
+             :"cpp.type" => "DenseFoo",
+             :"python.type" => "DenseFoo",
+             :"java.final" => "",
+             :"annotation.without.value" => "1"
+           }
 
     assert %Field{name: :bar, annotations: annotations} = find_field(struct.fields, :bar)
     assert %{:presence => "required"} = annotations
@@ -48,7 +51,10 @@ defmodule Thrift.Parser.AnnotationTest do
   test "exception annotations", context do
     assert %{exceptions: %{foo_error: exception}} = context[:schema]
     assert exception.annotations == %{:foo => "bar"}
-    assert %Field{name: :error_code, annotations: annotations} = find_field(exception.fields, :error_code)
+
+    assert %Field{name: :error_code, annotations: annotations} =
+             find_field(exception.fields, :error_code)
+
     assert %{:foo => "bar"} = annotations
   end
 end

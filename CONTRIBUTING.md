@@ -10,7 +10,7 @@ everyone. Several regular outside contributors are also project maintainers.
 
 1. Fork this repository to your own account
 2. Make your changes and verify that `mix test` passes
-3. Commit your work and push to a topic branch on your fork
+3. Commit your work and push to a new branch on your fork
 4. Submit a [pull request](https://github.com/pinterest/elixir-thrift/compare/)
 5. Participate in the code review process by responding to feedback
 
@@ -60,3 +60,8 @@ These data files live under `test/data/` and have `.thriftbin` extensions.
 If you're changing any of the serialization routines, or adding some new code
 paths, you may need to (re)generate some of these data files. If that's the
 case, check out [`test/data/README.md`](test/data/README.md) for instructions.
+
+## License
+
+By contributing to this project, you agree that your contributions will be
+licensed under its [Apache 2 license](LICENSE).

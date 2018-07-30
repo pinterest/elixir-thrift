@@ -39,6 +39,19 @@ pull requests.
 
 ## Testing
 
+### Test Coverage
+
+[![Coverage Status](https://coveralls.io/repos/pinterest/elixir-thrift/badge.svg?branch=master&service=github)](https://coveralls.io/github/pinterest/elixir-thrift?branch=master)
+
+We think test coverage is important because it makes it less likely that
+future changes will break existing functionality. Changes that drop the
+project's overall test coverage below 90% will fail to pass CI.
+
+Test coverage is measured using [Coveralls][]. You can generate a local
+coverage report using `mix coveralls.detail` or `mix coveralls.html`.
+
+[Coveralls]: https://coveralls.io/github/pinterest/elixir-thrift
+
 ### Static Test Data
 
 Some serialization tests use static test data to verify their correctness.

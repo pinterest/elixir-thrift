@@ -68,10 +68,13 @@ defmodule Thrift.Mixfile do
 
   defp deps do
     [
-      {:ex_doc, "~> 0.19", only: :dev},
-      {:excoveralls, "~> 0.9", only: [:dev, :test]},
-      {:credo, "~> 0.10", only: [:dev, :test]},
+      # Development
+      {:ex_doc, "~> 0.19", only: :dev, runtime: false},
+      {:excoveralls, "~> 0.9", only: [:dev, :test], runtime: false},
+      {:credo, "~> 0.10", only: [:dev, :test], runtime: false},
       {:dialyxir, "~> 0.5", only: :dev, runtime: false},
+
+      # Runtime
       {:connection, "~> 1.0"},
       {:ranch, "~> 1.5"}
     ]

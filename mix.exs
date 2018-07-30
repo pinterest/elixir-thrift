@@ -82,7 +82,14 @@ defmodule Thrift.Mixfile do
 
   defp package do
     [
-      maintainers: ["Jon Parise", "Steve Cohen", "Preston Guillory"],
+      maintainers: [
+        "Steve Cohen",
+        "James Fish",
+        "Preston Guillory",
+        "Michael Oliver",
+        "Jon Parise",
+        "Dan Swain"
+      ],
       licenses: ["Apache 2.0"],
       links: %{"GitHub" => @project_url},
       files:

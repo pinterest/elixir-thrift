@@ -35,7 +35,7 @@ defmodule Thrift.Generator.StructCompactProtocol do
 
   """
 
-  alias Thrift.Generator.Compact.{StructSerialize, StructDeserialize}
+  alias Thrift.Generator.Compact.{StructDeserialize, StructSerialize}
 
   defdelegate struct_deserializer(struct_def, name, file_group), to: StructDeserialize
   defdelegate struct_serializer(struct_def, name, file_group), to: StructSerialize

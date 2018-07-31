@@ -12,12 +12,12 @@ defmodule Thrift.Generator.Compact.StructDeserialize do
     Exception,
     Field,
     Struct,
-    TypeRef,
     TEnum,
+    TypeRef,
     Union
   }
 
-  alias Thrift.Generator.Compact.{StructSerialize, Common}
+  alias Thrift.Generator.Compact.{Common, StructSerialize}
   alias Thrift.Protocol.Compact.IntegerEncoding
 
   def struct_deserializer(%{fields: fields}, name, file_group) do

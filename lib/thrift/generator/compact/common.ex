@@ -5,15 +5,15 @@ defmodule Thrift.Generator.Compact.Common do
 
   """
 
-  alias Thrift.Parser.FileGroup
-
   alias Thrift.AST.{
     Exception,
     Struct,
-    TypeRef,
     TEnum,
+    TypeRef,
     Union
   }
+
+  alias Thrift.Parser.FileGroup
 
   require Thrift.Protocol.Compact.Type, as: Type
 

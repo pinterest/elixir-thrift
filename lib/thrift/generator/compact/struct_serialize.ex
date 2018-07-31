@@ -4,16 +4,16 @@ defmodule Thrift.Generator.Compact.StructSerialize do
 
   See `Thrift.Generator.StructCompactProtocol`
   """
-  alias Thrift.Generator.Utils
   alias Thrift.Generator.Compact.Common
+  alias Thrift.Generator.Utils
   alias Thrift.Parser.FileGroup
 
   alias Thrift.AST.{
     Exception,
     Field,
     Struct,
-    TypeRef,
     TEnum,
+    TypeRef,
     Union
   }
 

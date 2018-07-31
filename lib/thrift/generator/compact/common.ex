@@ -7,7 +7,7 @@ defmodule Thrift.Generator.Compact.Common do
 
   alias Thrift.Parser.FileGroup
 
-  alias Thrift.Parser.Models.{
+  alias Thrift.AST.{
     Exception,
     Struct,
     TypeRef,

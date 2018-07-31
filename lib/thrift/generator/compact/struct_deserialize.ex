@@ -8,7 +8,7 @@ defmodule Thrift.Generator.Compact.StructDeserialize do
   alias Thrift.Generator.Utils
   alias Thrift.Parser.FileGroup
 
-  alias Thrift.Parser.Models.{
+  alias Thrift.AST.{
     Exception,
     Field,
     Struct,

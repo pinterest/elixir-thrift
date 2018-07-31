@@ -42,15 +42,6 @@ defmodule Thrift.Generator.StructGenerator do
           quote do: defstruct(unquote(struct_parts))
       end
 
-    define_block =
-      case label do
-        :exception ->
-          quote do: defexception(unquote(struct_parts))
-
-        _ ->
-          quote do: defstruct(unquote(struct_parts))
-      end
-
     extra_defs =
       if label == :exception and not Keyword.has_key?(struct_parts, :message) do
         quote do

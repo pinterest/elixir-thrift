@@ -1,12 +1,55 @@
 defmodule Thrift do
   @moduledoc ~S"""
-  Thrift provides [Apache Thrift](http://thrift.apache.org/) support:
+  [Thrift](https://thrift.apache.org/) implementation for Elixir including a
+  Thrift IDL parser, a code generator, and an RPC system
 
-  * `Mix.Tasks.Compile.Thrift` - mix task for generate Erlang source files
-  from `.thrift` schema files
+  ## Thrift IDL Parsing
 
-  * `Thrift.Parser` - functions for parsing `.thift` schema files into a
-  `Thrift.AST` tree
+  `Thrift.Parser` parses [Thrift IDL](https://thrift.apache.org/docs/idl) into
+  an abstract syntax tree used for code generation. You can also work with
+  `Thrift.AST` directly to support additional use cases, such as building
+  linters or analysis tools.
+
+  ## Code Generation
+
+  `Mix.Tasks.Compile.Thrift` is a Mix compiler task that automates Thrift code
+  generation. To use it, add `:thrift` to your project's `:compilers` list.
+  For example:
+
+      compilers: [:thrift | Mix.compilers]
+
+  It's important to add `:thrift` *before* the `:elixir` compiler entry. The
+  Thrift compiler generates Elixir source files, which are in turn compiled by
+  the `:elixir` compiler.
+
+  Configure the compiler using a keyword list under the top-level `:thrift`
+  key. The only required compiler option is `:files`, which defines the list
+  of Thrift files to compile.
+
+  By default, the generated Elixir source files will be written to the `lib`
+  directory, but you can change that using the `output_path` option.
+
+  In this example, we gather all of the `.thrift` files under the `thrift`
+  directory and write our output files to the `lib/generated` directory:
+
+      defmodule MyProject.Mixfile do
+        # ...
+        def project do
+          [
+            # ...
+            compilers: [:thrift | Mix.compilers],
+            thrift: [
+              files: Path.wildcard("thrift/**/*.thrift"),
+              output_path: "lib/generated"
+            ]
+          ]
+        end
+      end
+
+  You can also use the `Mix.Tasks.Thrift.Generate` Mix task to generate code
+  on-demand. By default, it uses the same project configuration as the
+  compiler task above, but options can also be specified using command line
+  arguments.
   """
 
   @typedoc "Thrift data types"

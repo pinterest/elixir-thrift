@@ -50,9 +50,12 @@ defmodule Thrift.Mixfile do
       # Docs
       name: "Thrift",
       docs: [
-        main: "README",
-        extras: ["README.md": [title: "README"], "CONTRIBUTING.md": [title: "Contributing"]],
-        source_url: @project_url
+        main: "Thrift",
+        extras: ["CONTRIBUTING.md": [title: "Contributing"]],
+        source_url: @project_url,
+        groups_for_modules: [
+          "Abstract Syntax Tree": ~r"Thrift.AST.*"
+        ]
       ]
     ]
   end

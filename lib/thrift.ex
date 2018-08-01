@@ -24,7 +24,8 @@ defmodule Thrift do
 
   Configure the compiler using a keyword list under the top-level `:thrift`
   key. The only required compiler option is `:files`, which defines the list
-  of Thrift files to compile.
+  of Thrift files to compile. See `Mix.Tasks.Compile.Thrift` for the full set
+  of available options.
 
   By default, the generated Elixir source files will be written to the `lib`
   directory, but you can change that using the `output_path` option.

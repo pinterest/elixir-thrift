@@ -106,7 +106,7 @@ defmodule Thrift.Binary.Framed.ProtocolHandler do
   end
 
   defp maybe_ssl_accept(socket, @ssl_header_byte, _optional, ssl_opts, timeout) do
-    case :ssl.ssl_accept(socket, ssl_opts, timeout) do
+    case ssl_handshake(socket, ssl_opts, timeout) do
       {:ok, ssl_sock} ->
         {:ok, :ssl, ssl_sock}
 
@@ -121,6 +121,16 @@ defmodule Thrift.Binary.Framed.ProtocolHandler do
 
   defp maybe_ssl_accept(_socket, _first_byte, :required, _ssl_opts, _timeout) do
     {:error, :closed}
+  end
+
+  defp ssl_handshake(socket, ssl_opts, timeout) do
+    # As of OTP 21.0, `:ssl.ssl_accept/3` is deprecated in favour of `:ssl.handshake/3`.
+    # This check allows us to support both, depending on which OTP version is being used.
+    if function_exported?(:ssl, :handshake, 3) do
+      apply(:ssl, :handshake, [socket, ssl_opts, timeout])
+    else
+      apply(:ssl, :ssl_accept, [socket, ssl_opts, timeout])
+    end
   end
 
   defp do_thrift_call({transport, socket, server_module, handler_module, recv_timeout} = args) do

@@ -11,9 +11,6 @@ defmodule Thrift.Parser do
   @typedoc "A map of Thrift annotation keys to values"
   @type annotations :: %{String.t() => String.t()}
 
-  @typedoc "A schema path element"
-  @type path_element :: String.t() | atom
-
   @typedoc "Available parser options"
   @type opt ::
           {:include_paths, [Path.t()]}
@@ -34,32 +31,6 @@ defmodule Thrift.Parser do
       {:error, lexer_error1, lexer_error2} ->
         {:error, {lexer_error1, lexer_error2}}
     end
-  end
-
-  @doc """
-  Parses a Thrift document and returns a component to the caller.
-
-  The part of the Thrift document that's returned is determined by the `path`
-  parameter. It works a lot like the `Kernel.get_in/2` function, which takes a
-  map and can pull out nested pieces.
-
-  For example, this makes it easy to get to a service definition:
-
-      parse(doc, [:services, :MyService])
-
-  Will return the "MyService" service.
-  """
-  @spec parse(String.t(), [path_element, ...]) :: Thrift.AST.all()
-  def parse(doc, path) do
-    {:ok, schema} = parse(doc)
-
-    Enum.reduce(path, schema, fn
-      _part, nil ->
-        nil
-
-      part, %{} = next ->
-        Map.get(next, part)
-    end)
   end
 
   @doc """

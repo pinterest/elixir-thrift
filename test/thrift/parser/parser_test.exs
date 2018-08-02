@@ -4,7 +4,7 @@ defmodule Thrift.Parser.ParserTest do
   @project_root Path.expand("../..", __DIR__)
   @test_file_dir Path.join([@project_root, "tmp", "parser_test"])
 
-  import Thrift.Parser, only: [parse: 1, parse: 2, parse_file: 2]
+  import Thrift.Parser, only: [parse: 1, parse_file: 2]
 
   alias Thrift.AST.{
     Constant,
@@ -23,6 +23,20 @@ defmodule Thrift.Parser.ParserTest do
   }
 
   import ExUnit.CaptureIO
+
+  # Parse a Thrift document and returns a subcomponent to the caller.
+  @spec parse(String.t(), nonempty_list(term)) :: Thrift.AST.all()
+  defp parse(doc, path) do
+    {:ok, schema} = parse(doc)
+
+    Enum.reduce(path, schema, fn
+      _part, nil ->
+        nil
+
+      part, %{} = next ->
+        Map.get(next, part)
+    end)
+  end
 
   setup_all do
     File.rm_rf!(@test_file_dir)

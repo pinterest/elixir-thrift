@@ -16,7 +16,7 @@ defmodule Thrift.Mixfile do
     [
       app: :thrift,
       version: @version,
-      elixir: "~> 1.3",
+      elixir: "~> 1.4",
       deps: deps(),
 
       # Build Environment
@@ -62,7 +62,7 @@ defmodule Thrift.Mixfile do
 
   def application do
     [
-      applications: [:logger, :connection, :ranch, :ssl]
+      extra_applications: [:logger]
     ]
   end
 

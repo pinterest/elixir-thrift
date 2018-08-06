@@ -4,9 +4,6 @@ branches:
   only:
     - "master"
 
-env:
-  - CMD=test
-
 matrix:
   include:
     - elixir: 1.4
@@ -17,14 +14,13 @@ matrix:
       otp_release: 19.3
     - elixir: 1.7
       otp_release: 21.0
-      env: CMD=coveralls.travis
 
 before_script:
   - MIX_ENV=test mix compile --warnings-as-errors
 
 script:
   - if [[ "$TRAVIS_ELIXIR_VERSION" == "1.7"* ]]; then mix format --check-formatted; fi
-  - MIX_ENV=test mix $CMD
+  - mix coveralls.travis
 
 cache:
   directories:

@@ -5,7 +5,7 @@ branches:
     - "master"
 
 env:
-  - MIX_DO=test
+  - CMD=test
 
 matrix:
   include:
@@ -17,10 +17,11 @@ matrix:
       otp_release: 19.3
     - elixir: 1.7
       otp_release: 21.0
-      env: MIX_DO="format --check-formatted, coveralls.travis"
+      env: CMD=coveralls.travis
 
 script:
-  - MIX_ENV=test mix do $MIX_DO
+  - if [[ "$TRAVIS_ELIXIR_VERSION" == "1.7"* ]]; then mix format --check-formatted; fi
+  - MIX_ENV=test mix $CMD
 
 cache:
   directories:

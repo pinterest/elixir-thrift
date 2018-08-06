@@ -19,6 +19,9 @@ matrix:
       otp_release: 21.0
       env: CMD=coveralls.travis
 
+before_script:
+  - MIX_ENV=test mix compile --warnings-as-errors
+
 script:
   - if [[ "$TRAVIS_ELIXIR_VERSION" == "1.7"* ]]; then mix format --check-formatted; fi
   - MIX_ENV=test mix $CMD

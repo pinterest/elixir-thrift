@@ -4,6 +4,9 @@ branches:
   only:
     - "master"
 
+env:
+  - MIX_DO=test
+
 matrix:
   include:
     - elixir: 1.4
@@ -14,14 +17,10 @@ matrix:
       otp_release: 19.3
     - elixir: 1.7
       otp_release: 21.0
-      env: EXTRA_CHECKS=true
-
-env:
-  - EXTRA_CHECKS=false
+      env: MIX_DO="format --check-formatted, coveralls.travis"
 
 script:
-  - MIX_ENV=test mix deps.compile
-  - ./ci/tests.sh
+  - MIX_ENV=test mix do $MIX_DO
 
 cache:
   directories:

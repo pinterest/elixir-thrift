@@ -5,5 +5,4 @@ engines:
   remark-lint:
     enabled: true
 exclude_paths:
-- ci
 - doc

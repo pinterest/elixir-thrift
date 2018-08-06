@@ -118,7 +118,7 @@ defmodule Thrift.Parser.FileGroup do
 
     default_namespace =
       if file_group.opts[:namespace] do
-        %Namespace{:name => :elixir, :path => file_group.opts[:namespace]}
+        %Namespace{:scope => :elixir, :value => file_group.opts[:namespace]}
       end
 
     ns_mappings = build_ns_mappings(file_group.schemas, default_namespace)
@@ -232,7 +232,7 @@ defmodule Thrift.Parser.FileGroup do
 
       namespace = %Namespace{} ->
         namespace_parts =
-          namespace.path
+          namespace.value
           |> String.split(".")
           |> Enum.map(&Macro.camelize/1)
 

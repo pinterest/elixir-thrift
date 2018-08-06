@@ -51,6 +51,67 @@ defmodule Thrift do
   on-demand. By default, it uses the same project configuration as the
   compiler task above, but options can also be specified using command line
   arguments.
+
+  ### Thrift Definitions
+
+  Given some Thrift type definitions:
+
+  ```thrift
+  namespace elixir Thrift.Test
+
+  exception UserNotFound {
+    1: string message
+  }
+
+  struct User {
+    1: i64 id,
+    2: string username,
+  }
+
+  service UserService {
+    bool ping(),
+    User get(1: i64 id) throws (1: UserNotFound e),
+    bool delete(1: i64 id),
+  }
+  ```
+
+  ... the generated code will be placed in the following modules under
+  `lib/thrift/`:
+
+    Definition                | Module
+    ------------------------- | -----------------------------------------------
+    `User` struct             | `Thrift.Test.User`
+    *└ binary protocol*       | `Thrift.Test.User.BinaryProtocol`
+    `UserNotFound` exception  | `Thrift.Test.UserNotFound`
+    *└ binary protocol*       | `Thrift.Test.UserNotFound.BinaryProtocol`
+    `UserService` service     | `Thrift.Test.UserService.Handler`
+    *└ binary framed client*  | `Thrift.Test.UserService.Binary.Framed.Client`
+    *└ binary framed server*  | `Thrift.Test.UserService.Binary.Framed.Server`
+
+  ### Namespaces
+
+  The generated modules' namespace is determined by the `:namespace` compiler
+  option, which defaults to `Thrift.Generated`. Individual `.thrift` files can
+  specify their own namespace using the `namespace` keyword, taking precedence
+  over the compiler's value.
+
+  ```thrift
+  namespace elixir Thrift.Test
+  ```
+
+  Unfortunately, the Apache Thrift compiler will produce a warning on this line
+  because it doesn't recognize `elixir` as a supported language. While that
+  warning is benign, it can be annoying. For that reason, you can also specify
+  your Elixir namespace as a "magic" namespace comment:
+
+  ```thrift
+  #@namespace elixir Thrift.Test
+  ```
+
+  This alternate syntax is [borrowed from Scrooge][scrooge-ns], which uses the
+  same trick for defining Scala namespaces.
+
+  [scrooge-ns]: https://twitter.github.io/scrooge/Namespaces.html
   """
 
   @typedoc "Thrift data types"

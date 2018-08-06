@@ -56,22 +56,24 @@ defmodule Thrift do
 
   Given some Thrift type definitions:
 
-      namespace elixir Thrift.Test
+  ```thrift
+  namespace elixir Thrift.Test
 
-      exception UserNotFound {
-        1: string message
-      }
+  exception UserNotFound {
+    1: string message
+  }
 
-      struct User {
-        1: i64 id,
-        2: string username,
-      }
+  struct User {
+    1: i64 id,
+    2: string username,
+  }
 
-      service UserService {
-        bool ping(),
-        User get(1: i64 id) throws (1: UserNotFound e),
-        bool delete(1: i64 id),
-      }
+  service UserService {
+    bool ping(),
+    User get(1: i64 id) throws (1: UserNotFound e),
+    bool delete(1: i64 id),
+  }
+  ```
 
   ... the generated code will be placed in the following modules under
   `lib/thrift/`:
@@ -90,14 +92,18 @@ defmodule Thrift do
 
   Thrift uses the `namespace` keyword to define a language's namespace:
 
-      namespace elixir Thrift.Test
+  ```thrift
+  namespace elixir Thrift.Test
+  ```
 
   Unfortunately, the Apache Thrift compiler will produce a warning on this line
   because it doesn't recognize `elixir` as a supported language. While that
   warning is benign, it can be annoying. For that reason, you can also specify
   your Elixir namespace as a "magic" namespace comment:
 
-      #@namespace elixir Thrift.Test
+  ```thrift
+  #@namespace elixir Thrift.Test
+  ```
 
   This alternate syntax is [borrowed from Scrooge][scrooge-ns], which uses the
   same trick for defining Scala namespaces.

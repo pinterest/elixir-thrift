@@ -28,4 +28,4 @@ script:
 
 cache:
   directories:
-  - $HOME/.mix/archives
+  - deps

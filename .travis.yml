@@ -14,15 +14,20 @@ matrix:
       otp_release: 19.3
     - elixir: 1.7
       otp_release: 21.0
-      env: EXTRA_CHECKS=true
+      env: CHECK_FORMATTED=true
 
-env:
-  - EXTRA_CHECKS=false
+install:
+  - mix local.rebar --force
+  - mix local.hex --force
+  - mix deps.get --only test
+
+before_script:
+  - MIX_ENV=test mix compile --warnings-as-errors
 
 script:
-  - MIX_ENV=test mix deps.compile
-  - ./ci/tests.sh
+  - if [[ $CHECK_FORMATTED ]]; then (set -x; mix format --check-formatted); fi
+  - MIX_ENV=test mix coveralls.travis
 
 cache:
   directories:
-  - $HOME/.mix/archives
+  - deps

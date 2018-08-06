@@ -90,7 +90,10 @@ defmodule Thrift do
 
   ### Namespaces
 
-  Thrift uses the `namespace` keyword to define a language's namespace:
+  The generated modules' namespace is determined by the `:namespace` compiler
+  option, which defaults to `Thrift.Generated`. Individual `.thrift` files can
+  specify their own namespace using the `namespace` keyword, taking precedence
+  over the compiler's value.
 
   ```thrift
   namespace elixir Thrift.Test

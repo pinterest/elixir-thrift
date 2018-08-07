@@ -19,7 +19,7 @@ defmodule Thrift.AST do
     namespaces, each with its own language scope.
     """
 
-    @type t :: %Namespace{line: Parser.line(), scope: atom, value: String.t()}
+    @type t :: %Namespace{line: Thrift.Parser.line(), scope: atom, value: String.t()}
 
     @enforce_keys [:scope, :value]
     defstruct line: nil, scope: nil, value: nil
@@ -32,7 +32,7 @@ defmodule Thrift.AST do
 
   defmodule Include do
     @moduledoc false
-    @type t :: %Include{line: Parser.line(), path: String.t()}
+    @type t :: %Include{line: Thrift.Parser.line(), path: String.t()}
 
     @enforce_keys [:path]
     defstruct line: nil, path: nil
@@ -45,7 +45,12 @@ defmodule Thrift.AST do
 
   defmodule Constant do
     @moduledoc false
-    @type t :: %Constant{line: Parser.line(), name: atom, value: Literals.t(), type: Types.t()}
+    @type t :: %Constant{
+            line: Thrift.Parser.line(),
+            name: atom,
+            value: Literals.t(),
+            type: Types.t()
+          }
 
     @enforce_keys [:name, :value, :type]
     defstruct line: nil, name: nil, value: nil, type: nil
@@ -60,8 +65,8 @@ defmodule Thrift.AST do
     @moduledoc false
     @type enum_value :: bitstring | integer
     @type t :: %TEnum{
-            line: Parser.line(),
-            annotations: Parser.annotations(),
+            line: Thrift.Parser.line(),
+            annotations: Thrift.Parser.annotations(),
             name: atom,
             values: [{atom, enum_value}]
           }
@@ -88,8 +93,8 @@ defmodule Thrift.AST do
     @moduledoc false
     @type printable :: String.t() | atom
     @type t :: %Field{
-            line: Parser.line(),
-            annotations: Parser.annotations(),
+            line: Thrift.Parser.line(),
+            annotations: Thrift.Parser.annotations(),
             id: integer,
             name: atom,
             type: Types.t(),
@@ -164,8 +169,8 @@ defmodule Thrift.AST do
   defmodule Exception do
     @moduledoc false
     @type t :: %Exception{
-            line: Parser.line(),
-            annotations: Parser.annotations(),
+            line: Thrift.Parser.line(),
+            annotations: Thrift.Parser.annotations(),
             name: atom,
             fields: [Field.t()]
           }
@@ -185,8 +190,8 @@ defmodule Thrift.AST do
   defmodule Struct do
     @moduledoc false
     @type t :: %Struct{
-            line: Parser.line(),
-            annotations: Parser.annotations(),
+            line: Thrift.Parser.line(),
+            annotations: Thrift.Parser.annotations(),
             name: atom,
             fields: [Field.t()]
           }
@@ -206,8 +211,8 @@ defmodule Thrift.AST do
   defmodule Union do
     @moduledoc false
     @type t :: %Union{
-            line: Parser.line(),
-            annotations: Parser.annotations(),
+            line: Thrift.Parser.line(),
+            annotations: Thrift.Parser.annotations(),
             name: atom,
             fields: [Field.t()]
           }
@@ -269,7 +274,7 @@ defmodule Thrift.AST do
 
   defmodule TypeRef do
     @moduledoc false
-    @type t :: %TypeRef{line: Parser.line(), referenced_type: atom}
+    @type t :: %TypeRef{line: Thrift.Parser.line(), referenced_type: atom}
 
     @enforce_keys [:referenced_type]
     defstruct line: nil, referenced_type: nil
@@ -282,7 +287,7 @@ defmodule Thrift.AST do
 
   defmodule ValueRef do
     @moduledoc false
-    @type t :: %ValueRef{line: Parser.line(), referenced_value: atom}
+    @type t :: %ValueRef{line: Thrift.Parser.line(), referenced_value: atom}
 
     @enforce_keys [:referenced_value]
     defstruct line: nil, referenced_value: nil
@@ -297,8 +302,8 @@ defmodule Thrift.AST do
     @moduledoc false
     @type return :: :void | Types.t()
     @type t :: %Function{
-            line: Parser.line(),
-            annotations: Parser.annotations(),
+            line: Thrift.Parser.line(),
+            annotations: Thrift.Parser.annotations(),
             oneway: boolean,
             return_type: return,
             name: atom,
@@ -333,8 +338,8 @@ defmodule Thrift.AST do
   defmodule Service do
     @moduledoc false
     @type t :: %Service{
-            line: Parser.line(),
-            annotations: Parser.annotations(),
+            line: Thrift.Parser.line(),
+            annotations: Thrift.Parser.annotations(),
             name: atom,
             extends: atom,
             functions: %{atom => Function.t()}

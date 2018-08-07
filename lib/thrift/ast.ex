@@ -10,15 +10,23 @@ defmodule Thrift.AST do
   alias Thrift.Parser.{Literals, Types}
 
   defmodule Namespace do
-    @moduledoc false
-    @type t :: %Namespace{line: Parser.line(), name: atom, path: String.t()}
+    @moduledoc """
+    A namespace specifies the target module, package, etc. for a document's
+    type definitions.
 
-    @enforce_keys [:name, :path]
-    defstruct line: nil, name: nil, path: nil
+    The namespace's scope indicates the target language; a `*` indicates that
+    the namespace applies to all languages. A document can specify multiple
+    namespaces, each with its own language scope.
+    """
+
+    @type t :: %Namespace{line: Parser.line(), scope: atom, value: String.t()}
+
+    @enforce_keys [:scope, :value]
+    defstruct line: nil, scope: nil, value: nil
 
     @spec new(charlist, charlist) :: t
-    def new(name, path) do
-      %Namespace{name: atomify(name), path: List.to_string(path)}
+    def new(scope, value) do
+      %Namespace{scope: atomify(scope), value: List.to_string(value)}
     end
   end
 
@@ -416,7 +424,7 @@ defmodule Thrift.AST do
     end
 
     defp merge(schema, %Namespace{} = ns) do
-      %Schema{schema | namespaces: Map.put(schema.namespaces, ns.name, ns)}
+      %Schema{schema | namespaces: Map.put(schema.namespaces, ns.scope, ns)}
     end
 
     defp merge(schema, %Constant{} = const) do

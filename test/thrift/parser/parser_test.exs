@@ -90,10 +90,10 @@ defmodule Thrift.Parser.ParserTest do
         [:namespaces]
       )
 
-    assert namespaces[:py] == %Namespace{line: 1, name: :py, path: "foo.bar.baz"}
-    assert namespaces[:erl] == %Namespace{line: 2, name: :erl, path: "foo_bar"}
-    assert namespaces[:*] == %Namespace{line: 3, name: :*, path: "bar.baz"}
-    assert namespaces[:elixir] == %Namespace{line: 4, name: :elixir, path: "Foo"}
+    assert namespaces[:py] == %Namespace{line: 1, scope: :py, value: "foo.bar.baz"}
+    assert namespaces[:erl] == %Namespace{line: 2, scope: :erl, value: "foo_bar"}
+    assert namespaces[:*] == %Namespace{line: 3, scope: :*, value: "bar.baz"}
+    assert namespaces[:elixir] == %Namespace{line: 4, scope: :elixir, value: "Foo"}
   end
 
   test "parsing include headers" do
@@ -916,7 +916,7 @@ defmodule Thrift.Parser.ParserTest do
       result = parse_file(context[:path], namespace: namespace)
 
       if is_map(result.ns_mappings.namespace) do
-        result.ns_mappings.namespace.path
+        result.ns_mappings.namespace.value
       end
     end
 

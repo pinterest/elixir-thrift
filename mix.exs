@@ -79,7 +79,7 @@ defmodule Thrift.Mixfile do
 
       # Runtime
       {:connection, "~> 1.0"},
-      {:ranch, "~> 1.5"}
+      {:ranch, "~> 1.6"}
     ]
   end
 

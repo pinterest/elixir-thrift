@@ -80,7 +80,12 @@ defmodule Thrift.Parser.LexerTest do
     )
 
     for keyword <- keywords do
-      value = keyword |> tokenize |> Keyword.keys() |> List.first()
+      value =
+        keyword
+        |> tokenize()
+        |> Keyword.keys()
+        |> List.first()
+
       assert value == String.to_atom(keyword)
     end
   end

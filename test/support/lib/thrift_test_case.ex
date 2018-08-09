@@ -149,7 +149,10 @@ defmodule ThriftTestCase do
   end
 
   def inspect_quoted(block) do
-    block |> Macro.to_string() |> IO.puts()
+    block
+    |> Macro.to_string()
+    |> IO.puts()
+
     block
   end
 end

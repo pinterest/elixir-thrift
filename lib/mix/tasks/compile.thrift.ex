@@ -169,7 +169,9 @@ defmodule Mix.Tasks.Compile.Thrift do
     header = {@manifest_vsn, package_vsn()}
 
     try do
-      manifest |> File.read!() |> :erlang.binary_to_term()
+      manifest
+      |> File.read!()
+      |> :erlang.binary_to_term()
     rescue
       _ -> []
     else

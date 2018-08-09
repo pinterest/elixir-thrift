@@ -90,6 +90,9 @@ defmodule Thrift.Generator.EnumGenerator do
   end
 
   defp to_name(key) do
-    key |> to_string |> String.downcase() |> String.to_atom()
+    key
+    |> to_string()
+    |> String.downcase()
+    |> String.to_atom()
   end
 end

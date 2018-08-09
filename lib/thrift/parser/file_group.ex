@@ -223,8 +223,15 @@ defmodule Thrift.Parser.FileGroup do
       |> Atom.to_string()
       |> String.split(".", parts: 2)
 
-    module_name = name_parts |> Enum.at(0) |> String.to_atom()
-    struct_name = name_parts |> Enum.at(1) |> initialcase
+    module_name =
+      name_parts
+      |> Enum.at(0)
+      |> String.to_atom()
+
+    struct_name =
+      name_parts
+      |> Enum.at(1)
+      |> initialcase()
 
     case file_group.ns_mappings[module_name] do
       nil ->

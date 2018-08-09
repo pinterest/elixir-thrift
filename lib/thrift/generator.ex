@@ -87,7 +87,11 @@ defmodule Thrift.Generator do
       source = Macro.to_string(quoted)
 
       path = Path.join(output_dir, filename)
-      path |> Path.dirname() |> File.mkdir_p!()
+
+      path
+      |> Path.dirname()
+      |> File.mkdir_p!()
+
       File.write!(path, source)
 
       filename

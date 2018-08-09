@@ -82,7 +82,10 @@ defmodule Thrift.Generator.Utils do
 
   @spec underscore(atom) :: atom
   def underscore(a) when is_atom(a) do
-    a |> Atom.to_string() |> underscore |> String.to_atom()
+    a
+    |> Atom.to_string()
+    |> underscore()
+    |> String.to_atom()
   end
 
   # NOTE
@@ -102,7 +105,10 @@ defmodule Thrift.Generator.Utils do
   defmacrop debug_optimization(expr, label) do
     if @debug_optimization do
       quote do
-        unquote(expr) |> Macro.to_string() |> IO.puts()
+        unquote(expr)
+        |> Macro.to_string()
+        |> IO.puts()
+
         IO.puts(unquote(label))
       end
     else

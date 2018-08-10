@@ -1,6 +1,9 @@
 defmodule Thrift.Parser do
   @moduledoc """
-  This module provides functions for parsing Thrift IDL files (`.thrift`).
+  This module provides functions for parsing [Thrift IDL][idl] files
+  (`.thrift`).
+
+  [idl]: https://thrift.apache.org/docs/idl
   """
 
   alias Thrift.Parser.{FileGroup, FileRef, ParsedFile}
@@ -9,7 +12,7 @@ defmodule Thrift.Parser do
   @type line :: pos_integer | nil
 
   @typedoc "A map of Thrift annotation keys to values"
-  @type annotations :: %{String.t() => String.t()}
+  @type annotations :: %{required(String.t()) => String.t()}
 
   @typedoc "Available parser options"
   @type opt ::
@@ -18,7 +21,7 @@ defmodule Thrift.Parser do
   @type opts :: [opt]
 
   @doc """
-  Parses a Thrift document and returns the schema that it represents.
+  Parses a string of Thrift IDL into its AST representation.
   """
   @spec parse(String.t()) :: {:ok, Thrift.AST.Schema.t()} | {:error, term}
   def parse(doc) do

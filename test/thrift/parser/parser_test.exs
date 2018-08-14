@@ -25,7 +25,6 @@ defmodule Thrift.Parser.ParserTest do
   import ExUnit.CaptureIO
 
   # Parse a Thrift document and returns a subcomponent to the caller.
-  @spec parse(String.t(), nonempty_list(term)) :: Thrift.AST.all()
   defp parse(doc, path) do
     {:ok, schema} = parse(doc)
 

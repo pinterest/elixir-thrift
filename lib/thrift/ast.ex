@@ -2,8 +2,14 @@ defmodule Thrift.AST do
   @moduledoc """
   Thrift Abstract Syntax Tree
 
-  Parsed Thrift files are repesented as a tree of these structures, starting
-  with a `Thrift.AST.Schema` node.
+  `Thrift.Parser` returns a tree of these structures, starting with a
+  `Thrift.AST.Schema` node at the root.
+
+  ## Headers
+
+  - `Thrift.AST.Include`
+  - `Thrift.AST.Namespace`
+
   """
 
   import Thrift.Parser.Conversions
@@ -31,8 +37,12 @@ defmodule Thrift.AST do
   end
 
   defmodule Include do
-    @moduledoc false
-    @type t :: %Include{line: Thrift.Parser.line(), path: String.t()}
+    @moduledoc """
+    An include makes another file's symbols available within this file (with a
+    prefix).
+    """
+
+    @type t :: %Include{line: Thrift.Parser.line(), path: Path.t()}
 
     @enforce_keys [:path]
     defstruct line: nil, path: nil
@@ -618,17 +628,4 @@ defmodule Thrift.AST do
       end
     end
   end
-
-  @type all ::
-          Namespace.t()
-          | Include.t()
-          | Constant.t()
-          | TEnum.t()
-          | Field.t()
-          | Exception.t()
-          | Struct.t()
-          | Union.t()
-          | Function.t()
-          | Service.t()
-          | Schema.t()
 end

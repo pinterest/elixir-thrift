@@ -2,7 +2,7 @@ defmodule Thrift.AST do
   @moduledoc """
   Thrift Abstract Syntax Tree
 
-  `Thrift.Parser` returns as a tree of these structures, starting with a
+  `Thrift.Parser` returns a tree of these structures, starting with a
   `Thrift.AST.Schema` node at the root.
 
   ## Headers

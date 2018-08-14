@@ -21,7 +21,7 @@ defmodule Thrift.Parser do
   @type opts :: [opt]
 
   @doc """
-  Parses a string of Thrift IDL into its AST representation.
+  Parses a Thrift IDL string into its AST representation.
   """
   @spec parse(String.t()) :: {:ok, Thrift.AST.Schema.t()} | {:error, term}
   def parse(doc) do

@@ -1,12 +1,5 @@
 defmodule Thrift.Parser.FileGroup do
-  @moduledoc """
-  Represents a group of parsed files.
-
-  When you parse a file, it might include other thrift files. These files are
-  in turn accumulated and parsed and added to this module. Additionally, this
-  module allows resolution of the names of Structs / Enums / Unions etc across
-  files.
-  """
+  @moduledoc false
 
   alias Thrift.Parser
 

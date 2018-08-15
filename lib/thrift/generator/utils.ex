@@ -1,7 +1,5 @@
 defmodule Thrift.Generator.Utils do
-  @moduledoc """
-  Collection of utilities for working with generated code.
-  """
+  @moduledoc false
 
   alias Thrift.AST.{
     Constant,

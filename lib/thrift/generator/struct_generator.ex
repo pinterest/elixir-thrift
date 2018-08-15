@@ -1,4 +1,6 @@
 defmodule Thrift.Generator.StructGenerator do
+  @moduledoc false
+
   alias Thrift.AST.{
     Exception,
     Field,

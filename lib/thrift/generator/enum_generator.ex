@@ -1,4 +1,6 @@
 defmodule Thrift.Generator.EnumGenerator do
+  @moduledoc false
+
   def generate(name, enum) do
     macro_defs =
       Enum.map(enum.values, fn {key, value} ->

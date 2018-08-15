@@ -1,7 +1,5 @@
 defmodule Thrift.Binary.Framed.ProtocolHandler do
-  @moduledoc """
-  A GenServer that accepts connections on a server and processes the thrift messages.
-  """
+  @moduledoc false
 
   @default_timeout 20_000
   @ssl_header_byte 0x16

@@ -1,6 +1,5 @@
 {
   "skip_files": [
-      "lib/mix/tasks/coveralls.ex",
       "src/thrift_lexer.erl",
       "src/thrift_parser.erl",
       "test/support"

@@ -146,9 +146,10 @@ defmodule Thrift do
     [:bool, :i8, :i16, :i32, :i64, :binary, :double, :byte, :string]
   end
 
-  # A struct for handling IEEE-754 NaN values.
   defmodule NaN do
-    @moduledoc false
+    @moduledoc """
+    A struct for handling IEEE-754 NaN values.
+    """
     @type t :: %NaN{
             sign: 0 | 1,
             # 2^52 - 1

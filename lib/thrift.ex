@@ -148,7 +148,8 @@ defmodule Thrift do
 
   defmodule NaN do
     @moduledoc """
-    A struct for handling IEEE-754 NaN values.
+    A struct that represents [IEEE-754 NaN](https://en.wikipedia.org/wiki/NaN)
+    values.
     """
 
     @type t :: %NaN{

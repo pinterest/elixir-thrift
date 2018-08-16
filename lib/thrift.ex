@@ -150,6 +150,7 @@ defmodule Thrift do
     @moduledoc """
     A struct for handling IEEE-754 NaN values.
     """
+
     @type t :: %NaN{
             sign: 0 | 1,
             # 2^52 - 1

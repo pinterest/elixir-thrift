@@ -1,42 +1,41 @@
+# This module implements code generation of binary protocol deserialization.
+#
+# Consider a Thrift struct.
+#
+#   struct MyStruct {
+#     1: i32 num;
+#     2: list<i32> nums;
+#     3: map<string, OtherStruct> structs;
+#   }
+#
+# You could visual this as a tree of types like the following.
+#
+#   struct (MyStruct)
+#   ├ i32
+#   ├ list
+#   │ └ i32
+#   └ map
+#     ├ key
+#     │ └ string
+#     └ value
+#       └ struct (OtherStruct)
+#
+# We care about the edges of this graph. This module needs to know how to
+# implement deserializers for each transition from one type to another.
+#
+# - struct -> i32
+# - struct -> list
+# - list -> i32
+# - struct -> map
+# - map key -> string
+# - map value -> struct
+#
+# For the struct at the root of the graph, we generate a deserializer for each
+# field. Other structs are leaf nodes in the graph. Rather than generating the
+# deserialization logic inline, we make a call to the module we expect to have
+# been generated for that struct.
 defmodule Thrift.Generator.StructBinaryProtocol do
-  @moduledoc """
-  This module implements code generation of binary protocol deserialization.
-
-  Consider a Thrift struct.
-
-    struct MyStruct {
-      1: i32 num;
-      2: list<i32> nums;
-      3: map<string, OtherStruct> structs;
-    }
-
-  You could visual this as a tree of types like the following.
-
-    struct (MyStruct)
-    ├ i32
-    ├ list
-    │ └ i32
-    └ map
-      ├ key
-      │ └ string
-      └ value
-        └ struct (OtherStruct)
-
-  We care about the edges of this graph. This module needs to know how to
-  implement deserializers for each transition from one type to another.
-
-  - struct -> i32
-  - struct -> list
-  - list -> i32
-  - struct -> map
-  - map key -> string
-  - map value -> struct
-
-  For the struct at the root of the graph, we generate a deserializer for each
-  field. Other structs are leaf nodes in the graph. Rather than generating the
-  deserialization logic inline, we make a call to the module we expect to have
-  been generated for that struct.
-  """
+  @moduledoc false
 
   alias Thrift.AST.{
     Exception,

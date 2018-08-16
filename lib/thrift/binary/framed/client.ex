@@ -1,13 +1,13 @@
+# A client implementation of Thrift's Binary Framed protocol.
+#
+# This client is meant to be used with a generated Thrift client. This module
+# implements framing on top of the Connection behaviour.
+#
+# This module ony adds two functions to the connection behaviour,
+# `oneway` and `request`.
 defmodule Thrift.Binary.Framed.Client do
-  @moduledoc """
-  A client implementation of Thrift's Binary Framed protocol.
+  @moduledoc false
 
-  This client is meant to be used with a generated Thrift client. This module
-  implements framing on top of the Connection behaviour.
-
-  This module ony adds two functions to the connection behaviour,
-  `oneway` and `request`.
-  """
   alias Thrift.Protocol.Binary
   alias Thrift.TApplicationException
   alias Thrift.Transport.SSL

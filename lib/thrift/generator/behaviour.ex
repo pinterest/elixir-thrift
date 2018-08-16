@@ -1,11 +1,9 @@
+# Takes a thrift service definition and creates a behavoiur module for users
+# to implement. Thrift types are converted into Elixir typespecs that are
+# equivalent to their thrift counterparts.
 defmodule Thrift.Generator.Behaviour do
-  @moduledoc """
-  A generator for a handler module's behaviour.
+  @moduledoc false
 
-  Takes a thrift service definition and creates a behavoiur module for users
-  to implement. Thrift types are converted into Elixir typespecs that are
-  equivalent to their thrift counterparts.
-  """
   alias Thrift.AST.{
     Exception,
     Field,

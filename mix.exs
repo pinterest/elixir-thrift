@@ -55,7 +55,7 @@ defmodule Thrift.Mixfile do
         source_url: @project_url,
         groups_for_modules: [
           "Abstract Syntax Tree": ~r"Thrift.AST.*",
-          "Clients": ["Thrift.Binary.Framed.Client"]
+          Clients: ["Thrift.Binary.Framed.Client"]
         ]
       ]
     ]

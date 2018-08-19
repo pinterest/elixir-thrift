@@ -54,7 +54,8 @@ defmodule Thrift.Mixfile do
         extras: ["CONTRIBUTING.md": [title: "Contributing"]],
         source_url: @project_url,
         groups_for_modules: [
-          "Abstract Syntax Tree": ~r"Thrift.AST.*"
+          "Abstract Syntax Tree": ~r"Thrift.AST.*",
+          "Clients": ["Thrift.Binary.Framed.Client"]
         ]
       ]
     ]

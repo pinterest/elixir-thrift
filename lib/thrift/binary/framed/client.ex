@@ -1,12 +1,21 @@
-# A client implementation of Thrift's Binary Framed protocol.
-#
-# This client is meant to be used with a generated Thrift client. This module
-# implements framing on top of the Connection behaviour.
-#
-# This module ony adds two functions to the connection behaviour,
-# `oneway` and `request`.
 defmodule Thrift.Binary.Framed.Client do
-  @moduledoc false
+  @moduledoc """
+  A client implementation of Thrift's Binary Framed protocol.
+
+  This client is meant to be used with a generated Thrift client. This module
+  implements framing on top of the `Connection` behaviour.
+
+  This module adds `oneway/4` for making "oneway" RPC calls that won't receive
+  a response.
+
+  See `start_link/3` for the various connection options.
+
+      {:ok, client} = Client.start_link(
+          "localhost", 2345,
+          tcp_opts: [],
+          ssl_opts: [enabled: true, cacertfile: "cacerts.pem", certfile: "cert.pem", keyfile: "key.pem"],
+          gen_server_opts: [timeout: 10_000])
+  """
 
   alias Thrift.Protocol.Binary
   alias Thrift.TApplicationException
@@ -80,21 +89,41 @@ defmodule Thrift.Binary.Framed.Client do
 
   @doc """
   Starts and connects the client.
-  When called, the client connects on the appropriate host and port and establishes
-  a TCP connection. The options keyword list takes the following options:
 
-    `tcp_opts`: A keyword list that controls how the underlying connection is handled. All options
-     not handled below are sent to the underlying gen_tcp (with the exception of the
-     following options, which, if overridden, would break the framed client:
-     [`active`, `packet`, `mode`x]
+  When called, the client connects to the specified host and establishes a
+  TCP connection. The following options can be given:
 
-     - `timeout`:  An integer that governs how long the gen_tcp connection waits for operations
-        to complete. This timeout is used when connecting or receiving data.
+  `tcp_opts`: A keyword list that controls how the underlying connection is
+  handled. All options not handled below are sent to the underlying gen_tcp
+  (with the exception of the following options, which, if overridden, would
+  break the framed client: [`active`, `packet`, `mode`]).
 
-     - `send_timeout`: An integer that governs how long our connection waits when sending data.
+    - `:timeout`: A positive integer (milliseconds) that governs how long the
+      gen_tcp connection waits for operations to complete. This timeout is
+      used when connecting or receiving data.
+    - `:send_timeout`: A positive integer (milliseconds) that governs how long
+      our connection waits when sending data.
 
-  Additionally, the options `:name`, `:debug`, and `:spawn_opt`, if specified, will be passed to
-  the underlying `GenServer`. See `GenServer.start_link/3` for details on these options.
+  `ssl_opts`: A keyword list of SSL/TLS options:
+
+    - `:enabled`: A boolean indicating whether to upgrade the connection to
+      the SSL protocol
+    - `:optional`: A boolean indicating whether to accept both SSL and plain
+      connections
+    - `:configure`: A 0-arity function to provide additional SSL options at
+      runtime
+    - Additional `Thrift.Transport.SSL.option` values specifying other
+      standard [`:ssl` options](http://erlang.org/doc/man/ssl.html)
+
+  `gen_server_opts`: A keyword list of options for the GenServer:
+
+    - `:timeout`: A positive integer (milliseconds) specifying the amount of
+      time the client's GenServer should wait for a reply. After this time,
+      the GenServer will exit with `{:error, :timeout}`.
+
+  Additionally, the options `:name`, `:debug`, and `:spawn_opt`, if specified,
+  will be passed to the underlying `GenServer`. See `GenServer.start_link/3`
+  for details on these options.
   """
   @spec start_link(String.t(), 0..65_535, options) :: GenServer.on_start()
   def start_link(host, port, opts) do

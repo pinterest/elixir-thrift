@@ -10,6 +10,14 @@ defmodule Thrift.AST do
   - `Thrift.AST.Include`
   - `Thrift.AST.Namespace`
 
+  ## Definitions
+
+  - `Thrift.AST.Constant`
+  - `Thrift.AST.TEnum`
+
+  Each struct has a `line` field that indicates the source line number on
+  which it was defined. Many structs also have an `annotations` field which
+  contains the map of annotations associated with it.
   """
 
   import Thrift.Parser.Conversions
@@ -54,7 +62,9 @@ defmodule Thrift.AST do
   end
 
   defmodule Constant do
-    @moduledoc false
+    @moduledoc """
+    An constant value definition.
+    """
     @type t :: %Constant{
             line: Thrift.Parser.line(),
             name: atom,
@@ -66,25 +76,27 @@ defmodule Thrift.AST do
     defstruct line: nil, name: nil, value: nil, type: nil
 
     @spec new(charlist, Literals.t(), Types.t()) :: t
-    def new(name, val, type) do
-      %Constant{name: atomify(name), value: cast(type, val), type: type}
+    def new(name, value, type) do
+      %Constant{name: atomify(name), value: cast(type, value), type: type}
     end
   end
 
   defmodule TEnum do
-    @moduledoc false
-    @type enum_value :: bitstring | integer
+    @moduledoc """
+    An enumerated type with named values.
+    """
+    @type value :: non_neg_integer()
     @type t :: %TEnum{
             line: Thrift.Parser.line(),
             annotations: Thrift.Parser.annotations(),
             name: atom,
-            values: [{atom, enum_value}]
+            values: [{atom, value}, ...]
           }
 
     @enforce_keys [:name, :values]
     defstruct line: nil, annotations: %{}, name: nil, values: []
 
-    @spec new(charlist, %{charlist => enum_value}) :: t
+    @spec new(charlist, %{required(charlist) => value}) :: t
     def new(name, values) do
       {_, values} =
         Enum.reduce(values, {0, []}, fn

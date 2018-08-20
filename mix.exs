@@ -96,7 +96,7 @@ defmodule Thrift.Mixfile do
       licenses: ["Apache 2.0"],
       links: %{"GitHub" => @project_url},
       files:
-        ~w(README.md CONTRIBUTING.md LICENSE mix.exs lib) ++
+        ~w(README.md ADOPTERS.md CONTRIBUTING.md LICENSE mix.exs lib) ++
           ~w(src/thrift_lexer.xrl src/thrift_parser.yrl)
     ]
   end

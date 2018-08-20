@@ -14,6 +14,8 @@ defmodule Servers.Binary.Framed.SSLTest do
     defmodule SSLTestHandler do
       alias Servers.Binary.Framed.SSLTest.SSLTest.Handler
       @behaviour Handler
+
+      @impl Handler
       def ping, do: true
     end
   end

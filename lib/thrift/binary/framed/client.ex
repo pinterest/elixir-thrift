@@ -61,6 +61,7 @@ defmodule Thrift.Binary.Framed.Client do
   require Logger
   use Connection
 
+  @impl Connection
   def init({host, port, opts}) do
     tcp_opts = Keyword.get(opts, :tcp_opts, [])
     ssl_opts = Keyword.get(opts, :ssl_opts, [])
@@ -107,7 +108,7 @@ defmodule Thrift.Binary.Framed.Client do
   """
   def close(conn), do: Connection.call(conn, :close)
 
-  @doc false
+  @impl Connection
   def connect(_info, %{sock: nil, host: host, port: port, tcp_opts: opts, timeout: timeout} = s) do
     opts =
       opts
@@ -128,7 +129,7 @@ defmodule Thrift.Binary.Framed.Client do
     end
   end
 
-  @doc false
+  @impl Connection
   def disconnect(info, %{sock: {transport, sock}}) do
     :ok = transport.close(sock)
 
@@ -236,10 +237,12 @@ defmodule Thrift.Binary.Framed.Client do
     end
   end
 
+  @impl Connection
   def handle_call(:close, from, s) do
     {:disconnect, {:close, from}, s}
   end
 
+  @impl Connection
   def handle_cast(_, %{sock: nil} = s) do
     {:noreply, s}
   end

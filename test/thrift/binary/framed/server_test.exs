@@ -43,29 +43,37 @@ defmodule Servers.Binary.Framed.IntegrationTest do
       alias Servers.Binary.Framed.IntegrationTest.UserNotFound
       @behaviour ServerTest.Handler
 
+      @impl ServerTest.Handler
       def do_async(message) do
         Agent.update(:server_args, fn _ -> message end)
       end
 
+      @impl ServerTest.Handler
       def ping, do: true
 
+      @impl ServerTest.Handler
       def checked_exception do
         raise T.TestException, message: "Oh noes!", code: 400
       end
 
+      @impl ServerTest.Handler
       def server_exception do
         raise "This wasn't supposed to happen"
       end
 
+      @impl ServerTest.Handler
       def echo_struct(id_and_name), do: id_and_name
 
+      @impl ServerTest.Handler
       def returns_nothing, do: nil
 
+      @impl ServerTest.Handler
       def multiple_exceptions(1), do: raise(TestException, message: "BOOM", code: 124)
       def multiple_exceptions(2), do: raise(UserNotFound, message: "Not here!")
       def multiple_exceptions(3), do: raise(OtherException, message: "This is the other")
       def multiple_exceptions(_), do: true
 
+      @impl ServerTest.Handler
       def my_camel_cased_function(user_name) do
         Agent.update(:server_args, fn _ -> user_name end)
         2421

@@ -85,7 +85,7 @@ defmodule Thrift.AST do
     @moduledoc """
     An enumerated type with named values.
     """
-    @type value :: non_neg_integer()
+    @type value :: integer()
     @type t :: %TEnum{
             line: Thrift.Parser.line(),
             annotations: Thrift.Parser.annotations(),

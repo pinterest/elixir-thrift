@@ -115,7 +115,7 @@ defmodule Thrift do
 
   ## Clients
 
-  Services clients are built on `Thrift.Binary.Framed.Client`. This module
+  Service clients are built on `Thrift.Binary.Framed.Client`. This module
   uses the `Connection` behaviour to implement network state handling. In
   practice, you won't be interacting with this low-level module directly,
   however.

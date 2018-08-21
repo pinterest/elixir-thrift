@@ -48,6 +48,31 @@ defmodule MyProject.Mixfile do
 end
 ```
 
+## Using the Client
+The client includes a static module that does most of the work, and a generated
+interface module that performs some conversions and makes calling remote
+functions easier. You will not directly interface with the static module,
+but it is the one that's started when `start_link` is called.
+
+The static client module uses [James Fish](http://github.com/fishcakez)'s
+excellent [connection](http://github.com/fishcakez/connection) behaviour.
+
+For each function defined in the service, the generated module has
+four functions.
+
+Function name  | Description
+---------------|----------
+`get_user_by_id/3` | Makes a request to the remote `get_user_by_id` RPC. You can optionally pass `gen_tcp` and `GenServer` options (such as a timeout) to the client as the final `rpc_opts` argument. Returns `{:ok, response}` or `{:error, reason}` tuples.
+`get_user_by_id!/3`  | Same as above, but raises an exception if something goes wrong. The type of exception can be one of the exceptions defined in the service or `Thrift.TApplicationException`.
+
+To use the client, simply call `start_link`, supplying the host and port.
+ ```elixir
+iex> alias Thrift.Test.UserService.Binary.Framed.Client
+iex> {:ok, client} = Client.start_link("localhost", 2345, [])
+iex> {:ok, user} = Client.get_user_by_id(client, 22451)
+{:ok, %Thrift.Test.User{id: 22451, username: "stinky", first_name: "Stinky", last_name: "Stinkman"}}
+```
+
 ## Using The Server
 Creating a thrift server is slightly more involved than creating the client, because
 you need to create a module to handle the work. Fortunately, Elixir Thrift

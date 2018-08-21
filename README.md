@@ -66,7 +66,8 @@ Function name  | Description
 `get_user_by_id!/3`  | Same as above, but raises an exception if something goes wrong. The type of exception can be one of the exceptions defined in the service or `Thrift.TApplicationException`.
 
 To use the client, simply call `start_link`, supplying the host and port.
- ```elixir
+
+```elixir
 iex> alias Thrift.Test.UserService.Binary.Framed.Client
 iex> {:ok, client} = Client.start_link("localhost", 2345, [])
 iex> {:ok, user} = Client.get_user_by_id(client, 22451)

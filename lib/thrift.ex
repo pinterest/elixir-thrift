@@ -70,7 +70,7 @@ defmodule Thrift do
 
   service UserService {
     bool ping(),
-    User get(1: i64 id) throws (1: UserNotFound e),
+    User getUser(1: i64 id) throws (1: UserNotFound e),
     bool delete(1: i64 id),
   }
   ```
@@ -108,10 +108,38 @@ defmodule Thrift do
   #@namespace elixir Thrift.Test
   ```
 
-  This alternate syntax is [borrowed from Scrooge][scrooge-ns], which uses the
-  same trick for defining Scala namespaces.
+  This alternate syntax is [borrowed from Scrooge][scrooge-namespaces], which
+  uses the same trick for defining Scala namespaces.
 
-  [scrooge-ns]: https://twitter.github.io/scrooge/Namespaces.html
+  [scrooge-namespaces]: https://twitter.github.io/scrooge/Namespaces.html
+
+  ## Clients
+
+  Service clients are built on `Thrift.Binary.Framed.Client`. This module
+  uses the `Connection` behaviour to implement network state handling. In
+  practice, you won't be interacting with this low-level module directly,
+  however.
+
+  A client interface module is generated for each service. This is much more
+  convenient to use from application code because it provides distinct Elixir
+  functions for each Thrift service function. It also handles argument packing,
+  return value unpacking, and other high-level conversions. In this example,
+  this generated module is `Thrift.Test.UserService.Binary.Framed.Client`.
+
+  Each generated client function comes in two flavors: a standard version (e.g.
+  `Client.get_user/3`) that returns `{:ok, response}` or `{:error, reason}`,
+  and a *bang!* variant (e.g. `Client.get_user!/3`) that raises an exception on
+  errors.
+
+      iex> alias Thrift.Test.UserService.Binary.Framed.Client
+      iex> {:ok, client} = Client.start_link("localhost", 2345, [])
+      iex> {:ok, user} = Client.get_user(client, 123)
+      {:ok, %Thrift.Test.User{id: 123, username: "user"}}
+
+  Note that the generated function names use [Elixir's naming conventions]
+  [naming], so `getUser` becomes `get_user`.
+
+  [naming]: http://elixir-lang.org/docs/stable/elixir/naming-conventions.html
   """
 
   @typedoc "Thrift data types"

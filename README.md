@@ -65,8 +65,6 @@ Function name  | Description
 `get_user_by_id/3` | Makes a request to the remote `get_user_by_id` RPC. You can optionally pass `gen_tcp` and `GenServer` options (such as a timeout) to the client as the final `rpc_opts` argument. Returns `{:ok, response}` or `{:error, reason}` tuples.
 `get_user_by_id!/3`  | Same as above, but raises an exception if something goes wrong. The type of exception can be one of the exceptions defined in the service or `Thrift.TApplicationException`.
 
-**Note:** in the above example, the function `deleteUser` will be converted to `delete_user` to comply with Elixir's [naming conventions](http://elixir-lang.org/docs/stable/elixir/naming-conventions.html).
-
 To use the client, simply call `start_link`, supplying the host and port.
 
 ```elixir
@@ -75,53 +73,6 @@ iex> {:ok, client} = Client.start_link("localhost", 2345, [])
 iex> {:ok, user} = Client.get_user_by_id(client, 22451)
 {:ok, %Thrift.Test.User{id: 22451, username: "stinky", first_name: "Stinky", last_name: "Stinkman"}}
 ```
-
-The client supports the following options, which are passed in as the
-third argument to `start_link`:
-
-Option name      |  Type | Description
------------------|-------|-------------
-`:tcp_opts` | keyword | A keyword list of tcp options (see below)
-`:ssl_opts` | keyword | A list of options for SSL/TLS (see below)
-`:gen_server_opts` | keyword | A keyword list of options for the gen server (see below)
-
-
-##### TCP Opts
-Name             | Type | Description
------------------|------|---------------
-`:timeout`       | positive integer | The default timeout for reading from, writing to, and connecting to sockets.
-`:send_timeout`  | positive integer | The amount of time in milliseconds to wait before sending data fails.
-
-
-##### SSL/TLS Opts
-
-Name             | Type | Description
------------------|------|---------------
-`:enabled`       | boolean | Whether to upgrade the connection to the SSL protocol.
-`:optional`      | boolean | Whether to accept both SSL and plain connections.
-`:configure`     | 0-arity fun | A function to provide additional SSL options at run time.
-`ssloption`      | :ssl.ssloption | Other standard [`:ssl` options](http://erlang.org/doc/man/ssl.html).
-
-
-##### GenServer Opts
-Name             | Type | Description
------------------|------|---------------
-`:timeout`       | A positive integer | The amount of time in milliseconds the Client's GenServer waits for a reply. After this, the GenServer will exit with `{:error, :timeout}`.
-
-
-### Example of using options
-
-```elixir
-alias Thrift.Test.UserService.Binary.Framed.Client
-{:ok, client} = Client.start_link("localhost", 2345,
-                tcp_opts: [],
-                ssl_opts: [enabled: true, cacertfile: "cacerts.pem", certfile: "cert.pem", keyfile: "key.pem"],
-                gen_server_opts: [timeout: 10_000])
-
-```
-These options set the GenServer timeout to be ten seconds, which means the remote
-side can take its time to reply.
-
 
 ## Using The Server
 Creating a thrift server is slightly more involved than creating the client, because

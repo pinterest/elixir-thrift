@@ -29,12 +29,6 @@ defmodule Thrift.Binary.Framed.Server do
   registered under this name. If not specified, the handler module's name
   is used.
 
-  `:max_restarts`: The number of times to restart (see `:max_seconds`).
-
-  `:max_seconds`: The number of seconds. This is used by the supervisor to
-  determine when to crash. If a server restarts max_restarts times in
-  `:max_seconds` then the supervisor crashes.
-
   `tcp_opts`: A keyword list that controls how the underlying connection is
   handled. All options are sent directly to `:ranch_tcp`.
 

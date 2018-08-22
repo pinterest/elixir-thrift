@@ -40,6 +40,7 @@ defmodule Thrift.Binary.Framed.ProtocolHandler do
     {:ok, pid}
   end
 
+  @dialyzer {:nowarn_function, init: 7}
   @spec init(reference, port, :ranch_tcp, module, module, :ranch_tcp.opts(), [SSL.option()]) ::
           :ok | no_return
   def init(ref, socket, :ranch_tcp = transport, server_module, handler_module, tcp_opts, ssl_opts) do
@@ -66,11 +67,11 @@ defmodule Thrift.Binary.Framed.ProtocolHandler do
       {:error, closed} when closed in [:closed, :econnreset, :timeout] ->
         :ok = transport.close(socket)
 
-      {:error, reason} = error ->
+      {:error, reason} ->
         # :ssl.format_error handles posix errors as well as ssl errors
         Logger.info(fn ->
           "#{inspect(handler_module)} (#{inspect(self())}) connection error: #{
-            :ssl.format_error(error)
+            :ssl.format_error(reason)
           } (#{inspect(reason)})"
         end)
 

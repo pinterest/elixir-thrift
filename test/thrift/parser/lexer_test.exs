@@ -73,7 +73,7 @@ defmodule Thrift.Parser.LexerTest do
 
   test "keywords" do
     keywords = ~w(
-      namespace include
+      namespace include cpp_include
       typedef enum struct union exception
       void bool byte i8 i16 i64 double string binary list map set
       const oneway extends throws service required optional

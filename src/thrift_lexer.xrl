@@ -30,7 +30,7 @@ BOOLEAN         = true|false
 
 IDENTIFIER      = [a-zA-Z_](\.[a-zA-Z_0-9]|[a-zA-Z_0-9])*
 
-KEYWORDS1       = namespace|include
+KEYWORDS1       = namespace|include|cpp_include
 KEYWORDS2       = typedef|enum|union|struct|exception
 KEYWORDS3       = void|bool|byte|i8|i16|i32|i64|double|string|binary|list|map|set
 KEYWORDS4       = const|oneway|extends|throws|service|required|optional

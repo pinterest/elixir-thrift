@@ -8,6 +8,7 @@ defmodule Thrift.Parser.ParserTest do
 
   alias Thrift.AST.{
     Constant,
+    CppInclude,
     Exception,
     Field,
     Function,
@@ -108,6 +109,22 @@ defmodule Thrift.Parser.ParserTest do
     assert includes == [
              %Include{line: 1, path: "foo.thrift"},
              %Include{line: 2, path: "bar.thrift"}
+           ]
+  end
+
+  test "parsing cpp_include headers" do
+    cpp_includes =
+      parse(
+        """
+        cpp_include "foo.h"
+        cpp_include "bar.h"
+        """,
+        [:cpp_includes]
+      )
+
+    assert cpp_includes == [
+             %CppInclude{line: 1, path: "foo.h"},
+             %CppInclude{line: 2, path: "bar.h"}
            ]
   end
 

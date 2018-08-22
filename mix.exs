@@ -43,8 +43,7 @@ defmodule Thrift.Mixfile do
       # Dialyzer
       dialyzer: [
         plt_add_deps: :app_tree,
-        plt_add_apps: [:mix],
-        ignore_warnings: ".dialyzerignore"
+        plt_add_apps: [:mix]
       ],
 
       # Docs

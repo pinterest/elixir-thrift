@@ -1,5 +1,11 @@
 defmodule Thrift.Binary.Framed.Server do
-  @moduledoc false
+  @moduledoc """
+  A server implementation of Thrift's Binary Framed protocol.
+
+  See `start_link/4` for the various options.
+
+      {:ok, pid} = Server.start_link(ServiceHandler, 2345, [])
+  """
 
   @type server_option ::
           {:worker_count, pos_integer}
@@ -8,10 +14,45 @@ defmodule Thrift.Binary.Framed.Server do
           | {:max_seconds, non_neg_integer}
           | {:tcp_opts, :ranch_tcp.opts()}
           | {:ssl_opts, [Thrift.Transport.SSL.option()]}
+          | {:transport_opts, :ranch.opts()}
 
   @type server_opts :: [server_option]
 
-  @spec start_link(module, 1..65_535, module, [server_option]) :: GenServer.on_start()
+  @doc """
+  Starts the server using the specified handler module.
+
+  The following server options can be specified:
+
+  `:worker_count`: The number of acceptor workers used to take requests.
+
+  `:name`: (Optional) The name of the server. The server's pid becomes
+  registered under this name. If not specified, the handler module's name
+  is used.
+
+  `:max_restarts`: The number of times to restart (see `:max_seconds`).
+
+  `:max_seconds`: The number of seconds. This is used by the supervisor to
+  determine when to crash. If a server restarts max_restarts times in
+  `:max_seconds` then the supervisor crashes.
+
+  `tcp_opts`: A keyword list that controls how the underlying connection is
+  handled. All options are sent directly to `:ranch_tcp`.
+
+  `ssl_opts`: A keyword list of SSL/TLS options:
+
+  - `:enabled`: A boolean indicating whether to upgrade the connection to
+    the SSL protocol
+  - `:optional`: A boolean indicating whether to accept both SSL and plain
+    connections
+  - `:configure`: A 0-arity function to provide additional SSL options at
+    runtime
+  - Additional `t:Thrift.Transport.SSL.option/0` values specifying other
+    standard [`:ssl` options](http://erlang.org/doc/man/ssl.html)
+
+  `transport_opts` can be used to specify any additional options to pass
+  to `:ranch.child_spec/6`.
+  """
+  @spec start_link(module, port :: 1..65_535, module, [server_option]) :: GenServer.on_start()
   def start_link(server_module, port, handler_module, opts) do
     name = Keyword.get(opts, :name, handler_module)
     max_restarts = Keyword.get(opts, :max_restarts, 10)
@@ -43,6 +84,9 @@ defmodule Thrift.Binary.Framed.Server do
     )
   end
 
+  @doc """
+  Stops the server.
+  """
   def stop(pid) do
     Supervisor.stop(pid)
   end

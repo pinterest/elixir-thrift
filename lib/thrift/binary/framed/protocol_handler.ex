@@ -66,11 +66,11 @@ defmodule Thrift.Binary.Framed.ProtocolHandler do
       {:error, closed} when closed in [:closed, :econnreset, :timeout] ->
         :ok = transport.close(socket)
 
-      {:error, reason} ->
+      {:error, reason} = error ->
         # :ssl.format_error handles posix errors as well as ssl errors
         Logger.info(fn ->
           "#{inspect(handler_module)} (#{inspect(self())}) connection error: #{
-            :ssl.format_error(reason)
+            :ssl.format_error(error)
           } (#{inspect(reason)})"
         end)
 

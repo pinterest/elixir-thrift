@@ -23,16 +23,20 @@ defmodule Thrift.Parser do
   @doc """
   Parses a Thrift IDL string into its AST representation.
   """
-  @spec parse(String.t()) :: {:ok, Thrift.AST.Schema.t()} | {:error, term}
+  @spec parse(String.t()) ::
+          {:ok, Thrift.AST.Schema.t()} | {:error, {line(), message :: String.t()}}
   def parse(doc) do
     doc = String.to_charlist(doc)
 
-    case :thrift_lexer.string(doc) do
-      {:ok, tokens, _} ->
-        :thrift_parser.parse(tokens)
+    with {:ok, tokens, _} <- :thrift_lexer.string(doc),
+         {:ok, _} = result <- :thrift_parser.parse(tokens) do
+      result
+    else
+      {:error, {line, :thrift_lexer, error}, _} ->
+        {:error, {line, List.to_string(:thrift_lexer.format_error(error))}}
 
-      {:error, lexer_error1, lexer_error2} ->
-        {:error, {lexer_error1, lexer_error2}}
+      {:error, {line, :thrift_parser, error}} ->
+        {:error, {line, List.to_string(:thrift_parser.format_error(error))}}
     end
   end
 

@@ -145,7 +145,7 @@ defmodule Thrift do
 
   Thrift servers are a little more involved because you need to create a module
   to handle the work. Fortunately, a `Behaviour` is generated for each server
-  (complete with typespecs). Just use the `@behavior` module attribute, and the
+  (complete with typespecs). Use the `@behaviour` module attribute, and the
   compiler will tell you about any functions you might have missed.
 
       defmodule UserServiceHandler do

@@ -23,7 +23,7 @@ defmodule Thrift.Binary.Framed.Server do
 
   The following server options can be specified:
 
-  `:worker_count`: The number of acceptor workers used to take requests.
+  `:worker_count`: The number of acceptor workers to accept on the socket.
 
   `:name`: (Optional) The name of the server. The server's pid becomes
   registered under this name. If not specified, the handler module's name
@@ -46,8 +46,7 @@ defmodule Thrift.Binary.Framed.Server do
     connections
   - `:configure`: A 0-arity function to provide additional SSL options at
     runtime
-  - Additional `t:Thrift.Transport.SSL.option/0` values specifying other
-    standard [`:ssl` options](http://erlang.org/doc/man/ssl.html)
+  - Additional `:ssl.ssl_option/0` values specifying other `:ssl` options
 
   `transport_opts` can be used to specify any additional options to pass
   to `:ranch.child_spec/6`.

@@ -112,8 +112,7 @@ defmodule Thrift.Binary.Framed.Client do
       connections
     - `:configure`: A 0-arity function to provide additional SSL options at
       runtime
-    - Additional `Thrift.Transport.SSL.option` values specifying other
-      standard [`:ssl` options](http://erlang.org/doc/man/ssl.html)
+    - Additional `:ssl.ssl_option/0` values specifying other `:ssl` options
 
   `gen_server_opts`: A keyword list of options for the GenServer:
 

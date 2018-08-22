@@ -113,15 +113,6 @@ To start a server with UserServiceHandler as the callback module:
 
 ...and your server is up and running. RPC calls to the server are delegated to UserServiceHandler.
 
-Like the client, the server takes several options. They are:
-
-Name           |  Type | Description
----------------|-------|-------------
-`worker_count`   | positive integer | The number of acceptor workers available to take requests
-`name`  | atom | (Optional) The name of the server. The server's pid becomes registered to this name. If not specified, the handler module's name is used.
-`max_restarts` | non negative integer | The number of times to restart (see the next option)
-`max_seconds`  | non negative integer | The number of seconds. This is used by the supervisor to determine when to crash. If a server restarts `max_restarts` times in `max_seconds` then the supervisor crashes.
-
 The server defines a Supervisor, which can be added to your application's supervision tree. When adding the server to your applications supervision tree, use the `supervisor` function rather than the `worker` function.
 
 ## Using the binary protocol directly

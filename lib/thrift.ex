@@ -140,6 +140,42 @@ defmodule Thrift do
   [naming], so `getUser` becomes `get_user`.
 
   [naming]: http://elixir-lang.org/docs/stable/elixir/naming-conventions.html
+
+  ## Servers
+
+  Thrift servers are a little more involved because you need to create a module
+  to handle the work. Fortunately, a `Behaviour` is generated for each server
+  (complete with typespecs). Use the `@behaviour` module attribute, and the
+  compiler will tell you about any functions you might have missed.
+
+      defmodule UserServiceHandler do
+        @behaviour Thrift.Test.UserService.Handler
+
+        def ping, do: true
+
+        def get_user(user_id) do
+          case Backend.find_user_by_id(user_id) do
+            {:ok, user} ->
+              user
+            {:error, _} ->
+              raise Thrift.Test.UserNotFound.exception message: "could not find user with id #{user_id}"
+          end
+        end
+
+        def delete(user_id) do
+          Backend.delete_user(user_id) == :ok
+        end
+      end
+
+  To start the server:
+
+      {:ok, pid} = Thrift.Test.UserService.Binary.Framed.Server.start_link(UserServiceHandler, 2345, [])
+
+  ... and all RPC calls will be delegated to `UserServiceHandler`.
+
+  The server defines a Supervisor, which can be added to your application's
+  supervision tree. When adding the server to your applications supervision
+  tree, use the `supervisor` function rather than the `worker` function.
   """
 
   @typedoc "Thrift data types"

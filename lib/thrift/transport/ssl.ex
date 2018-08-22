@@ -20,10 +20,10 @@ defmodule Thrift.Transport.SSL do
 
   @type configure :: {module, function, list} | (() -> {:ok, [option]} | {:error, Exception.t()})
   @type option ::
-          :ssl.ssloption() | {:enabled, boolean} | {:optional, boolean} | {:configure, configure}
+          :ssl.ssl_option() | {:enabled, boolean} | {:optional, boolean} | {:configure, configure}
 
   @spec configuration([option]) ::
-          {:required | :optional, [:ssl.ssloption()]} | nil | {:error, Exception.t()}
+          {:required | :optional, [:ssl.ssl_option()]} | nil | {:error, Exception.t()}
   def configuration(opts) do
     case Keyword.pop(opts, :enabled, false) do
       {true, opts} ->

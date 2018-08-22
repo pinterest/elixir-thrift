@@ -21,7 +21,7 @@ defmodule Thrift.AST do
   """
 
   import Thrift.Parser.Conversions
-  alias Thrift.Parser.{Literals, Types}
+  alias Thrift.Parser.{FileGroup, Literals, Types}
 
   defmodule Namespace do
     @moduledoc """

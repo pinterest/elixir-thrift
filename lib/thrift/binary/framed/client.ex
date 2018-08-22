@@ -51,8 +51,8 @@ defmodule Thrift.Binary.Framed.Client do
     @type t :: %State{
             host: String.t(),
             port: 1..65_535,
-            tcp_opts: [Client.tcp_option()],
-            ssl_opts: [Client.ssl_option()],
+            tcp_opts: [Thrift.Binary.Framed.Client.tcp_option()],
+            ssl_opts: [SSL.option()],
             timeout: integer,
             sock: {:gen_tcp, :gen_tcp.socket()} | {:ssl, :ssl.sslsocket()},
             seq_id: integer
@@ -113,7 +113,7 @@ defmodule Thrift.Binary.Framed.Client do
       connections
     - `:configure`: A 0-arity function to provide additional SSL options at
       runtime
-    - Additional `Thrift.Transport.SSL.option` values specifying other
+    - Additional `t:Thrift.Transport.SSL.option/0` values specifying other
       standard [`:ssl` options](http://erlang.org/doc/man/ssl.html)
 
   `gen_server_opts`: A keyword list of options for the GenServer:

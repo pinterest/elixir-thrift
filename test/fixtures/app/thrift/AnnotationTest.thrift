@@ -33,11 +33,13 @@ struct foo {
 
 exception foo_error {
   1: i32 error_code ( foo="bar" )
-  2: string error_msg
+  2: string (foo="bar") error_msg
 } (foo = "bar")
 
 typedef string ( unicode.encoding = "UTF-16" ) non_latin_string (foo="bar")
 typedef list< double ( cpp.fixed_point = "16" ) > tiny_float_list
+typedef map< string ( unicode.encoding = "UTF-16" ), double ( cpp.fixed_point = "16" ) > tiny_float_map
+typedef set< double (cpp.fixed_point = "16")> (foo="bar") tiny_float_set
 
 enum weekdays {
   SUNDAY ( weekend = "yes" ),

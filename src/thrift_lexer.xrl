@@ -93,8 +93,7 @@ process_chars([$\\,C|Chars])    -> [C|process_chars(Chars)];
 process_chars([C|Chars])        -> [C|process_chars(Chars)];
 process_chars([])               -> [].
 
-reserved_keyword_error(Keyword, Line) ->
+reserved_keyword_error(Keyword, _Line) ->
     Message = io_lib:format(
-      "line ~B: cannot use reserved language keyword \"~s\"", [Line, Keyword]),
-    Exception = 'Elixir.RuntimeError':exception(list_to_binary(Message)),
-    erlang:error(Exception).
+      "cannot use reserved language keyword \"~s\"", [Keyword]),
+    {error, Message}.

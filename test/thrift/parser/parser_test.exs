@@ -877,15 +877,8 @@ defmodule Thrift.Parser.ParserTest do
   end
 
   test "names cannot override built-in keywords" do
-    thrift = """
-    struct continue {}
-    """
-
-    expected_error = "line 1: cannot use reserved language keyword \"continue\""
-
-    assert_raise RuntimeError, expected_error, fn ->
-      parse(thrift)
-    end
+    assert {:error, {1, ~S(cannot use reserved language keyword "continue")}} ==
+             parse("struct continue {}")
   end
 
   test "names can be reserved keywords if they have a different case" do

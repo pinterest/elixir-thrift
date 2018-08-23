@@ -17,9 +17,8 @@ Definitions.
 WHITESPACE      = [\s\t\r\n]+
 COMMENT         = //[^\n]*
 CCOMMENT        = /\*/*([^*/]|[^*]/|\*[^/])*\**\*/
-NSCOMMENT       = #@namespace
-UNIXCOMMENT     = #[^@][^\n]*
-COMMENTS        = {COMMENT}|{CCOMMENT}|{UNIXCOMMENT}
+COMMENTS        = {COMMENT}|{CCOMMENT}
+UNIXCOMMENT     = #[^\n]*
 
 INT             = [+-]?[0-9]+
 HEX             = [+-]?0x[0-9A-Fa-f]+
@@ -56,9 +55,9 @@ Rules.
 
 {WHITESPACE}    : skip_token.
 {COMMENTS}      : skip_token.
+{UNIXCOMMENT}   : process_unix_comment(TokenChars, TokenLine).
 
 __file__        : {token, {file, TokenLine}}.
-{NSCOMMENT}     : {token, {namespace, TokenLine}}.
 {PUNCTUATOR}    : {token, {list_to_atom(TokenChars), TokenLine}}.
 {KEYWORD}       : {token, {list_to_atom(TokenChars), TokenLine}}.
 
@@ -74,6 +73,9 @@ __file__        : {token, {file, TokenLine}}.
 {IDENTIFIER}    : {token, {ident, TokenLine, TokenChars}}.
 
 Erlang code.
+
+process_unix_comment("#@namespace" ++ Rest, Line) -> {token, {namespace, Line}, Rest};
+process_unix_comment("#" ++ _Rest, _Line)         -> skip_token.
 
 hex_to_integer([$+|Chars]) ->  hex_to_integer(Chars);
 hex_to_integer([$-|Chars]) -> -hex_to_integer(Chars);

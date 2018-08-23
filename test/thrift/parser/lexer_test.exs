@@ -94,6 +94,10 @@ defmodule Thrift.Parser.LexerTest do
     assert tokenize("#@namespace") == [namespace: 1]
   end
 
+  test "empty unix comment" do
+    assert tokenize("#\ntrue") == [true: 2]
+  end
+
   test "boolean literals" do
     assert tokenize("true") == [true: 1]
     assert tokenize("false") == [false: 1]

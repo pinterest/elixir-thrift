@@ -118,13 +118,15 @@ defmodule Thrift.Parser.ParserTest do
         """
         cpp_include "foo.h"
         cpp_include "bar.h"
+        cpp_include "baz/qux.h"
         """,
         [:cpp_includes]
       )
 
     assert cpp_includes == [
              %CppInclude{line: 1, path: "foo.h"},
-             %CppInclude{line: 2, path: "bar.h"}
+             %CppInclude{line: 2, path: "bar.h"},
+             %CppInclude{line: 3, path: "baz/qux.h"}
            ]
   end
 

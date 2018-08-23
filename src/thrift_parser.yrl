@@ -163,8 +163,8 @@ Throws -> throws '(' FieldList ')': '$3'.
 FieldList -> '$empty': [].
 FieldList -> Field FieldList: ['$1'|'$2'].
 
-Field -> FieldIdentifier FieldRequired FieldType ident FieldDefault Annotations Separator:
-    build_node('Field', line('$4'), '$6', ['$1', '$2', '$3', unwrap('$4'), '$5']).
+Field -> FieldIdentifier FieldRequired FieldType Annotations ident FieldDefault Annotations Separator:
+    build_node('Field', line('$5'), '$7', ['$1', '$2', '$3', unwrap('$5'), '$6']).
 
 FieldIdentifier -> int ':': unwrap('$1').
 FieldIdentifier -> '$empty': nil.
@@ -194,8 +194,8 @@ BaseType -> double: double.
 BaseType -> string: string.
 BaseType -> binary: binary.
 
-MapType -> map '<' FieldType ',' FieldType '>': {'$3', '$5'}.
-SetType -> set '<' FieldType '>': '$3'.
+MapType -> map '<' FieldType Annotations ',' FieldType Annotations '>': {'$3', '$6'}.
+SetType -> set '<' FieldType Annotations '>': '$3'.
 ListType -> list '<' FieldType Annotations '>': '$3'.
 
 % Annotations

@@ -23,7 +23,8 @@ COMMENTS        = {COMMENT}|{CCOMMENT}|{UNIXCOMMENT}
 
 INT             = [+-]?[0-9]+
 HEX             = [+-]?0x[0-9A-Fa-f]+
-DOUBLE          = [+-]?[0-9]+(\.[0-9]+)?([eE][+-]?[0-9]+)?
+BADDOUBLE       = [+-]?[0-9]+[eE][+-]?[0-9]+
+DOUBLE          = [+-]?[0-9]+\.[0-9]+([eE][+-]?[0-9]+)?
 PUNCTUATOR      = [\{\}\[\]\(\)<>,:;=\*]
 STRING          = '(\\'|[^\'])*'|"(\\"|[^\"])*"
 BOOLEAN         = true|false
@@ -64,6 +65,7 @@ __file__        : {token, {file, TokenLine}}.
 {INT}           : {token, {int, TokenLine, list_to_integer(TokenChars)}}.
 {HEX}           : {token, {int, TokenLine, hex_to_integer(TokenChars)}}.
 {DOUBLE}        : {token, {double, TokenLine, list_to_float(TokenChars)}}.
+{BADDOUBLE}     : {token, {double, TokenLine, bad_list_to_float(TokenChars)}}.
 {STRING}        : {token, {string, TokenLine, process_string(TokenChars, TokenLen)}}.
 {BOOLEAN}       : {token, {list_to_atom(TokenChars), TokenLine}}.
 
@@ -76,6 +78,13 @@ Erlang code.
 hex_to_integer([$+|Chars]) ->  hex_to_integer(Chars);
 hex_to_integer([$-|Chars]) -> -hex_to_integer(Chars);
 hex_to_integer([$0,$x|Chars]) -> list_to_integer(Chars, 16).
+
+% Erlang/Elixir can not parse integer significand in a float, so handle this case.
+
+bad_list_to_float(BadFloat) ->
+    {Significand, Rest} = string:to_integer(BadFloat),
+    GoodFloat = io_lib:format("~b.0~s", [Significand, Rest]),
+    list_to_float(lists:flatten(GoodFloat)).
 
 % Process a quoted string by stripping its surrounding quote characters and
 % expanding any escape sequences (prefixed by a \). To keep things simple,

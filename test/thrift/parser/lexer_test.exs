@@ -117,6 +117,7 @@ defmodule Thrift.Parser.LexerTest do
     assert tokenize("0.0") == [{:double, 1, 0.0}]
     assert tokenize("3.14") == [{:double, 1, 3.14}]
     assert tokenize("6.02e23") == [{:double, 1, 6.02e23}]
+    assert tokenize("6e23") == [{:double, 1, 6.0e23}]
   end
 
   test "string literals" do

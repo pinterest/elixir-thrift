@@ -8,6 +8,7 @@ defmodule Thrift.AST do
   ## Headers
 
   - `Thrift.AST.Include`
+  - `Thrift.AST.CppInclude`
   - `Thrift.AST.Namespace`
 
   ## Definitions
@@ -58,6 +59,22 @@ defmodule Thrift.AST do
     @spec new(charlist) :: t
     def new(path) do
       %Include{path: List.to_string(path)}
+    end
+  end
+
+  defmodule CppInclude do
+    @moduledoc """
+    A C++ include adds a custom C++ include to the output C++ code.
+    """
+
+    @type t :: %CppInclude{line: Thrift.Parser.line(), path: Path.t()}
+
+    @enforce_keys [:path]
+    defstruct line: nil, path: nil
+
+    @spec new(charlist) :: t
+    def new(path) do
+      %CppInclude{path: List.to_string(path)}
     end
   end
 
@@ -406,6 +423,7 @@ defmodule Thrift.AST do
             enums: %{String.t() => TEnum.t()},
             unions: %{String.t() => Union.t()},
             includes: [Include.t()],
+            cpp_includes: [CppInclude.t()],
             constants: %{String.t() => Literals.t()},
             exceptions: %{String.t() => Exception.t()},
             typedefs: %{String.t() => Types.t()},
@@ -419,6 +437,7 @@ defmodule Thrift.AST do
               enums: %{},
               unions: %{},
               includes: [],
+              cpp_includes: [],
               constants: %{},
               exceptions: %{},
               typedefs: %{},
@@ -448,6 +467,10 @@ defmodule Thrift.AST do
     @spec merge(t, header | definition) :: t
     defp merge(schema, %Include{} = inc) do
       %Schema{schema | includes: [inc | schema.includes]}
+    end
+
+    defp merge(schema, %CppInclude{} = cpp_inc) do
+      %Schema{schema | cpp_includes: [cpp_inc | schema.cpp_includes]}
     end
 
     defp merge(schema, %Namespace{} = ns) do

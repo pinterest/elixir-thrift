@@ -16,7 +16,7 @@ Header
 Nonterminals
     Schema File
     Headers Header
-    Include Namespace
+    Include CppInclude Namespace
     Definitions Definition
     Typedef Struct Union Exception
     Const ConstValue ConstList ConstMap
@@ -31,7 +31,7 @@ Nonterminals
 Terminals
     '*' '{' '}' '[' ']' '(' ')' '=' '>' '<' ',' ':' ';'
     file
-    include namespace
+    include cpp_include namespace
     int ident
     bool byte i8 i16 i32 i64 double string binary list map set
     true false
@@ -54,10 +54,14 @@ Headers -> '$empty': [].
 Headers -> Header Headers: ['$1'|'$2'].
 
 Header -> Include: '$1'.
+Header -> CppInclude: '$1'.
 Header -> Namespace: '$1'.
 
 Include -> include string:
     build_node('Include', line('$1'), [unwrap('$2')]).
+
+CppInclude -> cpp_include string:
+    build_node('CppInclude', line('$1'), [unwrap('$2')]).
 
 Namespace -> namespace '*' ident:
     build_node('Namespace', line('$1'), ["*", unwrap('$3')]).

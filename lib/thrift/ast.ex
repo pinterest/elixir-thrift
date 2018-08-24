@@ -313,10 +313,10 @@ defmodule Thrift.AST do
 
   defmodule TypeRef do
     @moduledoc false
-    @type t :: %TypeRef{line: Thrift.Parser.line(), referenced_type: atom}
+    @type t :: %TypeRef{line: Thrift.Parser.line(), name: atom, referenced_type: atom}
 
     @enforce_keys [:referenced_type]
-    defstruct line: nil, referenced_type: nil
+    defstruct line: nil, name: nil, referenced_type: nil
 
     @spec new(charlist) :: t
     def new(referenced_type) do

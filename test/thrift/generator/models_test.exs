@@ -185,14 +185,20 @@ defmodule Thrift.Generator.ModelsTest do
                contents: """
                include "shared.thrift"
 
+               typedef shared.MyInteger AnotherInteger
+
                struct StructWithIncludedNum {
                  1: optional shared.MyInteger num = 5;
+                 2: optional AnotherInteger count = 3;
+                 3: optional list<AnotherInteger> items = [1, 2, 3];
                }
                """
 
   thrift_test "includes" do
     struct = %StructWithIncludedNum{}
     assert struct.num == 5
+    assert struct.count == 3
+    assert struct.items == [1, 2, 3]
   end
 
   @thrift_file name: "complex_typedefs.thrift",

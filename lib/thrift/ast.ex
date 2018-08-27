@@ -577,8 +577,42 @@ defmodule Thrift.AST do
         |> String.split(".")
 
       case split_type_name do
+        [_module, _type | _rest] ->
+          # this case accounts for types that already have a module in them
+          type_name
+
+        _ ->
+          :"#{module}.#{type_name}"
+      end
+    end
+
+    defp add_namespace_to_value(module, {:set, elem_type}) do
+      {:set, add_namespace_to_value(module, elem_type)}
+    end
+
+    defp add_namespace_to_value(module, {:list, elem_type}) do
+      {:list, add_namespace_to_value(module, elem_type)}
+    end
+
+    defp add_namespace_to_value(module, {:map, {key_type, val_type}}) do
+      {:map, {add_namespace_to_value(module, key_type), add_namespace_to_value(module, val_type)}}
+    end
+
+    for type <- Thrift.primitive_names() do
+      defp add_namespace_to_value(_, unquote(type)) do
+        unquote(type)
+      end
+    end
+
+    defp add_namespace_to_value(module, type_name) when is_atom(type_name) do
+      split_type_name =
+        type_name
+        |> Atom.to_string()
+        |> String.split(".")
+
+      case split_type_name do
         [^module | _rest] ->
-          # this case accounts for types that already have the current module in them
+          # this case accounts for values that already have the current module in them
           type_name
 
         _ ->
@@ -625,7 +659,7 @@ defmodule Thrift.AST do
            %TypeRef{referenced_type: referenced_type},
            %ValueRef{referenced_value: referenced_value} = val_ref
          ) do
-      %ValueRef{val_ref | referenced_value: namespaced_module(referenced_type, referenced_value)}
+      %ValueRef{val_ref | referenced_value: namespaced_value(referenced_type, referenced_value)}
     end
 
     defp add_namespace_to_defaults(%TypeRef{} = type, defaults) when is_list(defaults) do
@@ -643,10 +677,10 @@ defmodule Thrift.AST do
       val
     end
 
-    defp namespaced_module(type, value) do
+    defp namespaced_value(type, value) do
       with string_val <- Atom.to_string(type),
            [module, _value | _rest] <- String.split(string_val, ".") do
-        add_namespace_to_type(module, value)
+        add_namespace_to_value(module, value)
       else
         _ ->
           value

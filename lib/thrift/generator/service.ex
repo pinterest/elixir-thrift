@@ -29,6 +29,7 @@ defmodule Thrift.Generator.Service do
     service_module =
       quote do
         defmodule unquote(dest_module) do
+          @moduledoc false
           unquote_splicing(arg_structs)
           unquote_splicing(response_structs)
 

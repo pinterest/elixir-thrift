@@ -15,9 +15,8 @@ defmodule Thrift.Generator.StructGenerator do
 
   def generate(label, schema, name, struct) when label in [:struct, :union, :exception] do
     struct_parts =
-      Enum.map(struct.fields, fn
-        %Field{name: name, type: type, default: default} ->
-          {name, Utils.quote_value(default, type, schema)}
+      Enum.map(struct.fields, fn %Field{name: name, type: type, default: default} ->
+        {name, Utils.quote_value(default, type, schema)}
       end)
 
     binary_protocol_defs =
@@ -47,6 +46,7 @@ defmodule Thrift.Generator.StructGenerator do
 
     quote do
       defmodule unquote(name) do
+        @moduledoc false
         _ = unquote("Auto-generated Thrift #{label} #{struct.name}")
 
         unquote_splicing(

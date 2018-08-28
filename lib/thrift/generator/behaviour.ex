@@ -30,6 +30,7 @@ defmodule Thrift.Generator.Behaviour do
     behaviour_module =
       quote do
         defmodule unquote(dest_module) do
+          @moduledoc false
           (unquote_splicing(callbacks))
         end
       end

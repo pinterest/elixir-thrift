@@ -1,7 +1,7 @@
 defmodule CalculatorTest do
   use ExUnit.Case
 
-  alias Calculator.Generated.DivideByZeroException
+  alias Calculator.Generated.DivideByZeroError
   alias Calculator.Generated.Service.Binary.Framed.Client
 
   setup do
@@ -45,9 +45,9 @@ defmodule CalculatorTest do
       Client.divide(ctx[:client], 22, 7.0)
     end
 
-    assert {:error, {:exception, %DivideByZeroException{}}} = Client.divide(ctx[:client], 22, 0)
+    assert {:error, {:exception, %DivideByZeroError{}}} = Client.divide(ctx[:client], 22, 0)
 
-    assert_raise DivideByZeroException, fn ->
+    assert_raise DivideByZeroError, fn ->
       Client.divide!(ctx[:client], 22, 0)
     end
   end

@@ -1,6 +1,6 @@
 #@namespace elixir Calculator.Generated
 
-exception DivideByZeroException {
+exception DivideByZeroError {
   1: string message
 }
 
@@ -15,5 +15,5 @@ service Service {
   i64 multiply(1: i64 left, 2: i64 right),
 
   # Divides two integers, throwing an exception for zero division
-  i64 divide(1: i64 left, 2: i64 right) throws (1: DivideByZeroException e),
+  i64 divide(1: i64 left, 2: i64 right) throws (1: DivideByZeroError e),
 }

@@ -2,7 +2,7 @@
   %{name: "default",
     files: %{
       included: ["example/lib/", "example/test/", "lib/", "src/", "test/"],
-      excluded: [~r"/_build/", ~r"/deps/", "example/lib/generated/", "test/fixtures/app/lib/"]
+      excluded: [~r"/_build/", ~r"/deps/", ~r"/generated/", "test/fixtures/app/lib/"]
     },
     requires: [],
     check_for_updates: false,

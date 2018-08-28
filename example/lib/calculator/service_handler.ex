@@ -1,4 +1,5 @@
 defmodule Calculator.ServiceHandler do
+  @moduledoc false
   @behaviour Calculator.Generated.Service.Handler
 
   @impl true
@@ -20,7 +21,7 @@ defmodule Calculator.ServiceHandler do
   def divide(left, right) do
     case right do
       0 ->
-        raise Calculator.Generated.DivideByZeroException, message: "Cannot divide by zero"
+        raise Calculator.Generated.DivideByZeroError, message: "Cannot divide by zero"
 
       _ ->
         div(left, right)

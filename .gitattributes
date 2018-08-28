@@ -1,2 +1,5 @@
 # Static serialized thrift data
 *.thriftbin binary
+
+# Generated thrift files in example project
+/example/lib/calculator/generated/** linguist-generated=true

@@ -21,12 +21,15 @@ install:
 
 before_script:
   - MIX_ENV=test mix compile --warnings-as-errors
+  - (cd example && MIX_ENV=test mix compile --warnings-as-errors)
 
 script:
   - if [[ $CHECK_FORMATTED ]]; then (set -x; mix format --check-formatted); fi
   - MIX_ENV=test mix coveralls.safe_travis
+  - (cd example && mix test)
 
 cache:
   directories:
   - _build
   - deps
+  - example/_build

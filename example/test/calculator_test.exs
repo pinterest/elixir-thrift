@@ -1,8 +1,14 @@
 defmodule CalculatorTest do
+  @moduledoc false
   use ExUnit.Case
+
+  require Calculator.Generated.VectorProductType
 
   alias Calculator.Generated.DivideByZeroError
   alias Calculator.Generated.Service.Binary.Framed.Client
+  alias Calculator.Generated.Vector
+  alias Calculator.Generated.VectorProductResult
+  alias Calculator.Generated.VectorProductType
 
   setup do
     port = Application.get_env(:calculator, :port, 9090)
@@ -50,5 +56,36 @@ defmodule CalculatorTest do
     assert_raise DivideByZeroError, fn ->
       Client.divide!(ctx[:client], 22, 0)
     end
+  end
+
+  test "dot product", ctx do
+    left = %Vector{x: 1.0, y: 2.0, z: 5.0}
+    right = %Vector{x: 3.0, y: 1.0, z: -1.0}
+    type = VectorProductType.dot_product()
+
+    assert Client.vector_product(ctx[:client], left, left, type) ==
+             {:ok, %VectorProductResult{scalar: 30.0}}
+
+    assert Client.vector_product(ctx[:client], left, right, type) ==
+             {:ok, %VectorProductResult{scalar: 0.0}}
+
+    assert Client.vector_product(ctx[:client], right, right, type) ==
+             {:ok, %VectorProductResult{scalar: 11.0}}
+  end
+
+  test "cross product", ctx do
+    i = %Vector{x: 1.0}
+    j = %Vector{y: 1.0}
+    k = %Vector{z: 1.0}
+    type = VectorProductType.cross_product()
+
+    assert Client.vector_product(ctx[:client], i, j, type) ==
+             {:ok, %VectorProductResult{vector: k}}
+
+    assert Client.vector_product(ctx[:client], j, k, type) ==
+             {:ok, %VectorProductResult{vector: i}}
+
+    assert Client.vector_product(ctx[:client], k, i, type) ==
+             {:ok, %VectorProductResult{vector: j}}
   end
 end

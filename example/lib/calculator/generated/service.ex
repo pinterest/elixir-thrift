@@ -279,6 +279,100 @@ defmodule(Calculator.Generated.Service) do
     end
   end
 
+  defmodule(VectorProductArgs) do
+    _ = "Auto-generated Thrift struct Elixir.VectorProductArgs"
+    _ = "1: calculator.Vector left"
+    _ = "2: calculator.Vector right"
+    _ = "3: calculator.VectorProductType type"
+    defstruct(left: nil, right: nil, type: nil)
+    @type t :: %__MODULE__{}
+    def(new) do
+      %__MODULE__{}
+    end
+
+    defmodule(BinaryProtocol) do
+      @moduledoc false
+      def(deserialize(binary)) do
+        deserialize(binary, %VectorProductArgs{})
+      end
+
+      defp(deserialize(<<0, rest::binary>>, %VectorProductArgs{} = acc)) do
+        {acc, rest}
+      end
+
+      defp(deserialize(<<12, 1::16-signed, rest::binary>>, acc)) do
+        case(Elixir.Calculator.Generated.Vector.BinaryProtocol.deserialize(rest)) do
+          {value, rest} ->
+            deserialize(rest, %{acc | left: value})
+
+          :error ->
+            :error
+        end
+      end
+
+      defp(deserialize(<<12, 2::16-signed, rest::binary>>, acc)) do
+        case(Elixir.Calculator.Generated.Vector.BinaryProtocol.deserialize(rest)) do
+          {value, rest} ->
+            deserialize(rest, %{acc | right: value})
+
+          :error ->
+            :error
+        end
+      end
+
+      defp(deserialize(<<8, 3::16-signed, value::32-signed, rest::binary>>, acc)) do
+        deserialize(rest, %{acc | type: value})
+      end
+
+      defp(deserialize(<<field_type, _id::16-signed, rest::binary>>, acc)) do
+        rest |> Thrift.Protocol.Binary.skip_field(field_type) |> deserialize(acc)
+      end
+
+      defp(deserialize(_, _)) do
+        :error
+      end
+
+      def(serialize(%VectorProductArgs{left: left, right: right, type: type})) do
+        [
+          case(left) do
+            nil ->
+              <<>>
+
+            _ ->
+              [<<12, 1::16-signed>> | Calculator.Generated.Vector.serialize(left)]
+          end,
+          case(right) do
+            nil ->
+              <<>>
+
+            _ ->
+              [<<12, 2::16-signed>> | Calculator.Generated.Vector.serialize(right)]
+          end,
+          case(type) do
+            nil ->
+              <<>>
+
+            _ ->
+              <<8, 3::16-signed, type::32-signed>>
+          end
+          | <<0>>
+        ]
+      end
+    end
+
+    def(serialize(struct)) do
+      BinaryProtocol.serialize(struct)
+    end
+
+    def(serialize(struct, :binary)) do
+      BinaryProtocol.serialize(struct)
+    end
+
+    def(deserialize(binary)) do
+      BinaryProtocol.deserialize(binary)
+    end
+  end
+
   defmodule(AddResponse) do
     _ = "Auto-generated Thrift struct Elixir.AddResponse"
     _ = "0: i64 success"
@@ -529,6 +623,70 @@ defmodule(Calculator.Generated.Service) do
     end
   end
 
+  defmodule(VectorProductResponse) do
+    _ = "Auto-generated Thrift struct Elixir.VectorProductResponse"
+    _ = "0: calculator.VectorProductResult success"
+    defstruct(success: nil)
+    @type t :: %__MODULE__{}
+    def(new) do
+      %__MODULE__{}
+    end
+
+    defmodule(BinaryProtocol) do
+      @moduledoc false
+      def(deserialize(binary)) do
+        deserialize(binary, %VectorProductResponse{})
+      end
+
+      defp(deserialize(<<0, rest::binary>>, %VectorProductResponse{} = acc)) do
+        {acc, rest}
+      end
+
+      defp(deserialize(<<12, 0::16-signed, rest::binary>>, acc)) do
+        case(Elixir.Calculator.Generated.VectorProductResult.BinaryProtocol.deserialize(rest)) do
+          {value, rest} ->
+            deserialize(rest, %{acc | success: value})
+
+          :error ->
+            :error
+        end
+      end
+
+      defp(deserialize(<<field_type, _id::16-signed, rest::binary>>, acc)) do
+        rest |> Thrift.Protocol.Binary.skip_field(field_type) |> deserialize(acc)
+      end
+
+      defp(deserialize(_, _)) do
+        :error
+      end
+
+      def(serialize(%VectorProductResponse{success: success})) do
+        [
+          case(success) do
+            nil ->
+              <<>>
+
+            _ ->
+              [<<12, 0::16-signed>> | Calculator.Generated.VectorProductResult.serialize(success)]
+          end
+          | <<0>>
+        ]
+      end
+    end
+
+    def(serialize(struct)) do
+      BinaryProtocol.serialize(struct)
+    end
+
+    def(serialize(struct, :binary)) do
+      BinaryProtocol.serialize(struct)
+    end
+
+    def(deserialize(binary)) do
+      BinaryProtocol.deserialize(binary)
+    end
+  end
+
   defmodule(Binary.Framed.Client) do
     @moduledoc false
     alias(Thrift.Binary.Framed.Client, as: ClientImpl)
@@ -625,6 +783,32 @@ defmodule(Calculator.Generated.Service) do
           raise(Thrift.ConnectionError, reason: reason)
       end
     end
+
+    def(unquote(:vector_product)(client, left, right, type, rpc_opts \\ [])) do
+      args = %VectorProductArgs{left: left, right: right, type: type}
+      serialized_args = VectorProductArgs.BinaryProtocol.serialize(args)
+
+      ClientImpl.call(
+        client,
+        "vectorProduct",
+        serialized_args,
+        VectorProductResponse.BinaryProtocol,
+        rpc_opts
+      )
+    end
+
+    def(unquote(:vector_product!)(client, left, right, type, rpc_opts \\ [])) do
+      case(unquote(:vector_product)(client, left, right, type, rpc_opts)) do
+        {:ok, rsp} ->
+          rsp
+
+        {:error, {:exception, ex}} ->
+          raise(ex)
+
+        {:error, reason} ->
+          raise(Thrift.ConnectionError, reason: reason)
+      end
+    end
   end
 
   defmodule(Binary.Framed.Server) do
@@ -669,7 +853,8 @@ defmodule(Calculator.Generated.Service) do
           end
 
         {_, extra} ->
-          raise(Thrift.TApplicationException,
+          raise(
+            Thrift.TApplicationException,
             type: :protocol_error,
             message: "Could not decode #{inspect(extra)}"
           )
@@ -718,7 +903,8 @@ defmodule(Calculator.Generated.Service) do
           end
 
         {_, extra} ->
-          raise(Thrift.TApplicationException,
+          raise(
+            Thrift.TApplicationException,
             type: :protocol_error,
             message: "Could not decode #{inspect(extra)}"
           )
@@ -761,7 +947,8 @@ defmodule(Calculator.Generated.Service) do
           end
 
         {_, extra} ->
-          raise(Thrift.TApplicationException,
+          raise(
+            Thrift.TApplicationException,
             type: :protocol_error,
             message: "Could not decode #{inspect(extra)}"
           )
@@ -804,7 +991,55 @@ defmodule(Calculator.Generated.Service) do
           end
 
         {_, extra} ->
-          raise(Thrift.TApplicationException,
+          raise(
+            Thrift.TApplicationException,
+            type: :protocol_error,
+            message: "Could not decode #{inspect(extra)}"
+          )
+      end
+    end
+
+    def(handle_thrift("vectorProduct", binary_data, handler_module)) do
+      case(
+        Elixir.Calculator.Generated.Service.VectorProductArgs.BinaryProtocol.deserialize(
+          binary_data
+        )
+      ) do
+        {%Calculator.Generated.Service.VectorProductArgs{left: left, right: right, type: type},
+         ""} ->
+          try do
+            rsp = handler_module.vector_product(left, right, type)
+
+            (
+              response = %Calculator.Generated.Service.VectorProductResponse{success: rsp}
+
+              {:reply,
+               Elixir.Calculator.Generated.Service.VectorProductResponse.BinaryProtocol.serialize(
+                 response
+               )}
+            )
+          rescue
+            []
+          catch
+            kind, reason ->
+              formatted_exception = Exception.format(kind, reason, System.stacktrace())
+
+              Logger.error(
+                "Exception not defined in thrift spec was thrown: #{formatted_exception}"
+              )
+
+              error =
+                Thrift.TApplicationException.exception(
+                  type: :internal_error,
+                  message: "Server error: #{formatted_exception}"
+                )
+
+              {:server_error, error}
+          end
+
+        {_, extra} ->
+          raise(
+            Thrift.TApplicationException,
             type: :protocol_error,
             message: "Could not decode #{inspect(extra)}"
           )

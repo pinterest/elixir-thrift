@@ -1,11 +1,11 @@
 # Example
 
-The [`example/`](ex) directory of elixir-thrift contains an implementation of a simple calculator service. It serves two purposes:
+The [`example/`][ex] directory of elixir-thrift contains an implementation of a simple calculator service. It serves two purposes:
 
 1. How to use this library.
 2. Example of what elixir-thrift generated code looks like.
 
-[ex]: https://github.com/pinterest/elixir-thrift/example
+[ex]: https://github.com/pinterest/elixir-thrift/tree/master/example
 
 ## Calculator Service
 

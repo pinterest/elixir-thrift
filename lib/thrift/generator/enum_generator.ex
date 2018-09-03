@@ -60,7 +60,7 @@ defmodule Thrift.Generator.EnumGenerator do
 
     quote do
       defmodule unquote(name) do
-        @moduledoc unquote("Auto-generated Thrift enum #{enum.name}")
+        @moduledoc false
         unquote_splicing(macro_defs)
 
         unquote_splicing(value_to_name_defs)

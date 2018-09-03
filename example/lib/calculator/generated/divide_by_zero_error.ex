@@ -1,4 +1,5 @@
 defmodule(Calculator.Generated.DivideByZeroError) do
+  @moduledoc false
   _ = "Auto-generated Thrift exception calculator.DivideByZeroError"
   _ = "1: string message"
   defexception(message: nil)

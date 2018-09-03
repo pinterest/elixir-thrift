@@ -1,4 +1,5 @@
 defmodule(Calculator.Generated.VectorProductResult) do
+  @moduledoc false
   _ = "Auto-generated Thrift union calculator.VectorProductResult"
   _ = "1: double scalar"
   _ = "2: calculator.Vector vector"

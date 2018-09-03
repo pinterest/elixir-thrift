@@ -1,5 +1,7 @@
 defmodule(Calculator.Generated.Service) do
+  @moduledoc false
   defmodule(AddArgs) do
+    @moduledoc false
     _ = "Auto-generated Thrift struct Elixir.AddArgs"
     _ = "1: i64 left"
     _ = "2: i64 right"
@@ -70,6 +72,7 @@ defmodule(Calculator.Generated.Service) do
   end
 
   defmodule(DivideArgs) do
+    @moduledoc false
     _ = "Auto-generated Thrift struct Elixir.DivideArgs"
     _ = "1: i64 left"
     _ = "2: i64 right"
@@ -140,6 +143,7 @@ defmodule(Calculator.Generated.Service) do
   end
 
   defmodule(MultiplyArgs) do
+    @moduledoc false
     _ = "Auto-generated Thrift struct Elixir.MultiplyArgs"
     _ = "1: i64 left"
     _ = "2: i64 right"
@@ -210,6 +214,7 @@ defmodule(Calculator.Generated.Service) do
   end
 
   defmodule(SubtractArgs) do
+    @moduledoc false
     _ = "Auto-generated Thrift struct Elixir.SubtractArgs"
     _ = "1: i64 left"
     _ = "2: i64 right"
@@ -280,6 +285,7 @@ defmodule(Calculator.Generated.Service) do
   end
 
   defmodule(VectorProductArgs) do
+    @moduledoc false
     _ = "Auto-generated Thrift struct Elixir.VectorProductArgs"
     _ = "1: calculator.Vector left"
     _ = "2: calculator.Vector right"
@@ -374,6 +380,7 @@ defmodule(Calculator.Generated.Service) do
   end
 
   defmodule(AddResponse) do
+    @moduledoc false
     _ = "Auto-generated Thrift struct Elixir.AddResponse"
     _ = "0: i64 success"
     defstruct(success: nil)
@@ -432,6 +439,7 @@ defmodule(Calculator.Generated.Service) do
   end
 
   defmodule(DivideResponse) do
+    @moduledoc false
     _ = "Auto-generated Thrift struct Elixir.DivideResponse"
     _ = "0: i64 success"
     _ = "1: calculator.DivideByZeroError e"
@@ -508,6 +516,7 @@ defmodule(Calculator.Generated.Service) do
   end
 
   defmodule(MultiplyResponse) do
+    @moduledoc false
     _ = "Auto-generated Thrift struct Elixir.MultiplyResponse"
     _ = "0: i64 success"
     defstruct(success: nil)
@@ -566,6 +575,7 @@ defmodule(Calculator.Generated.Service) do
   end
 
   defmodule(SubtractResponse) do
+    @moduledoc false
     _ = "Auto-generated Thrift struct Elixir.SubtractResponse"
     _ = "0: i64 success"
     defstruct(success: nil)
@@ -624,6 +634,7 @@ defmodule(Calculator.Generated.Service) do
   end
 
   defmodule(VectorProductResponse) do
+    @moduledoc false
     _ = "Auto-generated Thrift struct Elixir.VectorProductResponse"
     _ = "0: calculator.VectorProductResult success"
     defstruct(success: nil)
@@ -853,8 +864,7 @@ defmodule(Calculator.Generated.Service) do
           end
 
         {_, extra} ->
-          raise(
-            Thrift.TApplicationException,
+          raise(Thrift.TApplicationException,
             type: :protocol_error,
             message: "Could not decode #{inspect(extra)}"
           )
@@ -903,8 +913,7 @@ defmodule(Calculator.Generated.Service) do
           end
 
         {_, extra} ->
-          raise(
-            Thrift.TApplicationException,
+          raise(Thrift.TApplicationException,
             type: :protocol_error,
             message: "Could not decode #{inspect(extra)}"
           )
@@ -947,8 +956,7 @@ defmodule(Calculator.Generated.Service) do
           end
 
         {_, extra} ->
-          raise(
-            Thrift.TApplicationException,
+          raise(Thrift.TApplicationException,
             type: :protocol_error,
             message: "Could not decode #{inspect(extra)}"
           )
@@ -991,8 +999,7 @@ defmodule(Calculator.Generated.Service) do
           end
 
         {_, extra} ->
-          raise(
-            Thrift.TApplicationException,
+          raise(Thrift.TApplicationException,
             type: :protocol_error,
             message: "Could not decode #{inspect(extra)}"
           )
@@ -1038,8 +1045,7 @@ defmodule(Calculator.Generated.Service) do
           end
 
         {_, extra} ->
-          raise(
-            Thrift.TApplicationException,
+          raise(Thrift.TApplicationException,
             type: :protocol_error,
             message: "Could not decode #{inspect(extra)}"
           )

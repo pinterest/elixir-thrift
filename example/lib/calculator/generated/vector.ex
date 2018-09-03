@@ -1,4 +1,5 @@
 defmodule(Calculator.Generated.Vector) do
+  @moduledoc false
   _ = "Auto-generated Thrift struct calculator.Vector"
   _ = "1: double x"
   _ = "2: double y"

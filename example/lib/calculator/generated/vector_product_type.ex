@@ -1,5 +1,5 @@
 defmodule(Calculator.Generated.VectorProductType) do
-  @moduledoc "Auto-generated Thrift enum calculator.VectorProductType"
+  @moduledoc false
   defmacro(unquote(:dot_product)()) do
     1
   end

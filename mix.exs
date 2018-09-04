@@ -50,10 +50,11 @@ defmodule Thrift.Mixfile do
       name: "Thrift",
       docs: [
         main: "Thrift",
+        extra_section: "Guides",
         extras: [
           "ADOPTERS.md": [title: "Adopters"],
           "CONTRIBUTING.md": [title: "Contributing"],
-          "example/README.md": [filename: "example", title: "Example"]
+          "example/README.md": [filename: "example", title: "Example Project"]
         ],
         source_url: @project_url,
         groups_for_modules: [

@@ -82,12 +82,12 @@ def add!(client, left, right, rpc_opts \\ [])
 
 In order to start a Thrift server, you will need to provide a callback module
 that implements the functions described by its service interface. Fortunately,
-a [behaviour][] module will be automatically generated for you, complete with
+a [behaviour] module will be automatically generated for you, complete with
 success typing.
 
 ```elixir
 defmodule CalculatorHandler do
-  @behaviour Calcualtor.Generated.Service.Handler
+  @behaviour Calculator.Generated.Service.Handler
 
   @impl true
   def add(left, right) do
@@ -104,8 +104,9 @@ iex> {:ok, server} = Server.start_link(CalculatorHandler, 9090, [])
 ```
 
 All RPC calls to the server will be delegated to the handler module. The server
-provides a [supervisor][] which can be added to your application's supervision
-tree. It's important to start it as a `supervisor` and not as a `worker`.
+provides a [supervisor] which can be added to your application's supervision
+tree. It's important to add it to your supervision tree with type `:supervisor`
+and not `:worker`.
 
 ```elixir
 defmodule Calculator.Application
@@ -223,4 +224,4 @@ Presently, we implement:
 * Binary Protocol, Framed Client
 * Binary Protocol, Framed Server
 
-We are more than willing to access contributions that add more!
+We are more than willing to accept contributions that add more!

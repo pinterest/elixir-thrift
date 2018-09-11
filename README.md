@@ -152,7 +152,8 @@ iex> Vector.BinaryProtocol.deserialize(data)
 ## Thrift IDL Parsing
 
 The `Thrift.Parser` module parses [Thrift IDL][idl] documents and produces an
-abstract syntax tree.
+abstract syntax tree. You can use these features to support additional
+languages, protocols, and servers.
 
 ```elixir
 Thrift.Parser.parse("enum Colors { RED, GREEN, BLUE }")
@@ -162,28 +163,6 @@ Thrift.Parser.parse("enum Colors { RED, GREEN, BLUE }")
  namespaces: %{}, services: %{}, structs: %{}, thrift_namespace: nil,
  typedefs: %{}, unions: %{}}
 ```
-
-There is also a low-level lexer (`:thrift_lexer`) and parser (`:thrift_parser`)
-for the Thrift grammar.
-
-```elixir
-{:ok, tokens, _} = :thrift_lexer.string('enum Colors { RED, GREEN, BLUE }')
-{:ok,
- [{:enum, 1}, {:ident, 1, 'Colors'}, {:symbol, 1, '{'}, {:ident, 1, 'RED'},
-  {:symbol, 1, ','}, {:ident, 1, 'GREEN'}, {:symbol, 1, ','},
-  {:ident, 1, 'BLUE'}, {:symbol, 1, '}'}], 1}
-
-{:ok, schema} = :thrift_parser.parse(tokens)
-{:ok,
- %Thrift.AST.Schema{constants: %{},
-  enums: %{Colors: %Thrift.AST.TEnum{name: :Colors,
-     values: [RED: 1, GREEN: 2, BLUE: 3]}}, exceptions: %{}, includes: [],
-  namespaces: %{}, services: %{}, structs: %{}, thrift_namespace: nil,
-  typedefs: %{}, unions: %{}}}
-```
-
-You can use these features to support additional languages, protocols, and
-servers.
 
 [idl]: https://thrift.apache.org/docs/idl
 

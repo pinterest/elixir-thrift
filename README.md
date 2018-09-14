@@ -86,7 +86,7 @@ a [behaviour] module will be automatically generated for you, complete with
 success typing.
 
 ```elixir
-defmodule CalculatorHandler do
+defmodule Calculator.ServiceHandler do
   @behaviour Calculator.Generated.Service.Handler
 
   @impl true
@@ -100,7 +100,7 @@ Then provide your handler module when starting the server process:
 
 ```elixir
 iex> alias Calculator.Generated.Service.Binary.Framed.Server
-iex> {:ok, server} = Server.start_link(CalculatorHandler, 9090, [])
+iex> {:ok, server} = Server.start_link(Calculator.ServiceHandler, 9090, [])
 ```
 
 All RPC calls to the server will be delegated to the handler module. The server

@@ -219,9 +219,9 @@ Separator -> '$empty'.
 
 Erlang code.
 
-% Construct a new AST nodeof the requested Type. Args are passed to the node's
-% `new` function and, if provided, line number information is assigned to the
-% resulting node.
+% Construct a new AST node of the requested Type. Args are passed to the node
+% module's `new` function and, if provided, a line number and annotations are
+% assigned to the resulting node.
 build_node(Type, Args) when is_list(Args) ->
     Module = list_to_atom("Elixir.Thrift.AST." ++ atom_to_list(Type)),
     apply(Module, 'new', Args).

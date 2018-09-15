@@ -37,10 +37,6 @@ defmodule Thrift.Parser.Conversions do
     ref
   end
 
-  def cast(:double, val) do
-    val
-  end
-
   def cast(:bool, 0), do: false
   def cast(:bool, 1), do: true
 

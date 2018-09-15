@@ -457,7 +457,7 @@ defmodule Thrift.AST do
 
     defp module_name(nil), do: nil
 
-    defp module_name(path) when is_bitstring(path) do
+    defp module_name(path) when is_binary(path) do
       path
       |> Path.basename()
       |> Path.rootname()

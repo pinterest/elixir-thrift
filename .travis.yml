@@ -6,8 +6,6 @@ branches:
 
 matrix:
   include:
-    - elixir: 1.5
-      otp_release: 19.3
     - elixir: 1.6
       otp_release: 19.3
     - elixir: 1.7

@@ -138,7 +138,7 @@ Exception -> exception ident '{' FieldList '}' Annotations:
 Service -> service ident Extends '{' FunctionList '}' Annotations:
     build_node('Service', line('$1'), '$7', [unwrap('$2'), '$5', '$3']).
 
-Extends -> extends ident: unwrap('$2').
+Extends -> extends ident: list_to_atom(unwrap('$2')).
 Extends -> '$empty': nil.
 
 % Functions

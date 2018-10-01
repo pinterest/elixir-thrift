@@ -41,7 +41,7 @@ defmodule Thrift.AST do
 
     @spec new(charlist, charlist) :: t
     def new(scope, value) do
-      %Namespace{scope: atomify(scope), value: List.to_string(value)}
+      %Namespace{scope: List.to_atom(scope), value: List.to_string(value)}
     end
   end
 
@@ -94,7 +94,7 @@ defmodule Thrift.AST do
 
     @spec new(charlist, Literals.t(), Types.t()) :: t
     def new(name, value, type) do
-      %Constant{name: atomify(name), value: cast(type, value), type: type}
+      %Constant{name: List.to_atom(name), value: cast(type, value), type: type}
     end
   end
 
@@ -118,13 +118,13 @@ defmodule Thrift.AST do
       {_, values} =
         Enum.reduce(values, {0, []}, fn
           {name, value}, {_index, acc} ->
-            {value + 1, [{atomify(name), value} | acc]}
+            {value + 1, [{List.to_atom(name), value} | acc]}
 
           name, {index, acc} ->
-            {index + 1, [{atomify(name), index} | acc]}
+            {index + 1, [{List.to_atom(name), index} | acc]}
         end)
 
-      %TEnum{name: atomify(name), values: Enum.reverse(values)}
+      %TEnum{name: List.to_atom(name), values: Enum.reverse(values)}
     end
   end
 
@@ -219,7 +219,7 @@ defmodule Thrift.AST do
 
     @spec new(charlist, [Field.t(), ...]) :: t
     def new(name, fields) do
-      ex_name = atomify(name)
+      ex_name = List.to_atom(name)
       updated_fields = Field.build_field_list(ex_name, fields)
 
       %Exception{name: ex_name, fields: updated_fields}
@@ -240,7 +240,7 @@ defmodule Thrift.AST do
 
     @spec new(charlist, [Field.t(), ...]) :: t
     def new(name, fields) do
-      struct_name = atomify(name)
+      struct_name = List.to_atom(name)
       fields = Field.build_field_list(struct_name, fields)
 
       %Struct{name: struct_name, fields: fields}
@@ -261,7 +261,7 @@ defmodule Thrift.AST do
 
     @spec new(charlist, [Field.t(), ...]) :: t
     def new(name, fields) do
-      name = atomify(name)
+      name = List.to_atom(name)
 
       fields =
         name
@@ -320,7 +320,7 @@ defmodule Thrift.AST do
 
     @spec new(charlist) :: t
     def new(referenced_type) do
-      %TypeRef{referenced_type: atomify(referenced_type)}
+      %TypeRef{referenced_type: List.to_atom(referenced_type)}
     end
   end
 
@@ -333,7 +333,7 @@ defmodule Thrift.AST do
 
     @spec new(charlist) :: t
     def new(referenced_value) do
-      %ValueRef{referenced_value: atomify(referenced_value)}
+      %ValueRef{referenced_value: List.to_atom(referenced_value)}
     end
   end
 
@@ -361,7 +361,7 @@ defmodule Thrift.AST do
 
     @spec new(boolean, Types.t(), charlist, [Field.t(), ...], [Exception.t(), ...]) :: t
     def new(oneway, return_type, name, params, exceptions) do
-      name = atomify(name)
+      name = List.to_atom(name)
       params = Field.build_field_list(name, params)
 
       %Function{
@@ -387,10 +387,10 @@ defmodule Thrift.AST do
     @enforce_keys [:name, :functions]
     defstruct line: nil, annotations: %{}, name: nil, extends: nil, functions: %{}
 
-    @spec new(charlist, [Function.t(), ...], charlist) :: t
+    @spec new(charlist, [Function.t(), ...], atom) :: t
     def new(name, functions, extends) do
       fn_map = Enum.into(functions, %{}, fn f -> {f.name, f} end)
-      %Service{name: atomify(name), extends: atomify(extends), functions: fn_map}
+      %Service{name: List.to_atom(name), extends: extends, functions: fn_map}
     end
   end
 
@@ -534,7 +534,7 @@ defmodule Thrift.AST do
         | typedefs:
             put_new_strict(
               schema.typedefs,
-              atomify(type_alias),
+              List.to_atom(type_alias),
               add_namespace_to_type(schema.module, actual_type)
             )
       }

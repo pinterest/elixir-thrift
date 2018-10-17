@@ -918,17 +918,14 @@ defmodule Thrift.Parser.ParserTest do
 
   describe "namespace option" do
     setup do
-      path = Path.join(@test_file_dir, "namespace.thrift")
+      path = Path.join(@test_file_dir, "module.thrift")
       File.write!(path, "struct Struct { 1: i32 id }")
       {:ok, [path: path]}
     end
 
     defp parse_namespace(context, namespace) do
       result = parse_file(context[:path], namespace: namespace)
-
-      if is_map(result.ns_mappings.namespace) do
-        result.ns_mappings.namespace.value
-      end
+      result.namespaces[:module]
     end
 
     test "is empty", context do

@@ -14,7 +14,6 @@ defmodule Thrift.Parser.FileGroup do
     Constant,
     Exception,
     Field,
-    Namespace,
     Schema,
     Service,
     Struct,
@@ -28,7 +27,7 @@ defmodule Thrift.Parser.FileGroup do
           initial_file: Path.t(),
           parsed_files: %{FileRef.thrift_include() => %ParsedFile{}},
           schemas: %{FileRef.thrift_include() => %Schema{}},
-          ns_mappings: %{atom => %Namespace{}},
+          namespaces: %{atom => String.t() | nil},
           opts: Parser.opts()
         }
 
@@ -38,7 +37,7 @@ defmodule Thrift.Parser.FileGroup do
             schemas: %{},
             resolutions: %{},
             immutable_resolutions: %{},
-            ns_mappings: %{},
+            namespaces: %{},
             opts: Keyword.new()
 
   @spec new(Path.t(), Parser.opts()) :: t
@@ -109,14 +108,9 @@ defmodule Thrift.Parser.FileGroup do
       end)
       |> Map.new()
 
-    default_namespace =
-      if file_group.opts[:namespace] do
-        %Namespace{:scope => :elixir, :value => file_group.opts[:namespace]}
-      end
+    namespaces = build_namespaces(file_group.schemas, file_group.opts[:namespace])
 
-    ns_mappings = build_ns_mappings(file_group.schemas, default_namespace)
-
-    %FileGroup{file_group | resolutions: resolutions, ns_mappings: ns_mappings}
+    %FileGroup{file_group | resolutions: resolutions, namespaces: namespaces}
   end
 
   @spec resolve(t, any) :: any
@@ -226,13 +220,13 @@ defmodule Thrift.Parser.FileGroup do
       |> Enum.at(1)
       |> initialcase()
 
-    case file_group.ns_mappings[module_name] do
+    case file_group.namespaces[module_name] do
       nil ->
         Module.concat([struct_name])
 
-      namespace = %Namespace{} ->
+      namespace ->
         namespace_parts =
-          namespace.value
+          namespace
           |> String.split(".")
           |> Enum.map(&Macro.camelize/1)
 
@@ -258,12 +252,13 @@ defmodule Thrift.Parser.FileGroup do
     Enum.member?(Map.keys(initial_file.schema.constants), constant.name)
   end
 
-  defp build_ns_mappings(schemas, default_namespace) do
-    schemas
-    |> Enum.map(fn {module_name, %Schema{namespaces: ns}} ->
-      namespace = Map.get(ns, :elixir, default_namespace)
-      {String.to_atom(module_name), namespace}
+  defp build_namespaces(schemas, default_namespace) do
+    Map.new(schemas, fn
+      {module_name, %Schema{namespaces: %{:elixir => namespace}}} ->
+        {String.to_atom(module_name), namespace.value}
+
+      {module_name, _} ->
+        {String.to_atom(module_name), default_namespace}
     end)
-    |> Map.new()
   end
 end

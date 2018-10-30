@@ -177,6 +177,17 @@ Thrift.Parser.parse("enum Colors { RED, GREEN, BLUE }")
 
 [idl]: https://thrift.apache.org/docs/idl
 
+## Debugging
+
+In order to debug your Thrift RPC calls, we recommend you use [`thrift-tools`](https://github.com/pinterest/thrift-tools). It is a set of tools to introspect Apache Thrift traffic.
+
+Try something like:
+
+```
+$ pip install thrift-tools
+$ sudo thrift-tool --iface eth0 --port 9090 dump --show-all --pretty
+```
+
 ## FAQ
 
 ### Why is it faster than the Apache implementation?

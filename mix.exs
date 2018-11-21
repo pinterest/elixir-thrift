@@ -80,7 +80,7 @@ defmodule Thrift.Mixfile do
       # Development
       {:ex_doc, "~> 0.19", only: :dev, runtime: false},
       {:excoveralls, "~> 0.9", only: :test, runtime: false},
-      {:credo, "~> 0.10", only: :dev, runtime: false},
+      {:credo, "~> 1.0", only: :dev, runtime: false},
       {:dialyxir, "~> 0.5", only: :dev, runtime: false},
 
       # Runtime

@@ -23,7 +23,7 @@ defmodule Thrift.Binary.Framed.Client do
 
   @immutable_tcp_opts [active: false, packet: 4, mode: :binary]
 
-  @type error :: {:error, atom}
+  @type error :: {:error, atom} | {:error, {:exception, struct}}
   @type success :: {:ok, binary}
 
   @type protocol_response :: success | error

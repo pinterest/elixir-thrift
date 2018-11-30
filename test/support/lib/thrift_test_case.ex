@@ -77,9 +77,16 @@ defmodule ThriftTestCase do
         []
 
       modules ->
-        parts = Enum.map(modules, fn {module, _} -> Module.split(module) end)
+        parts = modules
+          |> Enum.reject(fn {module, _} -> protocol?(module) end)
+          |> Enum.map(fn {module, _} -> Module.split(module) end)
         for part <- parts, alias?(part, parts), do: Module.concat(part)
     end
+  end
+
+  defp protocol?(module) do
+    attrs = module.__info__(:attributes)
+    Keyword.has_key?(attrs, :protocol) or Keyword.has_key?(attrs, :protocol_impl)
   end
 
   defp alias?(module, modules) do

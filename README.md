@@ -147,17 +147,15 @@ end
 
 ## Serialization
 
-A `BinaryProtocol` module is generated for each Thrift struct, union, and
-exception type. You can use this interface to easily serialize and deserialize
-your own types.
+Each thrift struct, union and exception also has a `SerDe` protocol generated for
+it. This module lets you serialize and deserialize its own type easily via `Thrift.Serializable`.
 
 ```elixir
 iex> alias Calculator.Generated.Vector
 iex> data = %Vector{x: 1, y: 2, z: 3}
-|> Vector.BinaryProtocol.serialize
-|> IO.iodata_to_binary
-iex> Vector.BinaryProtocol.deserialize(data)
-{%Calculator.Generated.Vector{x: 1.0, y: 2.0, z: 3.0}, ""}
+|> Thrift.Serializable.serialize(%Thrift.Binary{payload: ""})
+iex> Thrift.Serializable.deserialize(%Vector{}, data)
+{%Calculator.Generated.Vector{x: 1.0, y: 2.0, z: 3.0}, %Thrift.Protocol.Binary{payload: ""}}
 ```
 
 ## Thrift IDL Parsing

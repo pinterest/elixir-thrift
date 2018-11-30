@@ -1,4 +1,4 @@
-defmodule Thrift.Generator.Binary.Framed.Client do
+defmodule Thrift.Generator.Client do
   @moduledoc false
 
   alias Thrift.AST.Function
@@ -27,11 +27,6 @@ defmodule Thrift.Generator.Binary.Framed.Client do
   end
 
   defp generate_handler_function(function) do
-    args_module = Service.module_name(function, :args)
-    args_binary_module = Module.concat(args_module, :BinaryProtocol)
-    response_module = Service.module_name(function, :response)
-    rpc_name = Atom.to_string(function.name)
-
     # Make two Elixir-friendly function names: an underscored version of the
     # Thrift function name and a "bang!" exception-raising variant.
     function_name =
@@ -75,9 +70,7 @@ defmodule Thrift.Generator.Binary.Framed.Client do
 
     quote do
       def(unquote(function_name)(client, unquote_splicing(vars), rpc_opts \\ [])) do
-        args = %unquote(args_module){unquote_splicing(assignments)}
-        serialized_args = unquote(args_binary_module).serialize(args)
-        unquote(build_response_handler(function, rpc_name, response_module))
+        unquote(build_call(function, assignments))
       end
 
       def(unquote(bang_name)(client, unquote_splicing(vars), rpc_opts \\ [])) do
@@ -95,18 +88,24 @@ defmodule Thrift.Generator.Binary.Framed.Client do
     end
   end
 
-  defp build_response_handler(%Function{oneway: true}, rpc_name, _response_module) do
+  defp build_call(%Function{oneway: true} = function, assignments) do
+    rpc_name = Atom.to_string(function.name)
+    args_module = Service.module_name(function, :args)
     quote do
-      :ok = ClientImpl.oneway(client, unquote(rpc_name), serialized_args, rpc_opts)
+      args = %unquote(args_module){unquote_splicing(assignments)}
+      :ok = ClientImpl.oneway(client, unquote(rpc_name), args, rpc_opts)
       {:ok, nil}
     end
   end
 
-  defp build_response_handler(%Function{oneway: false}, rpc_name, response_module) do
-    module = Module.concat(response_module, :BinaryProtocol)
-
+  defp build_call(%Function{oneway: false} = function, assignments) do
+    rpc_name = Atom.to_string(function.name)
+    args_module = Service.module_name(function, :args)
+    response_module = Service.module_name(function, :response)
     quote do
-      ClientImpl.call(client, unquote(rpc_name), serialized_args, unquote(module), rpc_opts)
+      args = %unquote(args_module){unquote_splicing(assignments)}
+      resp = %unquote(response_module){}
+      ClientImpl.call(client, unquote(rpc_name), args, resp, rpc_opts)
     end
   end
 end

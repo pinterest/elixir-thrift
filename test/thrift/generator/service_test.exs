@@ -1,6 +1,9 @@
 defmodule Thrift.Generator.ServiceTest do
   use ThriftTestCase
 
+  alias Thrift.Serializable
+  alias Thrift.Protocol.Binary
+
   @thrift_file name: "simple_service.thrift",
                contents: """
                namespace elixir Services.Simple
@@ -168,7 +171,8 @@ defmodule Thrift.Generator.ServiceTest do
 
     serialized =
       %UpdateUsernameArgs{id: 1234, new_username: "stinkypants"}
-      |> UpdateUsernameArgs.BinaryProtocol.serialize()
+      |> Serializable.serialize(%Binary{payload: ""})
+      |> Map.fetch!(:payload)
       |> IO.iodata_to_binary()
 
     assert <<10, 0, 1, 0, 0, 0, 0, 0, 0, 4, 210, 11, 0, 2, 0, 0, 0, 11, "stinkypants", 0>> ==
@@ -180,7 +184,8 @@ defmodule Thrift.Generator.ServiceTest do
 
     serialized =
       %UpdateUsernameResponse{success: true}
-      |> UpdateUsernameResponse.BinaryProtocol.serialize()
+      |> Serializable.serialize(%Binary{payload: ""})
+      |> Map.fetch!(:payload)
       |> IO.iodata_to_binary()
 
     assert <<2, 0, 0, 1, 0>> == serialized
@@ -194,7 +199,8 @@ defmodule Thrift.Generator.ServiceTest do
 
     serialized =
       %UpdateUsernameResponse{taken: %UsernameTakenException{message: "That username is taken"}}
-      |> UpdateUsernameResponse.BinaryProtocol.serialize()
+      |> Serializable.serialize(%Binary{payload: ""})
+      |> Map.fetch!(:payload)
       |> IO.iodata_to_binary()
 
     assert <<12, 0, 1, 11, 0, 1, 0, 0, 0, 22, rest::binary>> = serialized

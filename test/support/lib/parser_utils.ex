@@ -26,6 +26,7 @@ end
 defmodule ParserUtils do
   @moduledoc false
   alias Thrift.Parser
+  alias Thrift.Protocol.Binary
 
   def parse_thrift(file_path) do
     Parser.parse_file(file_path)
@@ -101,7 +102,7 @@ defmodule ParserUtils do
   end
 
   def serialize_user_elixir(user, opts \\ []) do
-    serialized = User.BinaryProtocol.serialize(user)
+    %Binary{payload: serialized} = Thrift.Serializable.serialize(user, %Binary{payload: ""})
 
     if Keyword.get(opts, :convert_to_binary, true) do
       IO.iodata_to_binary(serialized)
@@ -111,7 +112,7 @@ defmodule ParserUtils do
   end
 
   def deserialize_user_elixir(binary_data) do
-    {%User{}, ""} = User.BinaryProtocol.deserialize(binary_data)
+    {%User{}, %Binary{payload: ""}} = Thrift.Serializable.deserialize(%Binary{payload: binary_data}, %User{})
   end
 
   def deserialize_user_erlang(binary_data) do
@@ -142,8 +143,7 @@ defmodule ParserUtils do
   def serialize_nesting(nesting, opts \\ [])
 
   def serialize_nesting(nesting, opts) when is_map(nesting) do
-    alias Nesting.BinaryProtocol
-    serialized = BinaryProtocol.serialize(:struct, nesting)
+    %Binary{payload: serialized} = Thrift.Serializable.serialize(nesting, %Binary{payload: %{}})
 
     if Keyword.get(opts, :convert_to_binary, true) do
       IO.iodata_to_binary(serialized)

@@ -170,23 +170,35 @@ defmodule Thrift.Binary.Framed.ProtocolHandler do
          server_module,
          handler_module
        ) do
-    case server_module.handle_thrift(name, args_binary, handler_module) do
-      {:reply, serialized_reply} ->
+    {args, _} = server_module.deserialize(name, %Thrift.Protocol.Binary{payload: args_binary})
+    case server_module.handle_thrift(args, handler_module) do
+      {:reply, reply} ->
         message = Protocol.Binary.serialize(:message_begin, {:reply, sequence_id, name})
+        %Thrift.Protocol.Binary{payload: serialized_msg} =
+          Thrift.Serializable.serialize(reply, %Thrift.Protocol.Binary{payload: message})
 
-        {:ok, :reply, [message | serialized_reply]}
-
-      {:server_error, %TApplicationException{} = exc} ->
-        message = Protocol.Binary.serialize(:message_begin, {:exception, sequence_id, name})
-        serialized_exception = Protocol.Binary.serialize(:application_exception, exc)
-
-        {:error, {:server_error, [message | serialized_exception]}}
-
+        {:ok, :reply, serialized_msg}
       :noreply ->
         message = Protocol.Binary.serialize(:message_begin, {:reply, sequence_id, name})
 
         {:ok, :reply, [message | <<0>>]}
     end
+  catch
+    kind, reason ->
+      formatted_exception = Exception.format(kind, reason, System.stacktrace())
+      Logger.error("Exception not defined in thrift spec was thrown: #{formatted_exception}")
+
+      error =
+        Thrift.TApplicationException.exception(
+          type: :internal_error,
+          message: "Server error: #{formatted_exception}"
+        )
+
+        message = Protocol.Binary.serialize(:message_begin, {:exception, sequence_id, name})
+        %Thrift.Protocol.Binary{payload: serialized_msg} =
+          TApplicationException.SerDe.Thrift.Protocol.Binary.serialize(%Thrift.Protocol.Binary{payload: message}, error)
+
+        {:ok, :reply, serialized_msg}
   end
 
   defp handle_thrift_message(
@@ -194,7 +206,8 @@ defmodule Thrift.Binary.Framed.ProtocolHandler do
          server_module,
          handler_module
        ) do
-    spawn(server_module, :handle_thrift, [name, args_binary, handler_module])
+    {args, _} = server_module.deserialize(name, %Thrift.Protocol.Binary{payload: args_binary})
+    spawn(server_module, :handle_thrift, [args, handler_module])
     {:ok, :reply, <<0>>}
   end
 

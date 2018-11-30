@@ -1,6 +1,5 @@
-defmodule Thrift.Generator.Binary.Framed.Server do
+defmodule Thrift.Generator.Server do
   @moduledoc false
-  alias Thrift.AST.Function
 
   alias Thrift.Generator.{
     Service,
@@ -14,6 +13,8 @@ defmodule Thrift.Generator.Binary.Framed.Server do
       service.functions
       |> Map.values()
       |> Enum.map(&generate_handler_function(file_group, service_module, &1))
+      |> Utils.merge_blocks()
+      |> Utils.sort_defs()
 
     quote do
       defmodule Binary.Framed.Server do
@@ -32,28 +33,8 @@ defmodule Thrift.Generator.Binary.Framed.Server do
     end
   end
 
-  def generate_handler_function(file_group, service_module, %Function{params: []} = function) do
-    fn_name = Atom.to_string(function.name)
-    handler_fn_name = Utils.underscore(function.name)
-    response_module = Module.concat(service_module, Service.module_name(function, :response))
-
-    body =
-      quote do
-        rsp = handler_module.unquote(handler_fn_name)()
-        unquote(build_responder(function.return_type, response_module))
-      end
-
-    handler = wrap_with_try_catch(body, function, file_group, response_module)
-
-    quote do
-      def handle_thrift(unquote(fn_name), _binary_data, handler_module) do
-        unquote(handler)
-      end
-    end
-  end
-
   def generate_handler_function(file_group, service_module, function) do
-    fn_name = Atom.to_string(function.name)
+    rpc_name = Atom.to_string(function.name)
     args_module = Module.concat(service_module, Service.module_name(function, :args))
     response_module = Module.concat(service_module, Service.module_name(function, :response))
 
@@ -63,16 +44,12 @@ defmodule Thrift.Generator.Binary.Framed.Server do
       end)
 
     quote do
-      def handle_thrift(unquote(fn_name), binary_data, handler_module) do
-        case unquote(args_module).BinaryProtocol.deserialize(binary_data) do
-          {%unquote(args_module){unquote_splicing(struct_matches)}, ""} ->
-            unquote(build_handler_call(file_group, function, response_module))
+      def deserialize(unquote(rpc_name), payload) do
+        unquote(args_module).SerDe.deserialize(payload)
+      end
 
-          {_, extra} ->
-            raise Thrift.TApplicationException,
-              type: :protocol_error,
-              message: "Could not decode #{inspect(extra)}"
-        end
+      def handle_thrift(%unquote(args_module){unquote_splicing(struct_matches)}, handler_module) do
+        unquote(build_handler_call(file_group, function, response_module))
       end
     end
   end
@@ -101,26 +78,13 @@ defmodule Thrift.Generator.Binary.Framed.Server do
 
           quote do
             unquote(error_var) in unquote(dest_module) ->
-              response = %unquote(response_module){unquote(field_setter)}
-              {:reply, unquote(response_module).BinaryProtocol.serialize(response)}
+              {:reply, %unquote(response_module){unquote(field_setter)}}
           end
       end)
 
     quote do
       try do
         unquote(quoted_handler)
-      catch
-        kind, reason ->
-          formatted_exception = Exception.format(kind, reason, System.stacktrace())
-          Logger.error("Exception not defined in thrift spec was thrown: #{formatted_exception}")
-
-          error =
-            Thrift.TApplicationException.exception(
-              type: :internal_error,
-              message: "Server error: #{formatted_exception}"
-            )
-
-          {:server_error, error}
       rescue
         unquote(rescue_blocks)
       end
@@ -136,8 +100,7 @@ defmodule Thrift.Generator.Binary.Framed.Server do
 
   defp build_responder(_, response_module) do
     quote do
-      response = %unquote(response_module){success: rsp}
-      {:reply, unquote(response_module).BinaryProtocol.serialize(response)}
+      {:reply, %unquote(response_module){success: rsp}}
     end
   end
 end

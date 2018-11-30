@@ -78,15 +78,15 @@ defmodule Thrift do
   ... the generated code will be placed in the following modules under
   `lib/thrift/`:
 
-    Definition                | Module
-    ------------------------- | -----------------------------------------------
-    `User` struct             | `Thrift.Test.User`
-    *└ binary protocol*       | `Thrift.Test.User.BinaryProtocol`
-    `UserNotFound` exception  | `Thrift.Test.UserNotFound`
-    *└ binary protocol*       | `Thrift.Test.UserNotFound.BinaryProtocol`
-    `UserService` service     | `Thrift.Test.UserService.Handler`
-    *└ binary framed client*  | `Thrift.Test.UserService.Binary.Framed.Client`
-    *└ binary framed server*  | `Thrift.Test.UserService.Binary.Framed.Server`
+    Definition                 | Module
+    -------------------------- | -----------------------------------------------
+    `User` struct              | `Thrift.Test.User`
+    *└ serialization protocol* | `Thrift.Test.User.SerDe`
+    `UserNotFound` exception   | `Thrift.Test.UserNotFound`
+    *└ serialization protocol* | `Thrift.Test.UserNotFound.SerDe`
+    `UserService` service      | `Thrift.Test.UserService.Handler`
+    *└ binary framed client*   | `Thrift.Test.UserService.Binary.Framed.Client`
+    *└ binary framed server*   | `Thrift.Test.UserService.Binary.Framed.Server`
 
   ### Namespaces
 

@@ -11,7 +11,11 @@ defmodule Thrift.Parser.ParsedFile do
   def new(%FileRef{} = file_ref) do
     case Parser.parse(file_ref.contents) do
       {:ok, schema} ->
-        %__MODULE__{file_ref: file_ref, schema: schema, name: FileRef.include_name(file_ref.path)}
+        %__MODULE__{
+          file_ref: file_ref,
+          schema: schema,
+          name: Path.basename(file_ref.path, ".thrift")
+        }
 
       {:error, error} ->
         raise Thrift.FileParseError, {file_ref, error}

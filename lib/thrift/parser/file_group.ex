@@ -25,8 +25,8 @@ defmodule Thrift.Parser.FileGroup do
 
   @type t :: %FileGroup{
           initial_file: Path.t(),
-          parsed_files: %{FileRef.thrift_include() => %ParsedFile{}},
-          schemas: %{FileRef.thrift_include() => %Schema{}},
+          parsed_files: %{Path.t() => %ParsedFile{}},
+          schemas: %{Path.t() => %Schema{}},
           namespaces: %{atom => String.t() | nil},
           opts: Parser.opts()
         }

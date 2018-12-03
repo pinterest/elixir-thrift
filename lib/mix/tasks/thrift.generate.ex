@@ -1,13 +1,13 @@
 defmodule Mix.Tasks.Thrift.Generate do
   use Mix.Task
 
-  @shortdoc "Generates Elixir source files from Thrift schema files"
+  @shortdoc "Generates Elixir source files from Thrift IDL files"
 
   @moduledoc """
-  Generate Elixir source files from Thrift schema files (`.thrift`).
+  Generate Elixir source files from Thrift IDL files (`.thrift`).
 
   A list of files should be given after the task name in order to select
-  the specific Thrift schema files to parse:
+  the specific Thrift IDL files to parse:
 
       mix thrift.generate file1.thrift file2.thrift
 

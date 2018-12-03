@@ -6,7 +6,7 @@ defmodule Thrift.Parser do
   [idl]: https://thrift.apache.org/docs/idl
   """
 
-  alias Thrift.Parser.{FileGroup, FileRef, ParsedFile}
+  alias Thrift.Parser.{FileGroup, ParsedFile}
 
   @typedoc "A Thrift IDL line number"
   @type line :: pos_integer | nil
@@ -50,10 +50,7 @@ defmodule Thrift.Parser do
   def parse_file(file_path, opts \\ []) do
     normalized_opts = normalize_opts(opts)
 
-    parsed_file =
-      file_path
-      |> FileRef.new()
-      |> ParsedFile.new()
+    parsed_file = ParsedFile.new(file_path)
 
     mod_name =
       file_path

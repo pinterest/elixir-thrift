@@ -13,7 +13,7 @@ defmodule Mix.Tasks.Thrift.HttpClient.Generate do
 
   It assumes that you have already generated the thrift support files with
 
-      mix compile.thrift  thrift/calculator.thrift
+      mix compile.thrift
 
   Each service requires an endpoint to be configured in your config file
 

@@ -5,7 +5,6 @@ defmodule Thrift.Parser.FileGroup do
 
   alias Thrift.Parser.{
     FileGroup,
-    FileRef,
     ParsedFile,
     Resolver
   }
@@ -61,16 +60,15 @@ defmodule Thrift.Parser.FileGroup do
     }
   end
 
-  defp add_includes(%FileGroup{} = group, %ParsedFile{schema: schema, file_ref: file_ref}) do
+  defp add_includes(%FileGroup{} = group, %ParsedFile{schema: schema, path: path}) do
     # Search for included files in the current directory (relative to the
     # parsed file) as well as any additionally configured include paths.
-    include_paths = [Path.dirname(file_ref.path) | Keyword.get(group.opts, :include_paths, [])]
+    include_paths = [Path.dirname(path) | Keyword.get(group.opts, :include_paths, [])]
 
     Enum.reduce(schema.includes, group, fn include, group ->
       parsed_file =
         include.path
         |> find_include(include_paths)
-        |> FileRef.new()
         |> ParsedFile.new()
 
       add(group, parsed_file)

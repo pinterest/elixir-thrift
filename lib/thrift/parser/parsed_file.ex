@@ -3,22 +3,36 @@ defmodule Thrift.Parser.ParsedFile do
 
   alias Thrift.AST.Schema
   alias Thrift.Parser
-  alias Thrift.Parser.FileRef
 
-  @type t :: %__MODULE__{file_ref: %FileRef{}, schema: %Schema{}, name: String.t()}
-  defstruct file_ref: nil, schema: nil, name: nil
+  @type t :: %__MODULE__{path: Path.t(), schema: %Schema{}, name: String.t()}
+  defstruct path: nil, schema: nil, name: nil
 
-  def new(%FileRef{} = file_ref) do
-    case Parser.parse(file_ref.contents) do
-      {:ok, schema} ->
-        %__MODULE__{
-          file_ref: file_ref,
-          schema: schema,
-          name: Path.basename(file_ref.path, ".thrift")
-        }
-
+  @spec new(Path.t()) :: t()
+  def new(path) do
+    with {:ok, contents} <- read(path),
+         {:ok, schema} <- Parser.parse(contents) do
+      %__MODULE__{
+        path: path,
+        schema: schema,
+        name: Path.basename(path, ".thrift")
+      }
+    else
       {:error, error} ->
-        raise Thrift.FileParseError, {file_ref, error}
+        raise Thrift.FileParseError, {path, error}
+    end
+  end
+
+  defp read(path) do
+    case File.read(path) do
+      {:ok, contents} ->
+        # We include the __file__ here to hack around the fact that leex and
+        # yecc don't operate on files and lose the file info. This is relevant
+        # because the filename is turned into the thrift module, and is
+        # necessary for resolution.
+        {:ok, contents <> "\n__file__ \"#{path}\""}
+
+      {:error, reason} ->
+        {:error, :file.format_error(reason)}
     end
   end
 end

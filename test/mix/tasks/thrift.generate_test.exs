@@ -37,7 +37,7 @@ defmodule Mix.Tasks.Thrift.GenerateTest do
 
   test "specifying a non-existent Thrift file" do
     in_fixture(fn ->
-      assert_raise Mix.Error, ~r/could not read file/, fn ->
+      assert_raise Mix.Error, ~r/no such file or directory/, fn ->
         run(["missing.thrift"])
       end
     end)

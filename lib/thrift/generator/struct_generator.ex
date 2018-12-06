@@ -10,7 +10,7 @@ defmodule Thrift.Generator.StructGenerator do
     Union
   }
 
-  alias Thrift.Generator.{StructBinaryProtocol, Utils}
+  alias Thrift.Generator.Utils
   alias Thrift.Parser.FileGroup
 
   def generate(label, schema, name, struct) when label in [:struct, :union, :exception] do
@@ -19,13 +19,7 @@ defmodule Thrift.Generator.StructGenerator do
         {name, Utils.quote_value(default, type, schema)}
       end)
 
-    binary_protocol_defs =
-      [
-        StructBinaryProtocol.struct_serializer(struct, name, schema.file_group),
-        StructBinaryProtocol.struct_deserializer(struct, name, schema.file_group)
-      ]
-      |> Utils.merge_blocks()
-      |> Utils.sort_defs()
+    binary_protocol_impl = Thrift.Protocol.Binary.serde_impl(name, struct, schema.file_group)
 
     define_block =
       case label do
@@ -63,22 +57,37 @@ defmodule Thrift.Generator.StructGenerator do
         def new, do: %__MODULE__{}
         unquote_splicing(List.wrap(extra_defs))
 
-        defmodule BinaryProtocol do
-          @moduledoc false
-          unquote_splicing(binary_protocol_defs)
+        defprotocol SerDe do
+          @moduledoc """
+          Serialize and deserialize helpers for #{unquote(name)}
+          """
+
+          @doc """
+          Serialize #{unquote(name)} to payload
+          """
+          @spec serialize(payload, unquote(name).t) :: payload when payload: var
+          def serialize(payload, struct)
+
+          @doc """
+          Deserialize #{unquote(name)} from payload
+          """
+          @spec deserialize(payload) :: {unquote(name).t, payload} | :error when payload: var
+          def deserialize(payload)
+
+          @doc """
+          Deserialize #{unquote(name)} from payload with default values
+          """
+          @spec deserialize(payload, unquote(name).t) ::
+            {unquote(name).t, payload} | :error when payload: var
+          def deserialize(payload, struct)
         end
 
-        def serialize(struct) do
-          BinaryProtocol.serialize(struct)
+        defimpl Thrift.Serializable, for: unquote(name) do
+          def serialize(struct, payload), do: SerDe.serialize(payload, struct)
+          def deserialize(struct, payload), do: SerDe.deserialize(payload, struct)
         end
 
-        def serialize(struct, :binary) do
-          BinaryProtocol.serialize(struct)
-        end
-
-        def deserialize(binary) do
-          BinaryProtocol.deserialize(binary)
-        end
+        unquote(binary_protocol_impl)
       end
     end
   end

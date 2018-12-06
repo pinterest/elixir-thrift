@@ -5,8 +5,9 @@ defmodule Thrift.Generator.BinaryProtocolTest do
   alias Thrift.Union.TooManyFieldsSetError
 
   def assert_serializes(%{__struct__: mod} = struct, binary) do
-    assert binary == IO.iodata_to_binary(Binary.serialize(:struct, struct))
-    assert {^struct, ""} = mod.deserialize(binary)
+    serde = Module.concat(mod, SerDe.Thrift.Protocol.Binary)
+    assert binary == IO.iodata_to_binary(serde.serialize("", struct))
+    assert {^struct, ""} = serde.deserialize(binary)
 
     # If we randomly mutate any byte in the binary, it may deserialize to a
     # struct of the proper type, or it may return :error. But it should never
@@ -18,7 +19,7 @@ defmodule Thrift.Generator.BinaryProtocolTest do
         |> List.replace_at(i - 1, :rand.uniform(256) - 1)
         |> :binary.list_to_bin()
 
-      case mod.deserialize(mutated_binary) do
+      case serde.deserialize(mutated_binary) do
         {%{__struct__: ^mod}, _} -> :ok
         :error -> :ok
       end
@@ -30,8 +31,9 @@ defmodule Thrift.Generator.BinaryProtocolTest do
         binary,
         %{__struct__: mod} = deserialized_struct
       ) do
-    assert binary == IO.iodata_to_binary(Binary.serialize(:struct, struct))
-    assert {^deserialized_struct, ""} = mod.deserialize(binary)
+    serde = Module.concat(mod, SerDe.Thrift.Protocol.Binary)
+    assert binary == IO.iodata_to_binary(serde.serialize("", struct))
+    assert {^deserialized_struct, ""} = serde.deserialize(binary)
   end
 
   @thrift_file name: "bool.thrift",
@@ -480,7 +482,7 @@ defmodule Thrift.Generator.BinaryProtocolTest do
     )
 
     assert_raise TooManyFieldsSetError, fn ->
-      Binary.serialize(:struct, %UStruct{my_union: %Union{int_field: 123, string_field: "oops"}})
+      UStruct.SerDe.Thrift.Protocol.Binary.serialize("", %UStruct{my_union: %Union{int_field: 123, string_field: "oops"}})
     end
   end
 
@@ -665,7 +667,7 @@ defmodule Thrift.Generator.BinaryProtocolTest do
       "Required boolean field :val on Thrift.Generator.BinaryProtocolTest.RequiredBool must be true or false"
 
     assert_raise Thrift.InvalidValueError, message, fn ->
-      RequiredBool.serialize(%RequiredBool{})
+      RequiredBool.SerDe.Thrift.Protocol.Binary.serialize("", %RequiredBool{})
     end
   end
 
@@ -684,7 +686,7 @@ defmodule Thrift.Generator.BinaryProtocolTest do
       "Required field :val on Thrift.Generator.BinaryProtocolTest.RequiredField must not be nil"
 
     assert_raise Thrift.InvalidValueError, message, fn ->
-      RequiredField.serialize(%RequiredField{})
+      RequiredField.SerDe.Thrift.Protocol.Binary.serialize("", %RequiredField{})
     end
   end
 
@@ -907,14 +909,14 @@ defmodule Thrift.Generator.BinaryProtocolTest do
 
   thrift_test "lists serialize into maps" do
     binary = <<13, 0, 2, 3, 3, 0, 0, 0, 1, 91, 92, 0>>
-    assert binary == %Byte{val_map: %{91 => 92}} |> Byte.serialize() |> IO.iodata_to_binary()
-    assert binary == %Byte{val_map: [{91, 92}]} |> Byte.serialize() |> IO.iodata_to_binary()
+    assert binary == Byte.SerDe.Thrift.Protocol.Binary.serialize("", %Byte{val_map: %{91 => 92}}) |> IO.iodata_to_binary()
+    assert binary == Byte.SerDe.Thrift.Protocol.Binary.serialize("", %Byte{val_map: [{91, 92}]}) |> IO.iodata_to_binary()
   end
 
   thrift_test "lists serialize into sets" do
     binary = <<14, 0, 3, 3, 0, 0, 0, 1, 91, 0>>
-    assert binary == %Byte{val_set: MapSet.new([91])} |> Byte.serialize() |> IO.iodata_to_binary()
-    assert binary == %Byte{val_set: [91]} |> Byte.serialize() |> IO.iodata_to_binary()
+    assert binary == Byte.SerDe.Thrift.Protocol.Binary.serialize("", %Byte{val_set: MapSet.new([91])}) |> IO.iodata_to_binary()
+    assert binary == Byte.SerDe.Thrift.Protocol.Binary.serialize("", %Byte{val_set: [91]}) |> IO.iodata_to_binary()
   end
 
   @thrift_file name: "additions.thrift",
@@ -977,8 +979,7 @@ defmodule Thrift.Generator.BinaryProtocolTest do
     assert %AlreadyNamespaced{}.namespaced == ChocolateAdditionsType.almonds()
 
     actual =
-      choco
-      |> Chocolate.serialize()
+      Chocolate.SerDe.Thrift.Protocol.Binary.serialize("", choco)
       |> IO.iodata_to_binary()
 
     expected = <<14, 0, 1, 8, 0, 0, 0, 2, 0, 0, 0, 1, 0, 0, 0, 2, 8, 0, 2, 0, 0, 0, 3, 0>>

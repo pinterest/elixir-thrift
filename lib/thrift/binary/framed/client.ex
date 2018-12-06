@@ -182,32 +182,34 @@ defmodule Thrift.Binary.Framed.Client do
     end
   end
 
-  @spec oneway(pid, String.t(), iodata, options) :: :ok
+  @spec oneway(pid, String.t(), struct, options) :: :ok
   @doc """
   Execute a one way RPC. One way RPC calls do not generate a response,
   and as such, this implementation uses `GenServer.cast`.
-  The data argument must be a properly formatted Thrift message.
+  The argument must be a Thrift struct.
   """
-  def oneway(conn, rpc_name, serialized_args, _opts) do
+  def oneway(conn, rpc_name, args, _opts) do
+    serialized_args = Thrift.Serializable.serialize(args, %Binary{payload: ""})
     :ok = Connection.cast(conn, {:oneway, rpc_name, serialized_args})
   end
 
-  @spec call(pid, String.t(), iodata, module, options) :: protocol_response
+  @spec call(pid, String.t(), struct, struct, options) :: protocol_response
   @doc """
-  Executes a Thrift RPC. The data argument must be a correctly formatted
-  Thrift message.
+  Executes a Thrift RPC. The argument and response arguments must be Thrift structs.
 
   The `opts` argument takes the same type of keyword list that `start_link` takes.
   """
-  def call(conn, rpc_name, serialized_args, deserialize_module, opts) do
+  def call(conn, rpc_name, args, resp, opts) do
     tcp_opts = Keyword.get(opts, :tcp_opts, [])
     gen_server_opts = Keyword.get(opts, :gen_server_opts, [])
     gen_server_timeout = Keyword.get(gen_server_opts, :timeout, 5000)
 
+    serialized_args = Thrift.Serializable.serialize(args, %Binary{payload: ""})
+
     case Connection.call(conn, {:call, rpc_name, serialized_args, tcp_opts}, gen_server_timeout) do
       {:ok, data} ->
-        data
-        |> deserialize_module.deserialize
+        resp
+        |> Thrift.Serializable.deserialize(%Binary{payload: data})
         |> unpack_response
 
       {:error, _} = err ->
@@ -222,7 +224,7 @@ defmodule Thrift.Binary.Framed.Client do
   #
   # As a small optimization, we only use this function if the response struct
   # has at least one exception field (hence the `map_size/1` guard check).
-  defp unpack_response({%{success: nil} = response, ""}) when map_size(response) > 2 do
+  defp unpack_response({%{success: nil} = response, %Binary{payload: ""}}) when map_size(response) > 2 do
     exception =
       response
       |> Map.from_struct()
@@ -236,7 +238,7 @@ defmodule Thrift.Binary.Framed.Client do
     end
   end
 
-  defp unpack_response({%{success: result}, ""}), do: {:ok, result}
+  defp unpack_response({%{success: result}, %Binary{payload: ""}}), do: {:ok, result}
   defp unpack_response({:error, _} = error), do: error
 
   def handle_call(_, _, %{sock: nil} = s) do
@@ -244,7 +246,7 @@ defmodule Thrift.Binary.Framed.Client do
   end
 
   def handle_call(
-        {:call, rpc_name, serialized_args, tcp_opts},
+        {:call, rpc_name, %Binary{payload: serialized_args}, tcp_opts},
         _,
         %{sock: {transport, sock}, seq_id: seq_id, timeout: default_timeout} = s
       ) do
@@ -276,7 +278,7 @@ defmodule Thrift.Binary.Framed.Client do
   end
 
   def handle_cast(
-        {:oneway, rpc_name, serialized_args},
+        {:oneway, rpc_name, %Binary{payload: serialized_args}},
         %{sock: {transport, sock}, seq_id: seq_id} = s
       ) do
     s = %{s | seq_id: seq_id + 1}
@@ -304,8 +306,7 @@ defmodule Thrift.Binary.Framed.Client do
          seq_id,
          rpc_name
        ) do
-    exception = Binary.deserialize(:application_exception, serialized_response)
-    {:error, {:exception, exception}}
+    {:error, {:exception, deserialize_exception(serialized_response)}}
   end
 
   defp handle_message({:ok, {message_type, seq_id, rpc_name, _}}, seq_id, rpc_name) do
@@ -343,6 +344,18 @@ defmodule Thrift.Binary.Framed.Client do
 
   defp handle_message({:error, _} = err, _, _) do
     err
+  end
+
+  defp deserialize_exception(payload) do
+    case TApplicationException.SerDe.deserialize(%Binary{payload: payload}) do
+      {exception, %Binary{payload: ""}} ->
+        exception
+      _ ->
+        TApplicationException.exception(
+          type: :protocol_error,
+          message: "Unable to decode exception (#{inspect payload})"
+        )
+    end
   end
 
   defp to_host(host) when is_bitstring(host) do

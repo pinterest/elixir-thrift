@@ -59,15 +59,28 @@ defmodule Thrift.Generator.StructBinaryProtocol do
 
     field_deserializers =
       fields
-      |> Enum.map(&field_deserializer(&1.type, &1, :deserialize, file_group))
+      |> Enum.map(&field_deserializer(&1.type, &1, :deserialize_struct, file_group))
       |> Utils.merge_blocks()
 
     quote do
-      def deserialize(binary) do
-        deserialize(binary, %unquote(name){})
+      def deserialize(binary) when is_binary(binary) do
+        deserialize_struct(binary, %unquote(name){})
       end
 
-      defp deserialize(<<0, rest::binary>>, %unquote(name){} = acc) do
+      def deserialize(other) do
+        deserialize(other, %unquote(name){})
+      end
+
+      def deserialize(%Thrift.Protocol.Binary{payload: payload} = binary, acc) do
+        case payload |> IO.iodata_to_binary() |> deserialize_struct(acc) do
+          {result, rest} ->
+            {result, %Thrift.Protocol.Binary{binary | payload: rest}}
+          :error ->
+            :error
+        end
+      end
+
+      defp deserialize_struct(<<0, rest::binary>>, %unquote(name){} = acc) do
         {acc, rest}
       end
 
@@ -75,13 +88,13 @@ defmodule Thrift.Generator.StructBinaryProtocol do
 
       # Skip over unknown fields. This can happen when we encounter serialized
       # data from a newer schema than our own.
-      defp deserialize(<<field_type, _id::16-signed, rest::binary>>, acc) do
+      defp deserialize_struct(<<field_type, _id::16-signed, rest::binary>>, acc) do
         rest
         |> Thrift.Protocol.Binary.skip_field(field_type)
-        |> deserialize(acc)
+        |> deserialize_struct(acc)
       end
 
-      defp deserialize(_, _), do: :error
+      defp deserialize_struct(_, _), do: :error
     end
   end
 
@@ -222,7 +235,7 @@ defmodule Thrift.Generator.StructBinaryProtocol do
              <<unquote(Type.struct()), unquote(field.id)::16-signed, rest::binary>>,
              acc
            ) do
-        case unquote(dest_module).BinaryProtocol.deserialize(rest) do
+        case unquote(dest_module).SerDe.Thrift.Protocol.Binary.deserialize(rest) do
           {value, rest} ->
             unquote(name)(rest, %{acc | unquote(field.name) => value})
 
@@ -241,7 +254,7 @@ defmodule Thrift.Generator.StructBinaryProtocol do
              <<unquote(Type.struct()), unquote(field.id)::16-signed, rest::binary>>,
              acc
            ) do
-        case unquote(dest_module).BinaryProtocol.deserialize(rest) do
+        case unquote(dest_module).SerDe.Thrift.Protocol.Binary.deserialize(rest) do
           {value, rest} ->
             unquote(name)(rest, %{acc | unquote(field.name) => value})
 
@@ -260,7 +273,7 @@ defmodule Thrift.Generator.StructBinaryProtocol do
              <<unquote(Type.struct()), unquote(field.id)::16-signed, rest::binary>>,
              acc
            ) do
-        case unquote(dest_module).BinaryProtocol.deserialize(rest) do
+        case unquote(dest_module).SerDe.Thrift.Protocol.Binary.deserialize(rest) do
           {value, rest} ->
             unquote(name)(rest, %{acc | unquote(field.name) => value})
 
@@ -435,7 +448,7 @@ defmodule Thrift.Generator.StructBinaryProtocol do
 
     quote do
       defp unquote(key_name)(<<rest::binary>>, stack) do
-        case unquote(dest_module).BinaryProtocol.deserialize(rest) do
+        case unquote(dest_module).SerDe.Thrift.Protocol.Binary.deserialize(rest) do
           {key, rest} ->
             unquote(value_name)(rest, key, stack)
 
@@ -451,7 +464,7 @@ defmodule Thrift.Generator.StructBinaryProtocol do
 
     quote do
       defp unquote(key_name)(<<rest::binary>>, stack) do
-        case unquote(dest_module).BinaryProtocol.deserialize(rest) do
+        case unquote(dest_module).SerDe.Thrift.Protocol.Binary.deserialize(rest) do
           {key, rest} ->
             unquote(value_name)(rest, key, stack)
 
@@ -467,7 +480,7 @@ defmodule Thrift.Generator.StructBinaryProtocol do
 
     quote do
       defp unquote(key_name)(<<rest::binary>>, stack) do
-        case unquote(dest_module).BinaryProtocol.deserialize(rest) do
+        case unquote(dest_module).SerDe.Thrift.Protocol.Binary.deserialize(rest) do
           {key, rest} ->
             unquote(value_name)(rest, key, stack)
 
@@ -655,7 +668,7 @@ defmodule Thrift.Generator.StructBinaryProtocol do
 
     quote do
       defp unquote(value_name)(<<rest::binary>>, key, [map, remaining | stack]) do
-        case unquote(dest_module).BinaryProtocol.deserialize(rest) do
+        case unquote(dest_module).SerDe.Thrift.Protocol.Binary.deserialize(rest) do
           {value, rest} ->
             unquote(key_name)(rest, [Map.put(map, key, value), remaining - 1 | stack])
 
@@ -671,7 +684,7 @@ defmodule Thrift.Generator.StructBinaryProtocol do
 
     quote do
       defp unquote(value_name)(<<rest::binary>>, key, [map, remaining | stack]) do
-        case unquote(dest_module).BinaryProtocol.deserialize(rest) do
+        case unquote(dest_module).SerDe.Thrift.Protocol.Binary.deserialize(rest) do
           {value, rest} ->
             unquote(key_name)(rest, [Map.put(map, key, value), remaining - 1 | stack])
 
@@ -687,7 +700,7 @@ defmodule Thrift.Generator.StructBinaryProtocol do
 
     quote do
       defp unquote(value_name)(<<rest::binary>>, key, [map, remaining | stack]) do
-        case unquote(dest_module).BinaryProtocol.deserialize(rest) do
+        case unquote(dest_module).SerDe.Thrift.Protocol.Binary.deserialize(rest) do
           {value, rest} ->
             unquote(key_name)(rest, [Map.put(map, key, value), remaining - 1 | stack])
 
@@ -865,7 +878,7 @@ defmodule Thrift.Generator.StructBinaryProtocol do
 
     quote do
       defp unquote(name)(<<rest::binary>>, [list, remaining | stack]) do
-        case unquote(dest_module).BinaryProtocol.deserialize(rest) do
+        case unquote(dest_module).SerDe.Thrift.Protocol.Binary.deserialize(rest) do
           {element, rest} ->
             unquote(name)(rest, [[element | list], remaining - 1 | stack])
 
@@ -881,7 +894,7 @@ defmodule Thrift.Generator.StructBinaryProtocol do
 
     quote do
       defp unquote(name)(<<rest::binary>>, [list, remaining | stack]) do
-        case unquote(dest_module).BinaryProtocol.deserialize(rest) do
+        case unquote(dest_module).SerDe.Thrift.Protocol.Binary.deserialize(rest) do
           {element, rest} ->
             unquote(name)(rest, [[element | list], remaining - 1 | stack])
 
@@ -897,7 +910,7 @@ defmodule Thrift.Generator.StructBinaryProtocol do
 
     quote do
       defp unquote(name)(<<rest::binary>>, [list, remaining | stack]) do
-        case unquote(dest_module).BinaryProtocol.deserialize(rest) do
+        case unquote(dest_module).SerDe.Thrift.Protocol.Binary.deserialize(rest) do
           {element, rest} ->
             unquote(name)(rest, [[element | list], remaining - 1 | stack])
 
@@ -1002,20 +1015,32 @@ defmodule Thrift.Generator.StructBinaryProtocol do
           field_serializers = [required_field_serializer(match_field, file_group)]
 
           quote do
-            def serialize(%unquote(name){unquote_splicing(field_matchers)}) do
+            defp serialize_struct(%unquote(name){unquote_splicing(field_matchers)}) do
               unquote(Utils.optimize_iolist([field_serializers, <<0>>]))
             end
           end
       end)
 
     quote do
-      def serialize(%unquote(name){unquote_splicing(all_fields_nil)}) do
+      def serialize("", union) do
+        serialize_struct(union)
+      end
+
+      def serialize(iodata, union) when is_binary(iodata) or is_list(iodata) do
+        [iodata | serialize_struct(union)]
+      end
+
+      def serialize(%Thrift.Protocol.Binary{payload: payload} = binary, union) do
+        %Thrift.Protocol.Binary{binary | payload: serialize(payload, union)}
+      end
+
+      defp serialize_struct(%unquote(name){unquote_splicing(all_fields_nil)}) do
         <<0>>
       end
 
       unquote_splicing(single_field_serializers)
 
-      def serialize(%unquote(name){} = value) do
+      defp serialize_struct(%unquote(name){} = value) do
         set_fields =
           value
           |> Map.from_struct()
@@ -1043,7 +1068,19 @@ defmodule Thrift.Generator.StructBinaryProtocol do
     field_serializers = Enum.map(fields, &field_serializer(&1, name, file_group))
 
     quote do
-      def serialize(%unquote(name){unquote_splicing(field_matchers)}) do
+      def serialize("", struct) do
+        serialize_struct(struct)
+      end
+
+      def serialize(iodata, struct) when is_binary(iodata) or is_list(iodata) do
+        [iodata | serialize_struct(struct)]
+      end
+
+      def serialize(%Thrift.Protocol.Binary{payload: payload} = binary, struct) do
+        %Thrift.Protocol.Binary{binary | payload: serialize(payload, struct)}
+      end
+
+      defp serialize_struct(%unquote(name){unquote_splicing(field_matchers)}) do
         unquote(Utils.optimize_iolist([field_serializers, <<0>>]))
       end
     end
@@ -1208,7 +1245,7 @@ defmodule Thrift.Generator.StructBinaryProtocol do
     dest_module = FileGroup.dest_module(file_group, struct)
 
     quote do
-      unquote(dest_module).serialize(unquote(var))
+      unquote(dest_module).SerDe.Thrift.Protocol.Binary.serialize("", unquote(var))
     end
   end
 
@@ -1216,7 +1253,7 @@ defmodule Thrift.Generator.StructBinaryProtocol do
     dest_module = FileGroup.dest_module(file_group, union)
 
     quote do
-      unquote(dest_module).serialize(unquote(var))
+      unquote(dest_module).SerDe.Thrift.Protocol.Binary.serialize("", unquote(var))
     end
   end
 
@@ -1224,7 +1261,7 @@ defmodule Thrift.Generator.StructBinaryProtocol do
     dest_module = FileGroup.dest_module(file_group, struct)
 
     quote do
-      unquote(dest_module).serialize(unquote(var))
+      unquote(dest_module).SerDe.Thrift.Protocol.Binary.serialize("", unquote(var))
     end
   end
 

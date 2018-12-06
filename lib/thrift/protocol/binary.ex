@@ -9,16 +9,39 @@ defmodule Thrift.Protocol.Binary do
   """
 
   alias Thrift.{NaN, TApplicationException}
+  alias Thrift.Generator.{StructBinaryProtocol, Utils}
 
   require Thrift.Protocol.Binary.Type, as: Type
 
-  @type serializable :: Thrift.data_type() | :message_begin | :application_exception
-  @type deserializable :: :message_begin | :application_exception
+  @behaviour Thrift.Protocol
+
+  @type serializable :: Thrift.data_type() | :message_begin
+  @type deserializable :: :message_begin
 
   @stop 0
 
   @typedoc "Binary protocol message type identifier"
   @type message_type_id :: 1..4
+
+  @type t() :: %__MODULE__{payload: iodata}
+  @enforce_keys [:payload]
+  defstruct [:payload]
+
+  @impl Thrift.Protocol
+  def serde_impl(name, struct, file_group) do
+    protocol_defs =
+      [
+        StructBinaryProtocol.struct_serializer(struct, name, file_group),
+        StructBinaryProtocol.struct_deserializer(struct, name, file_group)
+      ]
+      |> Utils.merge_blocks()
+      |> Utils.sort_defs()
+    quote do
+      defimpl SerDe, for: unquote(__MODULE__) do
+        unquote_splicing(protocol_defs)
+      end
+    end
+  end
 
   @spec from_message_type(Thrift.message_type()) :: message_type_id
   defp from_message_type(:call), do: 1
@@ -73,12 +96,9 @@ defmodule Thrift.Protocol.Binary do
     [<<Type.of(key_type)::8-signed, Type.of(val_type)::8-signed, elem_count::32-signed>>, rest]
   end
 
-  def serialize(:struct, %{__struct__: mod} = struct) do
-    mod.serialize(struct, :binary)
-  end
-
-  def serialize(:union, %{__struct__: mod} = struct) do
-    mod.serialize(struct, :binary)
+  def serialize(struct, term) when struct in [:struct, :union] do
+    %Thrift.Protocol.Binary{payload: payload} = Thrift.Serializable.serialize(term, %Thrift.Protocol.Binary{payload: ""})
+    payload
   end
 
   def serialize(:message_begin, {message_type, sequence_id, name}) do
@@ -131,36 +151,6 @@ defmodule Thrift.Protocol.Binary do
 
   def deserialize(:message_begin, rest) do
     {:error, {:cant_decode_message, rest}}
-  end
-
-  def deserialize(:application_exception, binary) when is_binary(binary) do
-    do_read_application_exception(binary, Keyword.new())
-  end
-
-  defp do_read_application_exception(
-         <<Type.string()::size(8), 1::16-unsigned, message_size::32-signed,
-           message::binary-size(message_size), rest::binary>>,
-         opts
-       ) do
-    do_read_application_exception(rest, Keyword.put(opts, :message, message))
-  end
-
-  defp do_read_application_exception(
-         <<Type.i32()::size(8), 2::16-unsigned, type::32-signed, rest::binary>>,
-         opts
-       ) do
-    do_read_application_exception(rest, Keyword.put(opts, :type, type))
-  end
-
-  defp do_read_application_exception(<<@stop>>, opts) do
-    TApplicationException.exception(opts)
-  end
-
-  defp do_read_application_exception(error, _) do
-    TApplicationException.exception(
-      type: :protocol_error,
-      message: "Unable to decode exception (#{inspect(error)})"
-    )
   end
 
   @doc """
@@ -232,4 +222,65 @@ defmodule Thrift.Protocol.Binary do
   end
 
   defp skip_struct(_), do: :error
+
+  defimpl TApplicationException.SerDe do
+    @stop 0
+
+    def serialize("", err) do
+      serialize_struct(err)
+    end
+
+    def serialize(iodata, err) when is_binary(iodata) or is_list(iodata) do
+      [iodata | serialize_struct(err)]
+    end
+
+    def serialize(%Thrift.Protocol.Binary{payload: payload}, err) do
+      %Thrift.Protocol.Binary{payload: serialize(payload, err)}
+    end
+
+    defp serialize_struct(%TApplicationException{message: message, type: type}) do
+      type_id = TApplicationException.type_id(type)
+
+      <<Type.string()::size(8), 1::16-signed, byte_size(message)::size(32), message::binary,
+        Type.i32()::size(8), 2::16-signed, type_id::32-signed, @stop>>
+    end
+
+    def deserialize(binary) when is_binary(binary) do
+      deserialize_struct(binary, [])
+    end
+
+    def deserialize(%Thrift.Protocol.Binary{payload: iodata} = binary) do
+      case iodata |> IO.iodata_to_binary() |> deserialize_struct([]) do
+        {err, rest} ->
+          {err, %Thrift.Protocol.Binary{binary | payload: rest}}
+        :error ->
+          :error
+      end
+    end
+
+    def deserialize(%Thrift.Protocol.Binary{payload: iodata} = binary, %Thrift.TApplicationException{message: msg, type: type}) do
+      case iodata |> IO.iodata_to_binary() |> deserialize_struct([message: msg, type: type]) do
+        {err, rest} ->
+          {err, %Thrift.Protocol.Binary{binary | payload: rest}}
+        :error ->
+          :error
+      end
+    end
+
+    defp deserialize_struct(<<Type.string()::size(8), 1::16-unsigned, message_size::32-signed, message::binary-size(message_size), rest::binary>>, opts) do
+      deserialize_struct(rest, [message: message] ++ opts)
+    end
+
+    defp deserialize_struct(<<Type.i32()::size(8), 2::16-unsigned, type::32-signed, rest::binary>>, opts) do
+      deserialize_struct(rest, [type: type] ++ opts)
+    end
+
+    defp deserialize_struct(<<@stop, rest::binary>>, opts) do
+      {TApplicationException.exception(opts), rest}
+    end
+
+    defp deserialize_struct(<<_::binary>>, _opts) do
+      :error
+    end
+  end
 end

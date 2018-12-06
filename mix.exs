@@ -21,6 +21,7 @@ defmodule Thrift.Mixfile do
 
       # Build Environment
       elixirc_paths: elixirc_paths(Mix.env()),
+      consolidate_protocols: Mix.env() != :test,
       compilers: [:leex, :yecc, :erlang, :elixir, :app],
 
       # Testing

@@ -4,6 +4,7 @@ defmodule Thrift.TApplicationException do
   Application-level exception
   """
 
+  @type t() :: %__MODULE__{message: String.t, type: exception_type()}
   @enforce_keys [:message, :type]
   defexception message: "unknown", type: :unknown
 
@@ -27,6 +28,11 @@ defmodule Thrift.TApplicationException do
     injected_failure: 13
   ]
 
+  @typedoc """
+  Exception types
+  """
+  @type exception_type :: unquote(Enum.reduce(@exception_types, fn {type, _}, acc -> {:|, [] , [type, acc]} end))
+
   def exception(args) when is_list(args) do
     type = normalize_type(Keyword.fetch!(args, :type))
     message = args[:message] || Atom.to_string(type)
@@ -36,7 +42,7 @@ defmodule Thrift.TApplicationException do
   @doc """
   Converts an exception type to its integer identifier.
   """
-  @spec type_id(atom) :: non_neg_integer
+  @spec type_id(exception_type()) :: non_neg_integer()
   def type_id(type)
 
   for {type, id} <- @exception_types do
@@ -46,6 +52,35 @@ defmodule Thrift.TApplicationException do
   end
 
   defp normalize_type(type) when is_integer(type), do: :unknown
+
+  defprotocol SerDe do
+    @moduledoc """
+    Serialize and deserialize protocol for `Thrift.TApplicationException.t`
+    """
+
+    @doc """
+    Serialize `Thrift.TApplicationException.t` with a protocol payload.
+    """
+    @spec serialize(payload, TApplicationException.t()) :: payload when payload: var
+    def serialize(payload, err)
+
+    @doc """
+    Deserialize `Thrift.TApplication.t` with a protocol payload.
+    """
+    @spec deserialize(payload) :: {TApplicationException.t(), payload} | :error when payload: var
+    def deserialize(payload)
+
+    @doc """
+    Deserialize `Thrift.TApplication.t` with a protocol payload and default values.
+    """
+    @spec deserialize(payload, TApplicationException.t()) :: {TApplicationException.t(), payload} | :error when payload: var
+    def deserialize(payload, err)
+  end
+
+  defimpl Thrift.Serializable do
+    def serialize(err, payload), do: SerDe.serialize(payload, err)
+    def deserialize(err, payload), do: SerDe.deserialize(payload, err)
+  end
 end
 
 defmodule Thrift.ConnectionError do

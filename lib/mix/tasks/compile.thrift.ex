@@ -93,7 +93,7 @@ defmodule Mix.Tasks.Compile.Thrift do
 
   @spec parse(Path.t(), OptionParser.parsed()) :: FileGroup.t()
   defp parse(file, opts) do
-    Thrift.Parser.parse_file(file, opts)
+    Thrift.Parser.parse_file_group!(file, opts)
   rescue
     e ->
       Mix.shell().error("Failed to parse #{file}: #{Exception.message(e)}")

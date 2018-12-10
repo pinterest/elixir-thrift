@@ -25,11 +25,6 @@ end
 
 defmodule ParserUtils do
   @moduledoc false
-  alias Thrift.Parser
-
-  def parse_thrift(file_path) do
-    Parser.parse_file(file_path)
-  end
 
   def compile_module(file_group) do
     file_group

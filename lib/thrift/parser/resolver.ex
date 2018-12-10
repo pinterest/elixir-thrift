@@ -7,17 +7,16 @@ defmodule Thrift.Parser.Resolver do
   # resolve references.
 
   alias Thrift.AST.TEnum
-  alias Thrift.Parser.ParsedFile
 
-  def add(state, %ParsedFile{} = f) do
+  def add(state, name, schema) do
     state
-    |> update(f.name, f.schema.constants)
-    |> update(f.name, f.schema.services)
-    |> update(f.name, f.schema.structs)
-    |> update(f.name, f.schema.exceptions)
-    |> update(f.name, f.schema.unions)
-    |> update(f.name, f.schema.enums)
-    |> update(f.name, f.schema.typedefs)
+    |> update(name, schema.constants)
+    |> update(name, schema.services)
+    |> update(name, schema.structs)
+    |> update(name, schema.exceptions)
+    |> update(name, schema.unions)
+    |> update(name, schema.enums)
+    |> update(name, schema.typedefs)
   end
 
   defp update(%{} = resolutions, include_name, %{} = local_mappings) do

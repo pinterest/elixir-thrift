@@ -40,7 +40,7 @@ defmodule Thrift.Generator do
 
   def generate!(thrift_filename, output_dir) when is_bitstring(thrift_filename) do
     thrift_filename
-    |> Thrift.Parser.parse_file()
+    |> Thrift.Parser.parse_file_group!()
     |> generate!(output_dir)
   end
 

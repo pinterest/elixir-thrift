@@ -88,8 +88,8 @@ defmodule Thrift.FileParseError do
   end
 
   # display the line number if we get it
-  defp format_error({line_no, message}) do
-    " on line #{line_no}: #{message}"
+  defp format_error({_path, line, message}) do
+    " on line #{line}: #{message}"
   end
 
   defp format_error(error) do

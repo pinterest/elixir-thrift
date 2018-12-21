@@ -21,7 +21,7 @@ defmodule Thrift.Parser do
   @type opts :: [opt]
 
   @typedoc "Parse error (line and message)"
-  @type error :: {:error, {line(), message :: String.t()}}
+  @type error :: {:error, {Path.t() | nil, line(), message :: String.t()}}
 
   @doc """
   Parses a Thrift IDL string into its AST representation.
@@ -35,10 +35,10 @@ defmodule Thrift.Parser do
       result
     else
       {:error, {line, :thrift_lexer, error}, _} ->
-        {:error, {line, List.to_string(:thrift_lexer.format_error(error))}}
+        {:error, {nil, line, List.to_string(:thrift_lexer.format_error(error))}}
 
       {:error, {line, :thrift_parser, error}} ->
-        {:error, {line, List.to_string(:thrift_parser.format_error(error))}}
+        {:error, {nil, line, List.to_string(:thrift_parser.format_error(error))}}
     end
   end
 
@@ -47,12 +47,15 @@ defmodule Thrift.Parser do
   """
   @spec parse_file(Path.t()) :: {:ok, Thrift.AST.Schema.t()} | error
   def parse_file(path) do
-    case read_file(path) do
-      {:ok, contents} ->
-        parse_string(contents)
+    with {:ok, contents} <- read_file(path),
+         {:ok, _schema} = result <- parse_string(contents) do
+      result
+    else
+      {:error, {nil, line, message}} ->
+        {:error, {path, line, message}}
 
       {:error, message} ->
-        {:error, {nil, message}}
+        {:error, {path, nil, message}}
     end
   end
 

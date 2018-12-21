@@ -897,7 +897,7 @@ defmodule Thrift.Parser.ParserTest do
   end
 
   test "names cannot override built-in keywords" do
-    assert {:error, {1, ~S(cannot use reserved language keyword "continue")}} ==
+    assert {:error, {nil, 1, ~S(cannot use reserved language keyword "continue")}} ==
              parse_string("struct continue {}")
   end
 

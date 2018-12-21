@@ -55,7 +55,7 @@ defmodule Thrift.Parser.ParseErrorTest do
     /8
     """
 
-    assert {:error, {2, _}} = parse_string(contents)
+    assert {:error, {nil, 2, _}} = parse_string(contents)
 
     path = Path.join(@test_file_dir, "lexer_error.thrift")
     File.write!(path, contents)

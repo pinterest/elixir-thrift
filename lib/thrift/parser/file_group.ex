@@ -41,26 +41,29 @@ defmodule Thrift.Parser.FileGroup do
     %FileGroup{initial_file: initial_file, opts: opts}
   end
 
-  def add(file_group, path, schema) do
+  @spec add(FileGroup.t(), Path.t(), Schema.t()) :: {FileGroup.t(), [Parser.error()]}
+  def add(group, path, schema) do
     name = Path.basename(path, ".thrift")
-    file_group = add_includes(file_group, path, schema)
-    new_schemas = Map.put(file_group.schemas, name, schema)
-    resolutions = Resolver.add(file_group.resolutions, name, schema)
+    new_schemas = Map.put(group.schemas, name, schema)
+    resolutions = Resolver.add(group.resolutions, name, schema)
 
-    %__MODULE__{
-      file_group
+    group = %{
+      group
       | schemas: new_schemas,
         immutable_resolutions: resolutions,
         resolutions: resolutions
     }
+
+    add_includes(group, path, schema)
   end
 
+  @spec add_includes(FileGroup.t(), Path.t(), Schema.t()) :: {FileGroup.t(), [Parser.error()]}
   defp add_includes(%FileGroup{} = group, path, %Schema{} = schema) do
     # Search for included files in the current directory (relative to the
     # parsed file) as well as any additionally configured include paths.
     include_paths = [Path.dirname(path) | Keyword.get(group.opts, :include_paths, [])]
 
-    Enum.reduce(schema.includes, group, fn include, group ->
+    Enum.reduce(schema.includes, {group, []}, fn include, {group, errors} ->
       included_path = find_include(include.path, include_paths)
 
       case Parser.parse_file(included_path) do
@@ -68,7 +71,7 @@ defmodule Thrift.Parser.FileGroup do
           add(group, included_path, schema)
 
         {:error, error} ->
-          raise Thrift.FileParseError, {included_path, error}
+          {group, [error | errors]}
       end
     end)
   end

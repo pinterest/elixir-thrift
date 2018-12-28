@@ -5,7 +5,7 @@ defmodule Thrift.Parser.ParserTest do
   @test_file_dir Path.join([@project_root, "tmp", "parser_test"])
 
   import Thrift.Parser,
-    only: [parse_string: 1, parse_file: 1, parse_file_group!: 2]
+    only: [parse_string: 1, parse_file: 1, parse_file_group: 2]
 
   alias Thrift.AST.{
     Constant,
@@ -925,7 +925,7 @@ defmodule Thrift.Parser.ParserTest do
     end
 
     defp parse_namespace(context, namespace) do
-      result = parse_file_group!(context[:path], namespace: namespace)
+      {:ok, result} = parse_file_group(context[:path], namespace: namespace)
       result.namespaces[:module]
     end
 

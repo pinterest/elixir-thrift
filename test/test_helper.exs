@@ -33,7 +33,8 @@ defmodule ThriftTestHelpers do
   end
 
   def parse(file_path) do
-    Thrift.Parser.parse_file_group!(file_path)
+    {:ok, group} = Thrift.Parser.parse_file_group(file_path)
+    group
   end
 
   @spec with_thrift_files(Keyword.t(), String.t()) :: nil

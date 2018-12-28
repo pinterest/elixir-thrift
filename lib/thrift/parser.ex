@@ -20,13 +20,13 @@ defmodule Thrift.Parser do
           | {:namespace, module | String.t()}
   @type opts :: [opt]
 
-  @typedoc "Parse error (line and message)"
-  @type error :: {:error, {Path.t() | nil, line(), message :: String.t()}}
+  @typedoc "Parse error (path, line, message)"
+  @type error :: {Path.t() | nil, line(), message :: String.t()}
 
   @doc """
   Parses a Thrift IDL string into its AST representation.
   """
-  @spec parse_string(String.t()) :: {:ok, Thrift.AST.Schema.t()} | error
+  @spec parse_string(String.t()) :: {:ok, Thrift.AST.Schema.t()} | {:error, error}
   def parse_string(doc) do
     doc = String.to_charlist(doc)
 
@@ -45,7 +45,7 @@ defmodule Thrift.Parser do
   @doc """
   Parses a Thrift IDL file into its AST representation.
   """
-  @spec parse_file(Path.t()) :: {:ok, Thrift.AST.Schema.t()} | error
+  @spec parse_file(Path.t()) :: {:ok, Thrift.AST.Schema.t()} | {:error, error}
   def parse_file(path) do
     with {:ok, contents} <- read_file(path),
          {:ok, _schema} = result <- parse_string(contents) do
@@ -62,22 +62,19 @@ defmodule Thrift.Parser do
   @doc """
   Parses a Thrift IDL file and its included files into a file group.
   """
-  @spec parse_file_group(Path.t(), opts) :: {:ok, FileGroup.t()} | error
+  @spec parse_file_group(Path.t(), opts) :: {:ok, FileGroup.t()} | {:error, [error, ...]}
   def parse_file_group(path, opts \\ []) do
-    normalized_opts = normalize_opts(opts)
-    module_name = module_name(path)
+    group = FileGroup.new(path, normalize_opts(opts))
 
-    case parse_file(path) do
-      {:ok, schema} ->
-        group =
-          FileGroup.new(path, normalized_opts)
-          |> FileGroup.add(path, schema)
-          |> FileGroup.set_current_module(module_name)
+    with {:ok, schema} <- parse_file(path),
+         {group, [] = _errors} <- FileGroup.add(group, path, schema) do
+      {:ok, FileGroup.set_current_module(group, module_name(path))}
+    else
+      {:error, error} ->
+        {:error, [error]}
 
-        {:ok, group}
-
-      {:error, _} = error ->
-        error
+      {%FileGroup{}, errors} ->
+        {:error, Enum.reverse(errors)}
     end
   end
 
@@ -89,11 +86,11 @@ defmodule Thrift.Parser do
   @spec parse_file_group!(Path.t(), opts) :: FileGroup.t()
   def parse_file_group!(path, opts \\ []) do
     case parse_file_group(path, opts) do
-      {:ok, file_group} ->
-        file_group
+      {:ok, group} ->
+        group
 
-      {:error, error} ->
-        raise Thrift.FileParseError, {path, error}
+      {:error, [first_error | _errors]} ->
+        raise Thrift.FileParseError, first_error
     end
   end
 

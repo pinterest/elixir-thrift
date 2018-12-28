@@ -54,7 +54,7 @@ defmodule Mix.Tasks.Thrift.GenerateTest do
       bad_file = Path.join([@temp_dir, "invalid.thrift"])
       File.write!(bad_file, bad_schema)
 
-      assert_raise Mix.Error, ~r/Error parsing/, fn ->
+      assert_raise Mix.Error, ~r/Parse error/, fn ->
         run([bad_file])
       end
     end)

@@ -83,6 +83,10 @@ defmodule Thrift.Mixfile do
       {:credo, "~> 1.0", only: :dev, runtime: false},
       {:dialyxir, "~> 0.5", only: :dev, runtime: false},
 
+      # Compile
+      {:nimble_parsec, "~> 0.4",
+       github: "plataformatec/nimble_parsec", runtime: false, override: true},
+
       # Runtime
       {:connection, "~> 1.0"},
       {:ranch, "~> 1.6"}

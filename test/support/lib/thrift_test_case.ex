@@ -90,6 +90,7 @@ defmodule ThriftTestCase do
   defp generate_files(files, namespace, dir) do
     files
     |> Enum.map(&write_thrift_file(&1, namespace, dir))
+    |> Enum.map(&Thrift.Parser.parse_file_group!(&1))
     |> Enum.flat_map(&Thrift.Generator.generate!(&1, dir))
     |> Enum.flat_map(&require_file(&1, dir))
     |> Enum.each(&Module.put_attribute(namespace, :thrift_elixir_modules, &1))

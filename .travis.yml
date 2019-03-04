@@ -23,7 +23,7 @@ before_script:
 
 script:
   - if [[ $CHECK_FORMATTED ]]; then (set -x; mix format --check-formatted); fi
-  - MIX_ENV=test mix coveralls.safe_travis
+  - MIX_ENV=test mix coveralls.travis
   - (cd example && mix test)
 
 cache:

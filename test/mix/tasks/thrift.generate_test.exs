@@ -1,34 +1,25 @@
 defmodule Mix.Tasks.Thrift.GenerateTest do
-  use ExUnit.Case
-  import ExUnit.CaptureIO
-
-  @project_root Path.expand("../../../", __DIR__)
-  @fixture_project Path.join(@project_root, "test/fixtures/app")
-  @temp_dir Path.join([@fixture_project, "tmp"])
-
-  setup do
-    File.mkdir_p!(@temp_dir)
-
-    on_exit(fn ->
-      File.rm_rf!(Path.join(@fixture_project, "lib"))
-      File.rm_rf!(@temp_dir)
-    end)
-
-    :ok
-  end
+  use MixTest.Case
 
   test "not specifying any Thrift files" do
     in_fixture(fn ->
-      assert run([]) == ""
+      Mix.Tasks.Thrift.Generate.run([])
+      refute_received {:mix_shell, :info, [_]}
     end)
   end
 
   test "specifying multiple Thrift files" do
     in_fixture(fn ->
       with_project_config([], fn ->
-        output = run(["thrift/StressTest.thrift", "thrift/ThriftTest.thrift"])
-        assert output =~ "Parsing thrift/StressTest.thrift"
-        assert output =~ "Parsing thrift/ThriftTest.thrift"
+        Mix.Tasks.Thrift.Generate.run(
+          ~w[--verbose thrift/StressTest.thrift thrift/ThriftTest.thrift]
+        )
+
+        assert_received {:mix_shell, :info, ["Parsing thrift/StressTest.thrift"]}
+        assert_received {:mix_shell, :info, ["Parsing thrift/ThriftTest.thrift"]}
+        assert_received {:mix_shell, :info, ["Wrote lib/generated/service.ex"]}
+        assert_received {:mix_shell, :info, ["Wrote lib/thrift_test/thrift_test.ex"]}
+
         assert File.exists?("lib/generated/service.ex")
         assert File.exists?("lib/thrift_test/thrift_test.ex")
       end)
@@ -38,7 +29,7 @@ defmodule Mix.Tasks.Thrift.GenerateTest do
   test "specifying a non-existent Thrift file" do
     in_fixture(fn ->
       assert_raise Mix.Error, ~r/no such file or directory/, fn ->
-        run(["missing.thrift"])
+        Mix.Tasks.Thrift.Generate.run(["missing.thrift"])
       end
     end)
   end
@@ -51,11 +42,10 @@ defmodule Mix.Tasks.Thrift.GenerateTest do
       }
       """
 
-      bad_file = Path.join([@temp_dir, "invalid.thrift"])
-      File.write!(bad_file, bad_schema)
+      path = tempfile("invalid.thrift", bad_schema)
 
       assert_raise Mix.Error, ~r/Parse error/, fn ->
-        run([bad_file])
+        Mix.Tasks.Thrift.Generate.run([path])
       end
     end)
   end
@@ -63,7 +53,7 @@ defmodule Mix.Tasks.Thrift.GenerateTest do
   test "specifying an alternate output directory (--out)" do
     in_fixture(fn ->
       with_project_config([], fn ->
-        run(["--out", "lib/thrift", "thrift/ThriftTest.thrift"])
+        Mix.Tasks.Thrift.Generate.run(~w[--out lib/thrift thrift/ThriftTest.thrift])
         assert File.exists?("lib/thrift/thrift_test/thrift_test.ex")
       end)
     end)
@@ -72,24 +62,20 @@ defmodule Mix.Tasks.Thrift.GenerateTest do
   test "specifying an include path (--include)" do
     in_fixture(fn ->
       with_project_config([], fn ->
-        run(~w(--include thrift thrift/include/Include.thrift))
+        Mix.Tasks.Thrift.Generate.run(~w[--include thrift thrift/include/Include.thrift])
         assert File.exists?("lib/thrift_test/thrift_test.ex")
       end)
     end)
   end
 
-  defp run(args) when is_list(args), do: run(:stdio, args)
+  defp tempfile(filename, content) do
+    temp_dir = Path.join([fixture_path(), "tmp"])
+    File.mkdir_p!(temp_dir)
+    on_exit(fn -> File.rm_rf!(temp_dir) end)
 
-  defp run(device, args) when device in [:stdio, :stderr] and is_list(args) do
-    args = ["--verbose" | args]
-    capture_io(device, fn -> Mix.Tasks.Thrift.Generate.run(args) end)
-  end
+    path = Path.join([temp_dir, filename])
+    File.write!(path, content)
 
-  defp in_fixture(fun) do
-    File.cd!(@fixture_project, fun)
-  end
-
-  defp with_project_config(config, fun) do
-    Mix.Project.in_project(:app, @fixture_project, config, fn _ -> fun.() end)
+    path
   end
 end

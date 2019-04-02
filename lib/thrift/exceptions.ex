@@ -81,19 +81,9 @@ defmodule Thrift.FileParseError do
 
   # Exception callback, should not be called by end user
   @doc false
-  @spec exception({Thrift.Parser.FileRef.t(), term}) :: Exception.t()
-  def exception({file_ref, error}) do
-    msg = "Error parsing thrift file #{file_ref.path} #{format_error(error)}"
-    %__MODULE__{message: msg}
-  end
-
-  # display the line number if we get it
-  defp format_error({line_no, message}) do
-    "on line #{line_no}: #{message}"
-  end
-
-  defp format_error(error) do
-    ": #{inspect(error)}"
+  @spec exception(Thrift.Parser.error()) :: Exception.t()
+  def exception({path, line, message}) do
+    %__MODULE__{message: "Parse error at #{path}:#{line}: #{message}"}
   end
 end
 

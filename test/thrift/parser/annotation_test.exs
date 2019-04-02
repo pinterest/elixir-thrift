@@ -1,14 +1,10 @@
 defmodule Thrift.Parser.AnnotationTest do
   use ExUnit.Case, async: true
-  import Thrift.Parser, only: [parse: 1]
+  import Thrift.Parser, only: [parse_file: 1]
   alias Thrift.AST.Field
 
   setup_all do
-    {:ok, schema} =
-      "test/fixtures/app/thrift/AnnotationTest.thrift"
-      |> File.read!()
-      |> parse
-
+    {:ok, schema} = parse_file("test/fixtures/app/thrift/AnnotationTest.thrift")
     {:ok, [schema: schema]}
   end
 

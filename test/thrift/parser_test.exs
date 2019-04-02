@@ -4,7 +4,8 @@ defmodule Thrift.Parser.ParserTest do
   @project_root Path.expand("../..", __DIR__)
   @test_file_dir Path.join([@project_root, "tmp", "parser_test"])
 
-  import Thrift.Parser, only: [parse: 1, parse_file: 2]
+  import Thrift.Parser,
+    only: [parse_string: 1, parse_file: 1, parse_file_group: 2]
 
   alias Thrift.AST.{
     Constant,
@@ -26,8 +27,8 @@ defmodule Thrift.Parser.ParserTest do
   import ExUnit.CaptureIO
 
   # Parse a Thrift document and returns a subcomponent to the caller.
-  defp parse(doc, path) do
-    {:ok, schema} = parse(doc)
+  defp parse_string(doc, path) do
+    {:ok, schema} = parse_string(doc)
 
     Enum.reduce(path, schema, fn
       _part, nil ->
@@ -46,7 +47,7 @@ defmodule Thrift.Parser.ParserTest do
 
   test "parsing comments" do
     {:ok, schema} =
-      parse("""
+      parse_string("""
       // a simple C-style comment
       """)
 
@@ -55,7 +56,7 @@ defmodule Thrift.Parser.ParserTest do
 
   test "parsing long-comments " do
     {:ok, schema} =
-      parse("""
+      parse_string("""
       /* This is a long comment
       *  that spans many lines
       *  which means the docs are good
@@ -68,7 +69,7 @@ defmodule Thrift.Parser.ParserTest do
 
   test "parsing a single include header" do
     includes =
-      parse(
+      parse_string(
         """
         include "foo.thrift"
         """,
@@ -80,7 +81,7 @@ defmodule Thrift.Parser.ParserTest do
 
   test "parsing namespace headers" do
     namespaces =
-      parse(
+      parse_string(
         """
         namespace py foo.bar.baz
         namespace erl foo_bar
@@ -98,7 +99,7 @@ defmodule Thrift.Parser.ParserTest do
 
   test "parsing include headers" do
     includes =
-      parse(
+      parse_string(
         """
         include "foo.thrift"
         include "bar.thrift"
@@ -114,7 +115,7 @@ defmodule Thrift.Parser.ParserTest do
 
   test "parsing cpp_include headers" do
     cpp_includes =
-      parse(
+      parse_string(
         """
         cpp_include "foo.h"
         cpp_include "bar.h"
@@ -132,7 +133,7 @@ defmodule Thrift.Parser.ParserTest do
 
   test "parsing a byte constant" do
     constant =
-      parse(
+      parse_string(
         "const i8 BYTE_CONST = 2;",
         [:constants, :BYTE_CONST]
       )
@@ -142,7 +143,7 @@ defmodule Thrift.Parser.ParserTest do
 
   test "parsing a negative integer constant" do
     constant =
-      parse(
+      parse_string(
         "const i16 NEG_INT_CONST = -281;",
         [:constants, :NEG_INT_CONST]
       )
@@ -152,7 +153,7 @@ defmodule Thrift.Parser.ParserTest do
 
   test "parsing a small int constant" do
     constant =
-      parse(
+      parse_string(
         "const i16 SMALL_INT_CONST = 65535;",
         [:constants, :SMALL_INT_CONST]
       )
@@ -162,7 +163,7 @@ defmodule Thrift.Parser.ParserTest do
 
   test "parsing an int constant" do
     constant =
-      parse(
+      parse_string(
         "const i32 INT_CONST = 1234;",
         [:constants, :INT_CONST]
       )
@@ -172,7 +173,7 @@ defmodule Thrift.Parser.ParserTest do
 
   test "parsing a large int constant" do
     constant =
-      parse(
+      parse_string(
         "const i64 LARGE_INT_CONST = 12347437812391;",
         [:constants, :LARGE_INT_CONST]
       )
@@ -187,7 +188,7 @@ defmodule Thrift.Parser.ParserTest do
 
   test "parsing a double constant" do
     constant =
-      parse(
+      parse_string(
         "const double DOUBLE_CONST = 123.4",
         [:constants, :DOUBLE_CONST]
       )
@@ -197,7 +198,7 @@ defmodule Thrift.Parser.ParserTest do
 
   test "parsing a string constant" do
     constant =
-      parse(
+      parse_string(
         "const string STRING_CONST = \"hi\"",
         [:constants, :STRING_CONST]
       )
@@ -207,7 +208,7 @@ defmodule Thrift.Parser.ParserTest do
 
   test "parsing a map constant" do
     constant =
-      parse(
+      parse_string(
         ~s[const map<string, i32> MAP_CONST = {"hello": 1, "world": 2};],
         [:constants, :MAP_CONST]
       )
@@ -222,7 +223,7 @@ defmodule Thrift.Parser.ParserTest do
 
   test "parsing a list constant" do
     constant =
-      parse(
+      parse_string(
         "const list<i32> LIST_CONST = [5, 6, 7, 8]",
         [:constants, :LIST_CONST]
       )
@@ -237,7 +238,7 @@ defmodule Thrift.Parser.ParserTest do
 
   test "parsing a list constant with mixed separators" do
     constant =
-      parse(
+      parse_string(
         "const list<i32> LIST_CONST = [1, 2; 3; 4, 5]",
         [:constants, :LIST_CONST]
       )
@@ -252,7 +253,7 @@ defmodule Thrift.Parser.ParserTest do
 
   test "parsing an enum value constant" do
     constant =
-      parse(
+      parse_string(
         "const string SUNNY = Weather.SUNNY;",
         [:constants, :SUNNY]
       )
@@ -267,7 +268,7 @@ defmodule Thrift.Parser.ParserTest do
 
   test "parsing a list constant with enum values" do
     constant =
-      parse(
+      parse_string(
         """
         const list<string> WEATHER_TYPES = [
           Weather.SUNNY,
@@ -294,7 +295,7 @@ defmodule Thrift.Parser.ParserTest do
 
   test "parsing a map constant with enum keys" do
     constant =
-      parse(
+      parse_string(
         """
         const map<Weather, string> weather_messages = {
           Weather.SUNNY: "Yay, it's sunny!",
@@ -321,7 +322,7 @@ defmodule Thrift.Parser.ParserTest do
 
   test "parsing a map constant with enum values as values" do
     constant =
-      parse(
+      parse_string(
         """
         const map<string, Weather> clothes_to_wear = {
           "gloves": Weather.SNOWY,
@@ -348,7 +349,7 @@ defmodule Thrift.Parser.ParserTest do
 
   test "parsing an enum" do
     user_status =
-      parse(
+      parse_string(
         """
         enum UserStatus {
           ACTIVE,
@@ -369,7 +370,7 @@ defmodule Thrift.Parser.ParserTest do
 
   test "parsing an enum with awkward numbering" do
     user_status =
-      parse(
+      parse_string(
         """
         enum Numberz {
           ONE = 1,
@@ -401,7 +402,7 @@ defmodule Thrift.Parser.ParserTest do
     }
     """
 
-    exc = parse(program, [:exceptions, :ApplicationException])
+    exc = parse_string(program, [:exceptions, :ApplicationException])
 
     assert exc == %Exception{
              line: 1,
@@ -434,13 +435,13 @@ defmodule Thrift.Parser.ParserTest do
     expected_error = "Error: BadEx.bad, BadEx.evil share field number 1."
 
     assert_raise RuntimeError, expected_error, fn ->
-      parse(program)
+      parse_string(program)
     end
   end
 
   test "parsing a typedef" do
     typedefs =
-      parse(
+      parse_string(
         """
         typedef i64 id
         typedef string json
@@ -455,7 +456,7 @@ defmodule Thrift.Parser.ParserTest do
 
   test "parsing a struct with a bool" do
     s =
-      parse(
+      parse_string(
         """
         struct MyStruct {
           1: optional bool negative;
@@ -509,7 +510,7 @@ defmodule Thrift.Parser.ParserTest do
 
   test "parsing a struct with an int" do
     s =
-      parse(
+      parse_string(
         """
         struct MyStruct {
           1: optional string name;
@@ -529,7 +530,7 @@ defmodule Thrift.Parser.ParserTest do
 
   test "parsing a struct with a typedef" do
     s =
-      parse(
+      parse_string(
         """
         typedef i64 id
 
@@ -563,7 +564,7 @@ defmodule Thrift.Parser.ParserTest do
     }
     """
 
-    s = parse(struct_def, [:structs, :Optionals])
+    s = parse_string(struct_def, [:structs, :Optionals])
 
     assert s == %Struct{
              line: 1,
@@ -586,7 +587,7 @@ defmodule Thrift.Parser.ParserTest do
 
   test "parsing an empty map default value" do
     struct =
-      parse(
+      parse_string(
         """
         struct EmptyDefault {
           1: i64 id,
@@ -616,7 +617,7 @@ defmodule Thrift.Parser.ParserTest do
   test "when default ids conflict with explicit ids" do
     assert_raise RuntimeError, fn ->
       capture_io(fn ->
-        parse("""
+        parse_string("""
         struct BadFields {
           1: required i32 first,
           1: optional i64 other
@@ -628,7 +629,7 @@ defmodule Thrift.Parser.ParserTest do
 
   test "when a struct has another struct as a member" do
     user =
-      parse(
+      parse_string(
         """
         struct Name {
           1: string first_name,
@@ -660,7 +661,7 @@ defmodule Thrift.Parser.ParserTest do
 
   test "parsing a union definition" do
     union =
-      parse(
+      parse_string(
         """
         union Highlander {
           1: i32 connery,
@@ -683,7 +684,7 @@ defmodule Thrift.Parser.ParserTest do
   test "a union definition makes sure its field ids aren't repeated" do
     capture_io(fn ->
       assert_raise RuntimeError, fn ->
-        parse("""
+        parse_string("""
           union Highlander {
             1: i32 connery,
             1: i64 lambert
@@ -695,7 +696,7 @@ defmodule Thrift.Parser.ParserTest do
 
   test "defining a simple service" do
     service =
-      parse(
+      parse_string(
         """
         service MyService {
           void hi()
@@ -713,7 +714,7 @@ defmodule Thrift.Parser.ParserTest do
 
   test "defining a service with a complex return type and params" do
     service =
-      parse(
+      parse_string(
         """
         struct User {
         }
@@ -749,7 +750,7 @@ defmodule Thrift.Parser.ParserTest do
 
   test "a oneway function in a service" do
     service =
-      parse(
+      parse_string(
         """
         service OneWay {
           oneway void fireAndForget(1: i64 value);
@@ -777,7 +778,7 @@ defmodule Thrift.Parser.ParserTest do
 
   test "a service that throws exceptions" do
     service =
-      parse(
+      parse_string(
         """
         exception ServiceException {
           1: i32 error_code = 0,
@@ -823,7 +824,7 @@ defmodule Thrift.Parser.ParserTest do
     """
 
     capture_io(fn ->
-      service = parse(code, [:services, :MultipleFns])
+      service = parse_string(code, [:services, :MultipleFns])
 
       %{ping: ping, update: update, get_users: get_users} = service.functions
 
@@ -861,7 +862,7 @@ defmodule Thrift.Parser.ParserTest do
 
   test "a service extends another" do
     services =
-      parse(
+      parse_string(
         """
         service Pinger {
           boolean ping()
@@ -881,7 +882,7 @@ defmodule Thrift.Parser.ParserTest do
     # just make sure we don't blow up on parse and can parse
     # complex thrift files.
 
-    parse(File.read!("./test/fixtures/app/thrift/ThriftTest.thrift"))
+    {:ok, _} = parse_file("./test/fixtures/app/thrift/ThriftTest.thrift")
   end
 
   test "name collisions in the same type and thrift file" do
@@ -891,18 +892,18 @@ defmodule Thrift.Parser.ParserTest do
     """
 
     assert_raise RuntimeError, "Name collision: Foo", fn ->
-      parse(thrift)
+      parse_string(thrift)
     end
   end
 
   test "names cannot override built-in keywords" do
-    assert {:error, {1, ~S(cannot use reserved language keyword "continue")}} ==
-             parse("struct continue {}")
+    assert {:error, {nil, 1, ~S(cannot use reserved language keyword "continue")}} ==
+             parse_string("struct continue {}")
   end
 
   test "names can be reserved keywords if they have a different case" do
     continue_struct =
-      parse(
+      parse_string(
         """
         struct Continue {}
         """,
@@ -924,7 +925,7 @@ defmodule Thrift.Parser.ParserTest do
     end
 
     defp parse_namespace(context, namespace) do
-      result = parse_file(context[:path], namespace: namespace)
+      {:ok, result} = parse_file_group(context[:path], namespace: namespace)
       result.namespaces[:module]
     end
 

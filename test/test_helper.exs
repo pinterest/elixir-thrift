@@ -1,3 +1,5 @@
+Mix.start()
+Mix.shell(Mix.Shell.Process)
 ExUnit.configure(exclude: [pending: true], capture_log: true)
 ExUnit.start()
 
@@ -33,8 +35,8 @@ defmodule ThriftTestHelpers do
   end
 
   def parse(file_path) do
-    alias Thrift.Parser
-    Parser.parse_file(file_path)
+    {:ok, group} = Thrift.Parser.parse_file_group(file_path)
+    group
   end
 
   @spec with_thrift_files(Keyword.t(), String.t()) :: nil
@@ -57,5 +59,36 @@ defmodule ThriftTestHelpers do
         File.rm_rf!(root_dir)
       end
     end
+  end
+end
+
+defmodule MixTest.Case do
+  use ExUnit.CaseTemplate
+
+  using do
+    quote do
+      import MixTest.Case
+    end
+  end
+
+  setup do
+    on_exit(fn ->
+      Mix.Shell.Process.flush()
+      File.rm_rf!(Path.join(fixture_path(), "lib"))
+    end)
+
+    :ok
+  end
+
+  def fixture_path do
+    Path.expand("fixtures/app", __DIR__)
+  end
+
+  def in_fixture(fun) do
+    File.cd!(fixture_path(), fun)
+  end
+
+  def with_project_config(config, fun) do
+    Mix.Project.in_project(:app, fixture_path(), config, fn _ -> fun.() end)
   end
 end

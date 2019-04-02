@@ -38,12 +38,6 @@ defmodule Thrift.Generator do
     |> Kernel.<>(".ex")
   end
 
-  def generate!(thrift_filename, output_dir) when is_bitstring(thrift_filename) do
-    thrift_filename
-    |> Thrift.Parser.parse_file()
-    |> generate!(output_dir)
-  end
-
   def generate!(%FileGroup{} = file_group, output_dir) do
     Enum.flat_map(file_group.schemas, fn {_, schema} ->
       schema

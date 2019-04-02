@@ -79,7 +79,7 @@ defmodule Mix.Tasks.Thrift.Generate do
   end
 
   defp parse!(thrift_file, opts) do
-    Thrift.Parser.parse_file(thrift_file, opts)
+    Thrift.Parser.parse_file_group!(thrift_file, opts)
   rescue
     e -> Mix.raise("#{thrift_file}: #{Exception.message(e)}")
   end

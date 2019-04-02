@@ -1,6 +1,2 @@
 # Global
-* @fishcakez @jparise @scohen @thecodeboss
-
-# Code generation
-lib/thrift/generator/ @dantswain @pguillory
-lib/thrift/generator.ex @dantswain @pguillory
+* @fishcakez @jparise @scohen

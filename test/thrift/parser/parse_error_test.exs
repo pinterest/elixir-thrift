@@ -4,7 +4,7 @@ defmodule Thrift.Parser.ParseErrorTest do
   @project_root Path.expand("../..", __DIR__)
   @test_file_dir Path.join([@project_root, "tmp", "parse_error_test"])
 
-  import Thrift.Parser, only: [parse: 1, parse_file: 1]
+  import Thrift.Parser, only: [parse_string: 1, parse_file_group: 1]
 
   setup do
     File.rm_rf!(@test_file_dir)
@@ -19,16 +19,12 @@ defmodule Thrift.Parser.ParseErrorTest do
     }
     """
 
-    assert {:error, _} = parse(contents)
+    assert {:error, {nil, 1, _}} = parse_string(contents)
 
     path = Path.join(@test_file_dir, "syntax_error.thrift")
     File.write!(path, contents)
 
-    assert_raise(
-      Thrift.FileParseError,
-      ~r/#{path} on line 1:/,
-      fn -> parse_file(path) end
-    )
+    assert {:error, [{^path, 1, "syntax error before: \"stract\""}]} = parse_file_group(path)
 
     other_path = Path.join(@test_file_dir, "includes_syntax_error.thrift")
 
@@ -42,11 +38,8 @@ defmodule Thrift.Parser.ParseErrorTest do
 
     # should raise an error on the included file,
     # since that is where the syntax error is
-    assert_raise(
-      Thrift.FileParseError,
-      ~r/#{path} on line 1:/,
-      fn -> parse_file(other_path) end
-    )
+    assert {:error, [{^path, 1, "syntax error before: \"stract\""}]} =
+             parse_file_group(other_path)
   end
 
   test "a file that throws lexer errors raises an exception" do
@@ -55,16 +48,12 @@ defmodule Thrift.Parser.ParseErrorTest do
     /8
     """
 
-    assert {:error, {2, _}} = parse(contents)
+    assert {:error, {nil, 2, _}} = parse_string(contents)
 
     path = Path.join(@test_file_dir, "lexer_error.thrift")
     File.write!(path, contents)
 
-    assert_raise(
-      Thrift.FileParseError,
-      ~r/#{path} on line 2:/,
-      fn -> parse_file(path) end
-    )
+    assert {:error, [{^path, 2, "illegal characters \"/8\""}]} = parse_file_group(path)
 
     other_path = Path.join(@test_file_dir, "includes_syntax_error.thrift")
 
@@ -78,10 +67,6 @@ defmodule Thrift.Parser.ParseErrorTest do
 
     # should raise an error on the included file,
     # since that is where the syntax error is
-    assert_raise(
-      Thrift.FileParseError,
-      ~r/#{path} on line 2:/,
-      fn -> parse_file(other_path) end
-    )
+    assert {:error, [{^path, 2, "illegal characters \"/8\""}]} = parse_file_group(other_path)
   end
 end

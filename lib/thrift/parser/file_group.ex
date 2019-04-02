@@ -5,8 +5,6 @@ defmodule Thrift.Parser.FileGroup do
 
   alias Thrift.Parser.{
     FileGroup,
-    FileRef,
-    ParsedFile,
     Resolver
   }
 
@@ -25,7 +23,6 @@ defmodule Thrift.Parser.FileGroup do
 
   @type t :: %FileGroup{
           initial_file: Path.t(),
-          parsed_files: %{Path.t() => %ParsedFile{}},
           schemas: %{Path.t() => %Schema{}},
           namespaces: %{atom => String.t() | nil},
           opts: Parser.opts()
@@ -33,7 +30,6 @@ defmodule Thrift.Parser.FileGroup do
 
   @enforce_keys [:initial_file, :opts]
   defstruct initial_file: nil,
-            parsed_files: %{},
             schemas: %{},
             resolutions: %{},
             immutable_resolutions: %{},
@@ -45,35 +41,38 @@ defmodule Thrift.Parser.FileGroup do
     %FileGroup{initial_file: initial_file, opts: opts}
   end
 
-  @spec add(t, ParsedFile.t()) :: t
-  def add(file_group, parsed_file) do
-    file_group = add_includes(file_group, parsed_file)
-    new_parsed_files = Map.put(file_group.parsed_files, parsed_file.name, parsed_file)
-    new_schemas = Map.put(file_group.schemas, parsed_file.name, parsed_file.schema)
-    resolutions = Resolver.add(file_group.resolutions, parsed_file)
+  @spec add(FileGroup.t(), Path.t(), Schema.t()) :: {FileGroup.t(), [Parser.error()]}
+  def add(group, path, schema) do
+    name = Path.basename(path, ".thrift")
+    new_schemas = Map.put(group.schemas, name, schema)
+    resolutions = Resolver.add(group.resolutions, name, schema)
 
-    %__MODULE__{
-      file_group
-      | parsed_files: new_parsed_files,
-        schemas: new_schemas,
+    group = %{
+      group
+      | schemas: new_schemas,
         immutable_resolutions: resolutions,
         resolutions: resolutions
     }
+
+    add_includes(group, path, schema)
   end
 
-  defp add_includes(%FileGroup{} = group, %ParsedFile{schema: schema, file_ref: file_ref}) do
+  @spec add_includes(FileGroup.t(), Path.t(), Schema.t()) :: {FileGroup.t(), [Parser.error()]}
+  defp add_includes(%FileGroup{} = group, path, %Schema{} = schema) do
     # Search for included files in the current directory (relative to the
     # parsed file) as well as any additionally configured include paths.
-    include_paths = [Path.dirname(file_ref.path) | Keyword.get(group.opts, :include_paths, [])]
+    include_paths = [Path.dirname(path) | Keyword.get(group.opts, :include_paths, [])]
 
-    Enum.reduce(schema.includes, group, fn include, group ->
-      parsed_file =
-        include.path
-        |> find_include(include_paths)
-        |> FileRef.new()
-        |> ParsedFile.new()
+    Enum.reduce(schema.includes, {group, []}, fn include, {group, errors} ->
+      included_path = find_include(include.path, include_paths)
 
-      add(group, parsed_file)
+      case Parser.parse_file(included_path) do
+        {:ok, schema} ->
+          add(group, included_path, schema)
+
+        {:error, error} ->
+          {group, [error | errors]}
+      end
     end)
   end
 
@@ -246,10 +245,10 @@ defmodule Thrift.Parser.FileGroup do
   #   this should eventually be replaced if we find a way to only parse files
   #   once
   @spec own_constant?(t, Constant.t()) :: boolean
-  def own_constant?(file_group, %Constant{} = constant) do
+  def own_constant?(%FileGroup{} = file_group, %Constant{} = constant) do
     basename = Path.basename(file_group.initial_file, ".thrift")
-    initial_file = file_group.parsed_files[basename]
-    Enum.member?(Map.keys(initial_file.schema.constants), constant.name)
+    schema = file_group.schemas[basename]
+    Enum.member?(Map.keys(schema.constants), constant.name)
   end
 
   defp build_namespaces(schemas, default_namespace) do

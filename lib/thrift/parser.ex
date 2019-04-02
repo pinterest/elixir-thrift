@@ -1,12 +1,12 @@
 defmodule Thrift.Parser do
   @moduledoc """
-  This module provides functions for parsing [Thrift IDL][idl] files
-  (`.thrift`).
+  This module provides functions for parsing [Thrift IDL][idl] (`.thrift`)
+  files.
 
   [idl]: https://thrift.apache.org/docs/idl
   """
 
-  alias Thrift.Parser.{FileGroup, FileRef, ParsedFile}
+  alias Thrift.Parser.FileGroup
 
   @typedoc "A Thrift IDL line number"
   @type line :: pos_integer | nil
@@ -20,12 +20,14 @@ defmodule Thrift.Parser do
           | {:namespace, module | String.t()}
   @type opts :: [opt]
 
+  @typedoc "Parse error (path, line, message)"
+  @type error :: {Path.t() | nil, line(), message :: String.t()}
+
   @doc """
   Parses a Thrift IDL string into its AST representation.
   """
-  @spec parse(String.t()) ::
-          {:ok, Thrift.AST.Schema.t()} | {:error, {line(), message :: String.t()}}
-  def parse(doc) do
+  @spec parse_string(String.t()) :: {:ok, Thrift.AST.Schema.t()} | {:error, error}
+  def parse_string(doc) do
     doc = String.to_charlist(doc)
 
     with {:ok, tokens, _} <- :thrift_lexer.string(doc),
@@ -33,37 +35,84 @@ defmodule Thrift.Parser do
       result
     else
       {:error, {line, :thrift_lexer, error}, _} ->
-        {:error, {line, List.to_string(:thrift_lexer.format_error(error))}}
+        {:error, {nil, line, List.to_string(:thrift_lexer.format_error(error))}}
 
       {:error, {line, :thrift_parser, error}} ->
-        {:error, {line, List.to_string(:thrift_parser.format_error(error))}}
+        {:error, {nil, line, List.to_string(:thrift_parser.format_error(error))}}
     end
   end
 
   @doc """
-  Parses a Thrift IDL file.
-
-  In addition to the given file, all included files are also parsed and
-  returned as part of the resulting `Thrift.Parser.FileGroup`.
+  Parses a Thrift IDL file into its AST representation.
   """
-  @spec parse_file(Path.t(), opts) :: FileGroup.t()
-  def parse_file(file_path, opts \\ []) do
-    normalized_opts = normalize_opts(opts)
+  @spec parse_file(Path.t()) :: {:ok, Thrift.AST.Schema.t()} | {:error, error}
+  def parse_file(path) do
+    with {:ok, contents} <- read_file(path),
+         {:ok, _schema} = result <- parse_string(contents) do
+      result
+    else
+      {:error, {nil, line, message}} ->
+        {:error, {path, line, message}}
 
-    parsed_file =
-      file_path
-      |> FileRef.new()
-      |> ParsedFile.new()
+      {:error, message} ->
+        {:error, {path, nil, message}}
+    end
+  end
 
-    mod_name =
-      file_path
-      |> Path.basename()
-      |> Path.rootname()
-      |> String.to_atom()
+  @doc """
+  Parses a Thrift IDL file and its included files into a file group.
+  """
+  @spec parse_file_group(Path.t(), opts) :: {:ok, FileGroup.t()} | {:error, [error, ...]}
+  def parse_file_group(path, opts \\ []) do
+    group = FileGroup.new(path, normalize_opts(opts))
 
-    FileGroup.new(file_path, normalized_opts)
-    |> FileGroup.add(parsed_file)
-    |> FileGroup.set_current_module(mod_name)
+    with {:ok, schema} <- parse_file(path),
+         {group, [] = _errors} <- FileGroup.add(group, path, schema) do
+      {:ok, FileGroup.set_current_module(group, module_name(path))}
+    else
+      {:error, error} ->
+        {:error, [error]}
+
+      {%FileGroup{}, errors} ->
+        {:error, Enum.reverse(errors)}
+    end
+  end
+
+  @doc """
+  Parses a Thrift IDL file and its included files into a file group.
+
+  A `Thrift.FileParseError` will be raised if an error occurs.
+  """
+  @spec parse_file_group!(Path.t(), opts) :: FileGroup.t()
+  def parse_file_group!(path, opts \\ []) do
+    case parse_file_group(path, opts) do
+      {:ok, group} ->
+        group
+
+      {:error, [first_error | _errors]} ->
+        raise Thrift.FileParseError, first_error
+    end
+  end
+
+  defp read_file(path) do
+    case File.read(path) do
+      {:ok, contents} ->
+        # We include the __file__ here to hack around the fact that leex and
+        # yecc don't operate on files and lose the file info. This is relevant
+        # because the filename is turned into the thrift module, and is
+        # necessary for resolution.
+        {:ok, contents <> "\n__file__ \"#{path}\""}
+
+      {:error, reason} ->
+        {:error, :file.format_error(reason)}
+    end
+  end
+
+  defp module_name(path) do
+    path
+    |> Path.basename()
+    |> Path.rootname()
+    |> String.to_atom()
   end
 
   # normalize various type permutations that we could get options as

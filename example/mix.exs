@@ -31,7 +31,8 @@ defmodule Calculator.MixProject do
     [
       # Note: you will want to replace the next line to get elixir-thrift from either
       # Hex or GitHub in your own project.
-      {:thrift, path: ".."}
+      {:thrift, path: ".."},
+      {:httpoison, "~> 0.13"}
     ]
   end
 end

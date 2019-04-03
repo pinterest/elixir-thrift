@@ -626,7 +626,7 @@ defmodule(Calculator.Generated.Service) do
     def(handle_thrift("add", binary_data, handler_module)) do
       case(Elixir.Calculator.Generated.Service.AddArgs.BinaryProtocol.deserialize(binary_data)) do
         {%Calculator.Generated.Service.AddArgs{left: left, right: right}, ""} ->
-          try() do
+          try do
             rsp = handler_module.add(left, right)
             (
               response = %Calculator.Generated.Service.AddResponse{success: rsp}
@@ -648,7 +648,7 @@ defmodule(Calculator.Generated.Service) do
     def(handle_thrift("divide", binary_data, handler_module)) do
       case(Elixir.Calculator.Generated.Service.DivideArgs.BinaryProtocol.deserialize(binary_data)) do
         {%Calculator.Generated.Service.DivideArgs{left: left, right: right}, ""} ->
-          try() do
+          try do
             rsp = handler_module.divide(left, right)
             (
               response = %Calculator.Generated.Service.DivideResponse{success: rsp}
@@ -672,7 +672,7 @@ defmodule(Calculator.Generated.Service) do
     def(handle_thrift("multiply", binary_data, handler_module)) do
       case(Elixir.Calculator.Generated.Service.MultiplyArgs.BinaryProtocol.deserialize(binary_data)) do
         {%Calculator.Generated.Service.MultiplyArgs{left: left, right: right}, ""} ->
-          try() do
+          try do
             rsp = handler_module.multiply(left, right)
             (
               response = %Calculator.Generated.Service.MultiplyResponse{success: rsp}
@@ -694,7 +694,7 @@ defmodule(Calculator.Generated.Service) do
     def(handle_thrift("subtract", binary_data, handler_module)) do
       case(Elixir.Calculator.Generated.Service.SubtractArgs.BinaryProtocol.deserialize(binary_data)) do
         {%Calculator.Generated.Service.SubtractArgs{left: left, right: right}, ""} ->
-          try() do
+          try do
             rsp = handler_module.subtract(left, right)
             (
               response = %Calculator.Generated.Service.SubtractResponse{success: rsp}
@@ -716,7 +716,7 @@ defmodule(Calculator.Generated.Service) do
     def(handle_thrift("vectorProduct", binary_data, handler_module)) do
       case(Elixir.Calculator.Generated.Service.VectorProductArgs.BinaryProtocol.deserialize(binary_data)) do
         {%Calculator.Generated.Service.VectorProductArgs{left: left, right: right, type: type}, ""} ->
-          try() do
+          try do
             rsp = handler_module.vector_product(left, right, type)
             (
               response = %Calculator.Generated.Service.VectorProductResponse{success: rsp}

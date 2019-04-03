@@ -26,8 +26,6 @@ defmodule Mix.Tasks.Thrift.HttpClient.Generate do
 
   # ----------------------------------------------------------------------------
   def run(args) do
-    Logger.info("Compiling HTTP Thrift Service ...")
-
     {opts, files} =
       OptionParser.parse!(
         args,
@@ -38,8 +36,7 @@ defmodule Mix.Tasks.Thrift.HttpClient.Generate do
     output_path = opts[:out] || "lib"
 
     for file <- files do
-      file
-      |> Thrift.Parser.parse_file()
+      Thrift.Parser.parse_file_group!(file)
       |> Map.get(:schemas)
       |> Enum.each(fn {_, schema} ->
         namespace = get_namespace(schema)
@@ -93,13 +90,16 @@ defmodule Mix.Tasks.Thrift.HttpClient.Generate do
   def gen_http_helper(namespace) do
     module_name = Module.concat([namespace, HTTP, Client])
 
-    Logger.info("""
-      Generating HTTP Client for #{namespace}
-      NOTE:
-      Make sure to update your config files with
-      config :your_app, #{Macro.to_string(module_name)},
-                        endpoint: "http://x.x.y.y:8080/some_endpoint"
-    """)
+    Logger.info(
+      """
+        Generating HTTP Client for #{namespace}
+        NOTE:
+        Make sure to update your config files with
+        config :your_app, #{Macro.to_string(module_name)},
+                          endpoint: "http://x.x.y.y:8080/some_endpoint"
+      """
+      |> String.trim()
+    )
 
     quote do
       defmodule unquote(module_name) do
@@ -146,6 +146,7 @@ defmodule Mix.Tasks.Thrift.HttpClient.Generate do
   # ----------------------------------------------------------------------------
   def gen_module(namespace, service_name, service_spec) do
     module_name = Module.concat([namespace, HTTP, service_name])
+    interface_name = Module.concat([namespace, service_name, Handler])
 
     functions =
       service_spec.functions
@@ -153,6 +154,7 @@ defmodule Mix.Tasks.Thrift.HttpClient.Generate do
 
     quote do
       defmodule unquote(module_name) do
+        @behaviour unquote(interface_name)
         alias unquote(Module.concat(namespace, service_name))
         alias unquote(Module.concat([namespace, HTTP]))
         alias Thrift.Protocol.Binary

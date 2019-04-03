@@ -30,6 +30,7 @@ defmodule(Calculator.Generated.HTTP.Client) do
 end
 
 defmodule(Calculator.Generated.HTTP.Service) do
+  @behaviour Calculator.Generated.Service.Handler
   alias(Calculator.Generated.Service)
   alias(Calculator.Generated.HTTP)
   alias(Thrift.Protocol.Binary)

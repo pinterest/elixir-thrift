@@ -42,6 +42,7 @@ defmodule Thrift.Binary.Framed.Client do
           {:tcp_opts, [tcp_option]}
           | {:ssl_opts, [SSL.option()]}
           | {:gen_server_opts, [genserver_call_option]}
+          | {:reconnect, boolean}
 
   @type options :: [option]
 
@@ -55,7 +56,8 @@ defmodule Thrift.Binary.Framed.Client do
             ssl_opts: [SSL.option()],
             timeout: integer,
             sock: {:gen_tcp, :gen_tcp.socket()} | {:ssl, :ssl.sslsocket()},
-            seq_id: integer
+            seq_id: integer,
+            reconnect: boolean
           }
     defstruct host: nil,
               port: nil,
@@ -64,7 +66,8 @@ defmodule Thrift.Binary.Framed.Client do
               ssl_opts: nil,
               timeout: 5000,
               sock: nil,
-              seq_id: 0
+              seq_id: 0,
+              reconnect: false
   end
 
   require Logger
@@ -74,6 +77,7 @@ defmodule Thrift.Binary.Framed.Client do
   def init({host, port, opts}) do
     tcp_opts = Keyword.get(opts, :tcp_opts, [])
     ssl_opts = Keyword.get(opts, :ssl_opts, [])
+    reconnect = Keyword.get(opts, :reconnect, false)
 
     {timeout, tcp_opts} = Keyword.pop(tcp_opts, :timeout, 5000)
 
@@ -82,7 +86,8 @@ defmodule Thrift.Binary.Framed.Client do
       port: port,
       tcp_opts: tcp_opts,
       ssl_opts: ssl_opts,
-      timeout: timeout
+      timeout: timeout,
+      reconnect: reconnect
     }
 
     {:connect, :init, s}
@@ -246,7 +251,7 @@ defmodule Thrift.Binary.Framed.Client do
   def handle_call(
         {:call, rpc_name, serialized_args, tcp_opts},
         _,
-        %{sock: {transport, sock}, seq_id: seq_id, timeout: default_timeout} = s
+        %{sock: {transport, sock}, seq_id: seq_id, timeout: default_timeout, reconnect: reconnect} = s
       ) do
     s = %{s | seq_id: seq_id + 1}
     message = Binary.serialize(:message_begin, {:call, seq_id, rpc_name})
@@ -257,6 +262,13 @@ defmodule Thrift.Binary.Framed.Client do
       reply = deserialize_message_reply(message, rpc_name, seq_id)
       {:reply, reply, s}
     else
+      {:error, :closed} = error ->
+        if reconnect do
+          {:connect, :reconnect, s}
+        else
+          {:disconnect, error, error, s}
+        end
+
       {:error, :timeout} = error ->
         {:disconnect, {:error, :timeout, timeout}, error, s}
 
@@ -277,7 +289,7 @@ defmodule Thrift.Binary.Framed.Client do
 
   def handle_cast(
         {:oneway, rpc_name, serialized_args},
-        %{sock: {transport, sock}, seq_id: seq_id} = s
+        %{sock: {transport, sock}, seq_id: seq_id, reconnect: reconnect} = s
       ) do
     s = %{s | seq_id: seq_id + 1}
     message = Binary.serialize(:message_begin, {:oneway, seq_id, rpc_name})
@@ -285,6 +297,13 @@ defmodule Thrift.Binary.Framed.Client do
     case transport.send(sock, [message | serialized_args]) do
       :ok ->
         {:noreply, s}
+
+      {:error, :closed} = error ->
+        if reconnect do
+          {:connect, :reconnect, s}
+        else
+          {:disconnect, error, s}
+        end
 
       {:error, _} = error ->
         {:disconnect, error, s}

@@ -142,15 +142,20 @@ defmodule Thrift.Binary.Framed.Client do
   def close(conn), do: Connection.call(conn, :close)
 
   @impl Connection
-  def connect(_info, %{sock: nil, host: host, port: port, tcp_opts: opts, timeout: timeout} = s) do
+  def connect(info, %{sock: nil, host: host, port: port, tcp_opts: opts, timeout: timeout} = s) do
     opts =
       opts
       |> Keyword.merge(@immutable_tcp_opts)
       |> Keyword.put_new(:send_timeout, 1000)
 
+    # reset sequence id for newly created connection
+    s = %{s | seq_id: 0}
+
     case :gen_tcp.connect(host, port, opts, timeout) do
       {:ok, sock} ->
-        maybe_ssl_handshake(sock, host, port, s)
+        sock
+        |> maybe_ssl_handshake(host, port, s)
+        |> maybe_resend_data(info)
 
       {:error, :timeout} = error ->
         Logger.error("Failed to connect to #{host}:#{port} due to timeout after #{timeout}ms")
@@ -249,8 +254,8 @@ defmodule Thrift.Binary.Framed.Client do
   end
 
   def handle_call(
-        {:call, rpc_name, serialized_args, tcp_opts},
-        _,
+        {:call, rpc_name, serialized_args, tcp_opts} = msg,
+        from,
         %{
           sock: {transport, sock},
           seq_id: seq_id,
@@ -269,7 +274,7 @@ defmodule Thrift.Binary.Framed.Client do
     else
       {:error, :closed} = error ->
         if reconnect do
-          {:connect, :reconnect, %{s | sock: nil}}
+          {:connect, {:reconnect, :call, msg, from}, %{s | sock: nil}}
         else
           {:disconnect, error, error, s}
         end
@@ -293,7 +298,7 @@ defmodule Thrift.Binary.Framed.Client do
   end
 
   def handle_cast(
-        {:oneway, rpc_name, serialized_args},
+        {:oneway, rpc_name, serialized_args} = msg,
         %{sock: {transport, sock}, seq_id: seq_id, reconnect: reconnect} = s
       ) do
     s = %{s | seq_id: seq_id + 1}
@@ -305,7 +310,7 @@ defmodule Thrift.Binary.Framed.Client do
 
       {:error, :closed} = error ->
         if reconnect do
-          {:connect, :reconnect, %{s | sock: nil}}
+          {:connect, {:reconnect, :cast, msg}, %{s | sock: nil}}
         else
           {:disconnect, error, s}
         end
@@ -396,4 +401,34 @@ defmodule Thrift.Binary.Framed.Client do
         {:stop, error, s}
     end
   end
+
+  defp maybe_resend_data({:ok, s}, {:reconnect, :call, msg, from}) do
+    case handle_call(msg, from, s) do
+      {:reply, reply, s} ->
+        GenServer.reply(from, reply)
+        {:ok, s}
+
+      {:disconnect, info, error, s} ->
+        GenServer.reply(from, error)
+        disconnect(info, s)
+
+      _ ->
+        {:ok, s}
+    end
+  end
+
+  defp maybe_resend_data({:ok, s}, {:reconnect, :cast, msg}) do
+    case handle_cast(msg, s) do
+      {:noreply, s} ->
+        {:ok, s}
+
+      {:disconnect, info, s} ->
+        disconnect(info, s)
+
+      _ ->
+        {:ok, s}
+    end
+  end
+
+  defp maybe_resend_data(reply, _), do: reply
 end

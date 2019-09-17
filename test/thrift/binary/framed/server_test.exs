@@ -177,4 +177,24 @@ defmodule Servers.Binary.Framed.IntegrationTest do
   thrift_test "client methods can be called by name instead of pid", %{client_name: name} do
     assert {:ok, true} == Client.ping(name)
   end
+
+  @ping_reply <<128, 1, 0, 2, 0, 0, 0, 4, 112, 105, 110, 103, 0, 0, 0, 0, 2, 0, 0, 1, 0>>
+  thrift_test "client can reconnect when connection closed by server", ctx do
+    {:ok, sock} = :gen_tcp.listen(0, [:binary, packet: 4, active: false])
+    {:ok, port} = :inet.port(sock)
+    first_conn = Task.async(fn ->
+      {:ok, conn} = :gen_tcp.accept(sock)
+      :ok = :gen_tcp.close(conn)
+    end)
+    name = String.to_atom("#{ctx.client_name}_1")
+    {:ok, client} = Client.start_link("localhost", port, name: name, reconnect: true)
+    second_conn = Task.async(fn ->
+      {:ok, conn} = :gen_tcp.accept(sock)
+      {:ok, _} = :gen_tcp.recv(conn, 0)
+      :ok = :gen_tcp.send(conn, @ping_reply)
+    end)
+    assert {:ok, true} == Client.ping(client)
+    Task.await(first_conn)
+    Task.await(second_conn)
+  end
 end

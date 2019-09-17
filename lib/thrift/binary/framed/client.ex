@@ -172,7 +172,7 @@ defmodule Thrift.Binary.Framed.Client do
     :ok = transport.close(sock)
 
     case info do
-      {:reconnect, _} = reconnect ->
+      {:reconnect, _} ->
         {:connect, info, %{s | sock: nil}}
 
       {:close, from} ->

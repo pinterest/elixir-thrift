@@ -271,7 +271,7 @@ defmodule Thrift.Binary.Framed.Client do
     timeout = Keyword.get(tcp_opts, :timeout, default_timeout)
 
     with :ok <- transport.send(sock, [message | serialized_args]),
-         {:ok, message} <- receive_message(sock, timeout) do
+         {:ok, message} <- receive_message(transport, sock, timeout) do
       reply = deserialize_message_reply(message, rpc_name, seq_id)
       {:reply, reply, s}
     else
@@ -336,11 +336,18 @@ defmodule Thrift.Binary.Framed.Client do
     handle_message(Binary.deserialize(:message_begin, message), seq_id, rpc_name)
   end
 
-  defp receive_message(sock, timeout) do
+  defp receive_message(:gen_tcp, sock, timeout) do
     receive do
       {:tcp, ^sock, data} -> {:ok, data}
       {:tcp_closed, ^sock} -> {:error, :closed}
       {:tcp_error, ^sock, error} -> {:error, error}
+    after
+      timeout -> {:error, :timeout}
+    end
+  end
+
+  defp receive_message(:ssl, sock, timeout) do
+    receive do
       {:ssl, ^sock, data} -> {:ok, data}
       {:ssl_closed, ^sock} -> {:error, :closed}
       {:ssl_error, ^sock, error} -> {:error, error}

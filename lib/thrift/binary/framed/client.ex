@@ -142,7 +142,7 @@ defmodule Thrift.Binary.Framed.Client do
   def close(conn), do: Connection.call(conn, :close)
 
   @impl Connection
-  def connect(info, %{sock: nil, host: host, port: port, tcp_opts: opts, timeout: timeout} = s) do
+  def connect(_info, %{sock: nil, host: host, port: port, tcp_opts: opts, timeout: timeout} = s) do
     opts =
       opts
       |> Keyword.merge(@immutable_tcp_opts)
@@ -153,9 +153,7 @@ defmodule Thrift.Binary.Framed.Client do
 
     case :gen_tcp.connect(host, port, opts, timeout) do
       {:ok, sock} ->
-        sock
-        |> maybe_ssl_handshake(host, port, s)
-        |> maybe_resend_data(info)
+        maybe_ssl_handshake(sock, host, port, s)
 
       {:error, :timeout} = error ->
         Logger.error("Failed to connect to #{host}:#{port} due to timeout after #{timeout}ms")
@@ -257,14 +255,9 @@ defmodule Thrift.Binary.Framed.Client do
   end
 
   def handle_call(
-        {:call, rpc_name, serialized_args, tcp_opts} = msg,
-        from,
-        %{
-          sock: {transport, sock},
-          seq_id: seq_id,
-          timeout: default_timeout,
-          reconnect: reconnect
-        } = s
+        {:call, rpc_name, serialized_args, tcp_opts},
+        _from,
+        %{sock: {transport, sock}, seq_id: seq_id, timeout: default_timeout} = s
       ) do
     s = %{s | seq_id: seq_id + 1}
     message = Binary.serialize(:message_begin, {:call, seq_id, rpc_name})
@@ -275,13 +268,6 @@ defmodule Thrift.Binary.Framed.Client do
       reply = deserialize_message_reply(message, rpc_name, seq_id)
       {:reply, reply, s}
     else
-      {:error, :closed} = error ->
-        if reconnect do
-          {:disconnect, {:reconnect, {:call, msg, from}}, s}
-        else
-          {:disconnect, error, error, s}
-        end
-
       {:error, :timeout} = error ->
         {:disconnect, {:error, :timeout, timeout}, error, s}
 
@@ -301,8 +287,8 @@ defmodule Thrift.Binary.Framed.Client do
   end
 
   def handle_cast(
-        {:oneway, rpc_name, serialized_args} = msg,
-        %{sock: {transport, sock}, seq_id: seq_id, reconnect: reconnect} = s
+        {:oneway, rpc_name, serialized_args},
+        %{sock: {transport, sock}, seq_id: seq_id} = s
       ) do
     s = %{s | seq_id: seq_id + 1}
     message = Binary.serialize(:message_begin, {:oneway, seq_id, rpc_name})
@@ -311,20 +297,17 @@ defmodule Thrift.Binary.Framed.Client do
       :ok ->
         {:noreply, s}
 
-      {:error, :closed} = error ->
-        if reconnect do
-          {:disconnect, {:reconnect, {:cast, msg}}, s}
-        else
-          {:disconnect, error, s}
-        end
-
       {:error, _} = error ->
         {:disconnect, error, s}
     end
   end
 
   @impl Connection
-  def handle_info({:tcp_closed, sock}, %{reconnect: true, sock: {_transport, sock}} = s) do
+  def handle_info({:tcp_closed, sock}, %{reconnect: true, sock: {:gen_tcp, sock}} = s) do
+    {:disconnect, {:reconnect, nil}, s}
+  end
+
+  def handle_info({:ssl_closed, sock}, %{reconnect: true, sock: {:ssl, sock}} = s) do
     {:disconnect, {:reconnect, nil}, s}
   end
 
@@ -433,34 +416,4 @@ defmodule Thrift.Binary.Framed.Client do
         {:stop, error, s}
     end
   end
-
-  defp maybe_resend_data({:ok, s}, {:reconnect, {:call, msg, from}}) do
-    case handle_call(msg, from, s) do
-      {:reply, reply, s} ->
-        GenServer.reply(from, reply)
-        {:ok, s}
-
-      {:disconnect, info, error, s} ->
-        GenServer.reply(from, error)
-        disconnect(info, s)
-
-      _ ->
-        {:ok, s}
-    end
-  end
-
-  defp maybe_resend_data({:ok, s}, {:reconnect, {:cast, msg}}) do
-    case handle_cast(msg, s) do
-      {:noreply, s} ->
-        {:ok, s}
-
-      {:disconnect, info, s} ->
-        disconnect(info, s)
-
-      _ ->
-        {:ok, s}
-    end
-  end
-
-  defp maybe_resend_data(reply, _), do: reply
 end

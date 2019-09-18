@@ -182,7 +182,9 @@ defmodule Servers.Binary.Framed.IntegrationTest do
   thrift_test "client can reconnect when connection closed by server", ctx do
     {:ok, sock} = :gen_tcp.listen(0, [:binary, packet: 4, active: false])
     {:ok, port} = :inet.port(sock)
+    test_pid = self()
 
+    # in first connection we emulate closing connection by server
     first_conn =
       Task.async(fn ->
         {:ok, conn} = :gen_tcp.accept(sock)
@@ -192,15 +194,24 @@ defmodule Servers.Binary.Framed.IntegrationTest do
     name = String.to_atom("#{ctx.client_name}_1")
     {:ok, client} = Client.start_link("localhost", port, name: name, reconnect: true)
 
+    # in second connection we emulate reconnection to same server port
     second_conn =
       Task.async(fn ->
         {:ok, conn} = :gen_tcp.accept(sock)
+        send(test_pid, :connected)
         {:ok, _} = :gen_tcp.recv(conn, 0)
         :ok = :gen_tcp.send(conn, @ping_reply)
       end)
 
-    assert {:ok, true} == Client.ping(client)
     Task.await(first_conn)
+    # wait for reconnection success
+    :ok =
+      receive do
+        :connected -> :ok
+      end
+
+    assert {:ok, true} == Client.ping(client)
+
     Task.await(second_conn)
   end
 end

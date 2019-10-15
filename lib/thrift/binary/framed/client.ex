@@ -129,6 +129,9 @@ defmodule Thrift.Binary.Framed.Client do
   Additionally, the options `:name`, `:debug`, and `:spawn_opt`, if specified,
   will be passed to the underlying `GenServer`. See `GenServer.start_link/3`
   for details on these options.
+
+  The `:reconnect` option if setted to `true` forces client to reopen tcp connection whenever
+  it closed.
   """
   @spec start_link(String.t(), 0..65_535, options) :: GenServer.on_start()
   def start_link(host, port, opts) do

@@ -130,7 +130,7 @@ defmodule Thrift.Binary.Framed.Client do
   will be passed to the underlying `GenServer`. See `GenServer.start_link/3`
   for details on these options.
 
-  The `:reconnect` option if set to `true` forces client to reopen tcp connection whenever
+  The `:reconnect` option if set to `true` forces client to reopen TCP connection whenever
   it closed.
   """
   @spec start_link(String.t(), 0..65_535, options) :: GenServer.on_start()

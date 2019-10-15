@@ -303,12 +303,52 @@ defmodule Thrift.Binary.Framed.Client do
   end
 
   @impl Connection
+  def handle_info({:tcp, sock, _data}, %{reconnect: true, sock: {:gen_tcp, sock}} = s) do
+    {:disconnect, :reconnect, s}
+  end
+
   def handle_info({:tcp_closed, sock}, %{reconnect: true, sock: {:gen_tcp, sock}} = s) do
+    {:disconnect, :reconnect, s}
+  end
+
+  def handle_info({:tcp_error, sock, _error}, %{reconnect: true, sock: {:gen_tcp, sock}} = s) do
+    {:disconnect, :reconnect, s}
+  end
+
+  def handle_info({:ssl, sock, _data}, %{reconnect: true, sock: {:ssl, sock}} = s) do
     {:disconnect, :reconnect, s}
   end
 
   def handle_info({:ssl_closed, sock}, %{reconnect: true, sock: {:ssl, sock}} = s) do
     {:disconnect, :reconnect, s}
+  end
+
+  def handle_info({:ssl_error, sock, _error}, %{reconnect: true, sock: {:ssl, sock}} = s) do
+    {:disconnect, :reconnect, s}
+  end
+
+  def handle_info({:tcp, sock, _data}, %{sock: {:gen_tcp, sock}} = s) do
+    {:disconnect, :unexpected_payload, s}
+  end
+
+  def handle_info({:tcp_closed, sock}, %{sock: {:gen_tcp, sock}} = s) do
+    {:disconnect, :closed, s}
+  end
+
+  def handle_info({:tcp_error, sock, error}, %{sock: {:gen_tcp, sock}} = s) do
+    {:disconnect, error, s}
+  end
+
+  def handle_info({:ssl, sock, _data}, %{sock: {:ssl, sock}} = s) do
+    {:disconnect, :unexpected_payload, s}
+  end
+
+  def handle_info({:ssl_closed, sock}, %{sock: {:ssl, sock}} = s) do
+    {:disconnect, :closed, s}
+  end
+
+  def handle_info({:ssl_error, sock, error}, %{sock: {:ssl, sock}} = s) do
+    {:disconnect, error, s}
   end
 
   def handle_info(_, s) do

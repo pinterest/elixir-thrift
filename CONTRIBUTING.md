@@ -30,11 +30,9 @@ Travis CI, so please make sure your code is well formatted *before* you push
 your branch so those checks will pass.
 
 We also use [Credo][] for static analysis and code consistency. You can run it
-locally via `mix credo`. [Ebert][] will also comment on any issues it finds in
-pull requests.
+locally via `mix credo`.
 
 [Credo]: https://github.com/rrrene/credo
-[Ebert]: https://ebertapp.io/github/pinterest/elixir-thrift
 [`mix format`]: https://hexdocs.pm/mix/Mix.Tasks.Format.html
 
 ## Testing

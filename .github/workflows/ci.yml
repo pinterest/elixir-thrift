@@ -1,0 +1,44 @@
+---
+name: CI
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  build:
+    name: Elixir ${{ matrix.elixir-version }}
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        elixir-version: [1.5, 1.6, 1.7, 1.8, 1.9]
+    container:
+      image: elixir:${{ matrix.elixir-version }}
+    env:
+      MIX_ENV: test
+    steps:
+    - uses: actions/checkout@v1
+    - name: Install dependencies
+      run: |
+        mix local.rebar --force
+        mix local.hex --force
+        mix deps.get
+    - name: Check format
+      if: matrix.elixir-version == '1.9'
+      run: mix format --check-formatted
+    - name: Compile
+      run: |
+        mix deps.compile
+        mix compile --force --warnings-as-errors
+    - name: Run tests
+      if: matrix.elixir-version != '1.9'
+      run: mix test
+    - name: Run tests (with coverage)
+      if: matrix.elixir-version == '1.9'
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: mix coveralls.github

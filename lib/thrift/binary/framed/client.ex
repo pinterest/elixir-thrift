@@ -21,7 +21,7 @@ defmodule Thrift.Binary.Framed.Client do
   alias Thrift.TApplicationException
   alias Thrift.Transport.SSL
 
-  @immutable_tcp_opts [active: false, packet: 4, mode: :binary]
+  @immutable_tcp_opts [active: true, packet: 4, mode: :binary]
 
   @type error :: {:error, atom} | {:error, {:exception, struct}}
   @type success :: {:ok, binary}
@@ -42,6 +42,7 @@ defmodule Thrift.Binary.Framed.Client do
           {:tcp_opts, [tcp_option]}
           | {:ssl_opts, [SSL.option()]}
           | {:gen_server_opts, [genserver_call_option]}
+          | {:reconnect, boolean}
 
   @type options :: [option]
 
@@ -55,7 +56,8 @@ defmodule Thrift.Binary.Framed.Client do
             ssl_opts: [SSL.option()],
             timeout: integer,
             sock: {:gen_tcp, :gen_tcp.socket()} | {:ssl, :ssl.sslsocket()},
-            seq_id: integer
+            seq_id: integer,
+            reconnect: boolean
           }
     defstruct host: nil,
               port: nil,
@@ -64,7 +66,8 @@ defmodule Thrift.Binary.Framed.Client do
               ssl_opts: nil,
               timeout: 5000,
               sock: nil,
-              seq_id: 0
+              seq_id: 0,
+              reconnect: false
   end
 
   require Logger
@@ -74,6 +77,7 @@ defmodule Thrift.Binary.Framed.Client do
   def init({host, port, opts}) do
     tcp_opts = Keyword.get(opts, :tcp_opts, [])
     ssl_opts = Keyword.get(opts, :ssl_opts, [])
+    reconnect = Keyword.get(opts, :reconnect, false)
 
     {timeout, tcp_opts} = Keyword.pop(tcp_opts, :timeout, 5000)
 
@@ -82,7 +86,8 @@ defmodule Thrift.Binary.Framed.Client do
       port: port,
       tcp_opts: tcp_opts,
       ssl_opts: ssl_opts,
-      timeout: timeout
+      timeout: timeout,
+      reconnect: reconnect
     }
 
     {:connect, :init, s}
@@ -124,6 +129,9 @@ defmodule Thrift.Binary.Framed.Client do
   Additionally, the options `:name`, `:debug`, and `:spawn_opt`, if specified,
   will be passed to the underlying `GenServer`. See `GenServer.start_link/3`
   for details on these options.
+
+  The `:reconnect` option if set to `true` forces client to reopen TCP connection whenever
+  it closed.
   """
   @spec start_link(String.t(), 0..65_535, options) :: GenServer.on_start()
   def start_link(host, port, opts) do
@@ -143,6 +151,9 @@ defmodule Thrift.Binary.Framed.Client do
       |> Keyword.merge(@immutable_tcp_opts)
       |> Keyword.put_new(:send_timeout, 1000)
 
+    # reset sequence id for newly created connection
+    s = %{s | seq_id: 0}
+
     case :gen_tcp.connect(host, port, opts, timeout) do
       {:ok, sock} ->
         maybe_ssl_handshake(sock, host, port, s)
@@ -158,10 +169,13 @@ defmodule Thrift.Binary.Framed.Client do
   end
 
   @impl Connection
-  def disconnect(info, %{sock: {transport, sock}}) do
+  def disconnect(info, %{sock: {transport, sock}} = s) do
     :ok = transport.close(sock)
 
     case info do
+      :reconnect ->
+        {:connect, info, %{s | sock: nil}}
+
       {:close, from} ->
         Connection.reply(from, :ok)
         {:stop, :normal, nil}
@@ -245,7 +259,7 @@ defmodule Thrift.Binary.Framed.Client do
 
   def handle_call(
         {:call, rpc_name, serialized_args, tcp_opts},
-        _,
+        _from,
         %{sock: {transport, sock}, seq_id: seq_id, timeout: default_timeout} = s
       ) do
     s = %{s | seq_id: seq_id + 1}
@@ -253,7 +267,7 @@ defmodule Thrift.Binary.Framed.Client do
     timeout = Keyword.get(tcp_opts, :timeout, default_timeout)
 
     with :ok <- transport.send(sock, [message | serialized_args]),
-         {:ok, message} <- transport.recv(sock, 0, timeout) do
+         {:ok, message} <- receive_message(transport, sock, timeout) do
       reply = deserialize_message_reply(message, rpc_name, seq_id)
       {:reply, reply, s}
     else
@@ -291,8 +305,57 @@ defmodule Thrift.Binary.Framed.Client do
     end
   end
 
+  @impl Connection
+  def handle_info({:tcp, sock, _data}, %{reconnect: true, sock: {:gen_tcp, sock}} = s) do
+    {:disconnect, :reconnect, s}
+  end
+
+  def handle_info({:tcp_closed, sock}, %{reconnect: true, sock: {:gen_tcp, sock}} = s) do
+    {:disconnect, :reconnect, s}
+  end
+
+  def handle_info({:tcp_error, sock, _error}, %{reconnect: true, sock: {:gen_tcp, sock}} = s) do
+    {:disconnect, :reconnect, s}
+  end
+
+  def handle_info({:ssl, sock, _data}, %{reconnect: true, sock: {:ssl, sock}} = s) do
+    {:disconnect, :reconnect, s}
+  end
+
+  def handle_info({:ssl_closed, sock}, %{reconnect: true, sock: {:ssl, sock}} = s) do
+    {:disconnect, :reconnect, s}
+  end
+
+  def handle_info({:ssl_error, sock, _error}, %{reconnect: true, sock: {:ssl, sock}} = s) do
+    {:disconnect, :reconnect, s}
+  end
+
+  def handle_info(_, s) do
+    {:noreply, s}
+  end
+
   def deserialize_message_reply(message, rpc_name, seq_id) do
     handle_message(Binary.deserialize(:message_begin, message), seq_id, rpc_name)
+  end
+
+  defp receive_message(:gen_tcp, sock, timeout) do
+    receive do
+      {:tcp, ^sock, data} -> {:ok, data}
+      {:tcp_closed, ^sock} -> {:error, :closed}
+      {:tcp_error, ^sock, error} -> {:error, error}
+    after
+      timeout -> {:error, :timeout}
+    end
+  end
+
+  defp receive_message(:ssl, sock, timeout) do
+    receive do
+      {:ssl, ^sock, data} -> {:ok, data}
+      {:ssl_closed, ^sock} -> {:error, :closed}
+      {:ssl_error, ^sock, error} -> {:error, error}
+    after
+      timeout -> {:error, :timeout}
+    end
   end
 
   defp handle_message({:ok, {:reply, seq_id, rpc_name, serialized_response}}, seq_id, rpc_name) do

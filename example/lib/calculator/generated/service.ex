@@ -844,8 +844,6 @@ defmodule(Calculator.Generated.Service) do
               {:reply,
                Elixir.Calculator.Generated.Service.AddResponse.BinaryProtocol.serialize(response)}
             )
-          rescue
-            []
           catch
             kind, reason ->
               formatted_exception = Exception.format(kind, reason, System.stacktrace())
@@ -887,15 +885,15 @@ defmodule(Calculator.Generated.Service) do
                  response
                )}
             )
-          rescue
-            e in Calculator.Generated.DivideByZeroError ->
+          catch
+            :error, %Calculator.Generated.DivideByZeroError{} = e ->
               response = %Calculator.Generated.Service.DivideResponse{e: e}
 
               {:reply,
                Elixir.Calculator.Generated.Service.DivideResponse.BinaryProtocol.serialize(
                  response
                )}
-          catch
+
             kind, reason ->
               formatted_exception = Exception.format(kind, reason, System.stacktrace())
 
@@ -936,8 +934,6 @@ defmodule(Calculator.Generated.Service) do
                  response
                )}
             )
-          rescue
-            []
           catch
             kind, reason ->
               formatted_exception = Exception.format(kind, reason, System.stacktrace())
@@ -979,8 +975,6 @@ defmodule(Calculator.Generated.Service) do
                  response
                )}
             )
-          rescue
-            []
           catch
             kind, reason ->
               formatted_exception = Exception.format(kind, reason, System.stacktrace())
@@ -1025,8 +1019,6 @@ defmodule(Calculator.Generated.Service) do
                  response
                )}
             )
-          rescue
-            []
           catch
             kind, reason ->
               formatted_exception = Exception.format(kind, reason, System.stacktrace())

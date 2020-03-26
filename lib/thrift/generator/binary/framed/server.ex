@@ -90,8 +90,9 @@ defmodule Thrift.Generator.Binary.Framed.Server do
     wrap_with_try_catch(body, function, file_group, response_module)
   end
 
-  defp wrap_with_try_catch(quoted_handler, function, file_group, response_module) do
-    rescue_blocks =
+  defp wrap_with_try_catch(body, function, file_group, response_module) do
+    # Quoted clauses for exception types defined by the schema.
+    exception_clauses =
       Enum.flat_map(function.exceptions, fn
         exc ->
           resolved = FileGroup.resolve(file_group, exc)
@@ -100,16 +101,15 @@ defmodule Thrift.Generator.Binary.Framed.Server do
           field_setter = quote do: {unquote(exc.name), unquote(error_var)}
 
           quote do
-            unquote(error_var) in unquote(dest_module) ->
+            :error, %unquote(dest_module){} = unquote(error_var) ->
               response = %unquote(response_module){unquote(field_setter)}
               {:reply, unquote(response_module).BinaryProtocol.serialize(response)}
           end
       end)
 
-    quote do
-      try do
-        unquote(quoted_handler)
-      catch
+    # Quoted clauses for our standard catch clauses (common to all functions).
+    catch_clauses =
+      quote do
         kind, reason ->
           formatted_exception = Exception.format(kind, reason, System.stacktrace())
           Logger.error("Exception not defined in thrift spec was thrown: #{formatted_exception}")
@@ -121,8 +121,13 @@ defmodule Thrift.Generator.Binary.Framed.Server do
             )
 
           {:server_error, error}
-      rescue
-        unquote(rescue_blocks)
+      end
+
+    quote do
+      try do
+        unquote(body)
+      catch
+        unquote(Enum.concat(exception_clauses, catch_clauses))
       end
     end
   end

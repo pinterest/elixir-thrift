@@ -25,13 +25,19 @@ defmodule Thrift.Transport.SSL do
   @spec configuration([option]) ::
           {:required | :optional, [:ssl.ssl_option()]} | nil | {:error, Exception.t()}
   def configuration(opts) do
-    case Keyword.pop(opts, :enabled, false) do
-      {true, opts} ->
-        opts
-        |> handle_configure()
-        |> handle_optional()
+    {enabled, opts} = Keyword.pop(opts, :enabled, false)
 
-      {false, _} ->
+    case enabled do
+      true ->
+        case handle_configure(opts) do
+          {:ok, opts} ->
+            handle_optional(opts)
+
+          {:error, %_exception{}} = error ->
+            error
+        end
+
+      false ->
         nil
     end
   end
@@ -43,25 +49,22 @@ defmodule Thrift.Transport.SSL do
       {:ok, extra_opts} ->
         {:ok, extra_opts ++ opts}
 
-      {:error, _} = error ->
+      {:error, %_exception{}} = error ->
         error
     end
   end
 
-  defp handle_optional({:ok, opts}) do
-    case Keyword.pop(opts, :optional, false) do
-      {true, new_opts} ->
-        {:optional, new_opts}
+  defp handle_optional(opts) do
+    {optional, opts} = Keyword.pop(opts, :optional, false)
 
-      {false, new_opts} ->
-        {:required, new_opts}
+    case optional do
+      true ->
+        {:optional, opts}
 
-      {other, _new_opts} ->
-        raise "ssl_opts :optional flag must be a boolean, #{inspect(other)} was found instead."
+      false ->
+        {:required, opts}
     end
   end
-
-  defp handle_optional({:error, _} = error), do: error
 
   defp apply_configure({module, fun, args}), do: apply(module, fun, args)
   defp apply_configure(fun) when is_function(fun, 0), do: fun.()

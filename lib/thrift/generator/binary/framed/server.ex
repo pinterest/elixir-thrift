@@ -36,13 +36,8 @@ defmodule Thrift.Generator.Binary.Framed.Server do
     fn_name = Atom.to_string(function.name)
     handler_fn_name = Utils.underscore(function.name)
     response_module = Module.concat(service_module, Service.module_name(function, :response))
-
-    body =
-      quote do
-        rsp = handler_module.unquote(handler_fn_name)()
-        unquote(build_responder(function.return_type, response_module))
-      end
-
+    handler_args = []
+    body = build_responder(function.return_type, handler_fn_name, handler_args, response_module)
     handler = wrap_with_try_catch(body, function, file_group, response_module)
 
     quote do
@@ -80,13 +75,7 @@ defmodule Thrift.Generator.Binary.Framed.Server do
   defp build_handler_call(file_group, function, response_module) do
     handler_fn_name = Utils.underscore(function.name)
     handler_args = Enum.map(function.params, &Macro.var(&1.name, nil))
-
-    body =
-      quote do
-        rsp = handler_module.unquote(handler_fn_name)(unquote_splicing(handler_args))
-        unquote(build_responder(function.return_type, response_module))
-      end
-
+    body = build_responder(function.return_type, handler_fn_name, handler_args, response_module)
     wrap_with_try_catch(body, function, file_group, response_module)
   end
 
@@ -132,16 +121,17 @@ defmodule Thrift.Generator.Binary.Framed.Server do
     end
   end
 
-  defp build_responder(:void, _) do
+  defp build_responder(:void, handler_fn_name, handler_args, _response_module) do
     quote do
-      _ = rsp
+      _result = handler_module.unquote(handler_fn_name)(unquote_splicing(handler_args))
       :noreply
     end
   end
 
-  defp build_responder(_, response_module) do
+  defp build_responder(_, handler_fn_name, handler_args, response_module) do
     quote do
-      response = %unquote(response_module){success: rsp}
+      result = handler_module.unquote(handler_fn_name)(unquote_splicing(handler_args))
+      response = %unquote(response_module){success: result}
       {:reply, unquote(response_module).BinaryProtocol.serialize(response)}
     end
   end

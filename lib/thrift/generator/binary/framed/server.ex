@@ -59,7 +59,7 @@ defmodule Thrift.Generator.Binary.Framed.Server do
 
     quote do
       def handle_thrift(unquote(fn_name), binary_data, handler_module) do
-        case unquote(args_module).BinaryProtocol.deserialize(binary_data) do
+        case unquote(Module.concat(args_module, BinaryProtocol)).deserialize(binary_data) do
           {%unquote(args_module){unquote_splicing(struct_matches)}, ""} ->
             unquote(build_handler_call(file_group, function, response_module))
 
@@ -92,7 +92,9 @@ defmodule Thrift.Generator.Binary.Framed.Server do
           quote do
             :error, %unquote(dest_module){} = unquote(error_var) ->
               response = %unquote(response_module){unquote(field_setter)}
-              {:reply, unquote(response_module).BinaryProtocol.serialize(response)}
+
+              {:reply,
+               unquote(Module.concat(response_module, BinaryProtocol)).serialize(response)}
           end
       end)
 
@@ -132,7 +134,7 @@ defmodule Thrift.Generator.Binary.Framed.Server do
     quote do
       result = handler_module.unquote(handler_fn_name)(unquote_splicing(handler_args))
       response = %unquote(response_module){success: result}
-      {:reply, unquote(response_module).BinaryProtocol.serialize(response)}
+      {:reply, unquote(Module.concat(response_module, BinaryProtocol)).serialize(response)}
     end
   end
 end

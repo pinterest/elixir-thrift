@@ -222,7 +222,7 @@ defmodule Thrift.Generator.StructBinaryProtocol do
              <<unquote(Type.struct()), unquote(field.id)::16-signed, rest::binary>>,
              acc
            ) do
-        case unquote(dest_module).BinaryProtocol.deserialize(rest) do
+        case unquote(Module.concat(dest_module, BinaryProtocol)).deserialize(rest) do
           {value, rest} ->
             unquote(name)(rest, %{acc | unquote(field.name) => value})
 
@@ -241,7 +241,7 @@ defmodule Thrift.Generator.StructBinaryProtocol do
              <<unquote(Type.struct()), unquote(field.id)::16-signed, rest::binary>>,
              acc
            ) do
-        case unquote(dest_module).BinaryProtocol.deserialize(rest) do
+        case unquote(Module.concat(dest_module, BinaryProtocol)).deserialize(rest) do
           {value, rest} ->
             unquote(name)(rest, %{acc | unquote(field.name) => value})
 
@@ -260,7 +260,7 @@ defmodule Thrift.Generator.StructBinaryProtocol do
              <<unquote(Type.struct()), unquote(field.id)::16-signed, rest::binary>>,
              acc
            ) do
-        case unquote(dest_module).BinaryProtocol.deserialize(rest) do
+        case unquote(Module.concat(dest_module, BinaryProtocol)).deserialize(rest) do
           {value, rest} ->
             unquote(name)(rest, %{acc | unquote(field.name) => value})
 
@@ -435,7 +435,7 @@ defmodule Thrift.Generator.StructBinaryProtocol do
 
     quote do
       defp unquote(key_name)(<<rest::binary>>, stack) do
-        case unquote(dest_module).BinaryProtocol.deserialize(rest) do
+        case unquote(Module.concat(dest_module, BinaryProtocol)).deserialize(rest) do
           {key, rest} ->
             unquote(value_name)(rest, key, stack)
 
@@ -451,7 +451,7 @@ defmodule Thrift.Generator.StructBinaryProtocol do
 
     quote do
       defp unquote(key_name)(<<rest::binary>>, stack) do
-        case unquote(dest_module).BinaryProtocol.deserialize(rest) do
+        case unquote(Module.concat(dest_module, BinaryProtocol)).deserialize(rest) do
           {key, rest} ->
             unquote(value_name)(rest, key, stack)
 
@@ -467,7 +467,7 @@ defmodule Thrift.Generator.StructBinaryProtocol do
 
     quote do
       defp unquote(key_name)(<<rest::binary>>, stack) do
-        case unquote(dest_module).BinaryProtocol.deserialize(rest) do
+        case unquote(Module.concat(dest_module, BinaryProtocol)).deserialize(rest) do
           {key, rest} ->
             unquote(value_name)(rest, key, stack)
 
@@ -655,7 +655,7 @@ defmodule Thrift.Generator.StructBinaryProtocol do
 
     quote do
       defp unquote(value_name)(<<rest::binary>>, key, [map, remaining | stack]) do
-        case unquote(dest_module).BinaryProtocol.deserialize(rest) do
+        case unquote(Module.concat(dest_module, BinaryProtocol)).deserialize(rest) do
           {value, rest} ->
             unquote(key_name)(rest, [Map.put(map, key, value), remaining - 1 | stack])
 
@@ -671,7 +671,7 @@ defmodule Thrift.Generator.StructBinaryProtocol do
 
     quote do
       defp unquote(value_name)(<<rest::binary>>, key, [map, remaining | stack]) do
-        case unquote(dest_module).BinaryProtocol.deserialize(rest) do
+        case unquote(Module.concat(dest_module, BinaryProtocol)).deserialize(rest) do
           {value, rest} ->
             unquote(key_name)(rest, [Map.put(map, key, value), remaining - 1 | stack])
 
@@ -687,7 +687,7 @@ defmodule Thrift.Generator.StructBinaryProtocol do
 
     quote do
       defp unquote(value_name)(<<rest::binary>>, key, [map, remaining | stack]) do
-        case unquote(dest_module).BinaryProtocol.deserialize(rest) do
+        case unquote(Module.concat(dest_module, BinaryProtocol)).deserialize(rest) do
           {value, rest} ->
             unquote(key_name)(rest, [Map.put(map, key, value), remaining - 1 | stack])
 
@@ -865,7 +865,7 @@ defmodule Thrift.Generator.StructBinaryProtocol do
 
     quote do
       defp unquote(name)(<<rest::binary>>, [list, remaining | stack]) do
-        case unquote(dest_module).BinaryProtocol.deserialize(rest) do
+        case unquote(Module.concat(dest_module, BinaryProtocol)).deserialize(rest) do
           {element, rest} ->
             unquote(name)(rest, [[element | list], remaining - 1 | stack])
 
@@ -881,7 +881,7 @@ defmodule Thrift.Generator.StructBinaryProtocol do
 
     quote do
       defp unquote(name)(<<rest::binary>>, [list, remaining | stack]) do
-        case unquote(dest_module).BinaryProtocol.deserialize(rest) do
+        case unquote(Module.concat(dest_module, BinaryProtocol)).deserialize(rest) do
           {element, rest} ->
             unquote(name)(rest, [[element | list], remaining - 1 | stack])
 
@@ -897,7 +897,7 @@ defmodule Thrift.Generator.StructBinaryProtocol do
 
     quote do
       defp unquote(name)(<<rest::binary>>, [list, remaining | stack]) do
-        case unquote(dest_module).BinaryProtocol.deserialize(rest) do
+        case unquote(Module.concat(dest_module, BinaryProtocol)).deserialize(rest) do
           {element, rest} ->
             unquote(name)(rest, [[element | list], remaining - 1 | stack])
 

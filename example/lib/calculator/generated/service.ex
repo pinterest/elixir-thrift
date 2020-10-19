@@ -307,7 +307,7 @@ defmodule(Calculator.Generated.Service) do
       end
 
       defp(deserialize(<<12, 1::16-signed, rest::binary>>, acc)) do
-        case(Elixir.Calculator.Generated.Vector.BinaryProtocol.deserialize(rest)) do
+        case(Calculator.Generated.Vector.BinaryProtocol.deserialize(rest)) do
           {value, rest} ->
             deserialize(rest, %{acc | left: value})
 
@@ -317,7 +317,7 @@ defmodule(Calculator.Generated.Service) do
       end
 
       defp(deserialize(<<12, 2::16-signed, rest::binary>>, acc)) do
-        case(Elixir.Calculator.Generated.Vector.BinaryProtocol.deserialize(rest)) do
+        case(Calculator.Generated.Vector.BinaryProtocol.deserialize(rest)) do
           {value, rest} ->
             deserialize(rest, %{acc | right: value})
 
@@ -464,7 +464,7 @@ defmodule(Calculator.Generated.Service) do
       end
 
       defp(deserialize(<<12, 1::16-signed, rest::binary>>, acc)) do
-        case(Elixir.Calculator.Generated.DivideByZeroError.BinaryProtocol.deserialize(rest)) do
+        case(Calculator.Generated.DivideByZeroError.BinaryProtocol.deserialize(rest)) do
           {value, rest} ->
             deserialize(rest, %{acc | e: value})
 
@@ -654,7 +654,7 @@ defmodule(Calculator.Generated.Service) do
       end
 
       defp(deserialize(<<12, 0::16-signed, rest::binary>>, acc)) do
-        case(Elixir.Calculator.Generated.VectorProductResult.BinaryProtocol.deserialize(rest)) do
+        case(Calculator.Generated.VectorProductResult.BinaryProtocol.deserialize(rest)) do
           {value, rest} ->
             deserialize(rest, %{acc | success: value})
 
@@ -833,14 +833,12 @@ defmodule(Calculator.Generated.Service) do
     end
 
     def(handle_thrift("add", binary_data, handler_module)) do
-      case(Elixir.Calculator.Generated.Service.AddArgs.BinaryProtocol.deserialize(binary_data)) do
+      case(Calculator.Generated.Service.AddArgs.BinaryProtocol.deserialize(binary_data)) do
         {%Calculator.Generated.Service.AddArgs{left: left, right: right}, ""} ->
           try do
             result = handler_module.add(left, right)
             response = %Calculator.Generated.Service.AddResponse{success: result}
-
-            {:reply,
-             Elixir.Calculator.Generated.Service.AddResponse.BinaryProtocol.serialize(response)}
+            {:reply, Calculator.Generated.Service.AddResponse.BinaryProtocol.serialize(response)}
           catch
             kind, reason ->
               formatted_exception = Exception.format(kind, reason, System.stacktrace())
@@ -867,24 +865,20 @@ defmodule(Calculator.Generated.Service) do
     end
 
     def(handle_thrift("divide", binary_data, handler_module)) do
-      case(
-        Elixir.Calculator.Generated.Service.DivideArgs.BinaryProtocol.deserialize(binary_data)
-      ) do
+      case(Calculator.Generated.Service.DivideArgs.BinaryProtocol.deserialize(binary_data)) do
         {%Calculator.Generated.Service.DivideArgs{left: left, right: right}, ""} ->
           try do
             result = handler_module.divide(left, right)
             response = %Calculator.Generated.Service.DivideResponse{success: result}
 
             {:reply,
-             Elixir.Calculator.Generated.Service.DivideResponse.BinaryProtocol.serialize(response)}
+             Calculator.Generated.Service.DivideResponse.BinaryProtocol.serialize(response)}
           catch
             :error, %Calculator.Generated.DivideByZeroError{} = e ->
               response = %Calculator.Generated.Service.DivideResponse{e: e}
 
               {:reply,
-               Elixir.Calculator.Generated.Service.DivideResponse.BinaryProtocol.serialize(
-                 response
-               )}
+               Calculator.Generated.Service.DivideResponse.BinaryProtocol.serialize(response)}
 
             kind, reason ->
               formatted_exception = Exception.format(kind, reason, System.stacktrace())
@@ -911,18 +905,14 @@ defmodule(Calculator.Generated.Service) do
     end
 
     def(handle_thrift("multiply", binary_data, handler_module)) do
-      case(
-        Elixir.Calculator.Generated.Service.MultiplyArgs.BinaryProtocol.deserialize(binary_data)
-      ) do
+      case(Calculator.Generated.Service.MultiplyArgs.BinaryProtocol.deserialize(binary_data)) do
         {%Calculator.Generated.Service.MultiplyArgs{left: left, right: right}, ""} ->
           try do
             result = handler_module.multiply(left, right)
             response = %Calculator.Generated.Service.MultiplyResponse{success: result}
 
             {:reply,
-             Elixir.Calculator.Generated.Service.MultiplyResponse.BinaryProtocol.serialize(
-               response
-             )}
+             Calculator.Generated.Service.MultiplyResponse.BinaryProtocol.serialize(response)}
           catch
             kind, reason ->
               formatted_exception = Exception.format(kind, reason, System.stacktrace())
@@ -949,18 +939,14 @@ defmodule(Calculator.Generated.Service) do
     end
 
     def(handle_thrift("subtract", binary_data, handler_module)) do
-      case(
-        Elixir.Calculator.Generated.Service.SubtractArgs.BinaryProtocol.deserialize(binary_data)
-      ) do
+      case(Calculator.Generated.Service.SubtractArgs.BinaryProtocol.deserialize(binary_data)) do
         {%Calculator.Generated.Service.SubtractArgs{left: left, right: right}, ""} ->
           try do
             result = handler_module.subtract(left, right)
             response = %Calculator.Generated.Service.SubtractResponse{success: result}
 
             {:reply,
-             Elixir.Calculator.Generated.Service.SubtractResponse.BinaryProtocol.serialize(
-               response
-             )}
+             Calculator.Generated.Service.SubtractResponse.BinaryProtocol.serialize(response)}
           catch
             kind, reason ->
               formatted_exception = Exception.format(kind, reason, System.stacktrace())
@@ -988,9 +974,7 @@ defmodule(Calculator.Generated.Service) do
 
     def(handle_thrift("vectorProduct", binary_data, handler_module)) do
       case(
-        Elixir.Calculator.Generated.Service.VectorProductArgs.BinaryProtocol.deserialize(
-          binary_data
-        )
+        Calculator.Generated.Service.VectorProductArgs.BinaryProtocol.deserialize(binary_data)
       ) do
         {%Calculator.Generated.Service.VectorProductArgs{left: left, right: right, type: type},
          ""} ->
@@ -999,9 +983,7 @@ defmodule(Calculator.Generated.Service) do
             response = %Calculator.Generated.Service.VectorProductResponse{success: result}
 
             {:reply,
-             Elixir.Calculator.Generated.Service.VectorProductResponse.BinaryProtocol.serialize(
-               response
-             )}
+             Calculator.Generated.Service.VectorProductResponse.BinaryProtocol.serialize(response)}
           catch
             kind, reason ->
               formatted_exception = Exception.format(kind, reason, System.stacktrace())

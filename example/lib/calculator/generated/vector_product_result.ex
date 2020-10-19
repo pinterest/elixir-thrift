@@ -36,7 +36,7 @@ defmodule(Calculator.Generated.VectorProductResult) do
     end
 
     defp(deserialize(<<12, 2::16-signed, rest::binary>>, acc)) do
-      case(Elixir.Calculator.Generated.Vector.BinaryProtocol.deserialize(rest)) do
+      case(Calculator.Generated.Vector.BinaryProtocol.deserialize(rest)) do
         {value, rest} ->
           deserialize(rest, %{acc | vector: value})
 

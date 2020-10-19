@@ -8,28 +8,30 @@ defmodule(Calculator.Generated.VectorProductType) do
     2
   end
 
-  def(value_to_name(1)) do
-    {:ok, :dot_product}
-  end
-
-  def(value_to_name(2)) do
-    {:ok, :cross_product}
-  end
-
   def(value_to_name(v)) do
-    {:error, {:invalid_enum_value, v}}
-  end
+    case(v) do
+      1 ->
+        {:ok, :dot_product}
 
-  def(name_to_value(:dot_product)) do
-    {:ok, 1}
-  end
+      2 ->
+        {:ok, :cross_product}
 
-  def(name_to_value(:cross_product)) do
-    {:ok, 2}
+      _ ->
+        {:error, {:invalid_enum_value, v}}
+    end
   end
 
   def(name_to_value(k)) do
-    {:error, {:invalid_enum_name, k}}
+    case(k) do
+      :dot_product ->
+        {:ok, 1}
+
+      :cross_product ->
+        {:ok, 2}
+
+      _ ->
+        {:error, {:invalid_enum_name, k}}
+    end
   end
 
   def(value_to_name!(value)) do
@@ -50,27 +52,29 @@ defmodule(Calculator.Generated.VectorProductType) do
     [1, 2]
   end
 
-  def(member?(1)) do
-    true
+  def(member?(v)) do
+    case(v) do
+      1 ->
+        true
+
+      2 ->
+        true
+
+      _ ->
+        false
+    end
   end
 
-  def(member?(2)) do
-    true
-  end
+  def(name?(k)) do
+    case(k) do
+      :dot_product ->
+        true
 
-  def(member?(_)) do
-    false
-  end
+      :cross_product ->
+        true
 
-  def(name?(:dot_product)) do
-    true
-  end
-
-  def(name?(:cross_product)) do
-    true
-  end
-
-  def(name?(_)) do
-    false
+      _ ->
+        false
+    end
   end
 end

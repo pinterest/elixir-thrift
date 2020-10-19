@@ -20,36 +20,36 @@ defmodule Thrift.Generator.EnumGenerator do
       end)
 
     member_defs =
-      Enum.map(enum.values, fn {_key, value} ->
+      Enum.flat_map(enum.values, fn {_key, value} ->
         quote do
-          def member?(unquote(value)), do: true
+          unquote(value) -> true
         end
       end)
 
     name_member_defs =
-      Enum.map(enum.values, fn {key, _value} ->
+      Enum.flat_map(enum.values, fn {key, _value} ->
         enum_name = to_name(key)
 
         quote do
-          def name?(unquote(enum_name)), do: true
+          unquote(enum_name) -> true
         end
       end)
 
     value_to_name_defs =
-      Enum.map(enum.values, fn {key, value} ->
+      Enum.flat_map(enum.values, fn {key, value} ->
         enum_name = to_name(key)
 
         quote do
-          def value_to_name(unquote(value)), do: {:ok, unquote(enum_name)}
+          unquote(value) -> {:ok, unquote(enum_name)}
         end
       end)
 
     name_to_value_defs =
-      Enum.map(enum.values, fn {key, value} ->
+      Enum.flat_map(enum.values, fn {key, value} ->
         enum_name = to_name(key)
 
         quote do
-          def name_to_value(unquote(enum_name)), do: {:ok, unquote(value)}
+          unquote(enum_name) -> {:ok, unquote(value)}
         end
       end)
 
@@ -63,11 +63,27 @@ defmodule Thrift.Generator.EnumGenerator do
         @moduledoc false
         unquote_splicing(macro_defs)
 
-        unquote_splicing(value_to_name_defs)
-        def value_to_name(v), do: {:error, {:invalid_enum_value, v}}
+        def value_to_name(v) do
+          case v do
+            unquote(
+              value_to_name_defs ++
+                quote do
+                  _ -> {:error, {:invalid_enum_value, v}}
+                end
+            )
+          end
+        end
 
-        unquote_splicing(name_to_value_defs)
-        def name_to_value(k), do: {:error, {:invalid_enum_name, k}}
+        def name_to_value(k) do
+          case k do
+            unquote(
+              name_to_value_defs ++
+                quote do
+                  _ -> {:error, {:invalid_enum_name, k}}
+                end
+            )
+          end
+        end
 
         def value_to_name!(value) do
           {:ok, name} = value_to_name(value)
@@ -82,11 +98,27 @@ defmodule Thrift.Generator.EnumGenerator do
         def meta(:names), do: unquote(names)
         def meta(:values), do: unquote(Keyword.values(enum.values))
 
-        unquote_splicing(member_defs)
-        def member?(_), do: false
+        def member?(v) do
+          case v do
+            unquote(
+              member_defs ++
+                quote do
+                  _ -> false
+                end
+            )
+          end
+        end
 
-        unquote_splicing(name_member_defs)
-        def name?(_), do: false
+        def name?(k) do
+          case k do
+            unquote(
+              name_member_defs ++
+                quote do
+                  _ -> false
+                end
+            )
+          end
+        end
       end
     end
   end

@@ -1,5 +1,6 @@
 defmodule Servers.Binary.Framed.IntegrationTest do
   use ThriftTestCase
+  use StubStats
 
   @thrift_file name: "server_test.thrift",
                contents: """
@@ -90,6 +91,8 @@ defmodule Servers.Binary.Framed.IntegrationTest do
     {:ok, _} = Server.start_link(mod_name, 0, [])
     server_port = :ranch.get_port(mod_name)
 
+    {:ok, _} = start_supervised({StubStats, handler_module: mod_name})
+
     {:ok, handler_name: mod_name, port: server_port}
   end
 
@@ -107,16 +110,30 @@ defmodule Servers.Binary.Framed.IntegrationTest do
 
     {:ok, client} = Client.start_link("localhost", port, name: client_name)
 
+    :ok = reset_stats()
+
     {:ok, client: client, client_name: client_name}
   end
 
   thrift_test "it can return a simple boolean value", ctx do
     assert {:ok, true} == Client.ping(ctx.client)
+
+    assert %{result: "success"} in stats(:receive_message)
+    assert %{method: "ping", result: "success"} in stats(:call)
+    assert %{result: "success"} in stats(:send_reply)
+    assert %{method: "ping"} in stats(:request_size)
+    assert %{method: "ping", result: "success"} in stats(:response_size)
   end
 
   thrift_test "it can throw checked exceptions", ctx do
     expected_exception = TestException.exception(message: "Oh noes!", code: 400)
     assert {:error, {:exception, expected_exception}} == Client.checked_exception(ctx.client)
+
+    assert %{result: "success"} in stats(:receive_message)
+    assert %{method: "checked_exception", result: "success"} in stats(:call)
+    assert %{result: "success"} in stats(:send_reply)
+    assert %{method: "checked_exception"} in stats(:request_size)
+    assert %{method: "checked_exception", result: "success"} in stats(:response_size)
   end
 
   thrift_test "it can throw many checked exceptions", ctx do
@@ -140,6 +157,9 @@ defmodule Servers.Binary.Framed.IntegrationTest do
 
   thrift_test "it can return nothing", ctx do
     {:ok, nil} = Client.returns_nothing(ctx.client)
+
+    assert %{method: "returns_nothing", result: "success"} in stats(:call)
+    assert %{result: "success"} in stats(:send_reply)
   end
 
   thrift_test "it can return structs", ctx do

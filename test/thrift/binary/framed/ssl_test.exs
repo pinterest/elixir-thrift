@@ -1,5 +1,6 @@
 defmodule Servers.Binary.Framed.SSLTest do
   use ThriftTestCase
+  use StubStats
 
   @thrift_file name: "ssl_test.thrift",
                contents: """
@@ -37,6 +38,8 @@ defmodule Servers.Binary.Framed.SSLTest do
 
     server_port = :ranch.get_port(ctx.test)
 
+    {:ok, _} = start_supervised({StubStats, handler_module: ctx[:handler_name]})
+
     {:ok, port: server_port}
   end
 
@@ -50,6 +53,8 @@ defmodule Servers.Binary.Framed.SSLTest do
       )
 
     server_port = :ranch.get_port(ctx.test)
+
+    {:ok, _} = start_supervised({StubStats, handler_module: ctx[:handler_name]})
 
     {:ok, port: server_port}
   end
@@ -73,12 +78,18 @@ defmodule Servers.Binary.Framed.SSLTest do
     @tag ssl_opts: []
     thrift_test "it can return a simple boolean value", ctx do
       assert {:ok, true} == Client.ping(ctx.ssl_client)
+
+      assert %{result: "ssl"} in stats(:peek_first_byte)
+      assert %{result: "success"} in stats(:ssl_handshake)
     end
 
     @tag ssl_opts: [configure: {__MODULE__, :test_configure, []}]
     thrift_test "it can handle live configuration", ctx do
       assert {:ok, true} == Client.ping(ctx.ssl_client)
       assert_received :configured
+
+      assert %{result: "ssl"} in stats(:peek_first_byte)
+      assert %{result: "success"} in stats(:ssl_handshake)
     end
 
     @tag ssl_opts: []
@@ -86,6 +97,8 @@ defmodule Servers.Binary.Framed.SSLTest do
       Process.flag(:trap_exit, true)
       assert {:error, :closed} == Client.ping(client)
       assert_receive {:EXIT, ^client, {:error, :closed}}
+
+      assert %{result: "tcp_rejected"} in stats(:peek_first_byte)
     end
   end
 
@@ -95,11 +108,16 @@ defmodule Servers.Binary.Framed.SSLTest do
     @tag ssl_opts: []
     thrift_test "ssl client can receive a simple boolean value", ctx do
       assert {:ok, true} == Client.ping(ctx.ssl_client)
+
+      assert %{result: "ssl"} in stats(:peek_first_byte)
+      assert %{result: "success"} in stats(:ssl_handshake)
     end
 
     @tag ssl_opts: []
     thrift_test "plain client can receive a simple boolean value", ctx do
       assert {:ok, true} == Client.ping(ctx.plain_client)
+
+      assert %{result: "tcp"} in stats(:peek_first_byte)
     end
   end
 

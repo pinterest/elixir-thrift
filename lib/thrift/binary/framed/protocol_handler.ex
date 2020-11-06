@@ -280,24 +280,44 @@ defmodule Thrift.Binary.Framed.ProtocolHandler do
   defp start_span(metric_name, %__MODULE__{handler_module: handler_module}, tags \\ %{}) do
     event_name = [Thrift, handler_module, metric_name]
     time = System.monotonic_time()
-    metadata = Map.new(tags)
+    metadata = tags_to_metadata(tags)
     {:span, event_name, metadata, time}
   end
 
   defp finish_span({:span, event_name, metadata, time}, tags) do
     duration = System.monotonic_time() - time
-    :telemetry.execute(event_name, %{duration: duration}, add_tags(metadata, tags))
+    metadata = tags_to_metadata(tags, metadata)
+    :telemetry.execute(event_name, %{duration: duration}, metadata)
   end
 
   defp gauge(metric_name, value, %__MODULE__{handler_module: handler_module}, tags)
        when is_number(value) do
     event_name = [Thrift, handler_module, metric_name]
-    :telemetry.execute(event_name, %{value: value}, Map.new(tags))
+    metadata = tags_to_metadata(tags)
+    :telemetry.execute(event_name, %{value: value}, metadata)
   end
 
-  defp add_tags(metadata, tags) do
+  # Check that tags are simple and well-formed for use in systems like
+  # OpenTSDB. This check is only done in test due to the performance cost.
+  if Mix.env() == :test do
+    defp validate_tag(tag) when is_atom(tag) do
+      String.to_atom(validate_tag(Atom.to_string(tag)))
+    end
+
+    defp validate_tag(tag) when is_binary(tag) do
+      false = tag =~ ~r{[^a-zA-Z_]}
+      tag
+    end
+  else
+    defmacrop validate_tag(tag) do
+      tag
+    end
+  end
+
+  defp tags_to_metadata(tags, metadata \\ %{}) do
     Enum.reduce(tags, metadata, fn
-      {k, v}, metadata -> Map.put(metadata, k, v)
+      {k, v}, metadata ->
+        Map.put(metadata, validate_tag(k), validate_tag(v))
     end)
   end
 

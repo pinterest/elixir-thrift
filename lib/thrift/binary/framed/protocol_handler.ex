@@ -4,6 +4,7 @@ defmodule Thrift.Binary.Framed.ProtocolHandler do
   @default_timeout 20_000
   @ssl_header_byte 0x16
   @tcp_header_byte 0x00
+  @http_header_byte 0x47
 
   @typedoc "A module that implements the :ranch_transport behaviour"
   @type transport :: :ranch_tcp
@@ -121,6 +122,12 @@ defmodule Thrift.Binary.Framed.ProtocolHandler do
         finish_span(span, result: "tcp")
         receive_message(state)
 
+      {:ok, @http_header_byte} ->
+        finish_span(span, result: "http")
+        :ok = :inet.setopts(socket, packet: :raw)
+        :gen_tcp.send(socket, http_reply(optional, state))
+        close(state)
+
       {:ok, _other_byte} ->
         Logger.error(fn ->
           format_log("peek_first_byte", "unknown protocol", state)
@@ -141,6 +148,25 @@ defmodule Thrift.Binary.Framed.ProtocolHandler do
         finish_span(span, result: "error")
         close(state)
     end
+  end
+
+  defp http_reply(optional, %__MODULE__{} = state) do
+    message = """
+    This is a Thrift server.
+
+    ssl=#{optional}
+    server_module=#{inspect(state.server_module)}
+    handler_module=#{inspect(state.handler_module)}
+    """
+
+    [
+      "HTTP/1.1 200 OK",
+      "Content-Type: text/plain; charset=utf-8",
+      "Content-Length: #{byte_size(message)}",
+      "",
+      message
+    ]
+    |> Enum.join("\r\n")
   end
 
   defp ssl_handshake(

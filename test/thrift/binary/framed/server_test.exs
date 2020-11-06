@@ -197,4 +197,39 @@ defmodule Servers.Binary.Framed.IntegrationTest do
   thrift_test "client methods can be called by name instead of pid", %{client_name: name} do
     assert {:ok, true} == Client.ping(name)
   end
+
+  thrift_test "HTTP health check", %{port: port} do
+    assert health_check(port) == """
+           HTTP/1.1 200 OK\r
+           Content-Type: text/plain; charset=utf-8\r
+           Content-Length: 194\r
+           \r
+           This is a Thrift server.
+
+           ssl=disabled
+           server_module=Servers.Binary.Framed.IntegrationTest.ServerTest.Binary.Framed.Server
+           handler_module=Servers.Binary.Framed.IntegrationTest.ServerTestHandler
+           """
+  end
+
+  def health_check(port) do
+    Stream.resource(
+      fn ->
+        {:ok, sock} = :gen_tcp.connect({127, 0, 0, 1}, port, [:binary, active: false])
+        :ok = :gen_tcp.send(sock, "GET / HTTP/1.1\r\n\r\n")
+        sock
+      end,
+      fn sock ->
+        case :gen_tcp.recv(sock, 0) do
+          {:ok, bytes} -> {[bytes], sock}
+          {:error, :closed} -> {:halt, sock}
+        end
+      end,
+      fn sock ->
+        :gen_tcp.close(sock)
+      end
+    )
+    |> Enum.to_list()
+    |> IO.iodata_to_binary()
+  end
 end

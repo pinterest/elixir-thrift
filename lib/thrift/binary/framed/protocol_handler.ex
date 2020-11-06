@@ -3,6 +3,7 @@ defmodule Thrift.Binary.Framed.ProtocolHandler do
 
   @default_timeout 20_000
   @ssl_header_byte 0x16
+  @tcp_header_byte 0x00
 
   @typedoc "A module that implements the :ranch_transport behaviour"
   @type transport :: :ranch_tcp
@@ -74,7 +75,7 @@ defmodule Thrift.Binary.Framed.ProtocolHandler do
         close(state)
 
       nil ->
-        receive_message(state)
+        peek_first_byte(:disabled, nil, state)
 
       {optional, ssl_opts} when optional in [:required, :optional] ->
         peek_first_byte(optional, ssl_opts, state)
@@ -96,11 +97,19 @@ defmodule Thrift.Binary.Framed.ProtocolHandler do
       {:ok, first_byte}
     end
     |> case do
-      {:ok, @ssl_header_byte} ->
+      {:ok, @ssl_header_byte} when optional in [:required, :optional] ->
         finish_span(span, result: "ssl")
         ssl_handshake(ssl_opts, state)
 
-      {:ok, _non_ssl_header_byte} when optional == :required ->
+      {:ok, @ssl_header_byte} when optional == :disabled ->
+        Logger.error(fn ->
+          format_log("peek_first_byte", "SSL disabled", state)
+        end)
+
+        finish_span(span, result: "ssl_rejected")
+        close(state)
+
+      {:ok, @tcp_header_byte} when optional == :required ->
         Logger.error(fn ->
           format_log("peek_first_byte", "SSL required", state)
         end)
@@ -108,9 +117,17 @@ defmodule Thrift.Binary.Framed.ProtocolHandler do
         finish_span(span, result: "tcp_rejected")
         close(state)
 
-      {:ok, _non_ssl_header_byte} when optional == :optional ->
+      {:ok, @tcp_header_byte} when optional in [:disabled, :optional] ->
         finish_span(span, result: "tcp")
         receive_message(state)
+
+      {:ok, _other_byte} ->
+        Logger.error(fn ->
+          format_log("peek_first_byte", "unknown protocol", state)
+        end)
+
+        finish_span(span, result: "unknown_protocol")
+        close(state)
 
       {:error, closed} when closed in [:closed, :econnreset, :timeout] ->
         finish_span(span, result: to_string(closed))

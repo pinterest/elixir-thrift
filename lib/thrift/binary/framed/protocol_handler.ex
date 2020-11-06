@@ -224,7 +224,8 @@ defmodule Thrift.Binary.Framed.ProtocolHandler do
       {:server_error, %TApplicationException{} = exc} ->
         finish_span(span, result: "error")
 
-        serialized_message = Binary.serialize(:message_begin, {:exception, sequence_id, method_name})
+        serialized_message =
+          Binary.serialize(:message_begin, {:exception, sequence_id, method_name})
 
         serialized_exception = Binary.serialize(:application_exception, exc)
 

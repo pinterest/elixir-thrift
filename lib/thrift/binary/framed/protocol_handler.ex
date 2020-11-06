@@ -294,7 +294,7 @@ defmodule Thrift.Binary.Framed.ProtocolHandler do
     transport.close(socket)
   end
 
-  defp start_span(metric_name, %__MODULE__{handler_module: handler_module}, tags \\ %{}) do
+  defp start_span(metric_name, %__MODULE__{handler_module: handler_module}, tags \\ []) do
     event_name = [Thrift, handler_module, metric_name]
     time = System.monotonic_time()
     metadata = tags_to_metadata(tags)

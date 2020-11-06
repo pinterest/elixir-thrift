@@ -1,4 +1,6 @@
 defmodule Thrift.Binary.Framed.Server do
+  require Logger
+
   @moduledoc """
   A server implementation of Thrift's Binary Framed protocol.
 
@@ -55,6 +57,8 @@ defmodule Thrift.Binary.Framed.Server do
       |> Keyword.get(:transport_opts, [])
       |> Keyword.put(:port, port)
 
+    validate_ssl_configuration!(ssl_opts)
+
     listener =
       :ranch.child_spec(
         name,
@@ -77,5 +81,19 @@ defmodule Thrift.Binary.Framed.Server do
   """
   def stop(pid) do
     Supervisor.stop(pid)
+  end
+
+  # Ensure that SSL certs are available before starting server.
+  def validate_ssl_configuration!(ssl_opts) do
+    case Thrift.Transport.SSL.configuration(ssl_opts) do
+      {:error, %_exception{} = err} ->
+        Logger.error("Error validating SSL configuration: " <> Exception.format(:error, err, []))
+
+      nil ->
+        :ok
+
+      {optional, _ssl_opts} when optional in [:required, :optional] ->
+        :ok
+    end
   end
 end

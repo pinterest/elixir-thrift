@@ -1,6 +1,4 @@
 defmodule Thrift.Binary.Framed.Server do
-  require Logger
-
   @moduledoc """
   A server implementation of Thrift's Binary Framed protocol.
 

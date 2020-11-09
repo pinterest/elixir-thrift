@@ -121,6 +121,25 @@ defmodule Servers.Binary.Framed.SSLTest do
     end
   end
 
+  # @tag ssl_opts: [configure: {__MODULE__, :bad_configure, []}]
+  thrift_test "it refuses to start with bad SSL configuration", ctx do
+    configure = fn ->
+      try do
+        raise "uh oh"
+      rescue
+        exception -> {:error, exception}
+      end
+    end
+
+    assert_raise(RuntimeError, "uh oh", fn ->
+      Server.start_link(
+        ctx[:handler_name],
+        0,
+        ssl_opts: [enabled: true, configure: configure, optional: true]
+      )
+    end)
+  end
+
   ## Helpers
 
   defp get_certs() do

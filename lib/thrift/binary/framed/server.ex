@@ -87,7 +87,7 @@ defmodule Thrift.Binary.Framed.Server do
   def validate_ssl_configuration!(ssl_opts) do
     case Thrift.Transport.SSL.configuration(ssl_opts) do
       {:error, %_exception{} = err} ->
-        Logger.error("Error validating SSL configuration: " <> Exception.format(:error, err, []))
+        raise err
 
       nil ->
         :ok

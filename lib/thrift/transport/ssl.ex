@@ -33,7 +33,7 @@ defmodule Thrift.Transport.SSL do
           {:ok, opts} ->
             handle_optional(opts)
 
-          {:error, %_exception{}} = error ->
+          {:error, _} = error ->
             error
         end
 

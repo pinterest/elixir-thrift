@@ -324,20 +324,6 @@ defmodule BinaryProtocolTest do
     assert %OldChangeyStruct{id: 12345, username: "stinkypants"} == deserialized
   end
 
-  # test "nil nested fields get their default value" do
-  #   erlang_nested = serialize_nesting_to_erlang(user: user(:elixir, username: "frank"))
-
-  #   assert {:Nesting, user, nested} = erlang_nested
-  #   assert user == user(:erlang, username: "frank")
-  #   assert nested == {:SharedStruct, 44291, "Look at my value..."}
-
-  #   erlang_nested = serialize_nesting_to_erlang(nested: %Shared.SharedStruct{key: 2916, value: "my value"})
-
-  #   assert {:Nesting, user, nested} = erlang_nested
-  #   assert nested == {:SharedStruct, 2916, "my value"}
-  #   assert user == user(:erlang)
-  # end
-
   test "primitive serializers work as expected" do
     assert <<1::size(8)>> == Binary.serialize(:bool, true)
     assert <<0::size(8)>> == Binary.serialize(:bool, false)

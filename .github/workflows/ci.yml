@@ -61,7 +61,7 @@ jobs:
       - name: Compile
         run: |
           mix deps.compile
-          mix compile --force --warnings-as-errors
+          mix compile --warnings-as-errors
       - name: Run tests
         if: matrix.elixir != '1.11'
         run: mix test

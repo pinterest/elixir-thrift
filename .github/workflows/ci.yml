@@ -55,8 +55,6 @@ jobs:
           restore-keys: ${{ runner.os }}-${{ matrix.otp }}-${{ matrix.elixir }}-build-
       - name: Install dependencies
         run: |
-          mix local.rebar --force
-          mix local.hex --force
           mix deps.get
       - name: Compile
         run: |

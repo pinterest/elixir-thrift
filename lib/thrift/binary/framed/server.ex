@@ -49,6 +49,7 @@ defmodule Thrift.Binary.Framed.Server do
     worker_count = Keyword.get(opts, :worker_count, 1)
     tcp_opts = Keyword.get(opts, :tcp_opts, [])
     ssl_opts = Keyword.get(opts, :ssl_opts, [])
+    connect_func = Keyword.get(opts, :connect_func)
 
     transport_opts =
       opts
@@ -64,7 +65,7 @@ defmodule Thrift.Binary.Framed.Server do
         :ranch_tcp,
         transport_opts,
         Thrift.Binary.Framed.ProtocolHandler,
-        {server_module, handler_module, tcp_opts, ssl_opts}
+        {server_module, handler_module, connect_func, tcp_opts, ssl_opts}
       )
 
     Supervisor.start_link(

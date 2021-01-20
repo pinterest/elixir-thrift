@@ -87,13 +87,19 @@ defmodule Servers.Binary.Framed.IntegrationTest do
   alias Thrift.TApplicationException
 
   setup_all do
+    {:ok, connect_agent} = Agent.start_link(fn -> [] end)
+
+    connect_func = fn socket ->
+      Agent.update(connect_agent, &[socket | &1])
+    end
+
     {:module, mod_name, _, _} = define_handler()
-    {:ok, _} = Server.start_link(mod_name, 0, [])
+    {:ok, _} = Server.start_link(mod_name, 0, connect_func: connect_func)
     server_port = :ranch.get_port(mod_name)
 
     {:ok, _} = start_supervised({StubStats, handler_module: mod_name})
 
-    {:ok, handler_name: mod_name, port: server_port}
+    {:ok, handler_name: mod_name, port: server_port, connect_agent: connect_agent}
   end
 
   setup(%{port: port, test: client_name}) do
@@ -196,5 +202,12 @@ defmodule Servers.Binary.Framed.IntegrationTest do
 
   thrift_test "client methods can be called by name instead of pid", %{client_name: name} do
     assert {:ok, true} == Client.ping(name)
+  end
+
+  thrift_test "connect_func is called on connect", ctx do
+    {:ok, true} = Client.ping(ctx.client)
+    socket = Agent.get(ctx.connect_agent, fn [socket | _] -> socket end)
+    {:ok, {{127, 0, 0, 1}, port}} = :inet.sockname(socket)
+    assert port == :sys.get_state(ctx.client).mod_state.port
   end
 end

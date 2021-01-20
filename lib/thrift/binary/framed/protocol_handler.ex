@@ -24,6 +24,7 @@ defmodule Thrift.Binary.Framed.ProtocolHandler do
     :socket,
     :server_module,
     :handler_module,
+    :connect_func,
     :recv_timeout
   ]
 
@@ -33,7 +34,7 @@ defmodule Thrift.Binary.Framed.ProtocolHandler do
         ref,
         socket,
         transport,
-        {server_module, handler_module, transport_opts, ssl_opts}
+        {server_module, handler_module, connect_func, transport_opts, ssl_opts}
       ) do
     pid =
       spawn_link(__MODULE__, :init, [
@@ -42,6 +43,7 @@ defmodule Thrift.Binary.Framed.ProtocolHandler do
         transport,
         server_module,
         handler_module,
+        connect_func,
         transport_opts,
         ssl_opts
       ])
@@ -50,9 +52,9 @@ defmodule Thrift.Binary.Framed.ProtocolHandler do
   end
 
   @dialyzer {:nowarn_function, init: 7}
-  @spec init(reference, port, :ranch_tcp, module, module, :ranch_tcp.opts(), [SSL.option()]) ::
+  @spec init(reference, port, :ranch_tcp, module, module, function, :ranch_tcp.opts(), [SSL.option()]) ::
           :ok | no_return
-  def init(ref, socket, :ranch_tcp, server_module, handler_module, tcp_opts, ssl_opts) do
+  def init(ref, socket, :ranch_tcp, server_module, handler_module, connect_func, tcp_opts, ssl_opts) do
     :ok = :ranch.accept_ack(ref)
 
     {recv_timeout, tcp_opts} = Keyword.pop(tcp_opts, :recv_timeout, @default_timeout)
@@ -63,6 +65,7 @@ defmodule Thrift.Binary.Framed.ProtocolHandler do
       socket: socket,
       server_module: server_module,
       handler_module: handler_module,
+      connect_func: connect_func,
       recv_timeout: recv_timeout
     }
 
@@ -119,7 +122,7 @@ defmodule Thrift.Binary.Framed.ProtocolHandler do
 
       {:ok, @tcp_header_byte} when optional in [:disabled, :optional] ->
         finish_span(span, result: "tcp")
-        receive_message(state)
+        on_connect(state)
 
       {:ok, _other_byte} ->
         Logger.error(fn ->
@@ -160,7 +163,7 @@ defmodule Thrift.Binary.Framed.ProtocolHandler do
       {:ok, ssl_socket} ->
         finish_span(span, result: "success")
         state = %__MODULE__{state | transport: :ssl, socket: ssl_socket}
-        receive_message(state)
+        on_connect(state)
 
       {:error, closed} when closed in [:closed, :econnreset, :timeout] ->
         finish_span(span, result: to_string(closed))
@@ -173,6 +176,20 @@ defmodule Thrift.Binary.Framed.ProtocolHandler do
 
         finish_span(span, result: "error")
         close(state)
+    end
+  end
+
+  defp on_connect(state) do
+    case state.connect_func do
+      nil ->
+        receive_message(state)
+
+      connect_func when is_function(connect_func, 1) ->
+        if connect_func.(state.socket) do
+          receive_message(state)
+        else
+          close(state)
+        end
     end
   end
 

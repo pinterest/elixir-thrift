@@ -24,7 +24,7 @@ defmodule Thrift.Binary.Framed.ProtocolHandler do
     :socket,
     :server_module,
     :handler_module,
-    :connect_func,
+    :on_connect,
     :recv_timeout
   ]
 
@@ -34,7 +34,7 @@ defmodule Thrift.Binary.Framed.ProtocolHandler do
         ref,
         socket,
         transport,
-        {server_module, handler_module, connect_func, transport_opts, ssl_opts}
+        {server_module, handler_module, on_connect, transport_opts, ssl_opts}
       ) do
     pid =
       spawn_link(__MODULE__, :init, [
@@ -43,7 +43,7 @@ defmodule Thrift.Binary.Framed.ProtocolHandler do
         transport,
         server_module,
         handler_module,
-        connect_func,
+        on_connect,
         transport_opts,
         ssl_opts
       ])
@@ -54,7 +54,7 @@ defmodule Thrift.Binary.Framed.ProtocolHandler do
   @dialyzer {:nowarn_function, init: 7}
   @spec init(reference, port, :ranch_tcp, module, module, function, :ranch_tcp.opts(), [SSL.option()]) ::
           :ok | no_return
-  def init(ref, socket, :ranch_tcp, server_module, handler_module, connect_func, tcp_opts, ssl_opts) do
+  def init(ref, socket, :ranch_tcp, server_module, handler_module, on_connect, tcp_opts, ssl_opts) do
     :ok = :ranch.accept_ack(ref)
 
     {recv_timeout, tcp_opts} = Keyword.pop(tcp_opts, :recv_timeout, @default_timeout)
@@ -65,7 +65,7 @@ defmodule Thrift.Binary.Framed.ProtocolHandler do
       socket: socket,
       server_module: server_module,
       handler_module: handler_module,
-      connect_func: connect_func,
+      on_connect: on_connect,
       recv_timeout: recv_timeout
     }
 
@@ -180,12 +180,12 @@ defmodule Thrift.Binary.Framed.ProtocolHandler do
   end
 
   defp on_connect(state) do
-    case state.connect_func do
+    case state.on_connect do
       nil ->
         receive_message(state)
 
-      connect_func when is_function(connect_func, 1) ->
-        if connect_func.(state.socket) do
+      on_connect when is_function(on_connect, 1) ->
+        if on_connect.(state.socket) do
           receive_message(state)
         else
           close(state)

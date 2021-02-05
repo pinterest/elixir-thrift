@@ -52,7 +52,9 @@ defmodule Thrift.Binary.Framed.ProtocolHandler do
   end
 
   @dialyzer {:nowarn_function, init: 7}
-  @spec init(reference, port, :ranch_tcp, module, module, function, :ranch_tcp.opts(), [SSL.option()]) ::
+  @spec init(reference, port, :ranch_tcp, module, module, function, :ranch_tcp.opts(), [
+          SSL.option()
+        ]) ::
           :ok | no_return
   def init(ref, socket, :ranch_tcp, server_module, handler_module, on_connect, tcp_opts, ssl_opts) do
     :ok = :ranch.accept_ack(ref)

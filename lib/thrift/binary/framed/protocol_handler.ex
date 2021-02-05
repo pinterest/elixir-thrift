@@ -51,7 +51,7 @@ defmodule Thrift.Binary.Framed.ProtocolHandler do
     {:ok, pid}
   end
 
-  @dialyzer {:nowarn_function, init: 7}
+  @dialyzer {:nowarn_function, init: 8}
   @spec init(reference, port, :ranch_tcp, module, module, function, :ranch_tcp.opts(), [
           SSL.option()
         ]) ::

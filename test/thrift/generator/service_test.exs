@@ -30,6 +30,14 @@ defmodule Thrift.Generator.ServiceTest do
                }
                """
 
+  @thrift_file name: "wrong_service.thrift",
+               contents: """
+               namespace elixir Services.Wrong
+               service WrongService {
+                 bool plang(),
+               }
+               """
+
   defmodule ServerSpy do
     use GenServer
 
@@ -114,6 +122,7 @@ defmodule Thrift.Generator.ServiceTest do
   alias Thrift.Generator.ServiceTest.SimpleService.Binary.Framed.Server
   alias Thrift.Generator.ServiceTest.User
   alias Thrift.Generator.ServiceTest.UsernameTakenException
+  alias Thrift.Generator.ServiceTest.WrongService.Binary.Framed.Client, as: WrongClient
   alias Thrift.TApplicationException
 
   defp start_server(opts \\ []) do
@@ -435,5 +444,19 @@ defmodule Thrift.Generator.ServiceTest do
     # error that the other side has been closed.
     # see: http://erlang.org/pipermail/erlang-questions/2014-April/078545.html
     {:ok, nil} = Client.do_some_work(client, "work!")
+  end
+
+  thrift_test "it handles unknown method calls", ctx do
+    {:ok, client} = WrongClient.start_link("127.0.0.1", ctx.port)
+
+    # We have a client that implements different methods than the server to
+    # which it is connected, so we're able to call a method that does not
+    # exist.
+    assert {:error, {:exception, exception}} = WrongClient.plang(client)
+
+    assert exception == %Thrift.TApplicationException{
+             type: :unknown_method,
+             message: "Unknown method: plang"
+           }
   end
 end

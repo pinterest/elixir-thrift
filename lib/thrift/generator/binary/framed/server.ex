@@ -28,6 +28,16 @@ defmodule Thrift.Generator.Binary.Framed.Server do
         end
 
         unquote_splicing(functions)
+
+        def handle_thrift(method, _binary_data, _handler_module) do
+          error =
+            Thrift.TApplicationException.exception(
+              type: :unknown_method,
+              message: "Unknown method: #{method}"
+            )
+
+          {:server_error, error}
+        end
       end
     end
   end

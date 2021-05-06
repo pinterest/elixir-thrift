@@ -112,7 +112,7 @@ defmodule Thrift.Generator.Binary.Framed.Server do
     catch_clauses =
       quote do
         kind, reason ->
-          formatted_exception = Exception.format(kind, reason, System.stacktrace())
+          formatted_exception = Exception.format(kind, reason, __STACKTRACE__)
           Logger.error("Exception not defined in thrift spec was thrown: #{formatted_exception}")
 
           error =

@@ -841,7 +841,7 @@ defmodule(Calculator.Generated.Service) do
             {:reply, Calculator.Generated.Service.AddResponse.BinaryProtocol.serialize(response)}
           catch
             kind, reason ->
-              formatted_exception = Exception.format(kind, reason, System.stacktrace())
+              formatted_exception = Exception.format(kind, reason, __STACKTRACE__)
 
               Logger.error(
                 "Exception not defined in thrift spec was thrown: #{formatted_exception}"
@@ -881,7 +881,7 @@ defmodule(Calculator.Generated.Service) do
                Calculator.Generated.Service.DivideResponse.BinaryProtocol.serialize(response)}
 
             kind, reason ->
-              formatted_exception = Exception.format(kind, reason, System.stacktrace())
+              formatted_exception = Exception.format(kind, reason, __STACKTRACE__)
 
               Logger.error(
                 "Exception not defined in thrift spec was thrown: #{formatted_exception}"
@@ -915,7 +915,7 @@ defmodule(Calculator.Generated.Service) do
              Calculator.Generated.Service.MultiplyResponse.BinaryProtocol.serialize(response)}
           catch
             kind, reason ->
-              formatted_exception = Exception.format(kind, reason, System.stacktrace())
+              formatted_exception = Exception.format(kind, reason, __STACKTRACE__)
 
               Logger.error(
                 "Exception not defined in thrift spec was thrown: #{formatted_exception}"
@@ -949,7 +949,7 @@ defmodule(Calculator.Generated.Service) do
              Calculator.Generated.Service.SubtractResponse.BinaryProtocol.serialize(response)}
           catch
             kind, reason ->
-              formatted_exception = Exception.format(kind, reason, System.stacktrace())
+              formatted_exception = Exception.format(kind, reason, __STACKTRACE__)
 
               Logger.error(
                 "Exception not defined in thrift spec was thrown: #{formatted_exception}"
@@ -986,7 +986,7 @@ defmodule(Calculator.Generated.Service) do
              Calculator.Generated.Service.VectorProductResponse.BinaryProtocol.serialize(response)}
           catch
             kind, reason ->
-              formatted_exception = Exception.format(kind, reason, System.stacktrace())
+              formatted_exception = Exception.format(kind, reason, __STACKTRACE__)
 
               Logger.error(
                 "Exception not defined in thrift spec was thrown: #{formatted_exception}"

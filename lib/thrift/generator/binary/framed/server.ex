@@ -36,7 +36,7 @@ defmodule Thrift.Generator.Binary.Framed.Server do
               message: "Unknown method: #{method}"
             )
 
-          {:server_error, error}
+          {:client_error, error}
         end
       end
     end

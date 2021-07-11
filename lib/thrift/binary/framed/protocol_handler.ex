@@ -257,6 +257,19 @@ defmodule Thrift.Binary.Framed.ProtocolHandler do
 
         send_reply([serialized_message | serialized_response], :continue, state)
 
+      {:client_error, %TApplicationException{} = exc} ->
+        finish_span(span, result: "client_error")
+
+        serialized_message =
+          Binary.serialize(:message_begin, {:exception, sequence_id, method_name})
+
+        serialized_exception = Binary.serialize(:application_exception, exc)
+
+        response_size = IO.iodata_length(serialized_exception)
+        gauge(:response_size, response_size, state, method: method_name, result: "client_error")
+
+        send_reply([serialized_message | serialized_exception], :continue, state)
+
       {:server_error, %TApplicationException{} = exc} ->
         finish_span(span, result: "error")
 

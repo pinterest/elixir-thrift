@@ -446,7 +446,7 @@ defmodule Thrift.Generator.ServiceTest do
     {:ok, nil} = Client.do_some_work(client, "work!")
   end
 
-  thrift_test "it handles unknown method calls", ctx do
+  thrift_test "it stays connected after unknown method calls", ctx do
     {:ok, client} = WrongClient.start_link("127.0.0.1", ctx.port)
 
     # We have a client that implements different methods than the server to
@@ -458,5 +458,8 @@ defmodule Thrift.Generator.ServiceTest do
              type: :unknown_method,
              message: "Unknown method: plang"
            }
+
+    # Still connected.
+    assert {:error, {:exception, exception}} = WrongClient.plang(client)
   end
 end

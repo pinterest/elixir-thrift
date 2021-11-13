@@ -12,7 +12,7 @@ defmodule Thrift.Binary.Framed.ProtocolHandler do
   @type transport_opts :: :ranch_tcp.opts()
 
   alias Thrift.{
-    Protocol.Binary,
+    Protocol.THeader,
     TApplicationException,
     Transport.SSL
   }
@@ -154,6 +154,9 @@ defmodule Thrift.Binary.Framed.ProtocolHandler do
        ) do
     span = start_span(:ssl_handshake, state)
 
+    # Required for the function_exported? call below to work the first time.
+    Code.ensure_loaded!(:ssl)
+
     # As of OTP 21.0, `:ssl.ssl_accept/3` is deprecated in favour of `:ssl.handshake/3`.
     # This check allows us to support both, depending on which OTP version is being used.
     if function_exported?(:ssl, :handshake, 3) do
@@ -220,9 +223,10 @@ defmodule Thrift.Binary.Framed.ProtocolHandler do
   end
 
   defp deserialize_message(serialized_message, state) do
-    case Binary.deserialize(:message_begin, serialized_message) do
-      {:ok, message} ->
-        handle_message(message, state)
+    case THeader.deserialize(serialized_message) do
+      {:ok, headers, message} ->
+        Process.put(:thrift_headers, headers)
+        handle_message(message, headers.protocol, state)
 
       {:error, reason} ->
         Logger.error(fn ->
@@ -235,6 +239,7 @@ defmodule Thrift.Binary.Framed.ProtocolHandler do
 
   defp handle_message(
          {:call, sequence_id, method_name, args_binary},
+         protocol,
          %__MODULE__{server_module: server_module, handler_module: handler_module} = state
        ) do
     request_size = IO.iodata_length(args_binary)
@@ -250,7 +255,8 @@ defmodule Thrift.Binary.Framed.ProtocolHandler do
       {:reply, serialized_response} ->
         finish_span(span, result: "success")
 
-        serialized_message = Binary.serialize(:message_begin, {:reply, sequence_id, method_name})
+        serialized_message =
+          protocol.serialize(:message_begin, {:reply, sequence_id, method_name})
 
         response_size = IO.iodata_length(serialized_message)
         gauge(:response_size, response_size, state, method: method_name, result: "success")
@@ -261,9 +267,9 @@ defmodule Thrift.Binary.Framed.ProtocolHandler do
         finish_span(span, result: "client_error")
 
         serialized_message =
-          Binary.serialize(:message_begin, {:exception, sequence_id, method_name})
+          protocol.serialize(:message_begin, {:exception, sequence_id, method_name})
 
-        serialized_exception = Binary.serialize(:application_exception, exc)
+        serialized_exception = protocol.serialize(:application_exception, exc)
 
         response_size = IO.iodata_length(serialized_exception)
         gauge(:response_size, response_size, state, method: method_name, result: "client_error")
@@ -274,9 +280,9 @@ defmodule Thrift.Binary.Framed.ProtocolHandler do
         finish_span(span, result: "error")
 
         serialized_message =
-          Binary.serialize(:message_begin, {:exception, sequence_id, method_name})
+          protocol.serialize(:message_begin, {:exception, sequence_id, method_name})
 
-        serialized_exception = Binary.serialize(:application_exception, exc)
+        serialized_exception = protocol.serialize(:application_exception, exc)
 
         response_size = IO.iodata_length(serialized_exception)
         gauge(:response_size, response_size, state, method: method_name, result: "error")
@@ -287,6 +293,7 @@ defmodule Thrift.Binary.Framed.ProtocolHandler do
 
   defp handle_message(
          {:oneway, _sequence_id, method_name, args_binary},
+         _protocol,
          %__MODULE__{server_module: server_module, handler_module: handler_module} = state
        ) do
     spawn(fn ->

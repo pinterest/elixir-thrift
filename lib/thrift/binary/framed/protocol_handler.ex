@@ -155,7 +155,7 @@ defmodule Thrift.Binary.Framed.ProtocolHandler do
     span = start_span(:ssl_handshake, state)
 
     # Required for the function_exported? call below to work the first time.
-    Code.ensure_loaded!(:ssl)
+    {:module, :ssl} = Code.ensure_loaded(:ssl)
 
     # As of OTP 21.0, `:ssl.ssl_accept/3` is deprecated in favour of `:ssl.handshake/3`.
     # This check allows us to support both, depending on which OTP version is being used.

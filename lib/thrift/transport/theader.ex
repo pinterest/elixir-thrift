@@ -1,9 +1,16 @@
 defmodule Thrift.Transport.THeader do
+  @moduledoc """
+  THeader is an alternative to framed transport. It allows each
+  request/response message to include arbitrary informational headers, and
+  also supports transforms for things like compression and authentication.
+
+  THeader format docs:
+  - https://github.com/apache/thrift/blob/master/doc/specs/HeaderFormat.md
+  - https://github.com/facebook/fbthrift/blob/main/thrift/doc/HeaderFormat.md
+  """
+
   alias Thrift.Protocol.Binary
   alias Thrift.TApplicationException
-
-  # THeader format:
-  # https://github.com/apache/thrift/blob/master/doc/specs/HeaderFormat.md
 
   @header_magic 0x0FFF
 
@@ -16,8 +23,6 @@ defmodule Thrift.Transport.THeader do
 
   @info_keyvalue 1
 
-  # THeader format:
-  # https://github.com/apache/thrift/blob/master/doc/specs/HeaderFormat.md
   def deserialize(
         <<@header_magic::size(16), _flags::size(16), _sequence_number::size(32),
           header_size::size(16), rest::binary>>

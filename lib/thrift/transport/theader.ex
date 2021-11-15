@@ -1,4 +1,4 @@
-defmodule Thrift.Protocol.THeader do
+defmodule Thrift.Transport.THeader do
   alias Thrift.Protocol.Binary
   alias Thrift.TApplicationException
 

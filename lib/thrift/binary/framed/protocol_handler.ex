@@ -12,7 +12,7 @@ defmodule Thrift.Binary.Framed.ProtocolHandler do
   @type transport_opts :: :ranch_tcp.opts()
 
   alias Thrift.{
-    Protocol.THeader,
+    Transport.THeader,
     TApplicationException,
     Transport.SSL
   }

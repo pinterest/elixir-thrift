@@ -1,5 +1,5 @@
-defmodule Thrift.Protocol.THeaderTest do
-  alias Thrift.Protocol.THeader
+defmodule Thrift.Transport.THeaderTest do
+  alias Thrift.Transport.THeader
   use ExUnit.Case, async: true
 
   test "decode_varint" do

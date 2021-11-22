@@ -56,6 +56,7 @@ defmodule Thrift.Mixfile do
           "CONTRIBUTING.md": [title: "Contributing"],
           "example/README.md": [filename: "example", title: "Example Project"]
         ],
+        source_ref: "master",
         source_url: @project_url,
         groups_for_modules: [
           "Abstract Syntax Tree": ~r"Thrift.AST.*",

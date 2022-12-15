@@ -54,7 +54,7 @@ defmodule Thrift.Binary.Framed.Server do
     transport_opts =
       opts
       |> Keyword.get(:transport_opts, [])
-      |> Keyword.put(:port, port)
+      |> add_port_to_transport_opts(port)
 
     validate_ssl_configuration!(ssl_opts)
 
@@ -73,6 +73,18 @@ defmodule Thrift.Binary.Framed.Server do
       strategy: :one_for_one,
       max_restarts: 0
     )
+  end
+
+  defp add_port_to_transport_opts(transport_opts, port) when is_list(transport_opts) do
+    # Before Ranch 2.0, transport_opts is a keyword list with a mixture of
+    # Ranch and socket opts.
+    Keyword.put(transport_opts, :port, port)
+  end
+
+  defp add_port_to_transport_opts(transport_opts, port) when is_map(transport_opts) do
+    # After Ranch 2.0, transport_opts is a map with socket opts under its own
+    # key.
+    Map.update(transport_opts, :socket_opts, [port: port], &Keyword.put(&1, :port, port))
   end
 
   @doc """

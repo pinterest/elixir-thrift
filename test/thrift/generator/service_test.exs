@@ -177,7 +177,7 @@ defmodule Thrift.Generator.ServiceTest do
 
     serialized =
       %UpdateUsernameArgs{id: 1234, new_username: "stinkypants"}
-      |> UpdateUsernameArgs.BinaryProtocol.serialize()
+      |> UpdateUsernameArgs.serialize()
       |> IO.iodata_to_binary()
 
     assert <<10, 0, 1, 0, 0, 0, 0, 0, 0, 4, 210, 11, 0, 2, 0, 0, 0, 11, "stinkypants", 0>> ==
@@ -189,7 +189,7 @@ defmodule Thrift.Generator.ServiceTest do
 
     serialized =
       %UpdateUsernameResponse{success: true}
-      |> UpdateUsernameResponse.BinaryProtocol.serialize()
+      |> UpdateUsernameResponse.serialize()
       |> IO.iodata_to_binary()
 
     assert <<2, 0, 0, 1, 0>> == serialized
@@ -203,7 +203,7 @@ defmodule Thrift.Generator.ServiceTest do
 
     serialized =
       %UpdateUsernameResponse{taken: %UsernameTakenException{message: "That username is taken"}}
-      |> UpdateUsernameResponse.BinaryProtocol.serialize()
+      |> UpdateUsernameResponse.serialize()
       |> IO.iodata_to_binary()
 
     assert <<12, 0, 1, 11, 0, 1, 0, 0, 0, 22, rest::binary>> = serialized

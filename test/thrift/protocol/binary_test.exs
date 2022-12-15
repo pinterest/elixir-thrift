@@ -16,12 +16,11 @@ defmodule BinaryProtocolTest do
 
   defp assert_serde(%module{} = struct, thrift_binary_file) do
     thrift_binary_file = Path.join("test/data/binary", thrift_binary_file)
-    binary_protocol_module = Module.safe_concat(module, BinaryProtocol)
     thrift_binary = File.read!(thrift_binary_file)
 
-    serialized = serialize(binary_protocol_module, struct)
-    deserialized_test_data = deserialize(binary_protocol_module, thrift_binary)
-    assert deserialize(binary_protocol_module, serialized) == deserialized_test_data
+    serialized = serialize(module, struct)
+    deserialized_test_data = deserialize(module, thrift_binary)
+    assert deserialize(module, serialized) == deserialized_test_data
   end
 
   @thrift_file name: "enums.thrift",
@@ -236,8 +235,8 @@ defmodule BinaryProtocolTest do
       new_enum: Grooviness.partially_good()
     }
 
-    serialized = serialize(ChangeyStruct.BinaryProtocol, changey)
-    {deserialized, ""} = OldChangeyStruct.BinaryProtocol.deserialize(serialized)
+    serialized = serialize(ChangeyStruct, changey)
+    {deserialized, ""} = OldChangeyStruct.deserialize(serialized)
 
     assert %OldChangeyStruct{id: 12345, username: "stinkypants"} == deserialized
   end
@@ -251,8 +250,8 @@ defmodule BinaryProtocolTest do
       new_substruct: sub_struct
     }
 
-    serialized = serialize(ChangeyStruct.BinaryProtocol, changey)
-    {deserialized, ""} = OldChangeyStruct.BinaryProtocol.deserialize(serialized)
+    serialized = serialize(ChangeyStruct, changey)
+    {deserialized, ""} = OldChangeyStruct.deserialize(serialized)
 
     assert %OldChangeyStruct{id: 12345, username: "stinkypants"} == deserialized
   end
@@ -262,8 +261,8 @@ defmodule BinaryProtocolTest do
     sub = %SubStruct{password: "1234", sub_sub: sub_sub}
     changey = %ChangeyStruct{id: 12345, username: "stinkypants", new_substruct: sub}
 
-    serialized = serialize(ChangeyStruct.BinaryProtocol, changey)
-    {deserialized, ""} = OldChangeyStruct.BinaryProtocol.deserialize(serialized)
+    serialized = serialize(ChangeyStruct, changey)
+    {deserialized, ""} = OldChangeyStruct.deserialize(serialized)
 
     assert %OldChangeyStruct{id: 12345, username: "stinkypants"} == deserialized
   end
@@ -272,8 +271,8 @@ defmodule BinaryProtocolTest do
     sub = %SubStruct{password: "1234"}
     changey = %ChangeyStruct{id: 12345, username: "stinkypants", new_list: [sub]}
 
-    serialized = serialize(ChangeyStruct.BinaryProtocol, changey)
-    {deserialized, ""} = OldChangeyStruct.BinaryProtocol.deserialize(serialized)
+    serialized = serialize(ChangeyStruct, changey)
+    {deserialized, ""} = OldChangeyStruct.deserialize(serialized)
 
     assert %OldChangeyStruct{id: 12345, username: "stinkypants"} == deserialized
   end
@@ -282,8 +281,8 @@ defmodule BinaryProtocolTest do
     sub = %SubStruct{password: "1234"}
     changey = %ChangeyStruct{id: 12345, username: "stinkypants", new_set: MapSet.new([sub, sub])}
 
-    serialized = serialize(ChangeyStruct.BinaryProtocol, changey)
-    {deserialized, ""} = OldChangeyStruct.BinaryProtocol.deserialize(serialized)
+    serialized = serialize(ChangeyStruct, changey)
+    {deserialized, ""} = OldChangeyStruct.deserialize(serialized)
 
     assert %OldChangeyStruct{id: 12345, username: "stinkypants"} == deserialized
   end
@@ -292,8 +291,8 @@ defmodule BinaryProtocolTest do
     sub = %SubStruct{password: "1234"}
     changey = %ChangeyStruct{id: 12345, username: "stinkypants", new_map: %{1 => sub, 2 => sub}}
 
-    serialized = serialize(ChangeyStruct.BinaryProtocol, changey)
-    {deserialized, ""} = OldChangeyStruct.BinaryProtocol.deserialize(serialized)
+    serialized = serialize(ChangeyStruct, changey)
+    {deserialized, ""} = OldChangeyStruct.deserialize(serialized)
 
     assert %OldChangeyStruct{id: 12345, username: "stinkypants"} == deserialized
   end
@@ -318,8 +317,8 @@ defmodule BinaryProtocolTest do
 
     changey = %ChangeyStruct{id: 12345, username: "stinkypants", my_twin: twin}
 
-    serialized = serialize(ChangeyStruct.BinaryProtocol, changey)
-    {deserialized, ""} = OldChangeyStruct.BinaryProtocol.deserialize(serialized)
+    serialized = serialize(ChangeyStruct, changey)
+    {deserialized, ""} = OldChangeyStruct.deserialize(serialized)
 
     assert %OldChangeyStruct{id: 12345, username: "stinkypants"} == deserialized
   end

@@ -28,7 +28,6 @@ defmodule Thrift.Generator.Binary.Framed.Client do
 
   defp generate_handler_function(function) do
     args_module = Service.module_name(function, :args)
-    args_binary_module = Module.concat(args_module, :BinaryProtocol)
     response_module = Service.module_name(function, :response)
     rpc_name = Atom.to_string(function.name)
 
@@ -76,7 +75,7 @@ defmodule Thrift.Generator.Binary.Framed.Client do
     quote do
       def(unquote(function_name)(client, unquote_splicing(vars), rpc_opts \\ [])) do
         args = %unquote(args_module){unquote_splicing(assignments)}
-        serialized_args = unquote(args_binary_module).serialize(args)
+        serialized_args = unquote(args_module).serialize(args)
         unquote(build_response_handler(function, rpc_name, response_module))
       end
 
@@ -103,10 +102,8 @@ defmodule Thrift.Generator.Binary.Framed.Client do
   end
 
   defp build_response_handler(%Function{oneway: false}, rpc_name, response_module) do
-    module = Module.concat(response_module, :BinaryProtocol)
-
     quote do
-      ClientImpl.call(client, unquote(rpc_name), serialized_args, unquote(module), rpc_opts)
+      ClientImpl.call(client, unquote(rpc_name), serialized_args, unquote(response_module), rpc_opts)
     end
   end
 end

@@ -154,9 +154,9 @@ your own types.
 ```elixir
 iex> alias Calculator.Generated.Vector
 iex> data = %Vector{x: 1, y: 2, z: 3}
-|> Vector.BinaryProtocol.serialize
+|> Vector.serialize
 |> IO.iodata_to_binary
-iex> Vector.BinaryProtocol.deserialize(data)
+iex> Vector.deserialize(data)
 {%Calculator.Generated.Vector{x: 1.0, y: 2.0, z: 3.0}, ""}
 ```
 

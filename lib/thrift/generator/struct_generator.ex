@@ -63,21 +63,10 @@ defmodule Thrift.Generator.StructGenerator do
         def new, do: %__MODULE__{}
         unquote_splicing(List.wrap(extra_defs))
 
-        defmodule BinaryProtocol do
-          @moduledoc false
-          unquote_splicing(binary_protocol_defs)
-        end
-
-        def serialize(struct) do
-          BinaryProtocol.serialize(struct)
-        end
+        unquote_splicing(binary_protocol_defs)
 
         def serialize(struct, :binary) do
-          BinaryProtocol.serialize(struct)
-        end
-
-        def deserialize(binary) do
-          BinaryProtocol.deserialize(binary)
+          serialize(struct)
         end
       end
     end

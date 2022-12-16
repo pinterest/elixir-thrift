@@ -46,6 +46,10 @@ jobs:
               elixir: 1.11
               otp: 23
               coverage: true
+          - pair:
+              elixir: 1.11
+              otp: 23
+              update_ranch: true
     env:
       MIX_ENV: test
     steps:
@@ -66,6 +70,10 @@ jobs:
           path: _build/test/
           key: ${{ runner.os }}-${{ matrix.pair.otp }}-${{ matrix.pair.elixir }}-build-${{ hashFiles('**/mix.lock') }}
           restore-keys: ${{ runner.os }}-${{ matrix.pair.otp }}-${{ matrix.pair.elixir }}-build-
+      - name: Update ranch
+        if: ${{ matrix.update_ranch }}
+        run: |
+          mix deps.update ranch
       - name: Install dependencies
         run: |
           mix deps.get

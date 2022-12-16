@@ -103,8 +103,7 @@ defmodule Thrift.Generator.Binary.Framed.Server do
             :error, %unquote(dest_module){} = unquote(error_var) ->
               response = %unquote(response_module){unquote(field_setter)}
 
-              {:reply,
-               unquote(response_module).serialize(response)}
+              {:reply, unquote(response_module).serialize(response)}
           end
       end)
 

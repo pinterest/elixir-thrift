@@ -333,9 +333,7 @@ defmodule Thrift.Binary.Framed.Client do
       TApplicationException.exception(
         type: :bad_sequence_id,
         message:
-          "Invalid sequence id. The client sent #{seq_id}, but the server replied with #{
-            mismatched_seq_id
-          }"
+          "Invalid sequence id. The client sent #{seq_id}, but the server replied with #{mismatched_seq_id}"
       )
 
     {:error, {:exception, exception}}

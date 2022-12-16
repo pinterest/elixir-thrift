@@ -103,7 +103,13 @@ defmodule Thrift.Generator.Binary.Framed.Client do
 
   defp build_response_handler(%Function{oneway: false}, rpc_name, response_module) do
     quote do
-      ClientImpl.call(client, unquote(rpc_name), serialized_args, unquote(response_module), rpc_opts)
+      ClientImpl.call(
+        client,
+        unquote(rpc_name),
+        serialized_args,
+        unquote(response_module),
+        rpc_opts
+      )
     end
   end
 end

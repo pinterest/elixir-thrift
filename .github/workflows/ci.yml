@@ -39,17 +39,14 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - pair:
-              elixir: 1.7
-              otp: 22
-          - pair:
-              elixir: 1.11
-              otp: 23
-              coverage: true
-          - pair:
-              elixir: 1.11
-              otp: 23
-              update_ranch: true
+          - elixir: 1.7
+            otp: 22
+          - elixir: 1.11
+            otp: 23
+            coverage: true
+          - elixir: 1.11
+            otp: 23
+            update_ranch: true
     env:
       MIX_ENV: test
     steps:

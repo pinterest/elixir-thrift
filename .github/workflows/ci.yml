@@ -12,7 +12,7 @@ on:
 jobs:
   format:
     name: Format (Elixir ${{ matrix.pair.elixir }} / OTP ${{ matrix.pair.otp }})
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     strategy:
       fail-fast: false
       matrix:
@@ -34,7 +34,7 @@ jobs:
         run: mix format --check-formatted
   test:
     name: Test (Elixir ${{ matrix.pair.elixir }} / OTP ${{ matrix.pair.otp }})
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     strategy:
       fail-fast: false
       matrix:

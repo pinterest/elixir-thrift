@@ -7,7 +7,7 @@
 
 This package contains an implementation of [Thrift](https://thrift.apache.org/)
 for Elixir. It includes a Thrift IDL parser, an Elixir code generator, and
-binary framed client and server implementations.
+binary protocol clients and servers with framed and buffered transports.
 
 The generated serialization code is highly optimized and has been measured at
 **10 and 25 times faster**<sub>[why?](#why-is-it-faster-than-the-apache-implementation)</sub>
@@ -49,6 +49,23 @@ defmodule MyProject.Mixfile do
   end
 end
 ```
+
+## Buffered Transport
+
+Generated services also provide `Binary.Buffered.Client` and
+`Binary.Buffered.Server`, with the same RPC methods and connection options
+as their framed counterparts:
+
+```elixir
+{:ok, server} = MyService.Binary.Buffered.Server.start_link(MyHandler, 2345)
+{:ok, client} = MyService.Binary.Buffered.Client.start_link("localhost", 2345)
+```
+
+Both endpoints must use the same transport. Buffered transport sends binary
+protocol messages without frame-length prefixes, writing each RPC in one send.
+It accepts versioned and legacy headers and handles messages split across TCP
+reads. Incoming messages are limited to 16 MiB and 64 levels of nesting.
+Regenerate existing service code to obtain the buffered modules.
 
 ## RPC Service Support
 

@@ -9,18 +9,21 @@ defmodule Thrift.Generator.Binary.Framed.Server do
 
   alias Thrift.Parser.FileGroup
 
-  def generate(service_module, service, file_group) do
+  def generate(service_module, service, file_group, transport \\ :framed) do
     functions =
       service.functions
       |> Map.values()
       |> Enum.map(&generate_handler_function(file_group, service_module, &1))
 
+    module = Module.concat([Binary, Macro.camelize(Atom.to_string(transport)), Server])
+    implementation = Module.concat([Thrift, module])
+
     quote do
-      defmodule Binary.Framed.Server do
+      defmodule unquote(module) do
         @moduledoc false
         require Logger
 
-        alias Thrift.Binary.Framed.Server, as: ServerImpl
+        alias unquote(implementation), as: ServerImpl
         defdelegate stop(name), to: ServerImpl
 
         def start_link(handler_module, port, opts \\ []) do

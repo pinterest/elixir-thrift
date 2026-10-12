@@ -4,18 +4,21 @@ defmodule Thrift.Generator.Binary.Framed.Client do
   alias Thrift.AST.Function
   alias Thrift.Generator.{Service, Utils}
 
-  def generate(service) do
+  def generate(service, transport \\ :framed) do
     functions =
       service.functions
       |> Map.values()
       |> Enum.map(&generate_handler_function(&1))
       |> Utils.merge_blocks()
 
+    module = Module.concat([Binary, Macro.camelize(Atom.to_string(transport)), Client])
+    implementation = Module.concat([Thrift, module])
+
     quote do
-      defmodule Binary.Framed.Client do
+      defmodule unquote(module) do
         @moduledoc false
 
-        alias Thrift.Binary.Framed.Client, as: ClientImpl
+        alias unquote(implementation), as: ClientImpl
 
         defdelegate close(conn), to: ClientImpl
         defdelegate connect(conn, opts), to: ClientImpl

@@ -26,6 +26,11 @@ defmodule Thrift.Generator.Service do
     framed_client = Generator.Binary.Framed.Client.generate(service)
     framed_server = Generator.Binary.Framed.Server.generate(dest_module, service, file_group)
 
+    buffered_client = Generator.Binary.Framed.Client.generate(service, :buffered)
+
+    buffered_server =
+      Generator.Binary.Framed.Server.generate(dest_module, service, file_group, :buffered)
+
     service_module =
       quote do
         defmodule unquote(dest_module) do
@@ -36,6 +41,8 @@ defmodule Thrift.Generator.Service do
           unquote(framed_client)
 
           unquote(framed_server)
+          unquote(buffered_client)
+          unquote(buffered_server)
         end
       end
 

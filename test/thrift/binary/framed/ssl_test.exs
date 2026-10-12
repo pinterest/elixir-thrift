@@ -61,7 +61,9 @@ defmodule Servers.Binary.Framed.SSLTest do
 
   def build_ssl_client(ctx) do
     {:ok, ssl_client} =
-      Client.start_link("localhost", ctx.port, ssl_opts: ctx[:ssl_opts] ++ [enabled: true])
+      Client.start_link("localhost", ctx.port,
+        ssl_opts: ctx[:ssl_opts] ++ [enabled: true, verify: :verify_none]
+      )
 
     {:ok, ssl_client: ssl_client}
   end
@@ -143,7 +145,7 @@ defmodule Servers.Binary.Framed.SSLTest do
   ## Helpers
 
   defp get_certs() do
-    certs_path = Application.app_dir(:ssl, "examples/certs/etc/server")
+    certs_path = Path.expand("../../../fixtures/ssl", __DIR__)
     cacerts = Path.join(certs_path, "cacerts.pem")
     cert = Path.join(certs_path, "cert.pem")
     key = Path.join(certs_path, "key.pem")

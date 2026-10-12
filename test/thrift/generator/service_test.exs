@@ -460,6 +460,6 @@ defmodule Thrift.Generator.ServiceTest do
            }
 
     # Still connected.
-    assert {:error, {:exception, exception}} = WrongClient.plang(client)
+    assert {:error, {:exception, ^exception}} = WrongClient.plang(client)
   end
 end

@@ -147,19 +147,19 @@ defmodule Thrift.Parser.LexerTest do
 
     assert tokenize("{'hello':'world'}") == [
              {:"{", 1},
-             {:string, 1, 'hello'},
+             {:string, 1, ~c"hello"},
              {:":", 1},
-             {:string, 1, 'world'},
+             {:string, 1, ~c"world"},
              {:"}", 1}
            ]
 
     assert tokenize("{'a':1,'b':2}") == [
              {:"{", 1},
-             {:string, 1, 'a'},
+             {:string, 1, ~c"a"},
              {:":", 1},
              {:int, 1, 1},
              {:",", 1},
-             {:string, 1, 'b'},
+             {:string, 1, ~c"b"},
              {:":", 1},
              {:int, 1, 2},
              {:"}", 1}
@@ -173,11 +173,11 @@ defmodule Thrift.Parser.LexerTest do
   end
 
   test "identifiers" do
-    assert tokenize("abc_123.xzy") == [{:ident, 1, 'abc_123.xzy'}]
+    assert tokenize("abc_123.xzy") == [{:ident, 1, ~c"abc_123.xzy"}]
   end
 
   test "typedef" do
-    assert tokenize("typedef i32 Integer") == [{:typedef, 1}, {:i32, 1}, {:ident, 1, 'Integer'}]
+    assert tokenize("typedef i32 Integer") == [{:typedef, 1}, {:i32, 1}, {:ident, 1, ~c"Integer"}]
   end
 
   test "enum definition" do
@@ -190,21 +190,21 @@ defmodule Thrift.Parser.LexerTest do
              }
            """) == [
              {:enum, 1},
-             {:ident, 1, 'Operation'},
+             {:ident, 1, ~c"Operation"},
              {:"{", 1},
-             {:ident, 2, 'ADD'},
+             {:ident, 2, ~c"ADD"},
              {:=, 2},
              {:int, 2, 1},
              {:",", 2},
-             {:ident, 3, 'SUBTRACT'},
+             {:ident, 3, ~c"SUBTRACT"},
              {:=, 3},
              {:int, 3, 2},
              {:",", 3},
-             {:ident, 4, 'MULTIPLY'},
+             {:ident, 4, ~c"MULTIPLY"},
              {:=, 4},
              {:int, 4, 3},
              {:",", 4},
-             {:ident, 5, 'DIVIDE'},
+             {:ident, 5, ~c"DIVIDE"},
              {:=, 5},
              {:int, 5, 4},
              {:"}", 6}
@@ -221,30 +221,30 @@ defmodule Thrift.Parser.LexerTest do
              }
            """) == [
              {:struct, 1},
-             {:ident, 1, 'Work'},
+             {:ident, 1, ~c"Work"},
              {:"{", 1},
              {:int, 2, 1},
              {:":", 2},
              {:i32, 2},
-             {:ident, 2, 'num1'},
+             {:ident, 2, ~c"num1"},
              {:=, 2},
              {:int, 2, 0},
              {:",", 2},
              {:int, 3, 2},
              {:":", 3},
              {:i32, 3},
-             {:ident, 3, 'num2'},
+             {:ident, 3, ~c"num2"},
              {:",", 3},
              {:int, 4, 3},
              {:":", 4},
-             {:ident, 4, 'Operation'},
-             {:ident, 4, 'op'},
+             {:ident, 4, ~c"Operation"},
+             {:ident, 4, ~c"op"},
              {:",", 4},
              {:int, 5, 4},
              {:":", 5},
              {:optional, 5},
              {:string, 5},
-             {:ident, 5, 'comment'},
+             {:ident, 5, ~c"comment"},
              {:",", 5},
              {:"}", 6}
            ]
@@ -258,17 +258,17 @@ defmodule Thrift.Parser.LexerTest do
              }
            """) == [
              {:exception, 1},
-             {:ident, 1, 'InvalidOperation'},
+             {:ident, 1, ~c"InvalidOperation"},
              {:"{", 1},
              {:int, 2, 1},
              {:":", 2},
              {:i32, 2},
-             {:ident, 2, 'whatOp'},
+             {:ident, 2, ~c"whatOp"},
              {:",", 2},
              {:int, 3, 2},
              {:":", 3},
              {:string, 3},
-             {:ident, 3, 'why'},
+             {:ident, 3, ~c"why"},
              {:"}", 4}
            ]
   end
@@ -282,32 +282,32 @@ defmodule Thrift.Parser.LexerTest do
              }
            """) == [
              {:service, 1},
-             {:ident, 1, 'Calculator'},
+             {:ident, 1, ~c"Calculator"},
              {:extends, 1},
-             {:ident, 1, 'shared.SharedService'},
+             {:ident, 1, ~c"shared.SharedService"},
              {:"{", 1},
              {:void, 2},
-             {:ident, 2, 'ping'},
+             {:ident, 2, ~c"ping"},
              {:"(", 2},
              {:")", 2},
              {:",", 2},
              {:i32, 3},
-             {:ident, 3, 'add'},
+             {:ident, 3, ~c"add"},
              {:"(", 3},
              {:int, 3, 1},
              {:":", 3},
              {:i32, 3},
-             {:ident, 3, 'num1'},
+             {:ident, 3, ~c"num1"},
              {:",", 3},
              {:int, 3, 2},
              {:":", 3},
              {:i32, 3},
-             {:ident, 3, 'num2'},
+             {:ident, 3, ~c"num2"},
              {:")", 3},
              {:",", 3},
              {:oneway, 4},
              {:void, 4},
-             {:ident, 4, 'zip'},
+             {:ident, 4, ~c"zip"},
              {:"(", 4},
              {:")", 4},
              {:"}", 5}
@@ -323,20 +323,20 @@ defmodule Thrift.Parser.LexerTest do
              #@namespace elixir Bar
            """) == [
              {:namespace, 1},
-             {:ident, 1, 'elixir'},
-             {:ident, 1, 'Foo'},
+             {:ident, 1, ~c"elixir"},
+             {:ident, 1, ~c"Foo"},
              {:namespace, 2},
-             {:ident, 2, 'py'},
-             {:ident, 2, 'foo.bar.baz'},
+             {:ident, 2, ~c"py"},
+             {:ident, 2, ~c"foo.bar.baz"},
              {:namespace, 3},
-             {:ident, 3, 'java'},
-             {:ident, 3, 'com.pinterest.foo.bar.baz'},
+             {:ident, 3, ~c"java"},
+             {:ident, 3, ~c"com.pinterest.foo.bar.baz"},
              {:namespace, 4},
              {:*, 4},
-             {:ident, 4, 'foo.bar'},
+             {:ident, 4, ~c"foo.bar"},
              {:namespace, 5},
-             {:ident, 5, 'elixir'},
-             {:ident, 5, 'Bar'}
+             {:ident, 5, ~c"elixir"},
+             {:ident, 5, ~c"Bar"}
            ]
   end
 
@@ -344,7 +344,7 @@ defmodule Thrift.Parser.LexerTest do
     assert tokenize("const my_const = 32") ==
              [
                {:const, 1},
-               {:ident, 1, 'my_const'},
+               {:ident, 1, ~c"my_const"},
                {:=, 1},
                {:int, 1, 32}
              ]
@@ -355,9 +355,9 @@ defmodule Thrift.Parser.LexerTest do
              [
                {:const, 1},
                {:string, 1},
-               {:ident, 1, 'my_const'},
+               {:ident, 1, ~c"my_const"},
                {:=, 1},
-               {:ident, 1, 'MyEnum.VALUE'}
+               {:ident, 1, ~c"MyEnum.VALUE"}
              ]
   end
 end

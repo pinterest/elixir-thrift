@@ -174,7 +174,7 @@ defmodule Servers.Binary.Framed.IntegrationTest do
   end
 
   thrift_test "it can handle bogus data", ctx do
-    {:ok, socket} = :gen_tcp.connect('localhost', ctx.port, [:binary, packet: 4, active: false])
+    {:ok, socket} = :gen_tcp.connect(~c"localhost", ctx.port, [:binary, packet: 4, active: false])
     :ok = :gen_tcp.send(socket, <<1, 2, 3, 4, 5>>)
 
     assert {:error, :closed} == :gen_tcp.recv(socket, 0)

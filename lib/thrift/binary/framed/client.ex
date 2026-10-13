@@ -55,7 +55,8 @@ defmodule Thrift.Binary.Framed.Client do
             ssl_opts: [SSL.option()],
             timeout: integer,
             sock: {:gen_tcp, :gen_tcp.socket()} | {:ssl, :ssl.sslsocket()},
-            seq_id: integer
+            seq_id: integer,
+            packet: 0 | 4
           }
     defstruct host: nil,
               port: nil,
@@ -64,7 +65,8 @@ defmodule Thrift.Binary.Framed.Client do
               ssl_opts: nil,
               timeout: 5000,
               sock: nil,
-              seq_id: 0
+              seq_id: 0,
+              packet: 4
   end
 
   require Logger
@@ -82,7 +84,8 @@ defmodule Thrift.Binary.Framed.Client do
       port: port,
       tcp_opts: tcp_opts,
       ssl_opts: ssl_opts,
-      timeout: timeout
+      timeout: timeout,
+      packet: Keyword.get(opts, :packet, 4)
     }
 
     {:connect, :init, s}
@@ -141,6 +144,7 @@ defmodule Thrift.Binary.Framed.Client do
     opts =
       opts
       |> Keyword.merge(@immutable_tcp_opts)
+      |> Keyword.put(:packet, s.packet)
       |> Keyword.put_new(:send_timeout, 1000)
 
     case :gen_tcp.connect(host, port, opts, timeout) do
@@ -253,7 +257,7 @@ defmodule Thrift.Binary.Framed.Client do
     timeout = Keyword.get(tcp_opts, :timeout, default_timeout)
 
     with :ok <- transport.send(sock, [message | serialized_args]),
-         {:ok, message} <- transport.recv(sock, 0, timeout) do
+         {:ok, message} <- receive_message(transport, sock, timeout, s.packet) do
       reply = deserialize_message_reply(message, rpc_name, seq_id)
       {:reply, reply, s}
     else
@@ -290,6 +294,12 @@ defmodule Thrift.Binary.Framed.Client do
         {:disconnect, error, s}
     end
   end
+
+  defp receive_message(transport, socket, timeout, 0),
+    do: Thrift.Binary.Buffered.Message.recv(transport, socket, timeout)
+
+  defp receive_message(transport, socket, timeout, 4),
+    do: transport.recv(socket, 0, timeout)
 
   def deserialize_message_reply(message, rpc_name, seq_id) do
     handle_message(Binary.deserialize(:message_begin, message), seq_id, rpc_name)
@@ -333,9 +343,7 @@ defmodule Thrift.Binary.Framed.Client do
       TApplicationException.exception(
         type: :bad_sequence_id,
         message:
-          "Invalid sequence id. The client sent #{seq_id}, but the server replied with #{
-            mismatched_seq_id
-          }"
+          "Invalid sequence id. The client sent #{seq_id}, but the server replied with #{mismatched_seq_id}"
       )
 
     {:error, {:exception, exception}}

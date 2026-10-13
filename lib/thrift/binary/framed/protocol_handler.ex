@@ -25,7 +25,8 @@ defmodule Thrift.Binary.Framed.ProtocolHandler do
     :server_module,
     :handler_module,
     :on_connect,
-    :recv_timeout
+    :recv_timeout,
+    :packet
   ]
 
   @spec start_link(reference, port, transport, {module, module, transport_opts, [SSL.option()]}) ::
@@ -60,7 +61,8 @@ defmodule Thrift.Binary.Framed.ProtocolHandler do
     :ok = :ranch.accept_ack(ref)
 
     {recv_timeout, tcp_opts} = Keyword.pop(tcp_opts, :recv_timeout, @default_timeout)
-    :ok = :inet.setopts(socket, Keyword.put(tcp_opts, :packet, 4))
+    packet = Keyword.get(tcp_opts, :packet, 4)
+    :ok = :inet.setopts(socket, tcp_opts)
 
     state = %__MODULE__{
       transport: :gen_tcp,
@@ -68,7 +70,8 @@ defmodule Thrift.Binary.Framed.ProtocolHandler do
       server_module: server_module,
       handler_module: handler_module,
       on_connect: on_connect,
-      recv_timeout: recv_timeout
+      recv_timeout: recv_timeout,
+      packet: packet
     }
 
     case SSL.configuration(ssl_opts) do
@@ -97,7 +100,7 @@ defmodule Thrift.Binary.Framed.ProtocolHandler do
     with :ok <- :inet.setopts(socket, packet: :raw),
          {:ok, first_bytes} <- :gen_tcp.recv(socket, 4, recv_timeout),
          :ok <- :gen_tcp.unrecv(socket, first_bytes),
-         :ok <- :inet.setopts(socket, packet: 4) do
+         :ok <- :inet.setopts(socket, packet: state.packet) do
       <<first_byte::8-unsigned, _::binary>> = first_bytes
       {:ok, first_byte}
     end
@@ -114,7 +117,7 @@ defmodule Thrift.Binary.Framed.ProtocolHandler do
         finish_span(span, result: "ssl_rejected")
         close(state)
 
-      {:ok, @tcp_header_byte} when optional == :required ->
+      {:ok, byte} when byte in [@tcp_header_byte, 0x80] and optional == :required ->
         Logger.error(fn ->
           format_log("peek_first_byte", "SSL required", state)
         end)
@@ -122,7 +125,7 @@ defmodule Thrift.Binary.Framed.ProtocolHandler do
         finish_span(span, result: "tcp_rejected")
         close(state)
 
-      {:ok, @tcp_header_byte} when optional in [:disabled, :optional] ->
+      {:ok, byte} when byte in [@tcp_header_byte, 0x80] and optional in [:disabled, :optional] ->
         finish_span(span, result: "tcp")
         on_connect(state)
 
@@ -200,7 +203,7 @@ defmodule Thrift.Binary.Framed.ProtocolHandler do
        ) do
     span = start_span(:receive_message, state)
 
-    case transport.recv(socket, 0, recv_timeout) do
+    case receive_packet(transport, socket, recv_timeout, state.packet) do
       {:ok, serialized_message} ->
         finish_span(span, result: "success")
         deserialize_message(serialized_message, state)
@@ -218,6 +221,12 @@ defmodule Thrift.Binary.Framed.ProtocolHandler do
         close(state)
     end
   end
+
+  defp receive_packet(transport, socket, timeout, 0),
+    do: Thrift.Binary.Buffered.Message.recv(transport, socket, timeout)
+
+  defp receive_packet(transport, socket, timeout, 4),
+    do: transport.recv(socket, 0, timeout)
 
   defp deserialize_message(serialized_message, state) do
     case Binary.deserialize(:message_begin, serialized_message) do
@@ -293,7 +302,11 @@ defmodule Thrift.Binary.Framed.ProtocolHandler do
       server_module.handle_thrift(method_name, args_binary, handler_module)
     end)
 
-    send_reply(<<0>>, :continue, state)
+    if state.packet == 0 do
+      receive_message(state)
+    else
+      send_reply(<<0>>, :continue, state)
+    end
   end
 
   defp send_reply(data, after_reply, %__MODULE__{transport: transport, socket: socket} = state) do

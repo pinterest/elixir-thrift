@@ -47,7 +47,10 @@ defmodule Thrift.Binary.Framed.Server do
   def start_link(server_module, port, handler_module, opts) do
     name = Keyword.get(opts, :name, handler_module)
     worker_count = Keyword.get(opts, :worker_count, 1)
-    tcp_opts = Keyword.get(opts, :tcp_opts, [])
+
+    tcp_opts =
+      Keyword.put(Keyword.get(opts, :tcp_opts, []), :packet, Keyword.get(opts, :packet, 4))
+
     ssl_opts = Keyword.get(opts, :ssl_opts, [])
     on_connect = Keyword.get(opts, :on_connect)
 
